@@ -1,0 +1,134 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.Header {
+  font-size: 55px;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.Form {
+  background-color: #1e1f25;
+  padding: 24px;
+  border-radius: 12px;
+  width: 340px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 8px;
+  gap: 8px;
+}
+
+.tabs a,
+.registerTab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  color: white;
+  background-color: #292a31;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.tabs a:hover,
+.registerTab:hover {
+  background-color: #334155;
+}
+
+.activeTab {
+  background-color: #22c55e;
+  color: white;
+}
+.activeTab:hover {
+  background-color: #22c55e;
+}
+.checkBox {
+  width: 20px;
+  height: 20px;
+  color: #1e1f25;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input {
+  padding: 10px;
+  background-color: #1e1f25;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  border: 1px solid #334155;
+}
+
+.input:focus {
+  outline: 2px solid #22c55e;
+  background-color: #1e1f25;
+}
+
+.checkboxGroup {
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.4;
+}
+
+.checkboxGroup input {
+  margin-top: 2px;
+}
+
+.registerBtn {
+  background-color: #22c55e;
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.registerBtn:hover {
+  background-color: #16a34a;
+}
+
+.googleBtn {
+  background-color: white;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.googleBtn:hover {
+  background-color: #e2e8f0;
+}
+
+.googleBtn img {
+  width: 20px;
+}
