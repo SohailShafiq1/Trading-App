@@ -1,10 +1,14 @@
-function App() {
+import React, { useState, useEffect } from 'react';
+import styles from './App.module.css';
+const s = styles
 
+const App = () => {
   return (
-    <>
-     Checking
-    </>
-  )
-}
+<>
+    <div className={s.container}>
+    </div>
+</>
+  );
+};
 
-export default App
+export default App;
