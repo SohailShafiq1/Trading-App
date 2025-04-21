@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import styles from "./LoginPage.module.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext";
 
 const s = styles;
 
 const LoginPage = () => {
+  const { login, googleLogin } = useAuth();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -19,9 +23,14 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(form);
+    try {
+      await login(form);
+      navigate("/binarychart");
+    } catch (err) {
+      alert(err.response?.data?.message || "Login failed");
+    }
   };
 
   return (
@@ -67,11 +76,14 @@ const LoginPage = () => {
             </NavLink>
           </div>
 
+          <button type="submit" onClick={handleSubmit} className={s.loginBtn}>
+            Login
+          </button>
           <NavLink to="/binarychart" type="submit" className={s.loginBtn}>
           Login
           </NavLink>
 
-          <button type="button" className={s.googleBtn}>
+          <button type="button" className={s.googleBtn} onClick={googleLogin}>
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
               alt="Google"
