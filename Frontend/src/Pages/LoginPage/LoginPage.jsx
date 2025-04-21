@@ -67,9 +67,9 @@ const LoginPage = () => {
             </NavLink>
           </div>
 
-          <button type="submit" className={s.loginBtn}>
-            Login
-          </button>
+          <NavLink to="/binarychart" type="submit" className={s.loginBtn}>
+          Login
+          </NavLink>
 
           <button type="button" className={s.googleBtn}>
             <img

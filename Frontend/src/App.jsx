@@ -5,6 +5,9 @@ import HomePage from "./Pages/HomePage/HomePage";
 import RegisterLayout from "./Layout/RegisterLayout/RegisterLayout";
 import RegisterPage from "./Pages/RegisterPage/RegisterPage";
 import LoginPage from "./Pages/LoginPage/LoginPage";
+import BinaryChart from "./Pages/BinaryChart/BinaryChart";
+import BinaryLayout from "./Layout/BinaryLayout/BinaryLayout";
+import Profile from "./Pages/BinaryChart/components/Profile/Profile";
 const s = styles;
 const App = () => {
   return (
@@ -16,6 +19,10 @@ const App = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/login" element={<LoginPage />} />
+            </Route>
+            <Route path="/binarychart" element={<BinaryLayout />}>
+              <Route index element={<BinaryChart />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
           </Routes>
         </BrowserRouter>
