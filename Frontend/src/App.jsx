@@ -21,6 +21,10 @@ const App = () => {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/login" element={<LoginPage />} />
             </Route>
+            <Route path="/binarychart" element={<BinaryLayout />}>
+    <Route index element={<BinaryChart />} />
+    <Route path="profile" element={<Profile />} />
+  </Route>
           </Routes>
         </BrowserRouter>
       </div>
