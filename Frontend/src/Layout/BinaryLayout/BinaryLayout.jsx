@@ -48,7 +48,7 @@ const BinaryLayout = () => {
           </div>
         </div>
       </div>
-      <Outlet />
+      <Outlet />  
     </>
   );
 };
