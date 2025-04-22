@@ -13,21 +13,23 @@ const s = styles;
 const App = () => {
   return (
     <>
-      <div className={s.container}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<RegisterLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/login" element={<LoginPage />} />
-            </Route>
-            <Route path="/binarychart" element={<BinaryLayout />}>
-    <Route index element={<BinaryChart />} />
-    <Route path="profile" element={<Profile />} />
-  </Route>
-          </Routes>
-        </BrowserRouter>
-      </div>
+      <AuthProvider>
+        <div className={s.container}>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<RegisterLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/login" element={<LoginPage />} />
+              </Route>
+              <Route path="/binarychart" element={<BinaryLayout />}>
+                <Route index element={<BinaryChart />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </div>
+      </AuthProvider>
     </>
   );
 };
