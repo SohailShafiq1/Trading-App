@@ -47,10 +47,7 @@ const BinaryLayout = () => {
             </NavLink>
           </div>
           <div className={s.deposit}>
-            <NavLink to={"/binarychart/bankinglayout/deposit"}>
-              {" "}
-              Deposit
-            </NavLink>
+            <NavLink to={"/binarychart/bankinglayout/deposit"}>Deposit</NavLink>
             <AiOutlinePlus />
           </div>
         </div>
