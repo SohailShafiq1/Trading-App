@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from './Profile.module.css';
 const s = styles;
 import { NavLink } from 'react-router-dom';
+
 const Profile = () => {
   return (
     <div className={s.container}>
@@ -36,7 +37,7 @@ const Profile = () => {
             <div className={s.inputBox}>
               <label>Password</label>
               <input type="password" value="******" />
-              <a href="#" className={s.forgot}>Forget Your Password?</a>
+              <NavLink to="/forgot-password" className={s.forgot}>Forget Your Password?</NavLink>
             </div>
           </div>
 
@@ -50,14 +51,16 @@ const Profile = () => {
               <select>
                 <option>Select Country</option>
               </select>
+            <NavLink className={s.delete}>X Delete Account</NavLink>
+
             </div>
           </div>
 
           <div className={s.actions}>
             <button className={s.saveBtn}>Save</button>
-            <NavLink  className={s.logout}>Logout</NavLink>
-            <NavLink className={s.delete}>X Delete Account</NavLink>
           </div>
+            <NavLink className={s.logout}>Logout</NavLink>
+
         </div>
       </div>
     </div>

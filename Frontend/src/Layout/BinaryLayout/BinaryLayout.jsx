@@ -5,10 +5,13 @@ import { IoMdImage } from "react-icons/io";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom"; // Import useNavigate
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
+
 const BinaryLayout = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
+
   return (
     <>
       <div className={s.container}>
@@ -16,29 +19,29 @@ const BinaryLayout = () => {
           <img src={logo} alt="" />
         </div>
         <div className={s.navBar}>
-          <div style={{ backgroundColor: "#10A055" }}>
+          <NavLink
+            style={{ backgroundColor: "#10A055" }}
+            className={s.btn}
+            onClick={() => window.history.back()} // Navigate to the previous tab
+          >
             <MdUndo className={s.icons} />
-           <NavLink to="/binarychart" className={s.navlink}>
-              Back
-            </NavLink>
-          </div>
-          <div>
+            Back
+          </NavLink>
+          <NavLink to="/binarychart" className={s.btn}>
             <IoMdImage className={s.icons} />
             Trade
-          </div>
-          <div>
+          </NavLink>
+          <NavLink className={s.btn} to="/binarychart/profile">
             <CgProfile className={s.icons} />
-            <NavLink to="/binarychart/profile" className={s.navlink}>
-              Profile
-            </NavLink>
-          </div>
-          <div>
+            Profile
+          </NavLink>
+          <NavLink className={s.btn}>
             <CgMoreAlt className={s.icons} />
             More
-          </div>
-          <div>
+          </NavLink>
+          <NavLink className={s.btn}>
             <p>Live account</p>
-          </div>
+          </NavLink>
         </div>
         <div className={s.asset}>
           <div className={s.withdraw}>Withdrawal</div>
