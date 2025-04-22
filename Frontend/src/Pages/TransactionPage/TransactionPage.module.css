@@ -1,0 +1,44 @@
+.container {
+  width: 98%;
+  height: 70dvh;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  background-color: #141518;
+  margin-left: 0.8rem;
+}
+.table {
+    width: 95%;
+    border-collapse: collapse;
+    color: white;
+    font-size: 14px; 
+    margin-top: 5rem;
+  }
+  
+
+  th, td {
+    text-align: left;
+    padding: 12px 10px;
+    border: none;
+    font-size: 20px;
+  }
+
+  
+  th {
+    color: #aaa;
+    border-bottom: 3px solid #2b2c2f;
+
+    font-weight: 500;
+  }
+  
+  .circle {
+ color: #10A055;
+    border: none; 
+    margin-right: 5px;
+  }
+  
+  .amount {
+    color: #10A055;
+    font-weight: 600;
+  }
+  

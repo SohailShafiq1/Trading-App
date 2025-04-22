@@ -2,16 +2,15 @@ import React from "react";
 import styles from "./Profile.module.css";
 const s = styles;
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../../Context/AuthContext"; // Import useAuth
+import { useAuth } from "../../../../Context/AuthContext";
 
 const Profile = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
-  const { logout } = useAuth(); // Get logout function from AuthContext
+  const navigate = useNavigate(); 
+  const { logout } = useAuth(); 
 
   const handleLogout = () => {
-    // Call the logout function from AuthContext
+ 
     logout();
-    // Redirect to login page
     navigate("/login");
   };
 
