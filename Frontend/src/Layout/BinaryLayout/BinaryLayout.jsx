@@ -16,30 +16,26 @@ const BinaryLayout = () => {
           <img src={logo} alt="" />
         </div>
         <div className={s.navBar}>
-          <div style={{ backgroundColor: "#10A055" }}>
+          <NavLink style={{ backgroundColor: "#10A055" }} className={s.btn}>
             <MdUndo className={s.icons} />
-            <NavLink to="/binarychart" className={s.navlink}>
-              Back
-            </NavLink>
-          </div>
-          <div>
+            Back
+          </NavLink>
+          <NavLink to="/binarychart" className={s.btn}>
             <IoMdImage className={s.icons} />
             Trade
-          </div>
-          <div>
+          </NavLink>
+          <NavLink className={s.btn} to="/binarychart/profile">
             <CgProfile className={s.icons} />
-            <NavLink to="/binarychart/profile" className={s.navlink}>
-              Profile
-            </NavLink>
-          </div>
-          <div>
+            Profile
+          </NavLink>
+          <NavLink className={s.btn}>
             <CgMoreAlt className={s.icons} />
             More
-          </div>
-          <div>
+          </NavLink>
+          <NavLink className={s.btn}>
             <p>Live account</p>
-          </div>
-        </div>
+          </NavLink>
+        </div>{" "}
         <div className={s.asset}>
           <div className={s.withdraw}>
             <NavLink to={"/binarychart/bankinglayout/withdraw"}>
