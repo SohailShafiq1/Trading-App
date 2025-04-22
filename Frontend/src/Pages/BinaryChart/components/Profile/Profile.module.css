@@ -1,0 +1,152 @@
+.container {
+    width: 97%;
+    height: 83dvh;
+    margin-top: 10px;
+    margin-left: 22px;
+
+    display: flex;
+    justify-content: center;
+    background-color: #141518;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .profileBox {
+    width: 100%;
+    max-width: 850px;
+  }
+  
+  .title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 25px;
+  }
+  
+  .userInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 35px;
+  }
+  
+  .avatar {
+    width: 65px;
+    height: 65px;
+    background-color: #007aff;
+    border-radius: 50%;
+    position: relative;
+  }
+  
+  .email,
+  .userId,
+  .verified {
+    margin: 2px 0;
+    font-size: 14px;
+  }
+  
+  .verified {
+    color: #00ff7f;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+  }
+  
+  .row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .inputBox {
+    flex: 1;
+    min-width: 270px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  
+  .inputBox label {
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #aaa;
+  }
+  
+  .inputBox input,
+  .inputBox select {
+    padding: 12px 14px;
+    border: 1px solid #3a3b3d;
+    border-radius: 6px;
+    background-color: transparent;
+    color: white;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+  }
+  
+  .inputBox input:focus,
+  .inputBox select:focus {
+    outline: none;
+    border-color: #0a84ff;
+  }
+  
+  .forgot {
+    font-size: 12px;
+    color: #3ea6ff;
+    text-decoration: none;
+    position: absolute;
+    right: 0;
+    bottom: -20px;
+  }
+  
+  .forgot:hover {
+    text-decoration: underline;
+  }
+  
+  .actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .saveBtn {
+    background-color: #1cb954;
+    color: white;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .saveBtn:hover {
+    background-color: #18a34c;
+  }
+  
+  .logout {
+    color: red;
+    text-decoration: none;
+    margin-top: 10px;
+  }
+  
+  .logout:hover {
+    text-decoration: underline;
+  }
+  
+  .delete {
+    color: red;
+    text-decoration: none;
+    font-size: 14px;
+    align-self: flex-end;
+    margin-top: 10px;
+  }
+  
+  .delete:hover {
+    text-decoration: underline;
+  }
+  
