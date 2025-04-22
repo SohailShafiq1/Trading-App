@@ -1,0 +1,162 @@
+/* PrizePool.module.css */
+
+.container {
+  padding: 2rem;
+  background-color: #0f0f0f;
+  color: #ffffff;
+}
+
+.prizePool {
+  margin: 0 auto;
+}
+
+.box {
+  background-color: #1e1f25;
+  padding: 2rem;
+  padding-top: 0.5rem;
+  border-radius: 12px;
+}
+
+.box h1 {
+  color: #22c55e;
+  font-size: 43px;
+  margin-bottom: 0.5rem;
+}
+
+.box p {
+  color: #d1d5db;
+  font-size: 26px;
+  margin-bottom: 2rem;
+}
+
+.prizes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4rem;
+}
+
+.prize {
+  background-color: #0000004d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.1rem 1rem;
+  border-radius: 40px;
+  font-weight: 500;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  width: 80%;
+}
+
+.id {
+  background-color: #1e1f25;
+  color: #b0b0b0;
+  padding: 0.4rem 1rem;
+  border-radius: 100%;
+  margin-right: 1rem;
+  text-align: center;
+  margin-bottom: 0.4rem;
+  margin-top: 0.4rem;
+  font-size: 32px;
+}
+
+.name {
+  flex-grow: 1;
+  text-align: left;
+  margin-left: 3rem;
+  color: #ffffff;
+  margin-bottom: 0.2rem;
+  margin-top: 0.2rem;
+  font-size: 33px;
+  font-weight: 300;
+}
+
+.button {
+  background-color: #10a055;
+  border: none;
+  color: white;
+  padding: 0.4rem 1.5rem;
+  border-radius: 9999px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.button:hover {
+  background-color: #16a34a;
+}
+@media (max-width: 768px) {
+  .box h1 {
+    font-size: 32px;
+  }
+
+  .box p {
+    font-size: 18px;
+  }
+
+  .prizes {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .prize {
+    width: 100%;
+    padding: 0.6rem 1rem;
+  }
+
+  .id {
+    font-size: 24px;
+    padding: 0.3rem 0.8rem;
+  }
+
+  .name {
+    font-size: 24px;
+    margin-left: 1rem;
+  }
+
+  .button {
+    font-size: 18px;
+    padding: 0.4rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .box {
+    padding: 1rem;
+  }
+
+  .box h1 {
+    font-size: 28px;
+  }
+
+  .box p {
+    font-size: 16px;
+  }
+
+  .prize {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: 20px;
+  }
+
+  .id {
+    font-size: 20px;
+    margin-bottom: 0.5rem;
+  }
+
+  .name {
+    font-size: 20px;
+    margin: 0.5rem 0;
+  }
+
+  .button {
+    font-size: 16px;
+    padding: 0.4rem 1rem;
+    align-self: flex-end;
+  }
+}
