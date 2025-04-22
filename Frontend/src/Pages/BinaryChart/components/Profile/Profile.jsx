@@ -1,8 +1,20 @@
-import React, { useState } from 'react';
-import styles from './Profile.module.css';
+import React from "react";
+import styles from "./Profile.module.css";
 const s = styles;
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../../Context/AuthContext"; // Import useAuth
+
 const Profile = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
+  const { logout } = useAuth(); // Get logout function from AuthContext
+
+  const handleLogout = () => {
+    // Call the logout function from AuthContext
+    logout();
+    // Redirect to login page
+    navigate("/login");
+  };
+
   return (
     <div className={s.container}>
       <div className={s.profileBox}>
@@ -36,7 +48,9 @@ const Profile = () => {
             <div className={s.inputBox}>
               <label>Password</label>
               <input type="password" value="******" />
-              <a href="#" className={s.forgot}>Forget Your Password?</a>
+              <NavLink to="/forgot-password" className={s.forgot}>
+                Forget Your Password?
+              </NavLink>
             </div>
           </div>
 
@@ -50,14 +64,16 @@ const Profile = () => {
               <select>
                 <option>Select Country</option>
               </select>
+              <NavLink className={s.delete}>X Delete Account</NavLink>
             </div>
           </div>
 
           <div className={s.actions}>
             <button className={s.saveBtn}>Save</button>
-            <NavLink  className={s.logout}>Logout</NavLink>
-            <NavLink className={s.delete}>X Delete Account</NavLink>
           </div>
+          <button className={s.logout} onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </div>
     </div>
