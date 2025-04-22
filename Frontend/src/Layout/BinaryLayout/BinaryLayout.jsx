@@ -5,12 +5,13 @@ import { IoMdImage } from "react-icons/io";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
-import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom"; 
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
 
 const BinaryLayout = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate(); 
+
 
   return (
     <>
@@ -22,7 +23,7 @@ const BinaryLayout = () => {
           <NavLink
             style={{ backgroundColor: "#10A055" }}
             className={s.btn}
-            onClick={() => navigate(-1)} // Navigate to the previous page
+            onClick={() => navigate(-1)} 
           >
             <MdUndo className={s.icons} />
             Back

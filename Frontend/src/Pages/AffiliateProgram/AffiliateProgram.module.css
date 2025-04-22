@@ -1,0 +1,45 @@
+.container
+{
+    width: 97%;
+    height: 80dvh;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+}
+.top, .line
+{
+    width: 99%;
+    height: 40%;
+    display: flex;
+    justify-content: space-around;
+}
+.balance
+{
+    width: 25%;
+    height: 100%;
+    background-color: #1E1F25;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    
+}
+.partnerLink
+{
+    width: 73%;
+    height: 100%;
+    background-color: #1E1F25;
+    border-radius: 3px;
+}
+.line
+{
+    height: 35% ;
+}
+.line div {
+    width: 300px;
+    height: 100%;
+    background-color: #1E1F25; 
+    border-radius: 4px; 
+  }
