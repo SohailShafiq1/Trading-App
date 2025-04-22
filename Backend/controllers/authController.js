@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
-import { hashPassword, comparePassword } from "../utils/hashPassword.js";
+import bcrypt from "bcryptjs";
 
 const register = async (req, res) => {
   const { email, password, country, currency } = req.body;
@@ -9,14 +9,17 @@ const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "User already registered" });
     }
-    const hashedPassword = await hashPassword(password);
-    const newUser = await User.create({
+
+    const hashedPassword = await bcrypt.hashSync(password, 10);
+
+    const newUser = new User({
       email,
       password: hashedPassword,
       country,
       currency,
     });
     await newUser.save();
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.error("Registration Error:", error);
@@ -26,19 +29,26 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid Credentials" });
+      return res.status(400).json({ message: "User not found" });
     }
-    const isMatch = await comparePassword(password, user.password);
+    console.log(password, user.password);
+    const hash = bcrypt.hashSync(password, 10);
+    const isMatch = await bcrypt.compareSync(hash, user.password);
+
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid Credentials" });
+      return res.status(400).json({ message: "Incorrect password" });
     }
+
     const token = generateToken(user._id);
-    res.status(200).json({ message: "Login Successful", token });
+    res.status(200).json({ message: "Login successful", token, user });
   } catch (error) {
-    res.status(500).json({ message: "Error Logging In" });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Error logging in" });
   }
 };
 

@@ -18,12 +18,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async ({ email, password }) => {
-    const res = await axios.post(`${BACKEND_URL}/api/auth/login`, {
-      email,
-      password,
-    });
-    setUser(res.data.user);
-    localStorage.setItem("token", res.data.token);
+    try {
+      console.log("Logging in with:", { email, password });
+      const res = await axios.post(`${BACKEND_URL}/api/auth/login`, {
+        email,
+        password,
+      });
+      setUser(res.data.user);
+      localStorage.setItem("token", res.data.token);
+    } catch (error) {
+      console.error(
+        "Login error:",
+        error.response?.data?.message || error.message
+      );
+      throw new Error(error.response?.data?.message || "Login failed");
+    }
   };
 
   const googleLogin = async () => {
