@@ -8,12 +8,14 @@ const BankingLayout = () => {
   return (
     <>
       <div className={s.container}>
-        <nav>
+        <nav className={s.navBar}>
           <ul className={s.navList}>
             <li className={s.navItem}>
               <NavLink
                 to="/binarychart/bankinglayout/deposit"
-                className={s.navLink}
+                className={({ isActive }) =>
+                  isActive ? `${s.navLink} ${s.active}` : s.navLink
+                }
               >
                 Deposit
               </NavLink>
@@ -21,7 +23,9 @@ const BankingLayout = () => {
             <li className={s.navItem}>
               <NavLink
                 to="/binarychart/bankinglayout/withdraw"
-                className={s.navLink}
+                className={({ isActive }) =>
+                  isActive ? `${s.navLink} ${s.active}` : s.navLink
+                }
               >
                 Withdraw
               </NavLink>
@@ -29,13 +33,20 @@ const BankingLayout = () => {
             <li className={s.navItem}>
               <NavLink
                 to="/binarychart/bankinglayout/transactions"
-                className={s.navLink}
+                className={({ isActive }) =>
+                  isActive ? `${s.navLink} ${s.active}` : s.navLink
+                }
               >
                 Transactions
               </NavLink>
             </li>
             <li className={s.navItem}>
-              <NavLink to="/binarychart/profile" className={s.navLink}>
+              <NavLink
+                to="/binarychart/profile"
+                className={({ isActive }) =>
+                  isActive ? `${s.navLink} ${s.active}` : s.navLink
+                }
+              >
                 Account
               </NavLink>
             </li>

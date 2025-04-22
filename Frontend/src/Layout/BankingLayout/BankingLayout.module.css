@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+.navBar {
+  display: flex;
+  height: 100%;
+  margin-top: 1rem;
+  width: fit-content;
+}
+.navList {
+  background-color: #1e1f25;
+  width: 100%;
+  margin-left: 2rem;
+  display: flex;
+  flex-direction: row;
+  gap: 7rem;
+  padding: 3rem;
+}
+.navItem {
+  color: #fff;
+  list-style: none;
+}
+.navLink {
+  color: #fff;
+  text-decoration: none;
+  font-size: 22px;
+}
+.active {
+  color: #10a055;
+}
