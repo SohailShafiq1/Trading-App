@@ -5,7 +5,7 @@ import { IoMdImage } from "react-icons/io";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
-import { NavLink, Outlet, useNavigate } from "react-router-dom"; // Import useNavigate
+import { NavLink, Outlet } from "react-router-dom";
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
 
@@ -25,9 +25,11 @@ const BinaryLayout = () => {
             onClick={() => window.history.back()} // Navigate to the previous tab
           >
             <MdUndo className={s.icons} />
-            Back
-          </NavLink>
-          <NavLink to="/binarychart" className={s.btn}>
+           <NavLink to="/binarychart" className={s.navlink}>
+              Back
+            </NavLink>
+          </div>
+          <div>
             <IoMdImage className={s.icons} />
             Trade
           </NavLink>
@@ -44,9 +46,16 @@ const BinaryLayout = () => {
           </NavLink>
         </div>
         <div className={s.asset}>
-          <div className={s.withdraw}>Withdrawal</div>
+          <div className={s.withdraw}>
+            <NavLink to={"/binarychart/bankinglayout/withdraw"}>
+              Withdraw
+            </NavLink>
+          </div>
           <div className={s.deposit}>
-            <p> Deposit</p>
+            <NavLink to={"/binarychart/bankinglayout/deposit"}>
+              {" "}
+              Deposit
+            </NavLink>
             <AiOutlinePlus />
           </div>
         </div>

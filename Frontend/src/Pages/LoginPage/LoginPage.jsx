@@ -26,10 +26,11 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(form);
+      await login({ email: form.email, password: form.password });
+      console.log("Login successful", form.email);
       navigate("/binarychart");
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      alert(err.message || "Login failed");
     }
   };
 
@@ -76,12 +77,9 @@ const LoginPage = () => {
             </NavLink>
           </div>
 
-          <button type="submit" onClick={handleSubmit} className={s.loginBtn}>
+          <button type="submit" className={s.loginBtn}>
             Login
           </button>
-          <NavLink to="/binarychart" type="submit" className={s.loginBtn}>
-          Login
-          </NavLink>
 
           <button type="button" className={s.googleBtn} onClick={googleLogin}>
             <img

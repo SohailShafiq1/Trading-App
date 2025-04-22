@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import axios from "axios";
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -18,12 +20,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async ({ email, password }) => {
-    const res = await axios.post(`${BACKEND_URL}/api/auth/login`, {
-      email,
-      password,
-    });
-    setUser(res.data.user);
-    localStorage.setItem("token", res.data.token);
+    try {
+      const res = await axios.post(`${BACKEND_URL}/api/auth/login`, {
+        email,
+        password,
+      });
+      setUser(res.data.user);
+      localStorage.setItem("token", res.data.token);
+    } catch (error) {
+      console.error(
+        "Login error:",
+        error.response?.data?.message || error.message
+      );
+      throw new Error(error.response?.data?.message || "Login failed");
+    }
   };
 
   const googleLogin = async () => {
