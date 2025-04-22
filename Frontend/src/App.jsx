@@ -18,7 +18,7 @@ const s = styles;
 
 const App = () => {
   return (
-    <>
+    <AuthProvider>
       <div className={s.container}>
         <BrowserRouter>
           <Routes>
@@ -52,7 +52,7 @@ const App = () => {
           </Routes>
         </BrowserRouter>
       </div>
-    </>
+    </AuthProvider>
   );
 };
 

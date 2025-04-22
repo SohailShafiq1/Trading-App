@@ -8,10 +8,7 @@ import styles from "./BinaryLayout.module.css";
 import { NavLink, Outlet } from "react-router-dom";
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
-
 const BinaryLayout = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
-
   return (
     <>
       <div className={s.container}>
@@ -19,23 +16,17 @@ const BinaryLayout = () => {
           <img src={logo} alt="" />
         </div>
         <div className={s.navBar}>
-          <NavLink
-            style={{ backgroundColor: "#10A055" }}
-            className={s.btn}
-            onClick={() => window.history.back()} // Navigate to the previous tab
-          >
+          <NavLink style={{ backgroundColor: "#10A055" }} className={s.btn} >
             <MdUndo className={s.icons} />
-           <NavLink to="/binarychart" className={s.navlink}>
               Back
-            </NavLink>
-          </div>
-          <div>
+          </NavLink>
+          <NavLink to="/binarychart" className={s.btn}>
             <IoMdImage className={s.icons} />
-            Trade
+              Trade
           </NavLink>
           <NavLink className={s.btn} to="/binarychart/profile">
             <CgProfile className={s.icons} />
-            Profile
+              Profile
           </NavLink>
           <NavLink className={s.btn}>
             <CgMoreAlt className={s.icons} />
@@ -46,16 +37,9 @@ const BinaryLayout = () => {
           </NavLink>
         </div>
         <div className={s.asset}>
-          <div className={s.withdraw}>
-            <NavLink to={"/binarychart/bankinglayout/withdraw"}>
-              Withdraw
-            </NavLink>
-          </div>
+          <div className={s.withdraw}>Withdrawal</div>
           <div className={s.deposit}>
-            <NavLink to={"/binarychart/bankinglayout/deposit"}>
-              {" "}
-              Deposit
-            </NavLink>
+            <p> Deposit</p>
             <AiOutlinePlus />
           </div>
         </div>
