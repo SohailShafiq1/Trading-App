@@ -13,7 +13,8 @@ import BankingLayout from "./Layout/BankingLayout/BankingLayout";
 import DepositPage from "./Pages/DepositPage/DepositPage";
 import WithdrawPage from "./Pages/WithdrawPage/WithdrawPage";
 import TransactionsPage from "./Pages/TransactionPage/TransactionPage";
-import AffiliateProgram from "./Pages/AffiliateProgram/AffiliateProgram"
+import AffiliateProgram from "./Pages/AffiliateProgram/AffiliateProgram";
+import PrizePool from "./Pages/Prize Pool/PrizePool";
 
 const s = styles;
 
@@ -32,8 +33,11 @@ const App = () => {
             <Route path="/binarychart" element={<BinaryLayout />}>
               <Route index element={<BinaryChart />} />
               <Route path="/binarychart/profile" element={<Profile />} />
-              <Route path="/binarychart/affiliateprogram" element={<AffiliateProgram/>}/>
-              <Route path="/binarychart/prizepool" element={<AffiliateProgram/>}/>
+              <Route
+                path="/binarychart/affiliateprogram"
+                element={<AffiliateProgram />}
+              />
+              <Route path="/binarychart/prizepool" element={<PrizePool />} />
               <Route
                 path="/binarychart/bankinglayout"
                 element={<BankingLayout />}
@@ -45,10 +49,6 @@ const App = () => {
                 <Route
                   path="/binarychart/bankinglayout/withdraw"
                   element={<WithdrawPage />}
-                />
-                <Route
-                  path="/binarychart/bankinglayout/transactions"
-                  element={<TransactionsPage />}
                 />
                 <Route
                   path="/binarychart/bankinglayout/transactions"
