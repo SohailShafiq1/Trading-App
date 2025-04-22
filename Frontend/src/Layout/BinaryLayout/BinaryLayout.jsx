@@ -5,10 +5,13 @@ import { IoMdImage } from "react-icons/io";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
-import { Navigate, NavLink, Outlet } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom"; // Import useNavigate
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
+
 const BinaryLayout = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
+
   return (
     <>
       <div className={s.container}>
@@ -16,7 +19,11 @@ const BinaryLayout = () => {
           <img src={logo} alt="" />
         </div>
         <div className={s.navBar}>
-          <NavLink style={{ backgroundColor: "#10A055" }} className={s.btn}>
+          <NavLink
+            style={{ backgroundColor: "#10A055" }}
+            className={s.btn}
+            onClick={() => navigate(-1)} // Navigate to the previous page
+          >
             <MdUndo className={s.icons} />
             Back
           </NavLink>
@@ -28,22 +35,20 @@ const BinaryLayout = () => {
             <CgProfile className={s.icons} />
             Profile
           </NavLink>
-          <NavLink className={s.btn}>
+          <NavLink className={s.btn} to="/binarychart/affiliateprogram">
             <CgMoreAlt className={s.icons} />
             More
           </NavLink>
           <NavLink className={s.btn}>
             <p>Live account</p>
           </NavLink>
-        </div>{" "}
+        </div>
         <div className={s.asset}>
           <div className={s.withdraw}>
-            <NavLink to={"/binarychart/bankinglayout/withdraw"}>
-              Withdraw
-            </NavLink>
+            <NavLink to={"/binarychart/bankinglayout/withdraw"} className={s.link}>Withdraw</NavLink>
           </div>
           <div className={s.deposit}>
-            <NavLink to={"/binarychart/bankinglayout/deposit"}>Deposit</NavLink>
+            <NavLink to={"/binarychart/bankinglayout/deposit"} className={s.link}>Deposit</NavLink>
             <AiOutlinePlus />
           </div>
         </div>
