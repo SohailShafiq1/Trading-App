@@ -8,11 +8,11 @@ const AffiliateProgram = () => {
     <div className={s.container}>
         <div className={s.top}>
             <div className={s.balance}>
-                <p>Your Balance</p>
-                <h1>$0.00</h1>
-                <Navlink to="/withdrawl">
-                    Go to Withdrawal  
-                </Navlink>
+                <p></p>
+                <h1></h1>
+                <NavLink to="/withdrawl">
+                 
+                </NavLink>
                 <div className={s.earning}></div>
             </div>
             <div className={s.partnerLink}></div>
