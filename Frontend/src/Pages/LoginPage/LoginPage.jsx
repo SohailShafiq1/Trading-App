@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import styles from "./LoginPage.module.css";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
+import styles from "./LoginPage.module.css";
+import { jwtDecode as jwt_decode } from "jwt-decode";
 
-const s = styles;
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const LoginPage = () => {
   const { login, googleLogin } = useAuth();
@@ -27,67 +28,73 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       await login({ email: form.email, password: form.password });
-      console.log("Login successful", form.email);
       navigate("/binarychart");
     } catch (err) {
       alert(err.message || "Login failed");
     }
   };
 
-  return (
-    <div className={s.container}>
-      <div className={s.Header}>Sign In to Your Account</div>
-      <div className={s.Form}>
-        <div className={s.tabs}>
-          <div className={`${s.loginTab} ${s.activeTab}`}>Login</div>
-          <NavLink to={"/register"}>Register</NavLink>
-        </div>
+  const handleGoogleSignIn = () => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: handleCredentialResponse,
+      });
 
-        <form className={s.form} onSubmit={handleSubmit}>
+      window.google.accounts.id.prompt();
+    } else {
+      console.error("Google Identity Services script not loaded.");
+    }
+  };
+
+  const handleCredentialResponse = (response) => {
+    const token = response.credential;
+    const decoded = jwt_decode(token);
+    console.log("Google decoded user:", decoded);
+
+    googleLogin(token);
+  };
+
+  useEffect(() => {
+    window.google?.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: handleCredentialResponse,
+    });
+
+    window.google?.accounts.id.renderButton(
+      document.getElementById("googleBtn"),
+      {
+        theme: "outline",
+        width: 250,
+      }
+    );
+  }, [handleCredentialResponse]);
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.Header}>Sign In to Your Account</div>
+      <div className={styles.Form}>
+        <form className={styles.form} onSubmit={handleSubmit}>
           <input
             type="email"
             name="email"
             placeholder="Your Email"
             value={form.email}
             onChange={handleChange}
-            className={s.input}
+            className={styles.input}
           />
-
           <input
             type="password"
             name="password"
             placeholder="Your Password"
             value={form.password}
             onChange={handleChange}
-            className={s.input}
+            className={styles.input}
           />
-
-          <div className={s.optionsRow}>
-            <label className={s.checkboxGroup}>
-              <input
-                type="checkbox"
-                name="rememberMe"
-                checked={form.rememberMe}
-                onChange={handleChange}
-              />
-              Remember Me
-            </label>
-            <NavLink to="/forgot" className={s.forgotLink}>
-              Forget Your Password?
-            </NavLink>
-          </div>
-
-          <button type="submit" className={s.loginBtn}>
+          <button type="submit" className={styles.loginBtn}>
             Login
           </button>
-
-          <button type="button" className={s.googleBtn} onClick={googleLogin}>
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-            />
-            Sign in with Google
-          </button>
+          <div id="googleBtn"></div>
         </form>
       </div>
     </div>

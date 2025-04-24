@@ -42,28 +42,31 @@ const BinaryChart = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+    return `${String(minutes).padStart(2, "0")}:${String(
+      remainingSeconds
+    ).padStart(2, "0")}`;
   };
 
   return (
     <>
       <div className={s.container}>
         {/* Coin Selection */}
-       
 
         <div className={s.chart}>
-        <div className={s.coinList}>
-          {coins.map((coin) => (
-            <button
-              key={coin}
-              className={`${s.coinButton} ${selectedCoin === coin ? s.activeCoin : ""}`}
-              onClick={() => setSelectedCoin(coin)}
-            >
-              {coin}
-            </button>
-          ))}
-        </div>
-          {/* Pass the selected coin to the LiveCandleChart */} 
+          <div className={s.coinList}>
+            {coins.map((coin) => (
+              <button
+                key={coin}
+                className={`${s.coinButton} ${
+                  selectedCoin === coin ? s.activeCoin : ""
+                }`}
+                onClick={() => setSelectedCoin(coin)}
+              >
+                {coin}
+              </button>
+            ))}
+          </div>
+          {/* Pass the selected coin to the LiveCandleChart */}
           <LiveCandleChart coinName={selectedCoin} />
         </div>
 
@@ -72,20 +75,42 @@ const BinaryChart = () => {
           <p>Current Coin Price: ${coinPrice}</p>
           {/* Timer Control */}
           <div className={s.controlBox}>
-            <button className={s.iconBtn} onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}>−</button>
+            <button
+              className={s.iconBtn}
+              onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
+            >
+              −
+            </button>
             <div className={s.value}>{formatTime(timer)}</div>
-            <button className={s.iconBtn} onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}>+</button>
+            <button
+              className={s.iconBtn}
+              onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
+            >
+              +
+            </button>
           </div>
           <div className={s.moneyBox}>
-            <button className={s.iconBtn} onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}>−</button>
+            <button
+              className={s.iconBtn}
+              onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
+            >
+              −
+            </button>
             <input
               type="number"
               className={s.value}
               value={investment}
-              onChange={(e) => setInvestment(Math.max(parseInt(e.target.value, 10) || 1, 1))}
+              onChange={(e) =>
+                setInvestment(Math.max(parseInt(e.target.value, 10) || 1, 1))
+              }
               min="1"
             />
-            <button className={s.iconBtn} onClick={() => setInvestment((prev) => prev + 1)}>+</button>
+            <button
+              className={s.iconBtn}
+              onClick={() => setInvestment((prev) => prev + 1)}
+            >
+              +
+            </button>
           </div>
           {/* Buy/Sell Buttons */}
           <div className={s.buySelling}>
@@ -105,9 +130,12 @@ const BinaryChart = () => {
               {trades.map((trade, index) => (
                 <li
                   key={index}
-                  style={{ color: trade.type === "Buy" ? "#10A055" : "#FF1600" }}
+                  style={{
+                    color: trade.type === "Buy" ? "#10A055" : "#FF1600",
+                  }}
                 >
-                  {trade.type}: ${trade.price} at Coin Price: ${trade.coinPrice} ({trade.coinName})
+                  {trade.type}: ${trade.price} at Coin Price: ${trade.coinPrice}{" "}
+                  ({trade.coinName})
                 </li>
               ))}
             </ul>
