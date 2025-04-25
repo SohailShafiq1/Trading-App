@@ -118,23 +118,27 @@ const LiveCandleChart = ({ coinName }) => {
   return (
     <div id="chart">
       {/* Candle Duration Selection */}
-      <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
-        {CANDLE_DURATIONS.map((duration) => (
-          <span
-            key={duration.value}
-            onClick={() => handleCandleDurationChange(duration.value)}
+      <div style={{ marginBottom: "20px" }}>
+        <label>
+          Select Candle Duration:{" "}
+          <select
+            value={candleDuration}
+            onChange={(e) => handleCandleDurationChange(Number(e.target.value))}
             style={{
-              cursor: "pointer",
               padding: "5px 10px",
-              border: candleDuration === duration.value ? "2px solid #10A055" : "1px solid #ccc",
+              border: "1px solid #ccc",
               borderRadius: "5px",
-              backgroundColor: candleDuration === duration.value ? "#10A055" : "#f9f9f9",
-              color: candleDuration === duration.value ? "#fff" : "#000",
+              backgroundColor: "#f9f9f9",
+              cursor: "pointer",
             }}
           >
-            {duration.label}
-          </span>
-        ))}
+            {CANDLE_DURATIONS.map((duration) => (
+              <option key={duration.value} value={duration.value}>
+                {duration.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <ReactApexChart
         options={options}
