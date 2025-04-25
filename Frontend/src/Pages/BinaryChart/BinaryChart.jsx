@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
-
+import LiveCandleChart from './LiveCandleChart'
 const s = styles;
 
 const BinaryChart = () => {
@@ -92,7 +92,7 @@ const BinaryChart = () => {
             ))}
           </div>
           {/* Pass the selected coin to the LiveCandleChart */}
-          <LiveCandleChart coinName={selectedCoin} />
+          <TradingViewChart coinName={selectedCoin} />
         </div>
 
         <div className={s.control}>

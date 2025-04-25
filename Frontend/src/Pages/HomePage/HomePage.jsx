@@ -8,7 +8,7 @@ const HomePage = () => {
     <>
       <div className={s.homeContainer}>
         <p className={s.homeDescription}>
-          Smart and Innovative <br />
+          Smart and Innovative 
           Platform for Investments
         </p>
         <div className={s.homeParagraph}>

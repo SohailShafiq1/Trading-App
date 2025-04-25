@@ -1,3 +1,4 @@
+/* Base (Mobile First) */
 .container {
   display: flex;
   flex-direction: column;
@@ -6,10 +7,12 @@
   height: 100%;
   background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
     url("../../../assets/RegisterLayoutBG.jpeg");
-  object-fit: cover;
   background-size: cover;
+  background-position: center;
+  object-fit: cover;
   backdrop-filter: blur(5px);
 }
+
 .Page {
   display: flex;
   flex-direction: column;
@@ -18,48 +21,50 @@
   width: 100%;
   height: 100%;
 }
+
 .navBar {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  gap: 1rem;
   width: 100%;
-  height: 100%;
   max-width: 1400px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .logoHolder {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
-  color: #333;
-  margin: 2rem;
-  margin-bottom: 1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 .logo {
-  height: 60px;
+  height: 50px;
 }
 
 .navItems {
-  margin: 2rem;
   display: flex;
-  gap: 20px;
-  margin-bottom: 1rem;
+  gap: 10px;
+  align-items: center;
 }
 
+/* Buttons Shared */
 .loginButton a,
 .registerButton a {
-  padding: 0.7rem 4rem;
+  padding: 0.5rem 2rem;
   text-decoration: none;
   font-weight: 500;
-  font-size: 1.3rem;
+  font-size: 1rem;
   border-radius: 20px;
   transition: all 0.3s ease;
 }
 
 .loginButton a {
   background-color: #10a055;
-  box-shadow: 0px 1px 1cap rgba(10, 192, 4, 0.5);
+  box-shadow: 0px 1px 5px rgba(10, 192, 4, 0.5);
   color: white;
 }
 
@@ -70,11 +75,72 @@
 
 .registerButton a {
   background-color: #ce1606;
-  box-shadow: 0px 1px 1cap rgba(247, 4, 36, 0.5);
-
+  box-shadow: 0px 1px 5px rgba(247, 4, 36, 0.5);
   color: white;
 }
 
 .registerButton a:hover {
   background-color: #ff3c00;
+  color: white;
+}
+
+/* Tablets (≥600px) */
+@media screen and (min-width: 600px) {
+  .navBar {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+  }
+
+  .logoHolder {
+    font-size: 22px;
+    text-align: left;
+    margin: 0;
+  }
+
+  .logo {
+    height: 55px;
+  }
+
+  .navItems {
+    flex-direction: row;
+    gap: 15px;
+    margin: 0;
+  }
+
+  .loginButton a,
+  .registerButton a {
+    font-size: 1.1rem;
+    padding: 0.7rem 3rem;
+  }
+}
+
+/* Laptops (≥1024px) */
+@media screen and (min-width: 1024px) {
+  .logoHolder {
+    font-size: 24px;
+  }
+
+  .logo {
+    height: 60px;
+  }
+
+  .loginButton a,
+  .registerButton a {
+    font-size: 1.2rem;
+    padding: 0.7rem 4rem;
+  }
+}
+
+/* Large Desktops (≥1440px) */
+@media screen and (min-width: 1440px) {
+  .logoHolder {
+    font-size: 26px;
+  }
+
+  .loginButton a,
+  .registerButton a {
+    font-size: 1.3rem;
+    padding: 0.8rem 4.5rem;
+  }
 }

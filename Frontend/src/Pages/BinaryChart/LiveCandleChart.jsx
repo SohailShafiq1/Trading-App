@@ -144,7 +144,7 @@ const LiveCandleChart = ({ coinName }) => {
         options={options}
         series={series}
         type="candlestick"
-        height={350}
+        height={600}
       />
     </div>
   );
