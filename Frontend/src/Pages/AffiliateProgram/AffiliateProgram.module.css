@@ -1,45 +1,118 @@
-.container
-{
-    width: 97%;
-    height: 80dvh;
-    margin-top: 2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    gap: 20px;
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
 }
-.top, .line
-{
-    width: 99%;
-    height: 40%;
-    display: flex;
-    justify-content: space-around;
+.top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 2rem;
 }
-.balance
-{
-    width: 25%;
-    height: 100%;
-    background-color: #1E1F25;
-    border-radius: 3px;
-    display: flex;
-    flex-direction: column;
-    
+.balance {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  border-radius: 10px;
+  background-color: #1e1f25;
 }
-.partnerLink
-{
-    width: 73%;
-    height: 100%;
-    background-color: #1E1F25;
-    border-radius: 3px;
+.balance p {
+  margin: 0;
+  color: #3f474c;
+  font-size: 24px;
 }
-.line
-{
-    height: 35% ;
+.balance h1 {
+  color: white;
+  font-size: 36px;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
-.line div {
-    width: 300px;
-    height: 100%;
-    background-color: #1E1F25; 
-    border-radius: 4px; 
-  }
+.withdrawalLink {
+  background-color: #10a055;
+  padding: 1rem;
+  text-decoration: none;
+  color: white;
+  font-size: 28px;
+}
+.earning {
+  margin-top: 1rem;
+  background-color: #3f474c;
+  padding: 1rem;
+}
+.earning p {
+  color: #909090;
+  margin: 0;
+  font-size: 24px;
+}
+.earning span {
+  color: white;
+  font-size: 24px;
+  margin-top: 0;
+}
+
+.partnerLink {
+  width: 80%;
+  background-color: #1e1f25;
+}
+.topBar {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 1rem;
+}
+.header {
+  color: white;
+  font-size: 22px;
+}
+.headerIcon {
+  position: relative;
+  top: 3px;
+  transform: rotate(90deg);
+  font-weight: bolder;
+}
+.option {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+.option button {
+  background-color: #3f474c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+.linkContainer span {
+  color: #067be8;
+  font-size: 24px;
+}
+.copyButton {
+  color: #067be8;
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
+  font-size: 20px;
+  background-color: none;
+  border: none;
+  cursor: pointer;
+}
+.generate {
+  background-color: #10a055;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+}

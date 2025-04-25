@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import styles from "./App.module.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./Pages/HomePage/HomePage";
 import RegisterLayout from "./Layout/RegisterLayout/RegisterLayout";
 import RegisterPage from "./Pages/RegisterPage/RegisterPage";
 import LoginPage from "./Pages/LoginPage/LoginPage";
-import { AuthProvider } from "./Context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import BinaryChart from "./Pages/BinaryChart/BinaryChart";
 import BinaryLayout from "./Layout/BinaryLayout/BinaryLayout";
 import Profile from "./Pages/BinaryChart/components/Profile/Profile";
@@ -15,6 +15,7 @@ import WithdrawPage from "./Pages/WithdrawPage/WithdrawPage";
 import TransactionsPage from "./Pages/TransactionPage/TransactionPage";
 import AffiliateProgram from "./Pages/AffiliateProgram/AffiliateProgram";
 import PrizePool from "./Pages/Prize Pool/PrizePool";
+import ProtectedRoute from "./Route/ProtectedRoute/ProtectedRoute";
 
 const s = styles;
 
@@ -24,35 +25,78 @@ const App = () => {
       <div className={s.container}>
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<RegisterLayout />}>
               <Route index element={<HomePage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/login" element={<LoginPage />} />
             </Route>
 
-            <Route path="/binarychart" element={<BinaryLayout />}>
+            {/* Protected Routes */}
+            <Route
+              path="/binarychart"
+              element={
+                <ProtectedRoute>
+                  <BinaryLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<BinaryChart />} />
-              <Route path="/binarychart/profile" element={<Profile />} />
+              <Route
+                path="/binarychart/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/binarychart/affiliateprogram"
-                element={<AffiliateProgram />}
+                element={
+                  <ProtectedRoute>
+                    <AffiliateProgram />
+                  </ProtectedRoute>
+                }
               />
-              <Route path="/binarychart/prizepool" element={<PrizePool />} />
+              <Route
+                path="/binarychart/prizepool"
+                element={
+                  <ProtectedRoute>
+                    <PrizePool />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/binarychart/bankinglayout"
-                element={<BankingLayout />}
+                element={
+                  <ProtectedRoute>
+                    <BankingLayout />
+                  </ProtectedRoute>
+                }
               >
                 <Route
                   path="/binarychart/bankinglayout/deposit"
-                  element={<DepositPage />}
+                  element={
+                    <ProtectedRoute>
+                      <DepositPage />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/binarychart/bankinglayout/withdraw"
-                  element={<WithdrawPage />}
+                  element={
+                    <ProtectedRoute>
+                      <WithdrawPage />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/binarychart/bankinglayout/transactions"
-                  element={<TransactionsPage />}
+                  element={
+                    <ProtectedRoute>
+                      <TransactionsPage />
+                    </ProtectedRoute>
+                  }
                 />
               </Route>
             </Route>
