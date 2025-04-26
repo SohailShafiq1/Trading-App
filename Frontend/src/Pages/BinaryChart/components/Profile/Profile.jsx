@@ -5,11 +5,10 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../Context/AuthContext";
 
 const Profile = () => {
-  const navigate = useNavigate(); 
-  const { logout } = useAuth(); 
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
- 
     logout();
     navigate("/login");
   };
@@ -47,9 +46,11 @@ const Profile = () => {
             <div className={s.inputBox}>
               <label>Password</label>
               <input type="password" value="******" />
-              <NavLink to="/forgot-password" className={s.forgot}>
-                Forget Your Password?
-              </NavLink>
+              <div className={s.forgotBox}>
+                <NavLink to="/forgot-password" className={s.forgot}>
+                  Forget Your Password?
+                </NavLink>
+              </div>
             </div>
           </div>
 
@@ -63,7 +64,9 @@ const Profile = () => {
               <select>
                 <option>Select Country</option>
               </select>
-              <NavLink className={s.delete}>X Delete Account</NavLink>
+              <div className={s.deleteBox}>
+                <NavLink className={s.delete}>X Delete Account</NavLink>
+              </div>
             </div>
           </div>
 
