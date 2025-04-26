@@ -19,11 +19,13 @@ const TransactionPage = () => {
         <thead>
           <tr>
             <th>Order</th>
+            <th>Amount</th>
+
             <th>Date and time</th>
+            <th>Payment system</th>
+
             <th>Status</th>
             <th>Transaction type</th>
-            <th>Payment system</th>
-            <th>Amount</th>
           </tr>
         </thead>
         <tbody>
