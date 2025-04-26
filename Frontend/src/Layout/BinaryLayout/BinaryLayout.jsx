@@ -1,3 +1,4 @@
+import { AiFillTrophy } from "react-icons/ai";
 import { AiOutlinePlus } from "react-icons/ai";
 import { CgMoreAlt } from "react-icons/cg";
 import { CgProfile } from "react-icons/cg";
@@ -5,14 +6,12 @@ import { IoMdImage } from "react-icons/io";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
-import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom"; 
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
 
 const BinaryLayout = () => {
-  const navigate = useNavigate(); 
-
-
+  const navigate = useNavigate();
   return (
     <>
       <div className={s.container}>
@@ -23,7 +22,7 @@ const BinaryLayout = () => {
           <NavLink
             style={{ backgroundColor: "#10A055" }}
             className={s.btn}
-            onClick={() => navigate(-1)} 
+            onClick={() => navigate(-1)}
           >
             <MdUndo className={s.icons} />
             Back
@@ -40,21 +39,52 @@ const BinaryLayout = () => {
             <CgMoreAlt className={s.icons} />
             More
           </NavLink>
-          <NavLink className={s.btn}>
-            <p>Live account</p>
-          </NavLink>
         </div>
         <div className={s.asset}>
-          <div className={s.withdraw}>
-            <NavLink to={"/binarychart/bankinglayout/withdraw"} className={s.link}>Withdraw</NavLink>
-          </div>
-          <div className={s.deposit}>
-            <NavLink to={"/binarychart/bankinglayout/deposit"} className={s.link}>Deposit</NavLink>
-            <AiOutlinePlus />
+          <NavLink className={s.liveAcc}>
+            <p>Live account</p>
+          </NavLink>
+          <div className={s.bankbtns}>
+            <div className={s.withdraw}>
+              <NavLink
+                to={"/binarychart/bankinglayout/withdraw"}
+                className={s.link}
+              >
+                Withdraw
+              </NavLink>
+            </div>
+            <div className={s.deposit}>
+              <NavLink
+                to={"/binarychart/bankinglayout/deposit"}
+                className={s.link}
+              >
+                Deposit
+              </NavLink>
+              <AiOutlinePlus />
+            </div>
           </div>
         </div>
       </div>
-      <Outlet />  
+      <Outlet />
+      <div className={s.footer}>
+        <div className={s.footBar}>
+          <NavLink className={s.footBtn} onClick={() => navigate(-1)}>
+            <MdUndo className={s.icons} />
+          </NavLink>
+          <NavLink to="/binarychart" className={s.footBtn}>
+            <IoMdImage className={s.icons} />
+          </NavLink>
+          <NavLink className={s.footBtn} to="/binarychart/profile">
+            <CgProfile className={s.icons} />
+          </NavLink>
+          <NavLink className={s.footBtn} to="/binarychart">
+            <AiFillTrophy className={s.icons} />
+          </NavLink>
+          <NavLink className={s.footBtn} to="/binarychart/affiliateprogram">
+            <CgMoreAlt className={s.icons} />
+          </NavLink>
+        </div>
+      </div>
     </>
   );
 };

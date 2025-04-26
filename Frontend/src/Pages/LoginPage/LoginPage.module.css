@@ -29,7 +29,6 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
-  border-bottom: 1px solid #334155;
   padding-bottom: 8px;
   gap: 8px;
 }
@@ -45,6 +44,7 @@
   text-decoration: none;
   border-radius: 6px;
   transition: background-color 0.2s ease;
+  margin-bottom: 1.5rem;
 }
 
 .tabs a:hover,
@@ -64,7 +64,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap:1rem;
 }
 
 .input {
@@ -74,6 +74,9 @@
   border-radius: 6px;
   color: white;
   border: 1px solid #334155;
+}
+.input:nth-child(1){
+  margin-bottom: 1rem;
 }
 
 .input:focus {
@@ -107,12 +110,18 @@
   color: #3b82f6;
   text-decoration: none;
   font-size: 13px;
+  cursor: pointer;
 }
 
 .forgotLink:hover {
   text-decoration: underline;
 }
-
+.rememberForgot {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
 .loginBtn {
   background-color: #22c55e;
   border: none;
@@ -128,25 +137,19 @@
   background-color: #16a34a;
 }
 
-.googleBtn {
-  background-color: white;
-  color: black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
+@media (max-width: 768px) {
+  .Header {
+    margin-top: 3rem;
+    font-size: 30px;
+  }
 
-.googleBtn:hover {
-  background-color: #e2e8f0;
-}
-
-.googleBtn img {
-  width: 20px;
+  .Form {
+    width: 70%;
+  }
+  .form {
+    width: 100%;
+  }
+  .rememberForgot {
+    margin-bottom: 2rem;
+  }
 }
