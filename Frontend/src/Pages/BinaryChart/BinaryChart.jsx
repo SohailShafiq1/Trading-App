@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
-import LiveCandleChart from './LiveCandleChart'
+import LiveCandleChart from "./LiveCandleChart";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 const s = styles;
 
 const BinaryChart = () => {
@@ -42,9 +45,13 @@ const BinaryChart = () => {
   }, [selectedCoin, marketType]);
 
   const handleBuy = () => {
-    setPopupMessage(`Buy ${selectedCoin} at $${coinPrice} with $${investment}`);
-    setPopupColor("#10A055");
-    setShowPopup(true);
+    toast.success(`Buy ${selectedCoin} at $${coinPrice} with $${investment}`, {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+    });
     setTrades((prev) => [
       ...prev,
       { type: "Buy", price: investment, coinPrice, coinName: selectedCoin },
@@ -53,9 +60,14 @@ const BinaryChart = () => {
   };
 
   const handleSell = () => {
-    setPopupMessage(`Sell ${selectedCoin} at $${coinPrice} with $${investment}`);
-    setPopupColor("#FF1600");
-    setShowPopup(true);
+    toast.error(`Sell ${selectedCoin} at $${coinPrice} with $${investment}`, {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+    });
+
     setTrades((prev) => [
       ...prev,
       { type: "Sell", price: investment, coinPrice, coinName: selectedCoin },
@@ -74,97 +86,97 @@ const BinaryChart = () => {
   return (
     <>
       <div className={s.container}>
-        {/* Coin Selection */}
-       
-
-        <div className={s.chart}>
-          <div className={s.coinList}>
-            {coins.map((coin) => (
-              <button
-                key={coin}
-                className={`${s.coinButton} ${
-                  selectedCoin === coin ? s.activeCoin : ""
-                }`}
-                onClick={() => setSelectedCoin(coin)}
-              >
-                {coin}
-              </button>
-            ))}
-          </div>
-          {/* Pass the selected coin to the LiveCandleChart */}
-          <TradingViewChart coinName={selectedCoin} />
-        </div>
-
-        <div className={s.control}>
-          <h1>{selectedCoin} Trading</h1>
-          <p>Current Coin Price: ${coinPrice}</p>
-
-          <div className={s.controlBox}>
-            <button
-              className={s.iconBtn}
-              onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
-            >
-              −
-            </button>
-            <div className={s.value}>{formatTime(timer)}</div>
-            <button
-              className={s.iconBtn}
-              onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
-            >
-              +
-            </button>
-          </div>
-
-          <div className={s.moneyBox}>
-            <button
-              className={s.iconBtn}
-              onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
-            >
-              −
-            </button>
-            <input
-              type="number"
-              className={s.value}
-              value={investment}
-              onChange={(e) =>
-                setInvestment(Math.max(parseInt(e.target.value, 10) || 1, 1))
-              }
-              min="1"
-            />
-            <button
-              className={s.iconBtn}
-              onClick={() => setInvestment((prev) => prev + 1)}
-            >
-              +
-            </button>
-          </div>
-
-          <div className={s.buySelling}>
-            <div className={s.buyBox} onClick={handleBuy}>
-              <FiArrowDownRight className={s.icons} />
-              <p>Buy</p>
-            </div>
-            <div className={s.SellBox} onClick={handleSell}>
-              <FiArrowDownRight className={s.icons} />
-              <p>Sell</p>
-            </div>
-          </div>
-
-          <div className={s.tradeHistory}>
-            <p>Trades</p>
-            <ul>
-              {trades.map((trade, index) => (
-                <li
-                  key={index}
-                  style={{
-                    color: trade.type === "Buy" ? "#10A055" : "#FF1600",
-                  }}
+        <div className={s.box}>
+          <div className={s.chart}>
+            <div className={s.coinList}>
+              {coins.map((coin) => (
+                <button
+                  key={coin}
+                  className={`${s.coinButton} ${
+                    selectedCoin === coin ? s.activeCoin : ""
+                  }`}
+                  onClick={() => setSelectedCoin(coin)}
                 >
-                  {trade.type}: ${trade.price} at Coin Price: ${trade.coinPrice}{" "}
-                  ({trade.coinName})
-                </li>
+                  {coin}
+                </button>
               ))}
-            </ul>
+            </div>
+            <TradingViewChart coinName={selectedCoin} />
+          </div>
+
+          <div className={s.control}>
+            <h1>{selectedCoin} Trading</h1>
+            <p>Current Coin Price: ${coinPrice}</p>
+            <div className={s.controlStuff}>
+              <div className={s.controlBox}>
+                <button
+                  className={s.iconBtn}
+                  onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
+                >
+                  −
+                </button>
+                <div className={s.value}>{formatTime(timer)}</div>
+                <button
+                  className={s.iconBtn}
+                  onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
+                >
+                  +
+                </button>
+              </div>
+
+              <div className={s.moneyBox}>
+                <button
+                  className={s.iconBtn}
+                  onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  className={s.value}
+                  value={investment}
+                  onChange={(e) =>
+                    setInvestment(
+                      Math.max(parseInt(e.target.value, 10) || 1, 1)
+                    )
+                  }
+                  min="1"
+                />
+                <button
+                  className={s.iconBtn}
+                  onClick={() => setInvestment((prev) => prev + 1)}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div className={s.buySelling}>
+              <div className={s.buyBox} onClick={handleBuy}>
+                <FiArrowDownRight className={s.icons} />
+                <p>Buy</p>
+              </div>
+              <div className={s.SellBox} onClick={handleSell}>
+                <FiArrowDownRight className={s.icons} />
+                <p>Sell</p>
+              </div>
+            </div>
+
+            <div className={s.tradeHistory}>
+              <p>Trades</p>
+              <ul>
+                {trades.map((trade, index) => (
+                  <li
+                    key={index}
+                    style={{
+                      color: trade.type === "Buy" ? "#10A055" : "#FF1600",
+                    }}
+                  >
+                    {trade.type}: ${trade.price} at Coin Price: $
+                    {trade.coinPrice} ({trade.coinName})
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -174,6 +186,7 @@ const BinaryChart = () => {
           <p>{popupMessage}</p>
         </div>
       )}
+      <ToastContainer />
     </>
   );
 };

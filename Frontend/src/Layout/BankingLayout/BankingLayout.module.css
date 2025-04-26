@@ -32,20 +32,30 @@
   color: #10a055;
 }
 @media (max-width: 768px) {
-  .navBar {
+  .container {
     width: 100%;
+    height: 100%;
+    display: flex;
     justify-content: center;
     align-items: center;
   }
+  .navBar {
+    width: 95%;
+    justify-content: center;
+    align-items: center;
+    background-color: #1e1f25;
+    padding: 1rem 0;
+  }
   .navList {
-    width: 100%;
+    background-color: black;
+    width: 90%;
     align-items: center;
     justify-content: space-between;
     margin: 0;
     gap: 1rem;
     padding: 2rem 1rem;
   }
-  .navLink{
+  .navLink {
     font-size: 1rem;
   }
 }
