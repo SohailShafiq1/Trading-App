@@ -1,17 +1,14 @@
-/* Base Styles (Mobile First) */
 .homeContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-around;
-  padding: 1rem;
   width: 100%;
-  height: 85vh;
   max-width: 1400px;
 }
 
 .homeDescription {
-  font-size: 26px;
+  font-size: 70px;
   text-align: center;
   color: white;
   font-weight: bold;
@@ -21,12 +18,11 @@
 }
 
 .homeParagraph {
-  font-size: 20px;
+  font-size: 21px;
   text-align: center;
   color: #a6a6a6;
   margin-bottom: 1.5rem;
   width: 80%;
-  
 }
 
 .homeButton {
@@ -59,75 +55,18 @@
 .Image {
   width: 90%;
   max-width: 600px;
+  margin-top: 2rem;
+  margin-bottom: 5rem;
 }
 
-/* Tablets (>= 600px) */
-@media screen and (min-width: 600px) {
+@media (max-width: 768px) {
   .homeDescription {
-    font-size: 42px;
+    font-size: 23px;
+    margin-bottom: 1rem;
   }
 
   .homeParagraph {
-    font-size: 18px;
-  }
-
-  .homeButton a {
-    font-size: 1.1rem;
-    padding: 0.7rem 2.5rem;
-  }
-
-  .Image {
-    width: 80%;
-  }
-}
-
-/* Small Laptops (>= 768px) */
-@media screen and (min-width: 768px) {
-  .homeDescription {
-    font-size: 50px;
-  }
-
-  .homeParagraph {
-    font-size: 19px;
-  }
-
-  .homeButton a {
-    font-size: 1.15rem;
-    padding: 0.8rem 3rem;
-  }
-}
-
-/* Desktops (>= 1024px) */
-@media screen and (min-width: 1024px) {
-  .homeDescription {
-    font-size: 60px;
-  }
-
-  .homeParagraph {
-    font-size: 20px;
-  }
-
-  .homeButton a {
-    font-size: 1.2rem;
-    padding: 0.9rem 3.5rem;
-  }
-
-  .Image {
-    width: 70%;
-  }
-}
-
-/* Large Desktops (>= 1440px) */
-@media screen and (min-width: 1440px) {
-  .homeDescription {
-    font-size: 70px;
-  }
-
-  .homeParagraph {
-    font-size: 21px;
-  }
-
-  .Image {
-    width: 60%;
+    font-size: 16px;
+    margin-bottom: 2rem;
   }
 }

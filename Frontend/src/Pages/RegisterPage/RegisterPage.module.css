@@ -5,6 +5,7 @@
   align-items: center;
   width: 100%;
   height: 100%;
+  margin-bottom: 5rem;
 }
 
 .Header {
@@ -28,7 +29,6 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
-  border-bottom: 1px solid #334155;
   padding-bottom: 8px;
   gap: 8px;
 }
@@ -131,4 +131,13 @@
 
 .googleBtn img {
   width: 20px;
+}
+
+@media (max-width: 768px) {
+  .Header {
+    font-size: 30px;
+  }
+  .Form {
+    width: 70%;
+  }
 }
