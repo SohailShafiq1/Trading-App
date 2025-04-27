@@ -3,116 +3,269 @@
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
+
 .top {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   width: 100%;
-  gap: 2rem;
+  gap: 1rem;
 }
+
 .balance {
-  width: 40%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 10px;
   background-color: #1e1f25;
+  box-sizing: border-box;
 }
+
 .balance p {
   margin: 0;
   color: #3f474c;
-  font-size: 24px;
+  font-size: 1.2rem;
 }
+
 .balance h1 {
   color: white;
-  font-size: 36px;
-  margin-top: 6px;
-  margin-bottom: 6px;
+  font-size: 2rem;
+  margin: 0.5rem 0;
 }
+
 .withdrawalLink {
   background-color: #10a055;
-  padding: 1rem;
+  padding: 0.8rem;
   text-decoration: none;
   color: white;
-  font-size: 28px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 5px;
+  margin-top: 1rem;
 }
+
 .earning {
   margin-top: 1rem;
   background-color: #3f474c;
   padding: 1rem;
+  border-radius: 5px;
 }
+
 .earning p {
   color: #909090;
   margin: 0;
-  font-size: 24px;
+  font-size: 1rem;
 }
+
 .earning span {
   color: white;
-  font-size: 24px;
+  font-size: 1rem;
   margin-top: 0;
 }
 
 .partnerLink {
-  width: 80%;
+  width: 100%;
   background-color: #1e1f25;
+  border-radius: 10px;
+  margin-top: 1rem;
 }
+
 .topBar {
   width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   padding: 1rem;
+  box-sizing: border-box;
 }
+
 .header {
   color: white;
-  font-size: 22px;
+  font-size: 1.1rem;
 }
+
 .headerIcon {
   position: relative;
   top: 3px;
   transform: rotate(90deg);
   font-weight: bolder;
 }
+
 .option {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
+
 .option button {
   background-color: #3f474c;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 20px;
   cursor: pointer;
+  font-size: 0.8rem;
 }
+
 .linkContainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding-top: 4rem;
-  padding-bottom: 4rem;
+  padding: 2rem 1rem;
+  text-align: center;
 }
+
 .linkContainer span {
   color: #067be8;
-  font-size: 24px;
+  font-size: 1rem;
+  word-break: break-all;
 }
+
 .copyButton {
   color: #067be8;
-  margin-top: 0.7rem;
-  margin-bottom: 0.7rem;
-  font-size: 20px;
-  background-color: none;
+  margin: 0.7rem 0;
+  font-size: 1rem;
+  background: none;
   border: none;
   cursor: pointer;
 }
+
 .generate {
   background-color: #10a055;
   color: white;
   padding: 0.5rem 1rem;
-  font-size: 16px;
+  font-size: 0.9rem;
   border-radius: 20px;
   border: none;
   cursor: pointer;
+}
+
+.line {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.statsBox {
+  flex: 1 1 calc(50% - 1rem);
+  min-width: 120px;
+  background-color: #1e1f25;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+.statsBox:last-child {
+  text-decoration: none;
+  background-color: #10a055;
+  svg {
+    font-size: 58px;
+  }
+  p {
+    font-size: 20px;
+    background-color: white;
+    color: #10a055;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+  }
+}
+
+.statsBox svg {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.statsBox p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: white;
+  margin-bottom: 0.3rem;
+}
+
+.statsBox span {
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .top {
+    flex-direction: row;
+  }
+
+  .balance {
+    width: 50%;
+  }
+
+  .partnerLink {
+    width: 50%;
+    margin-top: 0;
+  }
+
+  .statsBox {
+    flex: 1 1 calc(25% - 1rem);
+    padding: 1.5rem;
+  }
+
+  .balance p,
+  .earning p,
+  .earning span {
+    font-size: 1.1rem;
+  }
+
+  .balance h1 {
+    font-size: 2.2rem;
+  }
+
+  .withdrawalLink {
+    font-size: 1.3rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .balance {
+    padding: 2rem;
+  }
+
+  .statsBox {
+    padding: 2rem;
+  }
+
+  .statsBox p {
+    font-size: 0.9rem;
+  }
+
+  .statsBox span {
+    font-size: 1.2rem;
+  }
+
+  .header {
+    font-size: 1.3rem;
+  }
+
+  .option button {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .linkContainer span {
+    font-size: 1.2rem;
+  }
 }

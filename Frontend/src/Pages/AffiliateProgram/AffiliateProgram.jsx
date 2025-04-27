@@ -1,4 +1,8 @@
-import { FiCopy } from "react-icons/fi"; 
+import { GiMedal } from "react-icons/gi";
+import { BsFillPersonFill } from "react-icons/bs";
+import { HiCursorClick } from "react-icons/hi";
+import { BiLineChartDown } from "react-icons/bi";
+import { FiCopy } from "react-icons/fi";
 import { AiOutlineLink } from "react-icons/ai";
 import React, { useState } from "react";
 import styles from "./AffiliateProgram.module.css";
@@ -20,7 +24,10 @@ const AffiliateProgram = () => {
         <div className={s.balance}>
           <p>Your balance</p>
           <h1>$0.00</h1>
-          <NavLink to="/withdrawal" className={s.withdrawalLink}>
+          <NavLink
+            to="/binarychart/bankinglayout/withdraw"
+            className={s.withdrawalLink}
+          >
             Go to withdrawal →
           </NavLink>
           <div className={s.earning}>
@@ -41,7 +48,7 @@ const AffiliateProgram = () => {
           <div className={s.linkContainer}>
             <span>{referralLink}</span>
             <div className={s.copyButton} onClick={handleCopyClick}>
-                <FiCopy /> Copy
+              <FiCopy /> {isCopied ? "Copied!" : "Copy"}
             </div>
             <button className={s.generate}>Generate New</button>
           </div>
@@ -49,21 +56,24 @@ const AffiliateProgram = () => {
       </div>
       <div className={s.line}>
         <div className={s.statsBox}>
+          <BiLineChartDown />
+          <span>0</span>
           <p>Trader Ids</p>
-          <span>0</span>
         </div>
         <div className={s.statsBox}>
+          <HiCursorClick />
+          <span>0</span>
           <p>Clicks</p>
-          <span>0</span>
         </div>
         <div className={s.statsBox}>
+          <BsFillPersonFill />
+          <span>0</span>
           <p>Registrations</p>
-          <span>0</span>
         </div>
-        <div className={s.statsBox}>
+        <NavLink to={"/binarychart/prizepool"} className={s.statsBox}>
+          <GiMedal />
           <p>Prize Pool</p>
-          <span>$0.00</span>
-        </div>
+        </NavLink>
       </div>
     </div>
   );

@@ -25,14 +25,11 @@ const App = () => {
       <div className={s.container}>
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<RegisterLayout />}>
               <Route index element={<HomePage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/login" element={<LoginPage />} />
             </Route>
-
-            {/* Protected Routes */}
             <Route
               path="/binarychart"
               element={
