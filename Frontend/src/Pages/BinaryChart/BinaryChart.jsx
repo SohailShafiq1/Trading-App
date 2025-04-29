@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
-import LiveCandleChart from "./LiveCandleChart";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+
 const s = styles;
 
 const BinaryChart = () => {
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(60); // Default trade time
+  const [remainingTime, setRemainingTime] = useState(null); // Timer for active trade
   const [investment, setInvestment] = useState(10);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupColor, setPopupColor] = useState("");
@@ -44,23 +45,9 @@ const BinaryChart = () => {
     }
   }, [selectedCoin, marketType]);
 
-  const handleBuy = () => {
-    toast.success(`Buy ${selectedCoin} at $${coinPrice} with $${investment}`, {
-      position: "top-right",
-      autoClose: 1000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-    });
-    setTrades((prev) => [
-      ...prev,
-      { type: "Buy", price: investment, coinPrice, coinName: selectedCoin },
-    ]);
-    setTimeout(() => setShowPopup(false), 2000);
-  };
-
-  const handleSell = () => {
-    toast.error(`Sell ${selectedCoin} at $${coinPrice} with $${investment}`, {
+  const handleBuy = async () => {
+    const buyPrice = parseFloat(coinPrice); // Capture the current price at the time of the buy
+    toast.success(`Buy ${selectedCoin} at $${buyPrice} with $${investment}`, {
       position: "top-right",
       autoClose: 1000,
       hideProgressBar: true,
@@ -70,10 +57,89 @@ const BinaryChart = () => {
 
     setTrades((prev) => [
       ...prev,
-      { type: "Sell", price: investment, coinPrice, coinName: selectedCoin },
+      { type: "Buy", price: investment, coinPrice: buyPrice, coinName: selectedCoin },
     ]);
-    setTimeout(() => setShowPopup(false), 2000);
+
+    setRemainingTime(timer); // Start the countdown timer
+
+    // Wait for the trade time and check the price
+    setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
+        );
+        const data = await response.json();
+        const currentPrice = parseFloat(data.price);
+
+        if (currentPrice > buyPrice) {
+          const profit = (investment * 1.07).toFixed(2); // Calculate 7% profit
+          setPopupMessage(`Trade Win! You got $${profit}`);
+          setPopupColor("#10A055"); // Green for win
+        } else {
+          setPopupMessage(`Trade Loss! You lost $${investment}`);
+          setPopupColor("#FF1600"); // Red for loss
+        }
+        setShowPopup(true);
+        setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
+      } catch (err) {
+        console.error("Failed to fetch coin price:", err);
+      }
+    }, timer * 1000); // Wait for the selected trade time
   };
+
+  const handleSell = async () => {
+    const sellPrice = parseFloat(coinPrice); // Capture the current price at the time of the sell
+    toast.error(`Sell ${selectedCoin} at $${sellPrice} with $${investment}`, {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+    });
+
+    setTrades((prev) => [
+      ...prev,
+      { type: "Sell", price: investment, coinPrice: sellPrice, coinName: selectedCoin },
+    ]);
+
+    setRemainingTime(timer); // Start the countdown timer
+
+    // Wait for the trade time and check the price
+    setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
+        );
+        const data = await response.json();
+        const currentPrice = parseFloat(data.price);
+
+        if (currentPrice < sellPrice) {
+          const profit = (investment * 1.07).toFixed(2); // Calculate 7% profit
+          setPopupMessage(`Trade Win! You got $${profit}`);
+          setPopupColor("#10A055"); // Green for win
+        } else {
+          setPopupMessage(`Trade Loss! You lost $${investment}`);
+          setPopupColor("#FF1600"); // Red for loss
+        }
+        setShowPopup(true);
+        setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
+      } catch (err) {
+        console.error("Failed to fetch coin price:", err);
+      }
+    }, timer * 1000); // Wait for the selected trade time
+  };
+
+  // Countdown timer logic
+  useEffect(() => {
+    if (remainingTime === null) return;
+
+    if (remainingTime > 0) {
+      const interval = setInterval(() => {
+        setRemainingTime((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [remainingTime]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -123,7 +189,6 @@ const BinaryChart = () => {
                   +
                 </button>
               </div>
-
               <div className={s.moneyBox}>
                 <button
                   className={s.iconBtn}
@@ -159,9 +224,14 @@ const BinaryChart = () => {
                 <FiArrowDownRight className={s.icons} />
                 <p>Sell</p>
               </div>
+              
             </div>
-
-            <div className={s.tradeHistory}>
+            {remainingTime !== null && (
+              <div className={s.timer}>
+                <p>Time Left: {remainingTime}s</p>
+              </div>
+            )}
+              <div className={s.tradeHistory}>
               <p>Trades</p>
               <ul>
                 {trades.map((trade, index) => (
@@ -178,6 +248,7 @@ const BinaryChart = () => {
               </ul>
             </div>
           </div>
+          
         </div>
       </div>
 
