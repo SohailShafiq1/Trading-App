@@ -10,9 +10,9 @@ import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
 
-const BinaryLayout = () => {
+const BinaryLayout = ({cash}) => {
   const navigate = useNavigate();
-  return (
+  return ( 
     <>
       <div className={s.container}>
         <div className={s.logo}>
@@ -42,7 +42,10 @@ const BinaryLayout = () => {
         </div>
         <div className={s.asset}>
           <NavLink className={s.liveAcc}>
-            <p>Live account</p>
+            <p>Live account 
+              <br />  {cash}$
+            </p>
+           
           </NavLink>
           <div className={s.bankbtns}>
             <div className={s.withdraw}>

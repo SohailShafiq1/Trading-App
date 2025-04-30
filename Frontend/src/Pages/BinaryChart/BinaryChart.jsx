@@ -8,9 +8,8 @@ import { toast } from "react-toastify";
 
 const s = styles;
 
-const BinaryChart = () => {
+const BinaryChart = ({ cash, setCash }) => {
   const [timer, setTimer] = useState(60); // Default trade time
-  const [remainingTime, setRemainingTime] = useState(null); // Timer for active trade
   const [investment, setInvestment] = useState(10);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupColor, setPopupColor] = useState("");
@@ -45,8 +44,35 @@ const BinaryChart = () => {
     }
   }, [selectedCoin, marketType]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTrades((prevTrades) =>
+        prevTrades.map((trade) =>
+          trade.remainingTime > 0
+            ? { ...trade, remainingTime: trade.remainingTime - 1 }
+            : trade
+        )
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleBuy = async () => {
+    if (investment > cash) {
+      toast.error("Insufficient funds!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+      });
+      return;
+    }
+
     const buyPrice = parseFloat(coinPrice); // Capture the current price at the time of the buy
+    setCash((prevCash) => prevCash - investment); // Deduct investment from cash
+
     toast.success(`Buy ${selectedCoin} at $${buyPrice} with $${investment}`, {
       position: "top-right",
       autoClose: 1000,
@@ -55,12 +81,20 @@ const BinaryChart = () => {
       pauseOnHover: false,
     });
 
+    const tradeId = Date.now(); // Unique ID for the trade
     setTrades((prev) => [
       ...prev,
-      { type: "Buy", price: investment, coinPrice: buyPrice, coinName: selectedCoin },
+      {
+        id: tradeId,
+        type: "Buy",
+        price: investment,
+        coinPrice: buyPrice,
+        coinName: selectedCoin,
+        remainingTime: timer,
+        status: "running", // Initial status
+        reward: 0, // Initial reward
+      },
     ]);
-
-    setRemainingTime(timer); // Start the countdown timer
 
     // Wait for the trade time and check the price
     setTimeout(async () => {
@@ -71,14 +105,32 @@ const BinaryChart = () => {
         const data = await response.json();
         const currentPrice = parseFloat(data.price);
 
+        let reward = 0;
+        let status = "";
+
         if (currentPrice > buyPrice) {
-          const profit = (investment * 1.07).toFixed(2); // Calculate 7% profit
-          setPopupMessage(`Trade Win! You got $${profit}`);
-          setPopupColor("#10A055"); // Green for win
+          reward = (investment * 1.07).toFixed(2); // Calculate 7% profit
+          setCash((prevCash) => prevCash + parseFloat(reward)); // Add profit to cash
+          status = "win";
         } else {
-          setPopupMessage(`Trade Loss! You lost $${investment}`);
-          setPopupColor("#FF1600"); // Red for loss
+          reward = -investment; // Loss is the investment amount
+          status = "loss";
         }
+
+        setTrades((prev) =>
+          prev.map((trade) =>
+            trade.id === tradeId
+              ? { ...trade, status, reward, remainingTime: 0 }
+              : trade
+          )
+        );
+
+        setPopupMessage(
+          status === "win"
+            ? `Trade Win! You got $${reward}`
+            : `Trade Loss! You lost $${-reward}`
+        );
+        setPopupColor(status === "win" ? "#10A055" : "#FF1600"); // Green for win, red for loss
         setShowPopup(true);
         setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
       } catch (err) {
@@ -88,7 +140,20 @@ const BinaryChart = () => {
   };
 
   const handleSell = async () => {
+    if (investment > cash) {
+      toast.error("Insufficient funds!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+      });
+      return;
+    }
+
     const sellPrice = parseFloat(coinPrice); // Capture the current price at the time of the sell
+    setCash((prevCash) => prevCash - investment); // Deduct investment from cash
+
     toast.error(`Sell ${selectedCoin} at $${sellPrice} with $${investment}`, {
       position: "top-right",
       autoClose: 1000,
@@ -97,12 +162,20 @@ const BinaryChart = () => {
       pauseOnHover: false,
     });
 
+    const tradeId = Date.now(); // Unique ID for the trade
     setTrades((prev) => [
       ...prev,
-      { type: "Sell", price: investment, coinPrice: sellPrice, coinName: selectedCoin },
+      {
+        id: tradeId,
+        type: "Sell",
+        price: investment,
+        coinPrice: sellPrice,
+        coinName: selectedCoin,
+        remainingTime: timer,
+        status: "running", // Initial status
+        reward: 0, // Initial reward
+      },
     ]);
-
-    setRemainingTime(timer); // Start the countdown timer
 
     // Wait for the trade time and check the price
     setTimeout(async () => {
@@ -113,14 +186,32 @@ const BinaryChart = () => {
         const data = await response.json();
         const currentPrice = parseFloat(data.price);
 
+        let reward = 0;
+        let status = "";
+
         if (currentPrice < sellPrice) {
-          const profit = (investment * 1.07).toFixed(2); // Calculate 7% profit
-          setPopupMessage(`Trade Win! You got $${profit}`);
-          setPopupColor("#10A055"); // Green for win
+          reward = (investment * 1.7).toFixed(2); // Calculate 70% profit
+          setCash((prevCash) => prevCash + parseFloat(reward)); // Add profit to cash
+          status = "win";
         } else {
-          setPopupMessage(`Trade Loss! You lost $${investment}`);
-          setPopupColor("#FF1600"); // Red for loss
+          reward = -investment; // Loss is the investment amount
+          status = "loss";
         }
+
+        setTrades((prev) =>
+          prev.map((trade) =>
+            trade.id === tradeId
+              ? { ...trade, status, reward, remainingTime: 0 }
+              : trade
+          )
+        );
+
+        setPopupMessage(
+          status === "win"
+            ? `Trade Win! You got $${reward}`
+            : `Trade Loss! You lost $${-reward}`
+        );
+        setPopupColor(status === "win" ? "#10A055" : "#FF1600"); // Green for win, red for loss
         setShowPopup(true);
         setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
       } catch (err) {
@@ -128,18 +219,6 @@ const BinaryChart = () => {
       }
     }, timer * 1000); // Wait for the selected trade time
   };
-
-  // Countdown timer logic
-  useEffect(() => {
-    if (remainingTime === null) return;
-
-    if (remainingTime > 0) {
-      const interval = setInterval(() => {
-        setRemainingTime((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [remainingTime]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -166,6 +245,15 @@ const BinaryChart = () => {
                   {coin}
                 </button>
               ))}
+                {/* Latest Trade Timer */}
+            {trades.length > 0 && (
+              <div className={s.timer}>
+                <p>
+                  Latest Trade Timer:{" "}
+                  {trades[trades.length - 1].remainingTime}s
+                </p>
+              </div>
+            )}
             </div>
             <TradingViewChart coinName={selectedCoin} />
           </div>
@@ -224,31 +312,36 @@ const BinaryChart = () => {
                 <FiArrowDownRight className={s.icons} />
                 <p>Sell</p>
               </div>
-              
             </div>
-            {remainingTime !== null && (
-              <div className={s.timer}>
-                <p>Time Left: {remainingTime}s</p>
-              </div>
-            )}
-              <div className={s.tradeHistory}>
+
+
+            <div className={s.tradeHistory}>
               <p>Trades</p>
               <ul>
                 {trades.map((trade, index) => (
                   <li
                     key={index}
                     style={{
-                      color: trade.type === "Buy" ? "#10A055" : "#FF1600",
+                      color:
+                        trade.status === "win"
+                          ? "#10A055"
+                          : trade.status === "loss"
+                          ? "#FF1600"
+                          : "#FFF", // White for running trades
                     }}
                   >
                     {trade.type}: ${trade.price} at Coin Price: $
-                    {trade.coinPrice} ({trade.coinName})
+                    {trade.coinPrice} ({trade.coinName}) -{" "}
+                    {trade.status === "running"
+                      ? `Time Left: ${trade.remainingTime}s`
+                      : `Status: ${trade.status.toUpperCase()}, Reward: ${
+                          trade.reward > 0 ? "+" : ""
+                        }$${Math.abs(trade.reward)}`}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          
         </div>
       </div>
 

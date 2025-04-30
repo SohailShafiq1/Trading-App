@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./App.module.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./Pages/HomePage/HomePage";
@@ -20,6 +20,8 @@ import ProtectedRoute from "./Route/ProtectedRoute/ProtectedRoute";
 const s = styles;
 
 const App = () => {
+  const [cash, setCash] = useState(500); // Initialize cash state
+
   return (
     <AuthProvider>
       <div className={s.container}>
@@ -34,11 +36,16 @@ const App = () => {
               path="/binarychart"
               element={
                 <ProtectedRoute>
-                  <BinaryLayout />
+                  <BinaryLayout cash={cash} />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<BinaryChart />} />
+              <Route
+                index
+                element={
+                  <BinaryChart cash={cash} setCash={setCash} /> 
+                }
+              />
               <Route
                 path="/binarychart/profile"
                 element={
@@ -51,7 +58,7 @@ const App = () => {
                 path="/binarychart/affiliateprogram"
                 element={
                   <ProtectedRoute>
-                    <AffiliateProgram />
+                    <AffiliateProgram cash="500" />
                   </ProtectedRoute>
                 }
               />
