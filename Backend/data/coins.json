@@ -1,0 +1,15 @@
+[
+  {
+    "name": "BTC",
+    "type": "Live"
+  },
+  {
+    "name": "XRP",
+    "type": "Live"
+  },
+  {
+    "name": "ETH",
+    "type": "OTC",
+    "startingPrice": 200
+  }
+]

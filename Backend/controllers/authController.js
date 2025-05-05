@@ -43,10 +43,10 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "User already registered" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+   
     const newUser = new User({
       email,
-      password: hashedPassword,
+      password,
       country,
       currency,
     });

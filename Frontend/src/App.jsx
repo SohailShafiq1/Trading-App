@@ -16,6 +16,7 @@ import TransactionsPage from "./Pages/TransactionPage/TransactionPage";
 import AffiliateProgram from "./Pages/AffiliateProgram/AffiliateProgram";
 import PrizePool from "./Pages/Prize Pool/PrizePool";
 import ProtectedRoute from "./Route/ProtectedRoute/ProtectedRoute";
+import AdminLayout from "./Admin/AdminLayout";
 
 const s = styles;
 
@@ -104,6 +105,7 @@ const App = () => {
                 />
               </Route>
             </Route>
+            <Route path="/admin" element= {<AdminLayout/>}/>
           </Routes>
         </BrowserRouter>
       </div>

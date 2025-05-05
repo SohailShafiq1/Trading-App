@@ -2,29 +2,44 @@ import React, { useState, useEffect } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
+import LiveCandleChart from "./LiveCandleChart";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const s = styles;
 
 const BinaryChart = ({ cash, setCash }) => {
+  const [coins, setCoins] = useState([]); // State to store coins
+  const [selectedCoin, setSelectedCoin] = useState("BTC");
+  const [coinPrice, setCoinPrice] = useState(0);
   const [timer, setTimer] = useState(60); // Default trade time
   const [investment, setInvestment] = useState(10);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupColor, setPopupColor] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [trades, setTrades] = useState([]);
-  const [coinPrice, setCoinPrice] = useState(0);
-  const [selectedCoin, setSelectedCoin] = useState("XRP");
-  const [marketType, setMarketType] = useState("Live");
 
-  const coinsLive = ["BTC", "ETH"];
-  const coinsOTC = ["XRP", "SEI", "AED"];
-  const coins = marketType === "Live" ? coinsLive : coinsOTC;
-
+  // Fetch coins from the backend
   useEffect(() => {
-    if (marketType === "Live") {
+    const fetchCoins = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/coins"); // Replace with your backend URL
+        setCoins(response.data); // Set coins from the backend
+      } catch (err) {
+        console.error("Error fetching coins:", err);
+      }
+    };
+
+    fetchCoins();
+  }, []);
+
+  // Fetch coin price based on selected coin
+  useEffect(() => {
+    const selectedCoinType = coins.find((coin) => coin.name === selectedCoin)?.type;
+
+    if (selectedCoinType === "Live") {
       const fetchPrice = async () => {
         try {
           const response = await fetch(
@@ -40,9 +55,9 @@ const BinaryChart = ({ cash, setCash }) => {
       const interval = setInterval(fetchPrice, 5000);
       return () => clearInterval(interval);
     } else {
-      setCoinPrice((Math.random() * 100 + 10).toFixed(2));
+      setCoinPrice((Math.random() * 100 + 10).toFixed(2)); // Random price for OTC coins
     }
-  }, [selectedCoin, marketType]);
+  }, [selectedCoin, coins]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -234,19 +249,18 @@ const BinaryChart = ({ cash, setCash }) => {
         <div className={s.box}>
           <div className={s.chart}>
             <div className={s.coinList}>
-              {coins.map((coin) => (
-                <button
-                  key={coin}
-                  className={`${s.coinButton} ${
-                    selectedCoin === coin ? s.activeCoin : ""
-                  }`}
-                  onClick={() => setSelectedCoin(coin)}
-                >
-                  {coin}
-                </button>
-              ))}
-                {/* Latest Trade Timer */}
-            {trades.length > 0 && (
+              <select
+                className={s.coinSelect}
+                value={selectedCoin}
+                onChange={(e) => setSelectedCoin(e.target.value)}
+              >
+                {coins.map((coin) => (
+                  <option key={coin.name} value={coin.name}>
+                    {coin.name}
+                  </option>
+                ))}
+              </select>
+              {trades.length > 0 && (
               <div className={s.timer}>
                 <p>
                   Latest Trade Timer:{" "}
@@ -255,7 +269,13 @@ const BinaryChart = ({ cash, setCash }) => {
               </div>
             )}
             </div>
-            <TradingViewChart coinName={selectedCoin} />
+
+            {/* Conditionally render charts based on coin type */}
+            {coins.find((coin) => coin.name === selectedCoin)?.type === "Live" ? (
+              <TradingViewChart coinName={selectedCoin} />
+            ) : (
+              <LiveCandleChart coinName={selectedCoin} />
+            )}
           </div>
 
           <div className={s.control}>
@@ -314,7 +334,6 @@ const BinaryChart = ({ cash, setCash }) => {
               </div>
             </div>
 
-
             <div className={s.tradeHistory}>
               <p>Trades</p>
               <ul>
@@ -328,15 +347,25 @@ const BinaryChart = ({ cash, setCash }) => {
                           : trade.status === "loss"
                           ? "#FF1600"
                           : "#FFF", // White for running trades
+                      padding: "10px", // Add padding for better readability
+                       // Optional: Add , // Optional: Add a light background color
                     }}
                   >
-                    {trade.type}: ${trade.price} at Coin Price: $
-                    {trade.coinPrice} ({trade.coinName}) -{" "}
-                    {trade.status === "running"
-                      ? `Time Left: ${trade.remainingTime}s`
-                      : `Status: ${trade.status.toUpperCase()}, Reward: ${
-                          trade.reward > 0 ? "+" : ""
-                        }$${Math.abs(trade.reward)}`}
+                    {/* First Row: Coin Name and Trade Duration */}
+                    <div style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>
+                      <strong>{trade.coinName}</strong>
+                      <span>{formatTime(trade.duration || timer)}</span> {/* Display trade duration */}
+                    </div>
+
+                    {/* Second Row: Trade Amount and Profit/Loss */}
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Trade: ${trade.price}</span>
+                      <span>
+                        {trade.status === "running"
+                          ? `Time Left: ${trade.remainingTime}s`
+                          : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>
