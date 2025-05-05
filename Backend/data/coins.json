@@ -4,12 +4,17 @@
     "type": "Live"
   },
   {
-    "name": "XRP",
-    "type": "Live"
-  },
-  {
     "name": "ETH",
     "type": "OTC",
     "startingPrice": 200
+  },
+  {
+    "name": "sei",
+    "type": "Live"
+  },
+  {
+    "name": "checking",
+    "type": "OTC",
+    "startingPrice": "23"
   }
 ]
