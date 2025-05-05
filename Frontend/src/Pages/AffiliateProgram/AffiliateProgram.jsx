@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import styles from "./AffiliateProgram.module.css";
 import { NavLink } from "react-router-dom";
 const s = styles;
-const AffiliateProgram = () => {
+const AffiliateProgram = ({cash}) => {
   const [isCopied, setIsCopied] = useState(false);
   const referralLink = "Order-ax.pro/sign-up/?lid=1249470";
 
@@ -23,7 +23,7 @@ const AffiliateProgram = () => {
       <div className={s.top}>
         <div className={s.balance}>
           <p>Your balance</p>
-          <h1>$0.00</h1>
+          <h1>{cash}</h1>
           <NavLink
             to="/binarychart/bankinglayout/withdraw"
             className={s.withdrawalLink}

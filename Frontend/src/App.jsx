@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./App.module.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./Pages/HomePage/HomePage";
@@ -16,10 +16,13 @@ import TransactionsPage from "./Pages/TransactionPage/TransactionPage";
 import AffiliateProgram from "./Pages/AffiliateProgram/AffiliateProgram";
 import PrizePool from "./Pages/Prize Pool/PrizePool";
 import ProtectedRoute from "./Route/ProtectedRoute/ProtectedRoute";
+import AdminLayout from "./Admin/AdminLayout";
 
 const s = styles;
 
 const App = () => {
+  const [cash, setCash] = useState(500); // Initialize cash state
+
   return (
     <AuthProvider>
       <div className={s.container}>
@@ -34,11 +37,16 @@ const App = () => {
               path="/binarychart"
               element={
                 <ProtectedRoute>
-                  <BinaryLayout />
+                  <BinaryLayout cash={cash} />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<BinaryChart />} />
+              <Route
+                index
+                element={
+                  <BinaryChart cash={cash} setCash={setCash} /> 
+                }
+              />
               <Route
                 path="/binarychart/profile"
                 element={
@@ -51,7 +59,7 @@ const App = () => {
                 path="/binarychart/affiliateprogram"
                 element={
                   <ProtectedRoute>
-                    <AffiliateProgram />
+                    <AffiliateProgram cash="500" />
                   </ProtectedRoute>
                 }
               />
@@ -97,6 +105,7 @@ const App = () => {
                 />
               </Route>
             </Route>
+            <Route path="/admin" element= {<AdminLayout/>}/>
           </Routes>
         </BrowserRouter>
       </div>

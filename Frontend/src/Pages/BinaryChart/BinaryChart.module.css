@@ -18,16 +18,17 @@
 }
 .chart {
   width: 80%;
-  height: 100vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
 }
 .coinList {
-  width: 100%;
-  height: 5%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  position: relative; /* To position the timer properly */
 }
 .market {
   width: 100%;
@@ -136,7 +137,7 @@
 }
 .tradeHistory {
   width: 100%;
-  height: 100%;
+  height: 200px;
   border-top: 2px solid red;
   border-bottom: 2px solid green;
   border-left: 2px solid transparent;
@@ -147,6 +148,7 @@
   text-align: center;
   overflow: scroll;
   scrollbar-width: none;
+
 }
 .popup {
   position: fixed;
@@ -161,12 +163,6 @@
   text-align: center;
   font-size: 16px;
   margin-left: 5rem;
-}
-.coinList {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
 }
 
 .coinButton {
@@ -189,6 +185,20 @@
   border-color: #10a055;
 }
 
+.timer {
+  position: absolute;
+  right: 10px; /* Adjust position as needed */
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1e1e1e;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 @media (max-width: 768px) {
   .box {
     flex-direction: column;
@@ -197,7 +207,7 @@
   }
   .chart {
     width: 100%;
-    height: 400px;
+    height: 700px;
   }
   .control {
     width: 90%;
@@ -235,4 +245,28 @@
   .value {
     margin: 0;
   }
+}
+.coinSelect {
+  width: 30%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  color: #333;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.coinSelect:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.coinSelect option {
+  padding: 10px;
+  background-color: #fff;
+  color: #333;
 }
