@@ -43,10 +43,9 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "User already registered" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       email,
-      password: hashedPassword,
+      password,
       country,
       currency,
     });
@@ -62,22 +61,30 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Incorrect password" });
+      return res.status(401).json({ message: "Incorrect password" });
     }
 
     const token = generateToken(user._id);
+    if (!token) {
+      return res.status(500).json({ message: "Error generating token" });
+    }
+
     res.status(200).json({ message: "Login successful", token, user });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Error logging in" });
+    console.error("Login error:", error.message);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
