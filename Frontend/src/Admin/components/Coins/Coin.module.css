@@ -1,0 +1,64 @@
+.addCoinForm {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.addCoinForm input,
+.addCoinForm select {
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.addCoinForm button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.addCoinForm button:hover {
+  background-color: #0056b3;
+}
+
+.coinListContainer {
+  max-height: 150px; /* Limit height to show only 5 items */
+  overflow-y: auto; /* Add vertical scroll */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.coinList {
+  list-style: none;
+  padding: 0;
+}
+
+.coinItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.coinItem:last-child {
+  border-bottom: none;
+}
+
+.coinItem button {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.coinItem button:hover {
+  background-color: #cc0000;
+}

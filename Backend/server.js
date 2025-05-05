@@ -6,6 +6,7 @@ import cors from "cors";
 import testPassword from "./test/testfile.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import coinRoutes from "./routes/coinRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/coins", coinRoutes);
+app.use("/api/users", userRoutes);
 connectDB();
 const PORT = process.env.PORT;
 
