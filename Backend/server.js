@@ -15,6 +15,7 @@ const allowedOrigins = ["http://localhost:5173"]; // Add your frontend URL here
 app.use(
   cors({
     origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );

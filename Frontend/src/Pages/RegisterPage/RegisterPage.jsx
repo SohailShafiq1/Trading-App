@@ -86,7 +86,12 @@ const RegisterPage = () => {
             name="password"
             placeholder="Your Password"
             value={form.password}
-            onChange={handleChange}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                password: e.target.value.replace(/[^a-zA-Z0-9@]/g, ""),
+              }))
+            }
             className={s.input}
           />
 

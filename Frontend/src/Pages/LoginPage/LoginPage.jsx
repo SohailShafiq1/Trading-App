@@ -34,12 +34,12 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      await login({ email: form.email, password: form.password });
       if (form.rememberMe) {
         localStorage.setItem("rememberedEmail", form.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-      await login({ email: form.email, password: form.password });
       navigate("/binarychart");
     } catch (err) {
       alert(err.message || "Login failed");
@@ -132,10 +132,7 @@ const LoginPage = () => {
                 Remember Me
               </label>
             </div>
-            <div
-              className={styles.forgotLink}
-              onClick={handleForgotPassword}
-            >
+            <div className={styles.forgotLink} onClick={handleForgotPassword}>
               Forgot Password?
             </div>
           </div>
