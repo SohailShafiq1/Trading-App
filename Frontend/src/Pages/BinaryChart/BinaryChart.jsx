@@ -24,8 +24,7 @@ const BinaryChart = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [trades, setTrades] = useState([]);
   const { user } = useAuth();
-  const { userAssets, setUserAssets } = useUserAssets(); // Access context
-
+  const { userAssets, setUserAssets } = useUserAssets(); 
   const updateUserAssetsInDB = async (newAssets) => {
     try {
       await axios.put(`http://localhost:5000/api/users/update-assets`, {
@@ -318,7 +317,6 @@ const BinaryChart = () => {
                   </p>
                 </div>
               )}
-              <h1>{userAssets}</h1>
             </div>
 
             {/* Conditionally render charts based on coin type */}

@@ -1,9 +1,12 @@
 import { BiRightArrowCircle } from "react-icons/bi";
 import React from "react";
 import styles from "./WithdrawPage.module.css";
+import { useUserAssets } from "../../Context/UserAssetsContext"; // Import useUserAssets
 const s = styles;
 
 const WithdrawPage = () => {
+  const { userAssets } = useUserAssets(); // Access userAssets from context
+
   return (
     <div className={s.container}>
       <div className={s.Box}>
@@ -11,12 +14,14 @@ const WithdrawPage = () => {
           <h3 className={s.sectionTitle}>Account:</h3>
           <div className={s.accountInfo}>
             <p>In the account:</p>
-            <p className={s.amount}>999 $</p>
+            <p className={s.amount}>{userAssets} $</p>{" "}
+           
           </div>
           <hr className={s.divider} />
           <div className={s.accountInfo}>
             <p>Available for withdrawal:</p>
-            <p className={s.amount}>999 $</p>
+            <p className={s.amount}>{userAssets} $</p>{" "}
+    
           </div>
         </div>
 

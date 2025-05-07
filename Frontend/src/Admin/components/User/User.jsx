@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import axios from "axios";
 import styles from "./User.module.css";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -6,9 +7,9 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const s = styles;
 
 const User = () => {
-  const [users, setUsers] = useState([]); // State to store registered users
+  const [users, setUsers] = useState([]);
+  const navigate = useNavigate(); // Initialize navigate
 
-  // Fetch registered users from the backend
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -23,6 +24,9 @@ const User = () => {
 
   return (
     <div className={s.section}>
+      <button className={s.backButton} onClick={() => navigate(-1)}>
+        Back
+      </button>
       <h2>Registered Users</h2>
       <table className={s.userTable}>
         <thead>

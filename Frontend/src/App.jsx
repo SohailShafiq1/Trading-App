@@ -18,6 +18,10 @@ import PrizePool from "./Pages/Prize Pool/PrizePool";
 import ProtectedRoute from "./Route/ProtectedRoute/ProtectedRoute";
 import AdminLayout from "./Admin/AdminLayout";
 import { UserAssetsProvider } from "./Context/UserAssetsContext";
+import Coins from "./Admin/components/Coins/Coins"; // adjust path accordingly
+import User from "./Admin/components/User/User";
+import Withdraw from "./Admin/components/Withdraw/Withdraw";
+
 const s = styles;
 
 const App = () => {
@@ -106,8 +110,33 @@ const App = () => {
                   <ProtectedRoute>
                     <AdminLayout />
                   </ProtectedRoute>
+
                 }
               />
+              <Route
+                path="/coins"
+                element={
+                  <ProtectedRoute>
+                    <Coins /> {/* Add the new Coins component here */}
+                  </ProtectedRoute>
+                }
+
+              />
+              <Route
+                path="/user"
+                element={
+                  <ProtectedRoute>
+                    <User />
+                  </ProtectedRoute>
+                } />
+              <Route
+                path="/withdraw"
+                element={
+                  <ProtectedRoute>
+                    <Withdraw /> {/* Add the new Withdraw component here */}
+                  </ProtectedRoute>
+                } />
+
             </Routes>
           </BrowserRouter>
         </div>
