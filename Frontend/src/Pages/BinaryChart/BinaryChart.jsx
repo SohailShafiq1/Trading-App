@@ -31,13 +31,14 @@ const BinaryChart = ({ cash, setCash }) => {
         console.error("Error fetching coins:", err);
       }
     };
-
     fetchCoins();
   }, []);
 
   // Fetch coin price based on selected coin
   useEffect(() => {
-    const selectedCoinType = coins.find((coin) => coin.name === selectedCoin)?.type;
+    const selectedCoinType = coins.find(
+      (coin) => coin.name === selectedCoin
+    )?.type;
 
     if (selectedCoinType === "Live") {
       const fetchPrice = async () => {
@@ -277,10 +278,18 @@ const BinaryChart = ({ cash, setCash }) => {
                   </p>
                 </div>
               )}
+                <div className={s.timer}>
+                  <p>
+                    Latest Trade Timer:{" "}
+                    {trades[trades.length - 1].remainingTime}s
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Conditionally render charts based on coin type */}
-            {coins.find((coin) => coin.name === selectedCoin)?.type === "Live" ? (
+            {coins.find((coin) => coin.name === selectedCoin)?.type ===
+            "Live" ? (
               <TradingViewChart coinName={selectedCoin} />
             ) : (
               <LiveCandleChart coinName={selectedCoin} />
@@ -357,6 +366,7 @@ const BinaryChart = ({ cash, setCash }) => {
                           ? "#FF1600"
                           : "#FFF", // White for running trades
                       padding: "10px", // Add padding for better readability
+                       // Optional: Add , // Optional: Add a light background color
                     }}
                   >
                     {/* First Row: Coin Name and Trade Duration */}
