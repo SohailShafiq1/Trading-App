@@ -16,5 +16,15 @@
     "name": "checking",
     "type": "OTC",
     "startingPrice": "23"
+  },
+  {
+    "name": "Israr",
+    "type": "OTC",
+    "startingPrice": "10000000000"
+  },
+  {
+    "name": "Sohail",
+    "type": "OTC",
+    "startingPrice": "1"
   }
 ]

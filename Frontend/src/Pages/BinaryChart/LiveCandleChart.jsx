@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import ReactApexChart from "react-apexcharts";
 import axios from "axios";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const CANDLE_DURATIONS = [
   { label: "30 seconds", value: 30000 },
@@ -10,37 +11,11 @@ const CANDLE_DURATIONS = [
   { label: "5 minutes", value: 300000 },
 ];
 
-const generateInitialData = (
-  count = 30,
-  base = 100,
-  duration = 30000,
-  trend = "Normal",
-  scenarioCounterRef = { current: 0 }
-) => {
-  const data = [];
-  let lastClose = base;
-  const now = Date.now();
-
-  for (let i = 0; i < count; i++) {
-    const time = new Date(now - (count - i) * duration).getTime();
-    const [open, high, low, close] = generateCandle(
-      lastClose,
-      trend,
-      scenarioCounterRef
-    );
-    data.push({ x: time, y: [open, high, low, close] });
-    lastClose = close;
-  }
-
-  return data;
-};
-
 const generateCandle = (
   lastClose,
   trend = "Normal",
   scenarioCounterRef = { current: 0 }
 ) => {
-  console.log("Generating candle for trend:", trend); // Debugging log
   const open = lastClose;
   let close = open;
   let high = open;
@@ -49,37 +24,37 @@ const generateCandle = (
   switch (trend) {
     case "Scenario1":
       scenarioCounterRef.current = (scenarioCounterRef.current + 1) % 4;
-      close = open + (scenarioCounterRef.current === 3 ? -5 : 5); // Strong movement
+      close = open + (scenarioCounterRef.current === 3 ? -5 : 5);
       break;
 
     case "Scenario2":
       scenarioCounterRef.current = (scenarioCounterRef.current + 1) % 10;
-      close = open + (scenarioCounterRef.current < 5 ? -5 : 5); // Alternating blocks
+      close = open + (scenarioCounterRef.current < 5 ? -5 : 5);
       break;
 
     case "Scenario3":
       scenarioCounterRef.current++;
-      close = open + (scenarioCounterRef.current % 2 === 0 ? 5 : -5); // Alternating bars
+      close = open + (scenarioCounterRef.current % 2 === 0 ? 5 : -5);
       break;
 
     case "Scenario4":
-      close = open + 6; // Consistently strong uptrend
+      close = open + 6;
       break;
 
     case "Scenario5":
-      close = open - 6; // Consistently strong downtrend
+      close = open - 6;
       break;
 
     case "Up":
-      close = open + Math.random() * 2 + 1; // Slightly biased upward
+      close = open + Math.random() * 2 + 1;
       break;
 
     case "Down":
-      close = open - Math.random() * 2 - 1; // Slightly biased downward
+      close = open - Math.random() * 2 - 1;
       break;
 
     default:
-      close = open + (Math.random() - 0.5) * 4; // Random
+      close = open + (Math.random() - 0.5) * 4;
       break;
   }
 
@@ -90,13 +65,13 @@ const generateCandle = (
 };
 
 const LiveCandleChart = ({ coinName }) => {
-  const [series, setSeries] = useState([{ data: generateInitialData() }]);
+  const [series, setSeries] = useState([]);
   const [candleDuration, setCandleDuration] = useState(
     CANDLE_DURATIONS[0].value
   );
   const [trend, setTrend] = useState("Normal");
-  const [popupMessage, setPopupMessage] = useState(""); // State for popup message
-  const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
+  const [popupMessage, setPopupMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
 
   const scenarioCounterRef = useRef(0);
   const updateIntervalRef = useRef(null);
@@ -104,46 +79,94 @@ const LiveCandleChart = ({ coinName }) => {
 
   const handleCandleDurationChange = (duration) => {
     setCandleDuration(duration);
-    setSeries([
-      {
-        data: generateInitialData(30, 100, duration, trend, scenarioCounterRef),
-      },
-    ]);
   };
 
-  // Reset scenario counter on trend change
+  useEffect(() => {
+    const loadChartFromDB = async () => {
+      try {
+        const response = await axios.get(
+          `${BACKEND_URL}/api/chart/${coinName}`
+        );
+        const data = response.data;
+
+        const { candles, duration, trend: savedTrend } = data;
+
+        if (Array.isArray(candles) && candles.length > 0) {
+          setSeries([{ data: candles }]);
+          setCandleDuration(duration || CANDLE_DURATIONS[0].value); // ⏱ restore duration
+          setTrend(savedTrend || "Normal"); // 📈 restore trend
+          return;
+        }
+
+        throw new Error("No candle data, fallback to first candle");
+      } catch (err) {
+        console.warn("Chart not found or empty, generating first candle...");
+
+        const now = Date.now();
+        const [open, high, low, close] = generateCandle(
+          100,
+          trend,
+          scenarioCounterRef
+        );
+        const firstCandle = [{ x: now, y: [open, high, low, close] }];
+        setSeries([{ data: firstCandle }]);
+
+        try {
+          await axios.post(`${BACKEND_URL}/api/chart/save`, {
+            coinName,
+            chartData: firstCandle,
+            trend,
+            duration: candleDuration,
+          });
+        } catch (saveErr) {
+          console.error("Failed to save chart data:", saveErr);
+        }
+      }
+    };
+
+    loadChartFromDB();
+  }, [coinName]);
+
   useEffect(() => {
     scenarioCounterRef.current = 0;
   }, [trend]);
 
-  // Fetch trend from backend
   useEffect(() => {
     const fetchTrend = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/admin/trend"
-        );
-        console.log("Fetched trend:", response.data); // Debugging log
+        const response = await axios.get(`${BACKEND_URL}/api/admin/trend`);
         const newTrend = response.data.trend;
 
         if (newTrend !== trend) {
-          setTrend(newTrend); // Update the trend state
-          setPopupMessage(`Trend changed to: ${newTrend}`); // Set popup message
-          setShowPopup(true); // Show the popup
-          setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
+          scenarioCounterRef.current = 0;
+          setTrend(newTrend);
+          setPopupMessage(`Trend changed to: ${newTrend}`);
+          setShowPopup(true);
+          setTimeout(() => setShowPopup(false), 3000);
         }
       } catch (err) {
         console.error("Error fetching trend:", err);
       }
     };
 
-    fetchTrend(); // Initial fetch
-    trendFetchIntervalRef.current = setInterval(fetchTrend, 3000); // Fetch trend every 3 seconds
+    fetchTrend();
+    trendFetchIntervalRef.current = setInterval(fetchTrend, 3000);
 
     return () => clearInterval(trendFetchIntervalRef.current);
   }, [trend]);
+  const saveChartDataToBackend = async (chartData) => {
+    try {
+      await axios.post(`${BACKEND_URL}/api/chart/save`, {
+        coinName,
+        chartData,
+        trend,
+        duration: candleDuration,
+      });
+    } catch (error) {
+      console.error("Failed to save chart data:", error);
+    }
+  };
 
-  // Update candles based on current trend and duration
   useEffect(() => {
     const updateCandles = () => {
       setSeries((prevSeries) => {
@@ -152,23 +175,22 @@ const LiveCandleChart = ({ coinName }) => {
         const now = new Date().getTime();
 
         if (now - lastCandle.x >= candleDuration) {
-          // Create new candle
+          const newTimestamp = lastCandle.x + candleDuration;
           const [open, high, low, close] = generateCandle(
             lastCandle.y[3],
             trend,
             scenarioCounterRef
           );
-          oldData.push({ x: now, y: [open, high, low, close] });
-
-          // Keep last 50 candles
+          const newCandle = { x: newTimestamp, y: [open, high, low, close] };
+          oldData.push(newCandle);
           if (oldData.length > 50) oldData.shift();
+          saveChartDataToBackend(oldData);
         } else {
-          // Update current active candle (price fluctuations)
           const updatedCandle = { ...lastCandle };
           const newClose = updatedCandle.y[3] + (Math.random() - 0.5) * 1.5;
-          updatedCandle.y[1] = Math.max(updatedCandle.y[1], newClose); // High
-          updatedCandle.y[2] = Math.min(updatedCandle.y[2], newClose); // Low
-          updatedCandle.y[3] = newClose; // Close
+          updatedCandle.y[1] = Math.max(updatedCandle.y[1], newClose);
+          updatedCandle.y[2] = Math.min(updatedCandle.y[2], newClose);
+          updatedCandle.y[3] = newClose;
           oldData[oldData.length - 1] = updatedCandle;
         }
 
@@ -176,7 +198,7 @@ const LiveCandleChart = ({ coinName }) => {
       });
     };
 
-    updateIntervalRef.current = setInterval(updateCandles, 1000); // Update every second
+    updateIntervalRef.current = setInterval(updateCandles, 1000);
 
     return () => clearInterval(updateIntervalRef.current);
   }, [candleDuration, trend]);
@@ -218,7 +240,6 @@ const LiveCandleChart = ({ coinName }) => {
 
   return (
     <div id="chart">
-      {/* Popup for trend change */}
       {showPopup && (
         <div
           style={{

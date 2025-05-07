@@ -31,13 +31,14 @@ const BinaryChart = ({ cash, setCash }) => {
         console.error("Error fetching coins:", err);
       }
     };
-
     fetchCoins();
   }, []);
 
   // Fetch coin price based on selected coin
   useEffect(() => {
-    const selectedCoinType = coins.find((coin) => coin.name === selectedCoin)?.type;
+    const selectedCoinType = coins.find(
+      (coin) => coin.name === selectedCoin
+    )?.type;
 
     if (selectedCoinType === "Live") {
       const fetchPrice = async () => {
@@ -261,17 +262,18 @@ const BinaryChart = ({ cash, setCash }) => {
                 ))}
               </select>
               {trades.length > 0 && (
-              <div className={s.timer}>
-                <p>
-                  Latest Trade Timer:{" "}
-                  {trades[trades.length - 1].remainingTime}s
-                </p>
-              </div>
-            )}
+                <div className={s.timer}>
+                  <p>
+                    Latest Trade Timer:{" "}
+                    {trades[trades.length - 1].remainingTime}s
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Conditionally render charts based on coin type */}
-            {coins.find((coin) => coin.name === selectedCoin)?.type === "Live" ? (
+            {coins.find((coin) => coin.name === selectedCoin)?.type ===
+            "Live" ? (
               <TradingViewChart coinName={selectedCoin} />
             ) : (
               <LiveCandleChart coinName={selectedCoin} />
@@ -348,22 +350,36 @@ const BinaryChart = ({ cash, setCash }) => {
                           ? "#FF1600"
                           : "#FFF", // White for running trades
                       padding: "10px", // Add padding for better readability
-                       // Optional: Add , // Optional: Add a light background color
+                      // Optional: Add , // Optional: Add a light background color
                     }}
                   >
                     {/* First Row: Coin Name and Trade Duration */}
-                    <div style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>
+                    <div
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <strong>{trade.coinName}</strong>
-                      <span>{formatTime(trade.duration || timer)}</span> {/* Display trade duration */}
+                      <span>{formatTime(trade.duration || timer)}</span>{" "}
+                      {/* Display trade duration */}
                     </div>
 
                     {/* Second Row: Trade Amount and Profit/Loss */}
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <span>Trade: ${trade.price}</span>
                       <span>
                         {trade.status === "running"
                           ? `Time Left: ${trade.remainingTime}s`
-                          : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}
+                          : `${trade.reward > 0 ? "+" : ""}$${Math.abs(
+                              trade.reward
+                            )}`}
                       </span>
                     </div>
                   </li>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./Coin.module.css";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const s = styles;
 
@@ -16,7 +17,7 @@ const Coins = () => {
   useEffect(() => {
     const fetchCoins = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/coins");
+        const response = await axios.get(`${BACKEND_URL}/api/coins`);
         setCoins(response.data);
       } catch (err) {
         console.error("Error fetching coins:", err);
@@ -36,10 +37,7 @@ const Coins = () => {
       return;
     }
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/coins",
-        newCoin
-      );
+      const response = await axios.post(`${BACKEND_URL}/api/coins`, newCoin);
       setCoins(response.data.coins);
       setNewCoin({ name: "", type: "Live", startingPrice: "" }); // Reset form
     } catch (err) {
@@ -50,9 +48,7 @@ const Coins = () => {
   // Delete a coin
   const deleteCoin = async (name) => {
     try {
-      const response = await axios.delete(
-        `http://localhost:5000/api/coins/${name}`
-      );
+      const response = await axios.delete(`${BACKEND_URL}/api/coins/${name}`);
       setCoins(response.data.coins);
     } catch (err) {
       console.error("Error deleting coin:", err.response?.data || err.message);

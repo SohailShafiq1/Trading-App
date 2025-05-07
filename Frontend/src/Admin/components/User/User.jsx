@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./User.module.css";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const s = styles;
 
@@ -11,7 +12,7 @@ const User = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/users");
+        const response = await axios.get(`${BACKEND_URL}/api/users`);
         setUsers(response.data);
       } catch (err) {
         console.error("Error fetching users:", err);
