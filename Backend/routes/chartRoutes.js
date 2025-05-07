@@ -1,9 +1,12 @@
 import express from "express";
-import { saveChartData, getCandles } from "../controllers/chartController.js";
+import { getCoinChart } from "../controllers/chartController.js";
+import { updateDuration } from "../controllers/chartController.js";
+import { addNewCoin } from "../controllers/chartController.js";
 
 const router = express.Router();
 
-router.get("/:coinName", getCandles); // GET /api/chart/BTC
-router.post("/save", saveChartData); // POST /api/chart/save
+router.get("/:coinName", getCoinChart);
+router.post("/duration", updateDuration);
+router.post("/add", addNewCoin);
 
 export default router;

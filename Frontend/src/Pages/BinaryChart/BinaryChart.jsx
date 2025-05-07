@@ -125,7 +125,9 @@ const BinaryChart = ({ cash, setCash }) => {
         let reward = 0;
         let status = "";
 
-        const selectedCoinData = coins.find((coin) => coin.name === selectedCoin);
+        const selectedCoinData = coins.find(
+          (coin) => coin.name === selectedCoin
+        );
         const profitPercentage = selectedCoinData?.profitPercentage || 0;
 
         if (currentPrice > buyPrice) {
@@ -209,7 +211,9 @@ const BinaryChart = ({ cash, setCash }) => {
         let reward = 0;
         let status = "";
 
-        const selectedCoinData = coins.find((coin) => coin.name === selectedCoin);
+        const selectedCoinData = coins.find(
+          (coin) => coin.name === selectedCoin
+        );
         const profitPercentage = selectedCoinData?.profitPercentage || 0;
 
         if (currentPrice < sellPrice) {
@@ -278,8 +282,6 @@ const BinaryChart = ({ cash, setCash }) => {
                   </p>
                 </div>
               )}
-              
-              
             </div>
 
             {/* Conditionally render charts based on coin type */}
@@ -361,7 +363,7 @@ const BinaryChart = ({ cash, setCash }) => {
                           ? "#FF1600"
                           : "#FFF", // White for running trades
                       padding: "10px", // Add padding for better readability
-                       // Optional: Add , // Optional: Add a light background color
+                      // Optional: Add , // Optional: Add a light background color
                     }}
                   >
                     {/* First Row: Coin Name and Trade Duration */}

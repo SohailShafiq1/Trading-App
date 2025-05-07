@@ -3,7 +3,6 @@ import Coin from "../models/Coin.js";
 
 const router = express.Router();
 
-// Get all coins
 router.get("/", async (req, res) => {
   try {
     const coins = await Coin.find();
@@ -13,9 +12,9 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Add a new coin
 router.post("/", async (req, res) => {
-  const { type, name, firstName, lastName, startingPrice, profitPercentage } = req.body;
+  const { type, name, firstName, lastName, startingPrice, profitPercentage } =
+    req.body;
 
   try {
     const newCoin = new Coin({
@@ -26,6 +25,9 @@ router.post("/", async (req, res) => {
       startingPrice,
       profitPercentage,
     });
+    if (newCoin.type === "OTC") {
+      newCoin.name = newCoin.firstName + "/" + newCoin.lastName;
+    }
     await newCoin.save();
     const coins = await Coin.find();
     res.status(201).json(coins);
@@ -37,7 +39,8 @@ router.post("/", async (req, res) => {
 // Update a coin
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { type, name, firstName, lastName, startingPrice, profitPercentage } = req.body;
+  const { type, name, firstName, lastName, startingPrice, profitPercentage } =
+    req.body;
 
   try {
     const updatedCoin = await Coin.findByIdAndUpdate(

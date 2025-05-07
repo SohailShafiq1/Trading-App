@@ -43,9 +43,7 @@ const App = () => {
             >
               <Route
                 index
-                element={
-                  <BinaryChart cash={cash} setCash={setCash} /> 
-                }
+                element={<BinaryChart cash={cash} setCash={setCash} />}
               />
               <Route
                 path="/binarychart/profile"
@@ -105,7 +103,15 @@ const App = () => {
                 />
               </Route>
             </Route>
-            <Route path="/admin" element= {<AdminLayout/>}/>
+
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </div>
