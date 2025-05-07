@@ -278,13 +278,8 @@ const BinaryChart = ({ cash, setCash }) => {
                   </p>
                 </div>
               )}
-                <div className={s.timer}>
-                  <p>
-                    Latest Trade Timer:{" "}
-                    {trades[trades.length - 1].remainingTime}s
-                  </p>
-                </div>
-              )}
+              
+              
             </div>
 
             {/* Conditionally render charts based on coin type */}
