@@ -32,6 +32,7 @@ const User = () => {
             <th>Country</th>
             <th>Currency</th>
             <th>Role</th>
+            <th>Assets</th>
           </tr>
         </thead>
         <tbody>
@@ -42,6 +43,7 @@ const User = () => {
               <td>{user.country}</td>
               <td>{user.currency}</td>
               <td>{user.isAdmin ? "Admin" : "User"}</td>
+              <td> {user.assets}</td>
             </tr>
           ))}
         </tbody>
