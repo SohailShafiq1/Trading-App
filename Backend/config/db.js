@@ -1,12 +1,14 @@
 import mongoose from "mongoose";
-const conectDB = async () => {
+
+const connectDB = async () => {
   try {
-    mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB Connected");
+    await mongoose.connect("mongodb://localhost:27017/binary-trading");
+    console.log("✅ MongoDB connected successfully");
   } catch (err) {
-    console.log(err.message);
-    process.exit(1);
+    console.error("❌ Failed to connect to MongoDB:", err.message);
+    process.exit(1); 
+  
   }
 };
 
-export default conectDB;
+export default connectDB;

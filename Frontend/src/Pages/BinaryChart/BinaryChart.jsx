@@ -59,6 +59,7 @@ const BinaryChart = ({ cash, setCash }) => {
     }
   }, [selectedCoin, coins]);
 
+  // Update trade timers
   useEffect(() => {
     const interval = setInterval(() => {
       setTrades((prevTrades) =>
@@ -123,8 +124,11 @@ const BinaryChart = ({ cash, setCash }) => {
         let reward = 0;
         let status = "";
 
+        const selectedCoinData = coins.find((coin) => coin.name === selectedCoin);
+        const profitPercentage = selectedCoinData?.profitPercentage || 0;
+
         if (currentPrice > buyPrice) {
-          reward = (investment * 1.07).toFixed(2); // Calculate 7% profit
+          reward = (investment * (1 + profitPercentage / 100)).toFixed(2); // Calculate profit dynamically
           setCash((prevCash) => prevCash + parseFloat(reward)); // Add profit to cash
           status = "win";
         } else {
@@ -204,8 +208,11 @@ const BinaryChart = ({ cash, setCash }) => {
         let reward = 0;
         let status = "";
 
+        const selectedCoinData = coins.find((coin) => coin.name === selectedCoin);
+        const profitPercentage = selectedCoinData?.profitPercentage || 0;
+
         if (currentPrice < sellPrice) {
-          reward = (investment * 1.7).toFixed(2); // Calculate 70% profit
+          reward = (investment * (1 + profitPercentage / 100)).toFixed(2); // Calculate profit dynamically
           setCash((prevCash) => prevCash + parseFloat(reward)); // Add profit to cash
           status = "win";
         } else {
@@ -255,19 +262,21 @@ const BinaryChart = ({ cash, setCash }) => {
                 onChange={(e) => setSelectedCoin(e.target.value)}
               >
                 {coins.map((coin) => (
-                  <option key={coin.name} value={coin.name}>
-                    {coin.name}
+                  <option key={coin._id} value={coin.name}>
+                    {coin.type === "OTC"
+                      ? `${coin.firstName}/${coin.lastName}`
+                      : coin.name}
                   </option>
                 ))}
               </select>
               {trades.length > 0 && (
-              <div className={s.timer}>
-                <p>
-                  Latest Trade Timer:{" "}
-                  {trades[trades.length - 1].remainingTime}s
-                </p>
-              </div>
-            )}
+                <div className={s.timer}>
+                  <p>
+                    Latest Trade Timer:{" "}
+                    {trades[trades.length - 1].remainingTime}s
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Conditionally render charts based on coin type */}
@@ -348,22 +357,35 @@ const BinaryChart = ({ cash, setCash }) => {
                           ? "#FF1600"
                           : "#FFF", // White for running trades
                       padding: "10px", // Add padding for better readability
-                       // Optional: Add , // Optional: Add a light background color
                     }}
                   >
                     {/* First Row: Coin Name and Trade Duration */}
-                    <div style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>
+                    <div
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <strong>{trade.coinName}</strong>
-                      <span>{formatTime(trade.duration || timer)}</span> {/* Display trade duration */}
+                      <span>{formatTime(trade.duration || timer)}</span>{" "}
+                      {/* Display trade duration */}
                     </div>
 
                     {/* Second Row: Trade Amount and Profit/Loss */}
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <span>Trade: ${trade.price}</span>
                       <span>
                         {trade.status === "running"
                           ? `Time Left: ${trade.remainingTime}s`
-                          : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}
+                          : `${trade.reward > 0 ? "+" : ""}$${Math.abs(
+                              trade.reward
+                            )}`}
                       </span>
                     </div>
                   </li>
