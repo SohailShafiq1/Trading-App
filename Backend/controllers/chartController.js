@@ -1,56 +1,46 @@
 import ChartModel from "../models/ChartModel.js";
-import { candleGenerator } from "../services/candleGenerator.js";
 
-export const getCoinChart = async (req, res) => {
+export const saveChartData = async (req, res) => {
+  const { coinName, chartData, trend, duration } = req.body;
+
+  try {
+    let chart = await ChartModel.findOne({ coinName });
+
+    if (chart) {
+      chart.candles = chartData;
+      chart.trend = trend;
+      chart.duration = duration;
+      await chart.save();
+    } else {
+      chart = new ChartModel({
+        coinName,
+        candles: chartData,
+        trend,
+        duration,
+      });
+      await chart.save();
+    }
+
+    res.status(200).json({ message: "Chart data saved successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const getCandles = async (req, res) => {
   try {
     const { coinName } = req.params;
     const chart = await ChartModel.findOne({ coinName });
 
-    if (!chart) {
-      return res.status(404).json({ message: "Coin not found" });
-    }
+    if (!chart) return res.status(404).json({ message: "No data found" });
 
-    res.json({
+    res.status(200).json({
       candles: chart.candles,
-      currentTrend: chart.currentTrend,
-      currentDuration: chart.currentDuration,
+      duration: chart.duration,
+      trend: chart.trend,
     });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch chart data" });
-  }
-};
-
-export const updateDuration = async (req, res) => {
-  try {
-    const { coinName, duration } = req.body;
-
-    await ChartModel.findOneAndUpdate(
-      { coinName },
-      { currentDuration: duration }
-    );
-
-    // Update in generator
-    const chart = await ChartModel.findOne({ coinName });
-    if (chart && chart.candles.length > 0) {
-      candleGenerator.activeCoins.set(coinName, {
-        lastCandle: chart.candles[chart.candles.length - 1],
-        duration,
-        trend: chart.currentTrend,
-      });
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update duration" });
-  }
-};
-
-export const addNewCoin = async (req, res) => {
-  try {
-    const { coinName } = req.body;
-    await candleGenerator.addCoin(coinName);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add new coin" });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching candles" });
   }
 };

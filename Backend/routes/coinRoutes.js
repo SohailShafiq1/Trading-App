@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
       profitPercentage,
     });
     if (newCoin.type === "OTC") {
-      newCoin.name = newCoin.firstName + "/" + newCoin.lastName;
+      newCoin.name = newCoin.firstName + "-" + newCoin.lastName;
     }
     await newCoin.save();
     const coins = await Coin.find();

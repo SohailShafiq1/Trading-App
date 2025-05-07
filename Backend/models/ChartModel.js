@@ -1,18 +1,26 @@
+// models/ChartModel.js
 import mongoose from "mongoose";
 
-const CandleSchema = new mongoose.Schema({
-  x: { type: Number, required: true }, // timestamp
-  y: { type: [Number], required: true }, // [open, high, low, close]
-  trend: { type: String, required: true }, // trend when generated
-  duration: { type: Number, required: true }, // candle duration in ms
+const candleSchema = new mongoose.Schema({
+  x: { type: Date, required: true }, // or Number if using timestamps
+  y: {
+    type: [Number],
+    required: true,
+    validate: {
+      validator: function (v) {
+        return v.length === 4; // [open, high, low, close]
+      },
+      message: (props) =>
+        `Candle data must have 4 values, got ${props.value.length}`,
+    },
+  },
 });
 
-const ChartSchema = new mongoose.Schema({
+const chartSchema = new mongoose.Schema({
   coinName: { type: String, required: true, unique: true },
-  candles: { type: [CandleSchema], default: [] },
-  currentTrend: { type: String, default: "Normal" },
-  currentDuration: { type: Number, default: 30000 }, // 30s default
-  lastUpdated: { type: Date, default: Date.now },
+  candles: [candleSchema],
+  trend: { type: String, required: true },
+  duration: { type: Number, required: true },
 });
 
-export default mongoose.model("Chart", ChartSchema);
+export default mongoose.model("Chart", chartSchema);
