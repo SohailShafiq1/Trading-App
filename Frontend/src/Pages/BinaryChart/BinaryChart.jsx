@@ -7,10 +7,13 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useAuth } from "../../Context/AuthContext";
+import { useUserAssets } from "../../Context/UserAssetsContext";
+import Trades from "./components/Trades/Trades";
 
 const s = styles;
 
-const BinaryChart = ({ cash, setCash }) => {
+const BinaryChart = () => {
   const [coins, setCoins] = useState([]); // State to store coins
   const [selectedCoin, setSelectedCoin] = useState("BTC");
   const [coinPrice, setCoinPrice] = useState(0);
@@ -20,6 +23,18 @@ const BinaryChart = ({ cash, setCash }) => {
   const [popupColor, setPopupColor] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [trades, setTrades] = useState([]);
+  const { user } = useAuth();
+  const { userAssets, setUserAssets } = useUserAssets(); 
+  const updateUserAssetsInDB = async (newAssets) => {
+    try {
+      await axios.put(`http://localhost:5000/api/users/update-assets`, {
+        email: user.email,
+        assets: newAssets,
+      });
+    } catch (err) {
+      console.error("Error updating user assets in the database:", err);
+    }
+  };
 
   // Fetch coins from the backend
   useEffect(() => {
@@ -76,7 +91,7 @@ const BinaryChart = ({ cash, setCash }) => {
   }, []);
 
   const handleBuy = async () => {
-    if (investment > cash) {
+    if (investment > userAssets) {
       toast.error("Insufficient funds!", {
         position: "top-right",
         autoClose: 2000,
@@ -87,8 +102,14 @@ const BinaryChart = ({ cash, setCash }) => {
       return;
     }
 
-    const buyPrice = parseFloat(coinPrice); // Capture the current price at the time of the buy
-    setCash((prevCash) => prevCash - investment); // Deduct investment from cash
+    const buyPrice = parseFloat(coinPrice);
+
+    // Deduct investment from userAssets using a functional update
+    setUserAssets((prevAssets) => {
+      const updatedAssets = prevAssets - investment;
+      updateUserAssetsInDB(updatedAssets); // Update in database
+      return updatedAssets;
+    });
 
     toast.success(`Buy ${selectedCoin} at $${buyPrice} with $${investment}`, {
       position: "top-right",
@@ -132,7 +153,11 @@ const BinaryChart = ({ cash, setCash }) => {
 
         if (currentPrice > buyPrice) {
           reward = (investment * (1 + profitPercentage / 100)).toFixed(2); // Calculate profit dynamically
-          setCash((prevCash) => prevCash + parseFloat(reward)); // Add profit to cash
+          setUserAssets((prevAssets) => {
+            const newAssets = prevAssets + parseFloat(reward);
+            updateUserAssetsInDB(newAssets); // Update in database
+            return newAssets;
+          });
           status = "win";
         } else {
           reward = -investment; // Loss is the investment amount
@@ -162,7 +187,7 @@ const BinaryChart = ({ cash, setCash }) => {
   };
 
   const handleSell = async () => {
-    if (investment > cash) {
+    if (investment > userAssets) {
       toast.error("Insufficient funds!", {
         position: "top-right",
         autoClose: 2000,
@@ -173,8 +198,14 @@ const BinaryChart = ({ cash, setCash }) => {
       return;
     }
 
-    const sellPrice = parseFloat(coinPrice); // Capture the current price at the time of the sell
-    setCash((prevCash) => prevCash - investment); // Deduct investment from cash
+    const sellPrice = parseFloat(coinPrice);
+
+    // Deduct investment from userAssets using a functional update
+    setUserAssets((prevAssets) => {
+      const updatedAssets = prevAssets - investment;
+      updateUserAssetsInDB(updatedAssets); // Update in database
+      return updatedAssets;
+    });
 
     toast.error(`Sell ${selectedCoin} at $${sellPrice} with $${investment}`, {
       position: "top-right",
@@ -218,7 +249,11 @@ const BinaryChart = ({ cash, setCash }) => {
 
         if (currentPrice < sellPrice) {
           reward = (investment * (1 + profitPercentage / 100)).toFixed(2); // Calculate profit dynamically
-          setCash((prevCash) => prevCash + parseFloat(reward)); // Add profit to cash
+          setUserAssets((prevAssets) => {
+            const newAssets = prevAssets + parseFloat(reward);
+            updateUserAssetsInDB(newAssets); // Update in database
+            return newAssets;
+          });
           status = "win";
         } else {
           reward = -investment; // Loss is the investment amount
@@ -349,56 +384,8 @@ const BinaryChart = ({ cash, setCash }) => {
               </div>
             </div>
 
-            <div className={s.tradeHistory}>
-              <p>Trades</p>
-              <ul>
-                {trades.map((trade, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      color:
-                        trade.status === "win"
-                          ? "#10A055"
-                          : trade.status === "loss"
-                          ? "#FF1600"
-                          : "#FFF", // White for running trades
-                      padding: "10px", // Add padding for better readability
-                      // Optional: Add , // Optional: Add a light background color
-                    }}
-                  >
-                    {/* First Row: Coin Name and Trade Duration */}
-                    <div
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <strong>{trade.coinName}</strong>
-                      <span>{formatTime(trade.duration || timer)}</span>{" "}
-                      {/* Display trade duration */}
-                    </div>
-
-                    {/* Second Row: Trade Amount and Profit/Loss */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>Trade: ${trade.price}</span>
-                      <span>
-                        {trade.status === "running"
-                          ? `Time Left: ${trade.remainingTime}s`
-                          : `${trade.reward > 0 ? "+" : ""}$${Math.abs(
-                              trade.reward
-                            )}`}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Move trade history to the Trades component */}
+            <Trades trades={trades} timer={timer} formatTime={formatTime} />
           </div>
         </div>
       </div>

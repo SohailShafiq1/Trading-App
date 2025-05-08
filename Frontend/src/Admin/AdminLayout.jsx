@@ -1,8 +1,6 @@
 import React from "react";
 import styles from "./AdminLayout.module.css";
-import User from "./components/User/User";
-import Trends from "./components/Trends/Trends";
-import Coins from "./components/Coins/Coins"; // Import the new Coins component
+import { NavLink } from "react-router-dom";
 
 const s = styles;
 
@@ -10,15 +8,17 @@ const AdminLayout = () => {
   return (
     <div className={s.container}>
       <h1 className={s.title}>Admin Panel</h1>
-
-      {/* Coin Management Section */}
-      <Coins />
-
-      {/* User Management Section */}
-      <User />
-
-      {/* Trend Management Section */}
-      <Trends />
+      <div className={s.linkContainer}>
+        <NavLink to="/user" className={s.link}>
+          User
+        </NavLink>
+        <NavLink to="/withdraw" className={s.link}>
+          Withdraw
+        </NavLink>
+        <NavLink to="/coins" className={s.link}>
+          Coins
+        </NavLink>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./Coin.module.css";
+import Trends from "../Trends/Trends"; // Import the Trends component
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const s = styles;
@@ -18,16 +20,16 @@ const Coins = () => {
   const [editingCoin, setEditingCoin] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showTrendPopup, setShowTrendPopup] = useState(false); // State to control the popup
+  const navigate = useNavigate();
 
   const fetchCoins = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${BACKEND_URL}/api/coins`);
-      // Ensure response.data is an array
       if (Array.isArray(response.data)) {
         setCoins(response.data);
       } else if (Array.isArray(response.data?.coins)) {
-        // Handle case where data is nested under 'coins' property
         setCoins(response.data.coins);
       } else {
         setError("Invalid data format received from server");
@@ -45,6 +47,7 @@ const Coins = () => {
   useEffect(() => {
     fetchCoins();
   }, []);
+
   const addCoin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -118,14 +121,24 @@ const Coins = () => {
     setEditingCoin((prev) => ({ ...prev, [name]: value }));
   };
 
+  const openTrendPopup = () => {
+    setShowTrendPopup(true); // Show the popup
+  };
+
+  const closeTrendPopup = () => {
+    setShowTrendPopup(false); // Close the popup
+  };
+
   return (
     <div className={s.container}>
+      <button className={s.backButton} onClick={() => navigate(-1)}>
+        Back
+      </button>
       <h2>Coin Management</h2>
 
       {error && <div className={s.error}>{error}</div>}
       {isLoading && <div className={s.loading}>Loading...</div>}
 
-      {/* Add Coin Form */}
       <form className={s.form} onSubmit={addCoin}>
         <select name="type" value={newCoin.type} onChange={handleInputChange}>
           <option value="Live">Live</option>
@@ -171,6 +184,13 @@ const Coins = () => {
               min="0"
               step="0.01"
             />
+            <button
+              type="button"
+              className={s.trendButton}
+              onClick={openTrendPopup} // Open the popup for Trends
+            >
+              Set OTC Trend
+            </button>
           </>
         )}
 
@@ -198,6 +218,7 @@ const Coins = () => {
             <th>Name</th>
             <th>Starting Price</th>
             <th>Profit %</th>
+            <th>Trend</th> {/* New Trend column */}
             <th>Actions</th>
           </tr>
         </thead>
@@ -213,6 +234,18 @@ const Coins = () => {
                 </td>
                 <td>{coin.startingPrice || "N/A"}</td>
                 <td>{coin.profitPercentage}%</td>
+                <td>
+                  {coin.type === "OTC" ? (
+                    <button
+                      className={s.trendButton}
+                      onClick={() => openTrendPopup()} // Open Trend popup for OTC
+                    >
+                      Set Trend
+                    </button>
+                  ) : (
+                    "N/A"
+                  )}
+                </td>
                 <td>
                   <button
                     type="button"
@@ -240,15 +273,6 @@ const Coins = () => {
           <div className={s.modal}>
             <h3>Edit Coin</h3>
             <form onSubmit={updateCoin}>
-              <select
-                name="type"
-                value={editingCoin.type}
-                onChange={handleEditInputChange}
-              >
-                <option value="Live">Live</option>
-                <option value="OTC">OTC</option>
-              </select>
-
               {editingCoin.type === "Live" ? (
                 <>
                   <input
@@ -315,6 +339,18 @@ const Coins = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Trend Popup */}
+      {showTrendPopup && (
+        <div className={s.modalOverlay}>
+          <div className={s.modal}>
+            <button className={s.closeButton} onClick={closeTrendPopup}>
+              Close
+            </button>
+            <Trends /> {/* Render the Trends component */}
           </div>
         </div>
       )}

@@ -3,22 +3,23 @@
   border-collapse: collapse;
   margin-top: 20px;
   font-family: Arial, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   color: #333;
 }
 
 .userTable th,
 .userTable td {
   border: 1px solid #ddd;
-  padding: 12px;
+  padding: 15px;
   text-align: left;
 }
 
 .userTable th {
   background-color: #007bff;
-  color: #fff;
+  color: #ffffff;
   font-weight: bold;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .userTable tr:nth-child(even) {
@@ -28,22 +29,62 @@
 .userTable tr:hover {
   background-color: #f1f1f1;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .userTable td {
   vertical-align: middle;
 }
 
+.userTable th:first-child,
+.userTable td:first-child {
+  text-align: center;
+}
+
+.userTable th:last-child,
+.userTable td:last-child {
+  text-align: right;
+}
+
 .section {
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .section h2 {
   margin-bottom: 20px;
-  font-size: 24px;
+  font-size: 28px;
   color: #333;
   text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.backButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.backButton:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.backButton:active {
+  background-color: #003f7f;
+  transform: translateY(0);
 }

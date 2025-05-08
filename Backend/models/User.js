@@ -42,6 +42,10 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    assets: {
+      type: Number,
+      default: 10000, 
+    },
   },
   {
     timestamps: true,

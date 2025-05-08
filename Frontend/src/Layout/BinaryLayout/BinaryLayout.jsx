@@ -3,14 +3,20 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { CgMoreAlt } from "react-icons/cg";
 import { CgProfile } from "react-icons/cg";
 import { IoMdImage } from "react-icons/io";
+import axios from "axios";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 const s = styles;
 import logo from "../../../assets/WealthXLogo.png";
+import { useAuth } from "../../Context/AuthContext";
+import { useUserAssets } from "../../Context/UserAssetsContext";
 
-const BinaryLayout = ({ cash }) => {
+const BinaryLayout = () => {
+  const { user } = useAuth();
+  const { userAssets } = useUserAssets(); // Access context
+
   const navigate = useNavigate();
   return (
     <>
@@ -44,7 +50,7 @@ const BinaryLayout = ({ cash }) => {
           <NavLink className={s.liveAcc}>
             <p>
               Live account
-              <br /> {cash}$
+              <br /> {userAssets}$
             </p>
           </NavLink>
           <div className={s.bankbtns}>
