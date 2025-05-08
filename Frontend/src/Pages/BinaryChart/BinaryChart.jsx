@@ -15,7 +15,7 @@ const s = styles;
 
 const BinaryChart = () => {
   const [coins, setCoins] = useState([]); // State to store coins
-  const [selectedCoin, setSelectedCoin] = useState("BTC");
+  const [selectedCoin, setSelectedCoin] = useState("");
   const [coinPrice, setCoinPrice] = useState(0);
   const [timer, setTimer] = useState(60); // Default trade time
   const [investment, setInvestment] = useState(10);
@@ -24,7 +24,7 @@ const BinaryChart = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [trades, setTrades] = useState([]);
   const { user } = useAuth();
-  const { userAssets, setUserAssets } = useUserAssets(); 
+  const { userAssets, setUserAssets } = useUserAssets();
   const updateUserAssetsInDB = async (newAssets) => {
     try {
       await axios.put(`http://localhost:5000/api/users/update-assets`, {
@@ -319,12 +319,14 @@ const BinaryChart = () => {
               )}
             </div>
 
-            {/* Conditionally render charts based on coin type */}
-            {coins.find((coin) => coin.name === selectedCoin)?.type ===
-            "Live" ? (
+            {coins.length > 0 &&
+            coins.find((coin) => coin.name === selectedCoin)?.type ===
+              "Live" ? (
               <TradingViewChart coinName={selectedCoin} />
-            ) : (
+            ) : coins.length > 0 ? (
               <LiveCandleChart coinName={selectedCoin} />
+            ) : (
+              <p>Loading chart...</p>
             )}
           </div>
 
@@ -383,8 +385,6 @@ const BinaryChart = () => {
                 <p>Sell</p>
               </div>
             </div>
-
-            {/* Move trade history to the Trades component */}
             <Trades trades={trades} timer={timer} formatTime={formatTime} />
           </div>
         </div>

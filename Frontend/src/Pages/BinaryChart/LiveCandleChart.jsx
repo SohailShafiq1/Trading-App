@@ -1,294 +1,132 @@
-import React, { useEffect, useState, useRef } from "react";
-import ReactApexChart from "react-apexcharts";
-import axios from "axios";
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import React, { useRef, useEffect, useState } from "react";
+import { createChart, CandlestickSeries } from "lightweight-charts";
 
-const CANDLE_DURATIONS = [
-  { label: "30 seconds", value: 30000 },
-  { label: "1 minute", value: 60000 },
-  { label: "2 minutes", value: 120000 },
-  { label: "3 minutes", value: 180000 },
-  { label: "5 minutes", value: 300000 },
-];
+export default function LiveCandleChart() {
+  const chartContainerRef = useRef();
+  const chartRef = useRef(null);
+  const candleSeriesRef = useRef(null);
+  const [intervalSeconds, setIntervalSeconds] = useState(30);
+  const [rawData, setRawData] = useState([]);
 
-const generateCandle = (
-  lastClose,
-  trend = "Normal",
-  scenarioCounterRef = { current: 0 }
-) => {
-  const open = lastClose;
-  let close = open;
-  let high = open;
-  let low = open;
-
-  switch (trend) {
-    case "Scenario1":
-      scenarioCounterRef.current = (scenarioCounterRef.current + 1) % 4;
-      close = open + (scenarioCounterRef.current === 3 ? -5 : 5);
-      break;
-
-    case "Scenario2":
-      scenarioCounterRef.current = (scenarioCounterRef.current + 1) % 10;
-      close = open + (scenarioCounterRef.current < 5 ? -5 : 5);
-      break;
-
-    case "Scenario3":
-      scenarioCounterRef.current++;
-      close = open + (scenarioCounterRef.current % 2 === 0 ? 5 : -5);
-      break;
-
-    case "Scenario4":
-      close = open + 6;
-      break;
-
-    case "Scenario5":
-      close = open - 6;
-      break;
-
-    case "Up":
-      close = open + Math.random() * 2 + 1;
-      break;
-
-    case "Down":
-      close = open - Math.random() * 2 - 1;
-      break;
-
-    default:
-      close = open + (Math.random() - 0.5) * 4;
-      break;
-  }
-
-  high = Math.max(open, close) + Math.random();
-  low = Math.min(open, close) - Math.random();
-
-  return [open, high, low, close];
-};
-
-const LiveCandleChart = ({ coinName }) => {
-  const [series, setSeries] = useState([]);
-  const [candleDuration, setCandleDuration] = useState(
-    CANDLE_DURATIONS[0].value
-  );
-  const [trend, setTrend] = useState("Normal");
-  const [popupMessage, setPopupMessage] = useState("");
-  const [showPopup, setShowPopup] = useState(false);
-
-  const scenarioCounterRef = useRef(0);
-  const updateIntervalRef = useRef(null);
-  const trendFetchIntervalRef = useRef(null);
-
-  const handleCandleDurationChange = (duration) => {
-    setCandleDuration(duration);
-  };
-
+  // Generate raw 1-second data only once
   useEffect(() => {
-    const loadChartFromDB = async () => {
-      try {
-        const response = await axios.get(
-          `${BACKEND_URL}/api/chart/${coinName}`
-        );
-        const data = response.data;
+    const data = [];
+    let currentPrice = 100;
+    let currentTime = Math.floor(Date.now() / 1000) - 3000;
 
-        const { candles, duration, trend: savedTrend } = data;
-
-        if (Array.isArray(candles) && candles.length > 0) {
-          setSeries([{ data: candles }]);
-          setCandleDuration(duration || CANDLE_DURATIONS[0].value); // ⏱ restore duration
-          setTrend(savedTrend || "Normal"); // 📈 restore trend
-          return;
-        }
-
-        throw new Error("No candle data, fallback to first candle");
-      } catch (err) {
-        console.warn("Chart not found or empty, generating first candle...");
-
-        const now = Date.now();
-        const [open, high, low, close] = generateCandle(
-          100,
-          trend,
-          scenarioCounterRef
-        );
-        const firstCandle = [{ x: now, y: [open, high, low, close] }];
-        setSeries([{ data: firstCandle }]);
-
-        try {
-          await axios.post(`${BACKEND_URL}/api/chart/save`, {
-            coinName,
-            chartData: firstCandle,
-            trend,
-            duration: candleDuration,
-          });
-        } catch (saveErr) {
-          console.error("Failed to save chart data:", saveErr);
-        }
-      }
-    };
-
-    loadChartFromDB();
-  }, [coinName]);
-
-  useEffect(() => {
-    scenarioCounterRef.current = 0;
-  }, [trend]);
-
-  useEffect(() => {
-    const fetchTrend = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/api/admin/trend`);
-        const newTrend = response.data.trend;
-
-        if (newTrend !== trend) {
-          scenarioCounterRef.current = 0;
-          setTrend(newTrend);
-          setPopupMessage(`Trend changed to: ${newTrend}`);
-          setShowPopup(true);
-          setTimeout(() => setShowPopup(false), 3000);
-        }
-      } catch (err) {
-        console.error("Error fetching trend:", err);
-      }
-    };
-
-    fetchTrend();
-    trendFetchIntervalRef.current = setInterval(fetchTrend, 3000);
-
-    return () => clearInterval(trendFetchIntervalRef.current);
-  }, [trend]);
-  const saveChartDataToBackend = async (chartData) => {
-    try {
-      await axios.post(`${BACKEND_URL}/api/chart/save`, {
-        coinName,
-        chartData,
-        trend,
-        duration: candleDuration,
-      });
-    } catch (error) {
-      console.error("Failed to save chart data:", error);
+    for (let i = 0; i < 3000; i++) {
+      const changePercent = (Math.random() - 0.5) * 0.002;
+      const newPrice = currentPrice * (1 + changePercent);
+      const price = parseFloat(newPrice.toFixed(2));
+      data.push({ time: currentTime, price });
+      currentPrice = price;
+      currentTime += 1;
     }
-  };
 
+    setRawData(data);
+  }, []);
+
+  // Generate live candles
   useEffect(() => {
-    const updateCandles = () => {
-      setSeries((prevSeries) => {
-        const oldData = [...prevSeries[0].data];
-        const lastCandle = oldData[oldData.length - 1];
-        const now = new Date().getTime();
+    const interval = setInterval(() => {
+      setRawData((prevData) => {
+        const lastDataPoint = prevData[prevData.length - 1];
+        const changePercent = (Math.random() - 0.5) * 0.002;
+        const newPrice = lastDataPoint.price * (1 + changePercent);
+        const price = parseFloat(newPrice.toFixed(2));
+        const newTime = lastDataPoint.time + 1;
 
-        if (now - lastCandle.x >= candleDuration) {
-          const newTimestamp = lastCandle.x + candleDuration;
-          const [open, high, low, close] = generateCandle(
-            lastCandle.y[3],
-            trend,
-            scenarioCounterRef
-          );
-          const newCandle = { x: newTimestamp, y: [open, high, low, close] };
-          oldData.push(newCandle);
-          if (oldData.length > 50) oldData.shift();
-          saveChartDataToBackend(oldData);
-        } else {
-          const updatedCandle = { ...lastCandle };
-          const newClose = updatedCandle.y[3] + (Math.random() - 0.5) * 1.5;
-          updatedCandle.y[1] = Math.max(updatedCandle.y[1], newClose);
-          updatedCandle.y[2] = Math.min(updatedCandle.y[2], newClose);
-          updatedCandle.y[3] = newClose;
-          oldData[oldData.length - 1] = updatedCandle;
-        }
-
-        return [{ data: oldData }];
+        return [...prevData, { time: newTime, price }];
       });
-    };
+    }, 1000);
 
-    updateIntervalRef.current = setInterval(updateCandles, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    return () => clearInterval(updateIntervalRef.current);
-  }, [candleDuration, trend]);
+  // Create chart once
+  useEffect(() => {
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: chartContainerRef.current.clientHeight,
+    });
+    chartRef.current = chart;
 
-  const options = {
-    chart: {
-      type: "candlestick",
-      height: 600,
-      animations: {
-        enabled: true,
-        easing: "linear",
-        dynamicAnimation: { speed: 300 },
-      },
-      toolbar: {
-        show: true,
-      },
-      zoom: {
-        enabled: true,
-        type: "x",
-        autoScaleYaxis: true,
-      },
-    },
-    title: {
-      text: `${coinName} Chart - Mode: ${trend}`,
-      align: "left",
-    },
-    xaxis: {
-      type: "datetime",
-    },
-    yaxis: {
-      tooltip: {
-        enabled: true,
-      },
-    },
-    tooltip: {
-      enabled: true,
-    },
-  };
+    const candleSeries = chart.addSeries(CandlestickSeries);
+    candleSeriesRef.current = candleSeries;
+
+    new ResizeObserver(() => {
+      chart.applyOptions({
+        width: chartContainerRef.current.clientWidth,
+        height: chartContainerRef.current.clientHeight,
+      });
+    }).observe(chartContainerRef.current);
+
+    return () => chart.remove();
+  }, []);
+
+  // Aggregate raw data into candles based on selected interval
+  useEffect(() => {
+    if (!rawData.length || !candleSeriesRef.current) return;
+
+    const interval = intervalSeconds;
+    const grouped = [];
+
+    for (let i = 0; i < rawData.length; i += interval) {
+      const chunk = rawData.slice(i, i + interval);
+      if (chunk.length === 0) continue;
+
+      const open = chunk[0].price;
+      const close = chunk[chunk.length - 1].price;
+      const high = Math.max(...chunk.map((p) => p.price));
+      const low = Math.min(...chunk.map((p) => p.price));
+      const time = chunk[0].time;
+
+      grouped.push({ time, open, high, low, close });
+    }
+
+    candleSeriesRef.current.setData(grouped);
+  }, [intervalSeconds, rawData]);
 
   return (
-    <div id="chart">
-      {showPopup && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            backgroundColor: "#007BFF",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: "5px",
-            boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
-            zIndex: 1000,
-          }}
-        >
-          {popupMessage}
-        </div>
-      )}
-
-      <div style={{ marginBottom: "20px" }}>
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {/* Interval selector UI */}
+      <div
+        style={{
+          position: "absolute",
+          top: "10px",
+          left: "10px",
+          zIndex: 1,
+          background: "#fff",
+          padding: "6px 10px",
+          borderRadius: "6px",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+        }}
+      >
         <label>
-          Select Candle Duration:{" "}
+          Interval:&nbsp;
           <select
-            value={candleDuration}
-            onChange={(e) => handleCandleDurationChange(Number(e.target.value))}
-            style={{
-              padding: "5px 10px",
-              border: "1px solid #ccc",
-              borderRadius: "5px",
-              backgroundColor: "#f9f9f9",
-              cursor: "pointer",
-            }}
+            value={intervalSeconds}
+            onChange={(e) => setIntervalSeconds(Number(e.target.value))}
           >
-            {CANDLE_DURATIONS.map((duration) => (
-              <option key={duration.value} value={duration.value}>
-                {duration.label}
-              </option>
-            ))}
+            <option value={30}>30s</option>
+            <option value={60}>1m</option>
+            <option value={120}>2m</option>
+            <option value={180}>3m</option>
+            <option value={300}>5m</option>
           </select>
         </label>
       </div>
 
-      <ReactApexChart
-        options={options}
-        series={series}
-        type="candlestick"
-        height={600}
+      {/* Chart container */}
+      <div
+        ref={chartContainerRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+          top: "50px",
+        }}
       />
     </div>
   );
-};
-
-export default LiveCandleChart;
+}

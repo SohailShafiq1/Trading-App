@@ -5,7 +5,6 @@ export const saveChartData = async (req, res) => {
 
   try {
     let chart = await ChartModel.findOne({ coinName });
-
     if (chart) {
       chart.candles = chartData;
       chart.trend = trend;
