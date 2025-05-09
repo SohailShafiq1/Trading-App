@@ -12,6 +12,34 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/price/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const coin = await Coin.findOne({ name });
+    if (!coin) {
+      return res.status(404).json({ message: "Coin not found" });
+    }
+    res.json(coin.startingPrice);
+  } catch (err) {
+    console.error("Error fetching coin:", err);
+    res.status(500).json({ message: "Failed to fetch coin" });
+  }
+});
+
+router.get("/type/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const coin = await Coin.findOne({ name });
+    if (!coin) {
+      return res.status(404).json({ message: "Coin not found" });
+    }
+    res.json(coin.type);
+  } catch (err) {
+    console.error("Error fetching coin:", err);
+    res.status(500).json({ message: "Failed to fetch coin" });
+  }
+});
+
 router.post("/", async (req, res) => {
   const { type, name, firstName, lastName, startingPrice, profitPercentage } =
     req.body;

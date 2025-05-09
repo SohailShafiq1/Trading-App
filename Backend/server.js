@@ -13,7 +13,7 @@ const app = express();
 
 const allowedOrigins = ["http://localhost:5173"];
 app.use(
-  cors({
+  cors({  
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,

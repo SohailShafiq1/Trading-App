@@ -11,20 +11,25 @@ import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
 
-const s = styles;
-
 const BinaryChart = () => {
-  const [coins, setCoins] = useState([]); // State to store coins
-  const [selectedCoin, setSelectedCoin] = useState("");
-  const [coinPrice, setCoinPrice] = useState(0);
-  const [timer, setTimer] = useState(60); // Default trade time
+  // State declarations
+  const [coins, setCoins] = useState([]);
+  const [selectedCoin, setSelectedCoin] = useState("BTC");
+  const [selectedCoinType, setSelectedCoinType] = useState("");
+  const [livePrice, setLivePrice] = useState(0);
+  const [otcPrice, setOtcPrice] = useState(0);
+  const [timer, setTimer] = useState(60);
   const [investment, setInvestment] = useState(10);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupColor, setPopupColor] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [trades, setTrades] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [priceLoaded, setPriceLoaded] = useState(false);
   const { user } = useAuth();
   const { userAssets, setUserAssets } = useUserAssets();
+
+  // Update user assets in database
   const updateUserAssetsInDB = async (newAssets) => {
     try {
       await axios.put(`http://localhost:5000/api/users/update-assets`, {
@@ -32,48 +37,107 @@ const BinaryChart = () => {
         assets: newAssets,
       });
     } catch (err) {
-      console.error("Error updating user assets in the database:", err);
+      console.error("Error updating user assets:", err);
+      toast.error("Failed to update assets");
     }
   };
 
-  // Fetch coins from the backend
+  // Fetch coins from backend
   useEffect(() => {
     const fetchCoins = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/coins"); // Replace with your backend URL
-        setCoins(response.data); // Set coins from the backend
+        const response = await axios.get("http://localhost:5000/api/coins");
+        setCoins(response.data);
       } catch (err) {
         console.error("Error fetching coins:", err);
+        toast.error("Failed to load coins");
       }
     };
     fetchCoins();
   }, []);
 
-  // Fetch coin price based on selected coin
+  // Set coin type when selected coin changes
   useEffect(() => {
-    const selectedCoinType = coins.find(
-      (coin) => coin.name === selectedCoin
-    )?.type;
-
-    if (selectedCoinType === "Live") {
-      const fetchPrice = async () => {
-        try {
-          const response = await fetch(
-            `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
-          );
-          const data = await response.json();
-          setCoinPrice(parseFloat(data.price).toFixed(2));
-        } catch (err) {
-          console.error("Failed to fetch coin price:", err);
-        }
-      };
-      fetchPrice();
-      const interval = setInterval(fetchPrice, 5000);
-      return () => clearInterval(interval);
-    } else {
-      setCoinPrice((Math.random() * 100 + 10).toFixed(2)); // Random price for OTC coins
+    if (selectedCoin) {
+      setIsLoading(true);
+      setPriceLoaded(false);
+      const coin = coins.find((c) => c.name === selectedCoin);
+      if (coin) {
+        setSelectedCoinType(coin.type);
+        setLivePrice(0);
+        setOtcPrice(0);
+      }
     }
   }, [selectedCoin, coins]);
+
+  // Fetch and update live price
+  useEffect(() => {
+    if (!selectedCoin || selectedCoinType !== "Live") return;
+
+    let interval;
+    let isMounted = true;
+
+    const fetchLivePrice = async () => {
+      try {
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
+        );
+        const data = await response.json();
+        if (isMounted) {
+          setLivePrice(parseFloat(data.price).toFixed(2));
+          setPriceLoaded(true);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch live price:", err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchLivePrice();
+    interval = setInterval(fetchLivePrice, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedCoin, selectedCoinType]);
+
+  // Fetch and update OTC price
+  useEffect(() => {
+    if (!selectedCoin || selectedCoinType !== "OTC") return;
+
+    let interval;
+    let isMounted = true;
+
+    const fetchOtcPrice = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/coins/price/${selectedCoin}`
+        );
+        if (isMounted) {
+          setOtcPrice(parseFloat(response.data).toFixed(2));
+          setPriceLoaded(true);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch OTC price:", err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchOtcPrice();
+    interval = setInterval(fetchOtcPrice, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedCoin, selectedCoinType]);
 
   // Update trade timers
   useEffect(() => {
@@ -90,217 +154,139 @@ const BinaryChart = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleBuy = async () => {
-    if (investment > userAssets) {
-      toast.error("Insufficient funds!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-      });
+  const handleTrade = async (tradeType) => {
+    if (!selectedCoin) {
+      toast.error("Please select a coin first!");
       return;
     }
 
-    const buyPrice = parseFloat(coinPrice);
+    if (isLoading || !priceLoaded) {
+      toast.error("Please wait for price data to load");
+      return;
+    }
 
-    // Deduct investment from userAssets using a functional update
-    setUserAssets((prevAssets) => {
-      const updatedAssets = prevAssets - investment;
-      updateUserAssetsInDB(updatedAssets); // Update in database
-      return updatedAssets;
+    if (investment > userAssets) {
+      toast.error("Insufficient funds!");
+      return;
+    }
+
+    const currentPrice = selectedCoinType === "OTC" ? otcPrice : livePrice;
+    const tradePrice = parseFloat(currentPrice);
+    const tradeId = Date.now();
+
+    // Deduct investment
+    setUserAssets((prev) => {
+      const newAssets = prev - investment;
+      updateUserAssetsInDB(newAssets);
+      return newAssets;
     });
 
-    toast.success(`Buy ${selectedCoin} at $${buyPrice} with $${investment}`, {
-      position: "top-right",
-      autoClose: 1000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-    });
-
-    const tradeId = Date.now(); // Unique ID for the trade
+    // Add new trade
     setTrades((prev) => [
       ...prev,
       {
         id: tradeId,
-        type: "Buy",
+        type: tradeType,
         price: investment,
-        coinPrice: buyPrice,
+        coinPrice: tradePrice,
         coinName: selectedCoin,
         remainingTime: timer,
-        status: "running", // Initial status
-        reward: 0, // Initial reward
+        status: "running",
+        reward: 0,
       },
     ]);
 
-    // Wait for the trade time and check the price
     setTimeout(async () => {
       try {
-        const response = await fetch(
-          `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
-        );
-        const data = await response.json();
-        const currentPrice = parseFloat(data.price);
+        let endPrice;
+        if (selectedCoinType === "Live") {
+          const response = await fetch(
+            `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
+          );
+          const data = await response.json();
+          endPrice = parseFloat(data.price);
+        } else {
+          const response = await axios.get(
+            `http://localhost:5000/api/coins/price/${selectedCoin}`
+          );
+          endPrice = parseFloat(response.data);
+        }
 
-        let reward = 0;
-        let status = "";
+        const coinData = coins.find((c) => c.name === selectedCoin);
+        const profitPercentage = coinData?.profitPercentage || 0;
 
-        const selectedCoinData = coins.find(
-          (coin) => coin.name === selectedCoin
-        );
-        const profitPercentage = selectedCoinData?.profitPercentage || 0;
+        const isWin =
+          tradeType === "Buy" ? endPrice > tradePrice : endPrice < tradePrice;
 
-        if (currentPrice > buyPrice) {
-          reward = (investment * (1 + profitPercentage / 100)).toFixed(2); // Calculate profit dynamically
-          setUserAssets((prevAssets) => {
-            const newAssets = prevAssets + parseFloat(reward);
-            updateUserAssetsInDB(newAssets); // Update in database
+        const reward = isWin
+          ? (investment * (1 + profitPercentage / 100)).toFixed(2)
+          : -investment;
+
+        if (isWin) {
+          setUserAssets((prev) => {
+            const newAssets = prev + parseFloat(reward);
+            updateUserAssetsInDB(newAssets);
             return newAssets;
           });
-          status = "win";
-        } else {
-          reward = -investment; // Loss is the investment amount
-          status = "loss";
         }
 
         setTrades((prev) =>
           prev.map((trade) =>
             trade.id === tradeId
-              ? { ...trade, status, reward, remainingTime: 0 }
+              ? {
+                  ...trade,
+                  status: isWin ? "win" : "loss",
+                  reward: parseFloat(reward),
+                  remainingTime: 0,
+                }
               : trade
           )
         );
 
         setPopupMessage(
-          status === "win"
+          isWin
             ? `Trade Win! You got $${reward}`
-            : `Trade Loss! You lost $${-reward}`
+            : `Trade Loss! You lost $${Math.abs(reward)}`
         );
-        setPopupColor(status === "win" ? "#10A055" : "#FF1600"); // Green for win, red for loss
+        setPopupColor(isWin ? "#10A055" : "#FF1600");
         setShowPopup(true);
-        setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
+        setTimeout(() => setShowPopup(false), 3000);
       } catch (err) {
-        console.error("Failed to fetch coin price:", err);
+        console.error("Failed to check trade result:", err);
       }
-    }, timer * 1000); // Wait for the selected trade time
-  };
-
-  const handleSell = async () => {
-    if (investment > userAssets) {
-      toast.error("Insufficient funds!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-      });
-      return;
-    }
-
-    const sellPrice = parseFloat(coinPrice);
-
-    // Deduct investment from userAssets using a functional update
-    setUserAssets((prevAssets) => {
-      const updatedAssets = prevAssets - investment;
-      updateUserAssetsInDB(updatedAssets); // Update in database
-      return updatedAssets;
-    });
-
-    toast.error(`Sell ${selectedCoin} at $${sellPrice} with $${investment}`, {
-      position: "top-right",
-      autoClose: 1000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-    });
-
-    const tradeId = Date.now(); // Unique ID for the trade
-    setTrades((prev) => [
-      ...prev,
-      {
-        id: tradeId,
-        type: "Sell",
-        price: investment,
-        coinPrice: sellPrice,
-        coinName: selectedCoin,
-        remainingTime: timer,
-        status: "running", // Initial status
-        reward: 0, // Initial reward
-      },
-    ]);
-
-    // Wait for the trade time and check the price
-    setTimeout(async () => {
-      try {
-        const response = await fetch(
-          `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
-        );
-        const data = await response.json();
-        const currentPrice = parseFloat(data.price);
-
-        let reward = 0;
-        let status = "";
-
-        const selectedCoinData = coins.find(
-          (coin) => coin.name === selectedCoin
-        );
-        const profitPercentage = selectedCoinData?.profitPercentage || 0;
-
-        if (currentPrice < sellPrice) {
-          reward = (investment * (1 + profitPercentage / 100)).toFixed(2); // Calculate profit dynamically
-          setUserAssets((prevAssets) => {
-            const newAssets = prevAssets + parseFloat(reward);
-            updateUserAssetsInDB(newAssets); // Update in database
-            return newAssets;
-          });
-          status = "win";
-        } else {
-          reward = -investment; // Loss is the investment amount
-          status = "loss";
-        }
-
-        setTrades((prev) =>
-          prev.map((trade) =>
-            trade.id === tradeId
-              ? { ...trade, status, reward, remainingTime: 0 }
-              : trade
-          )
-        );
-
-        setPopupMessage(
-          status === "win"
-            ? `Trade Win! You got $${reward}`
-            : `Trade Loss! You lost $${-reward}`
-        );
-        setPopupColor(status === "win" ? "#10A055" : "#FF1600"); // Green for win, red for loss
-        setShowPopup(true);
-        setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
-      } catch (err) {
-        console.error("Failed to fetch coin price:", err);
-      }
-    }, timer * 1000); // Wait for the selected trade time
+    }, timer * 1000);
   };
 
   const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(
-      remainingSeconds
-    ).padStart(2, "0")}`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
+
+  // Persist selected coin
+  useEffect(() => {
+    const savedCoin = localStorage.getItem("selectedCoin");
+    if (savedCoin) setSelectedCoin(savedCoin);
+  }, []);
+
+  useEffect(() => {
+    if (selectedCoin) localStorage.setItem("selectedCoin", selectedCoin);
+  }, [selectedCoin]);
 
   return (
     <>
-      <div className={s.container}>
-        <div className={s.box}>
-          <div className={s.chart}>
-            <div className={s.coinList}>
+      <div className={styles.container}>
+        <div className={styles.box}>
+          <div className={styles.chart}>
+            <div className={styles.coinList}>
               <select
-                className={s.coinSelect}
+                className={styles.coinSelect}
                 value={selectedCoin}
                 onChange={(e) => setSelectedCoin(e.target.value)}
               >
+                <option value="" disabled>
+                  Select a coin
+                </option>
                 {coins.map((coin) => (
                   <option key={coin._id} value={coin.name}>
                     {coin.type === "OTC"
@@ -310,91 +296,124 @@ const BinaryChart = () => {
                 ))}
               </select>
               {trades.length > 0 && (
-                <div className={s.timer}>
+                <div className={styles.timer}>
                   <p>
                     Latest Trade Timer:{" "}
-                    {trades[trades.length - 1].remainingTime}s
+                    {formatTime(trades[trades.length - 1].remainingTime)}
                   </p>
                 </div>
               )}
             </div>
 
-            {coins.length > 0 &&
-            coins.find((coin) => coin.name === selectedCoin)?.type ===
-              "Live" ? (
-              <TradingViewChart coinName={selectedCoin} />
-            ) : coins.length > 0 ? (
-              <LiveCandleChart coinName={selectedCoin} />
+            {isLoading ? (
+              <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
+                <p>Loading market data for {selectedCoin}...</p>
+              </div>
             ) : (
-              <p>Loading chart...</p>
+              selectedCoin && (
+                <>
+                  {selectedCoinType === "Live" && (
+                    <TradingViewChart
+                      coinName={selectedCoin}
+                      intervalSeconds={timer}
+                    />
+                  )}
+                  {selectedCoinType === "OTC" && (
+                    <LiveCandleChart coinName={selectedCoin} price={otcPrice} />
+                  )}
+                </>
+              )
             )}
           </div>
 
-          <div className={s.control}>
-            <h1>{selectedCoin} Trading</h1>
-            <p>Current Coin Price: ${coinPrice}</p>
-            <div className={s.controlStuff}>
-              <div className={s.controlBox}>
+          <div className={styles.control}>
+            <h1>{selectedCoin || "Select Coin"} Trading</h1>
+            <p>
+              Current Price: $
+              {selectedCoinType === "OTC" ? otcPrice : livePrice}
+              {isLoading && !priceLoaded && " (Loading...)"}
+            </p>
+
+            <div className={styles.controlStuff}>
+              <div className={styles.controlBox}>
                 <button
-                  className={s.iconBtn}
+                  className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
+                  disabled={isLoading}
                 >
                   −
                 </button>
-                <div className={s.value}>{formatTime(timer)}</div>
+                <div className={styles.value}>{formatTime(timer)}</div>
                 <button
-                  className={s.iconBtn}
+                  className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
+                  disabled={isLoading}
                 >
                   +
                 </button>
               </div>
-              <div className={s.moneyBox}>
+
+              <div className={styles.moneyBox}>
                 <button
-                  className={s.iconBtn}
+                  className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
+                  disabled={isLoading}
                 >
                   −
                 </button>
                 <input
                   type="number"
-                  className={s.value}
+                  className={styles.value}
                   value={investment}
                   onChange={(e) =>
-                    setInvestment(
-                      Math.max(parseInt(e.target.value, 10) || 1, 1)
-                    )
+                    setInvestment(Math.max(parseInt(e.target.value) || 1, 1))
                   }
                   min="1"
+                  disabled={isLoading}
                 />
                 <button
-                  className={s.iconBtn}
+                  className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => prev + 1)}
+                  disabled={isLoading}
                 >
                   +
                 </button>
               </div>
             </div>
-            <div className={s.buySelling}>
-              <div className={s.buyBox} onClick={handleBuy}>
-                <FiArrowDownRight className={s.icons} />
+
+            <div className={styles.buySelling}>
+              <div
+                className={`${styles.buyBox} ${
+                  isLoading || !priceLoaded ? styles.disabled : ""
+                }`}
+                onClick={() => !isLoading && priceLoaded && handleTrade("Buy")}
+              >
+                <FiArrowDownRight className={styles.icons} />
                 <p>Buy</p>
               </div>
-              <div className={s.SellBox} onClick={handleSell}>
-                <FiArrowDownRight className={s.icons} />
+              <div
+                className={`${styles.SellBox} ${
+                  isLoading || !priceLoaded ? styles.disabled : ""
+                }`}
+                onClick={() => !isLoading && priceLoaded && handleTrade("Sell")}
+              >
+                <FiArrowDownRight className={styles.icons} />
                 <p>Sell</p>
               </div>
             </div>
-            <Trades trades={trades} timer={timer} formatTime={formatTime} />
+
+            <Trades trades={trades} formatTime={formatTime} />
           </div>
         </div>
       </div>
 
       {showPopup && (
-        <div className={s.popup} style={{ backgroundColor: popupColor }}>
+        <div className={styles.popup} style={{ backgroundColor: popupColor }}>
           <p>{popupMessage}</p>
         </div>
       )}
+
       <ToastContainer />
     </>
   );

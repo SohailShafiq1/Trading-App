@@ -1,49 +1,169 @@
 import React, { useRef, useEffect, useState } from "react";
 import { createChart, CandlestickSeries } from "lightweight-charts";
+import axios from "axios";
 
-export default function LiveCandleChart() {
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+export default function LiveCandleChart({ coinName, price }) {
   const chartContainerRef = useRef();
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
   const [intervalSeconds, setIntervalSeconds] = useState(30);
   const [rawData, setRawData] = useState([]);
+  const [trend, setTrend] = useState("Random");
+  const scenarioCounterRef = useRef(0);
+  const fluctuationCounterRef = useRef(0);
+  const oscillationPhaseRef = useRef(0);
 
-  // Generate raw 1-second data only once
   useEffect(() => {
-    const data = [];
-    let currentPrice = 100;
-    let currentTime = Math.floor(Date.now() / 1000) - 3000;
-
-    for (let i = 0; i < 3000; i++) {
-      const changePercent = (Math.random() - 0.5) * 0.002;
-      const newPrice = currentPrice * (1 + changePercent);
-      const price = parseFloat(newPrice.toFixed(2));
-      data.push({ time: currentTime, price });
-      currentPrice = price;
-      currentTime += 1;
+    if (isNaN(parseFloat(price))) {
+      console.error("Invalid price prop:", price);
     }
+  }, [price]);
+  const fetchTrend = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/admin/trend`);
+      const newTrend = response.data.trend;
+      if (newTrend !== trend) {
+        scenarioCounterRef.current = 0;
+        fluctuationCounterRef.current = 0; // Reset fluctuation counter
+        oscillationPhaseRef.current = 0; // Reset oscillation phase
+        setTrend(newTrend);
+        console.log("Trend changed:", newTrend);
+      }
+    } catch (err) {
+      console.error("Error fetching trend:", err);
+    }
+  };
 
-    setRawData(data);
-  }, []);
-
-  // Generate live candles
   useEffect(() => {
+    const trendInterval = setInterval(fetchTrend, 5000); // Check every 5s
+    return () => clearInterval(trendInterval);
+  }, [trend]);
+
+  // Start with 0 data on coin change
+  useEffect(() => {
+    if (!price) return;
+    const startTime = Math.floor(Date.now() / 1000);
+    setRawData([{ time: startTime, price: parseFloat(price) }]);
+  }, [coinName]);
+
+  // Simulate live 1s feed with trend logic
+  useEffect(() => {
+    if (!rawData.length) return;
+
     const interval = setInterval(() => {
       setRawData((prevData) => {
-        const lastDataPoint = prevData[prevData.length - 1];
-        const changePercent = (Math.random() - 0.5) * 0.002;
-        const newPrice = lastDataPoint.price * (1 + changePercent);
-        const price = parseFloat(newPrice.toFixed(2));
-        const newTime = lastDataPoint.time + 1;
+        const last = prevData[prevData.length - 1];
+        const open = last.price;
+        let close;
 
-        return [...prevData, { time: newTime, price }];
+        // Apply trend logic
+        switch (trend) {
+          case "Scenario1":
+            scenarioCounterRef.current = (scenarioCounterRef.current + 1) % 4;
+            close = open + (scenarioCounterRef.current === 3 ? -3 : 3); // Reduced fluctuation
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Small oscillations (up and down)
+            if (fluctuationCounterRef.current < 5) {
+              close = open + (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              close = open + (Math.random() * 0.5 + 0.5); // Smaller final movement
+            }
+            break;
+          case "Scenario2":
+            scenarioCounterRef.current = (scenarioCounterRef.current + 1) % 10;
+            close = open + (scenarioCounterRef.current < 5 ? -3 : 3); // Reduced fluctuation
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Small oscillations (up and down)
+            if (fluctuationCounterRef.current < 5) {
+              close = open + (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              close = open + (Math.random() * 0.5 + 0.5); // Smaller final movement
+            }
+            break;
+          case "Scenario3":
+            scenarioCounterRef.current++;
+            close = open + (scenarioCounterRef.current % 2 === 0 ? 3 : -3); // Oscillations
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Small oscillations (up and down)
+            if (fluctuationCounterRef.current < 5) {
+              close = open + (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              close = open + (Math.random() * 0.5 + 0.5); // Smaller final movement
+            }
+            break;
+          case "Scenario4":
+            close = open + 4;
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Small oscillations (up and down)
+            if (fluctuationCounterRef.current < 5) {
+              close = open + (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              close = open + (Math.random() * 0.5 + 0.5); // Smaller final movement
+            }
+            break;
+          case "Scenario5":
+            close = open - 4;
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Small oscillations (up and down)
+            if (fluctuationCounterRef.current < 5) {
+              close = open - (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              close = open - (Math.random() * 0.5 + 0.5); // Smaller final movement
+            }
+            break;
+          case "Up":
+            close = open + Math.random() * 1 + 0.5; // Smaller price change range
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Oscillation logic before finalizing the trend
+            if (fluctuationCounterRef.current < 5) {
+              // Small oscillations (up and down)
+              close = open + (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              // Final upward movement after oscillations
+              close = open + Math.random() * 0.5 + 0.5; // Smaller final movement
+            }
+            break;
+          case "Down":
+            close = open - Math.random() * 1 - 0.5; // Smaller price change range
+            fluctuationCounterRef.current++; // Track fluctuations
+            // Oscillation logic before finalizing the trend
+            if (fluctuationCounterRef.current < 5) {
+              // Small oscillations (up and down)
+              close = open - (Math.random() - 0.5) * 2; // Reduced oscillation range
+            } else {
+              // Final downward movement after oscillations
+              close = open - Math.random() * 0.5 - 0.5; // Smaller final movement
+            }
+            break;
+          default:
+            close = open + (Math.random() - 0.5) * 4;
+            break;
+        }
+
+        // After a series of fluctuations (up/down), finalize with trend
+        if (fluctuationCounterRef.current >= 5) {
+          if (trend === "Up") {
+            close = open + 0.5; // Smaller final upward movement
+          } else if (trend === "Down") {
+            close = open - 0.5; // Smaller final downward movement
+          }
+          fluctuationCounterRef.current = 0; // Reset after finalizing
+        }
+
+        const newTime = last.time + 1;
+        return [
+          ...prevData,
+          { time: newTime, price: parseFloat(close.toFixed(4)) },
+        ];
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [trend, rawData]);
 
-  // Create chart once
+  // Create chart
   useEffect(() => {
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -53,6 +173,9 @@ export default function LiveCandleChart() {
 
     const candleSeries = chart.addSeries(CandlestickSeries);
     candleSeriesRef.current = candleSeries;
+
+    chart.timeScale().applyOptions({ rightOffset: 0, barSpacing: 10 });
+    chart.timeScale().scrollToRealTime();
 
     new ResizeObserver(() => {
       chart.applyOptions({
@@ -64,7 +187,7 @@ export default function LiveCandleChart() {
     return () => chart.remove();
   }, []);
 
-  // Aggregate raw data into candles based on selected interval
+  // Aggregate raw data
   useEffect(() => {
     if (!rawData.length || !candleSeriesRef.current) return;
 
@@ -85,11 +208,11 @@ export default function LiveCandleChart() {
     }
 
     candleSeriesRef.current.setData(grouped);
+    chartRef.current.timeScale().scrollToRealTime();
   }, [intervalSeconds, rawData]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Interval selector UI */}
       <div
         style={{
           position: "absolute",
@@ -103,7 +226,7 @@ export default function LiveCandleChart() {
         }}
       >
         <label>
-          Interval:&nbsp;
+          {coinName} Interval:&nbsp;
           <select
             value={intervalSeconds}
             onChange={(e) => setIntervalSeconds(Number(e.target.value))}
@@ -117,7 +240,6 @@ export default function LiveCandleChart() {
         </label>
       </div>
 
-      {/* Chart container */}
       <div
         ref={chartContainerRef}
         style={{
