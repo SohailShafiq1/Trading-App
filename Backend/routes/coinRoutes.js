@@ -1,6 +1,6 @@
 import express from "express";
 import Coin from "../models/Coin.js";
-
+import { getCoinPrice, getCandleData } from "../controllers/coinController.js";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -108,5 +108,6 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to delete coin" });
   }
 });
+router.get("/candles/:name", getCandleData);
 
-export default router; // Use export default
+export default router;
