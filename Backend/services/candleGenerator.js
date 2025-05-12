@@ -3,18 +3,54 @@ import Trend from "../models/Trend.js";
 
 class CandleGenerator {
   constructor() {
-    this.scenarioCounter = 0;
-    this.fluctuationCounter = 0;
-    this.oscillationPhase = 0;
-    this.intervals = [30, 60, 120, 180, 300]; // 30s, 1m, 2m, 3m, 5m
+    this.intervals = {
+      "30s": 30,
+      "1m": 60,
+      "2m": 120,
+      "3m": 180,
+      "5m": 300,
+    };
     this.activeIntervals = new Map();
+    this.priceHistory = new Map();
+    this.scenarioState = new Map();
   }
 
   async initialize() {
     console.log("Initializing candle generation...");
     const coins = await Coin.find({});
-    coins.forEach((coin) => this.startGeneration(coin));
+    coins.forEach((coin) => {
+      this.setupCoinGeneration(coin);
+    });
     setInterval(() => this.checkTrend(), 5000);
+  }
+
+  async setupCoinGeneration(coin) {
+    const identifier = coin.name || `${coin.firstName}_${coin.lastName}`;
+    console.log(`Setting up generation for ${identifier}`);
+
+    // Clear existing interval if it exists
+    if (this.activeIntervals.has(identifier)) {
+      clearInterval(this.activeIntervals.get(identifier));
+    }
+
+    this.priceHistory.set(identifier, coin.currentPrice);
+    this.scenarioState.set(identifier, {
+      counter: 0,
+      phase: 0,
+      direction: 1,
+      step: 0,
+    });
+
+    // Start generation with the coin's selected interval
+    const intervalSeconds = this.intervals[coin.selectedInterval] || 30;
+    await this.generateCandle(coin, intervalSeconds);
+
+    const intervalId = setInterval(
+      () => this.generateCandle(coin, intervalSeconds),
+      intervalSeconds * 1000
+    );
+
+    this.activeIntervals.set(identifier, intervalId);
   }
 
   async getCurrentTrend() {
@@ -24,54 +60,58 @@ class CandleGenerator {
 
   async startGeneration(coin) {
     const identifier = coin.name || `${coin.firstName}_${coin.lastName}`;
-    console.log(`Starting generation for ${identifier}`);
+    const interval = coin.selectedInterval || "30s";
+    const intervalSeconds = this.intervals[interval];
 
-    // Clear any existing intervals for this coin
-    if (this.activeIntervals.has(identifier)) {
-      this.activeIntervals.get(identifier).forEach(clearInterval);
-    }
+    // Generate initial candle
+    await this.generateCandle(coin, intervalSeconds);
 
-    const intervals = new Set();
+    // Set up interval for regular generation
+    const intervalId = setInterval(
+      () => this.generateCandle(coin, intervalSeconds),
+      intervalSeconds * 1000
+    );
 
-    this.intervals.forEach((interval) => {
-      const intervalId = setInterval(
-        () => this.generateCandle(coin, interval),
-        interval * 1000
-      );
-      intervals.add(intervalId);
-      // Initial generation
-      this.generateCandle(coin, interval);
-    });
-
-    this.activeIntervals.set(identifier, intervals);
+    this.activeIntervals.set(identifier, intervalId);
   }
 
   async generateCandle(coin, intervalSeconds) {
     try {
       const identifier = coin.name || `${coin.firstName}_${coin.lastName}`;
-      const intervalLabel = this.getIntervalLabel(intervalSeconds);
+      const intervalLabel =
+        Object.keys(this.intervals).find(
+          (key) => this.intervals[key] === intervalSeconds
+        ) || "30s";
+
       const now = new Date();
       const intervalStart = new Date(
         Math.floor(now.getTime() / (intervalSeconds * 1000)) *
           (intervalSeconds * 1000)
       );
 
+      let lastPrice = this.priceHistory.get(identifier) || coin.currentPrice;
       const currentTrend = await this.getCurrentTrend();
+      const state = this.scenarioState.get(identifier);
 
-      // Simulate realistic price fluctuations during the interval
-      const openPrice = coin.currentPrice;
-      let highPrice = openPrice;
-      let lowPrice = openPrice;
-      let closePrice = openPrice;
+      // Generate price path with scenario effects
+      const steps = 10;
+      const pricePath = [lastPrice];
 
-      for (let i = 0; i < intervalSeconds; i++) {
-        const simulatedPrice = this.generatePrice(closePrice, currentTrend);
-        highPrice = Math.max(highPrice, simulatedPrice);
-        lowPrice = Math.min(lowPrice, simulatedPrice);
-        closePrice = simulatedPrice;
+      for (let i = 0; i < steps; i++) {
+        const newPrice = this.generatePrice(pricePath[i], currentTrend, state);
+        pricePath.push(newPrice);
       }
 
-      // Update the coin's price and candles
+      const openPrice = pricePath[0];
+      const highPrice = Math.max(...pricePath);
+      const lowPrice = Math.min(...pricePath);
+      const closePrice = pricePath[pricePath.length - 1];
+
+      // Update state
+      this.priceHistory.set(identifier, closePrice);
+      state.step++;
+      if (state.step >= steps) state.step = 0;
+
       await Coin.findOneAndUpdate(
         { _id: coin._id },
         {
@@ -86,71 +126,69 @@ class CandleGenerator {
               interval: intervalLabel,
             },
           },
-        },
-        { new: true }
+        }
       );
 
-      console.log(
-        `Generated ${intervalLabel} candle for ${identifier} at ${new Date()} - Open: ${openPrice.toFixed(
-          4
-        )}, High: ${highPrice.toFixed(4)}, Low: ${lowPrice.toFixed(
-          4
-        )}, Close: ${closePrice.toFixed(4)}`
-      );
+      console.log(`Generated ${intervalLabel} candle for ${identifier}`);
     } catch (err) {
       console.error(`Error generating candle for ${coin._id}:`, err);
     }
   }
 
-  generatePrice(currentPrice, trend) {
+  generatePrice(currentPrice, trend, state) {
     if (currentPrice === undefined || currentPrice === null) {
       currentPrice = 100;
     }
 
-    let priceChange = 0;
-    const baseChange = (Math.random() - 0.5) * 2;
+    const baseVolatility = 0.5;
+    let volatility = baseVolatility;
+    let trendFactor = 0;
+    let scenarioEffect = 0;
 
     switch (trend) {
       case "Up":
-        priceChange = Math.abs(baseChange) + 0.5;
+        volatility = baseVolatility * 0.8;
+        trendFactor = 0.3;
         break;
       case "Down":
-        priceChange = -Math.abs(baseChange) - 0.5;
+        volatility = baseVolatility * 0.8;
+        trendFactor = -0.3;
         break;
-      case "Scenario1":
-        this.scenarioCounter = (this.scenarioCounter + 1) % 4;
-        priceChange = this.scenarioCounter === 3 ? -3 : 3;
-        break;
-      case "Scenario2":
-        this.scenarioCounter = (this.scenarioCounter + 1) % 10;
-        priceChange = this.scenarioCounter < 5 ? -3 : 3;
-        break;
-      case "Scenario3":
-        priceChange = this.scenarioCounter++ % 2 === 0 ? 3 : -3;
-        break;
-      case "Scenario4":
-        priceChange = 4 + Math.random() * 0.5;
-        break;
-      case "Scenario5":
-        priceChange = -4 - Math.random() * 0.5;
-        break;
-      default: // Random
-        priceChange = baseChange;
+      default:
+        volatility = baseVolatility;
     }
 
-    const newPrice = currentPrice + priceChange;
-    return parseFloat(newPrice.toFixed(4));
-  }
+    switch (trend) {
+      case "Scenario1":
+        state.counter = (state.counter + 1) % 4;
+        scenarioEffect = state.counter === 3 ? 5 : -1.5;
+        break;
+      case "Scenario2":
+        state.counter = (state.counter + 1) % 10;
+        scenarioEffect = state.counter < 5 ? 4 : -4;
+        break;
+      case "Scenario3":
+        state.phase = (state.phase + 0.2) % (2 * Math.PI);
+        scenarioEffect = Math.sin(state.phase) * 3;
+        break;
+      case "Scenario4":
+        scenarioEffect = 2 + Math.random() * 0.5;
+        if (state.step % 3 === 0) scenarioEffect *= -0.7;
+        break;
+      case "Scenario5":
+        scenarioEffect = -2 - Math.random() * 0.5;
+        if (state.step % 4 === 0) scenarioEffect *= -0.5;
+        break;
+      default:
+        scenarioEffect = (Math.random() - 0.5) * 2;
+    }
 
-  getIntervalLabel(seconds) {
-    const labels = {
-      30: "30s",
-      60: "1m",
-      120: "2m",
-      180: "3m",
-      300: "5m",
-    };
-    return labels[seconds] || "30s";
+    const randomFactor = (Math.random() - 0.5) * 2;
+    const priceChange =
+      randomFactor * volatility + trendFactor + scenarioEffect;
+
+    const newPrice = Math.max(0.01, currentPrice * (1 + priceChange / 100));
+    return parseFloat(newPrice.toFixed(4));
   }
 
   async checkTrend() {
@@ -160,8 +198,11 @@ class CandleGenerator {
 
       if (coins.length > 0) {
         await Coin.updateMany({}, { trend: currentTrend });
-        this.scenarioCounter = 0;
-        this.fluctuationCounter = 0;
+        this.scenarioState.forEach((state) => {
+          state.counter = 0;
+          state.phase = 0;
+          state.step = 0;
+        });
         console.log(`Trend updated to ${currentTrend}`);
       }
     } catch (err) {

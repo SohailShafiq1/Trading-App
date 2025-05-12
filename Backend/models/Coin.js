@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const candleSchema = new mongoose.Schema({
-  time: { type: Date, required: true },
+  time: { type: Date, required: true, index: true },
   open: { type: Number, required: true },
   high: { type: Number, required: true },
   low: { type: Number, required: true },
@@ -10,6 +10,7 @@ const candleSchema = new mongoose.Schema({
     type: String,
     enum: ["30s", "1m", "2m", "3m", "5m"],
     required: true,
+    index: true,
   },
 });
 
@@ -75,6 +76,12 @@ const coinSchema = new mongoose.Schema(
     lastUpdated: {
       type: Date,
       default: Date.now,
+    },
+    selectedInterval: {
+      type: String,
+      enum: ["30s", "1m", "2m", "3m", "5m"],
+      default: "30s",
+      required: true,
     },
   },
   {

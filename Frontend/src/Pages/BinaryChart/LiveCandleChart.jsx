@@ -1,14 +1,40 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { createChart } from "lightweight-charts";
 import axios from "axios";
+import { debounce } from "lodash";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const debouncedIntervalUpdate = debounce(
+  async (coinName, newInterval, lastIntervalRef, setInterval) => {
+    try {
+      const response = await axios.put(
+        `${BACKEND_URL}/api/coins/interval/${encodeURIComponent(coinName)}`,
+        { interval: newInterval },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        lastIntervalRef.current = newInterval;
+        setInterval(newInterval);
+      }
+    } catch (err) {
+      console.error("Error updating interval:", err);
+    }
+  },
+  500
+); // 500ms debounce
 
 export default function LiveCandleChart({ coinName }) {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
   const [interval, setInterval] = useState("30s");
+  const lastIntervalRef = useRef(interval); // Track the last successful interval
+
   const [candleData, setCandleData] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [currentTrend, setCurrentTrend] = useState("Normal");
@@ -17,34 +43,81 @@ export default function LiveCandleChart({ coinName }) {
   const lastPriceRef = useRef(null);
   const lastCandleDataRef = useRef([]);
   const lastTrendRef = useRef("Normal");
+  const abortControllerRef = useRef(new AbortController());
 
-  // Fetch initial data only once when chart is ready
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        setLoading(true);
-        const [priceRes, candleRes, trendRes] = await Promise.all([
-          axios.get(`${BACKEND_URL}/api/coins/price/${coinName}`),
-          axios.get(`${BACKEND_URL}/api/coins/candles/${coinName}`, {
-            params: { interval },
-          }),
-          axios.get(`${BACKEND_URL}/api/admin/trend`),
-        ]);
+    return () => {
+      debouncedIntervalUpdate.cancel(); // Cleanup debounce on unmount
+    };
+  }, []);
+  const fetchInitialData = useCallback(async () => {
+    if (!coinName) return;
 
-        setCurrentPrice(priceRes.data);
-        setCandleData(candleRes.data);
-        setCurrentTrend(trendRes.data.mode || trendRes.data.trend || "Normal");
-      } catch (err) {
+    try {
+      setLoading(true);
+      abortControllerRef.current.abort();
+      abortControllerRef.current = new AbortController();
+
+      const [priceRes, candleRes, trendRes, coinRes] = await Promise.all([
+        axios.get(`${BACKEND_URL}/api/coins/price/${coinName}`, {
+          signal: abortControllerRef.current.signal,
+        }),
+        axios.get(`${BACKEND_URL}/api/coins/candles/${coinName}`, {
+          params: { interval },
+          signal: abortControllerRef.current.signal,
+        }),
+        axios.get(`${BACKEND_URL}/api/admin/trend`, {
+          signal: abortControllerRef.current.signal,
+        }),
+        axios.get(`${BACKEND_URL}/api/coins/type/${coinName}`, {
+          signal: abortControllerRef.current.signal,
+        }),
+      ]);
+
+      // Set the initial interval from the coin's selectedInterval
+      if (coinRes.data) {
+        const coin = await axios.get(
+          `${BACKEND_URL}/api/coins/name/${coinName}`
+        );
+        const selectedInterval = coin.data?.selectedInterval || "30s";
+        setInterval(selectedInterval);
+      }
+
+      setCurrentPrice(priceRes.data?.price || priceRes.data);
+      setCandleData(candleRes.data || []);
+      setCurrentTrend(trendRes.data?.mode || trendRes.data?.trend || "Normal");
+      lastCandleDataRef.current = candleRes.data || [];
+    } catch (err) {
+      if (!axios.isCancel(err)) {
         console.error("Error fetching initial data:", err);
-      } finally {
-        setLoading(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [coinName]);
+
+  useEffect(() => {
+    fetchInitialData();
+    return () => {
+      abortControllerRef.current.abort();
+    };
+  }, [fetchInitialData]);
+
+  useEffect(() => {
+    if (!coinName) return;
+
+    const updateInterval = async () => {
+      try {
+        await axios.put(`${BACKEND_URL}/api/coins/interval/${coinName}`, {
+          interval: interval, // Make sure we're sending the interval value properly
+        });
+      } catch (err) {
+        console.error("Error updating interval:", err);
       }
     };
 
-    if (coinName) fetchInitialData();
-  }, [coinName, interval]);
-
-  // Poll for price updates with a controlled interval (every 5 seconds)
+    updateInterval();
+  }, [interval, coinName]);
   useEffect(() => {
     if (!coinName || loading) return;
 
@@ -53,9 +126,8 @@ export default function LiveCandleChart({ coinName }) {
         const res = await axios.get(
           `${BACKEND_URL}/api/coins/price/${coinName}`
         );
-        const newPrice = res.data;
+        const newPrice = res.data?.price || res.data;
 
-        // Check if price has changed
         if (newPrice !== lastPriceRef.current) {
           setCurrentPrice(newPrice);
           lastPriceRef.current = newPrice;
@@ -63,14 +135,11 @@ export default function LiveCandleChart({ coinName }) {
       } catch (err) {
         console.error("Price fetch error:", err);
       }
-    }, 5000); // Update price every 5 seconds
+    }, 5000);
 
-    return () => {
-      clearInterval(priceInterval);
-    };
-  }, [coinName]);
+    return () => clearInterval(priceInterval);
+  }, [coinName, loading]);
 
-  // Poll for candle data updates (every 10 seconds)
   useEffect(() => {
     if (!coinName || loading) return;
 
@@ -82,35 +151,31 @@ export default function LiveCandleChart({ coinName }) {
             params: { interval },
           }
         );
-        const newCandleData = res.data;
+        const newCandleData = res.data || [];
 
-        // Only update if the candle data has changed
         if (
           JSON.stringify(newCandleData) !==
           JSON.stringify(lastCandleDataRef.current)
         ) {
           setCandleData(newCandleData);
-          lastCandleDataRef.current = newCandleData; // Store the last fetched candle data
+          lastCandleDataRef.current = newCandleData;
         }
       } catch (err) {
         console.error("Candle fetch error:", err);
       }
-    }, 10000); // Update candles every 10 seconds
+    }, 10000);
 
-    return () => {
-      clearInterval(candleInterval);
-    };
-  }, [coinName, interval]);
+    return () => clearInterval(candleInterval);
+  }, [coinName, interval, loading]);
 
-  // Poll for trend updates (every 10 seconds)
   useEffect(() => {
     if (loading) return;
 
     const trendInterval = setInterval(async () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/api/admin/trend`);
-        const newTrend = res.data.mode || res.data.trend || "Normal";
-        // Check if trend has changed
+        const newTrend = res.data?.mode || res.data?.trend || "Normal";
+
         if (newTrend !== lastTrendRef.current) {
           setCurrentTrend(newTrend);
           lastTrendRef.current = newTrend;
@@ -118,20 +183,18 @@ export default function LiveCandleChart({ coinName }) {
       } catch (err) {
         console.error("Trend fetch error:", err);
       }
-    }, 10000); // Update trend every 10 seconds
+    }, 10000);
 
-    return () => {
-      clearInterval(trendInterval);
-    };
-  }, []);
+    return () => clearInterval(trendInterval);
+  }, [loading]);
 
-  // Create the chart and add series (only once)
   useEffect(() => {
     if (loading || !chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: chartContainerRef.current.clientHeight,
+    const container = chartContainerRef.current;
+    const chart = createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
       layout: {
         backgroundColor: "#ffffff",
         textColor: "#000",
@@ -139,6 +202,13 @@ export default function LiveCandleChart({ coinName }) {
       grid: {
         vertLines: { color: "#eee" },
         horzLines: { color: "#eee" },
+      },
+      timeScale: {
+        rightOffset: 12,
+        barSpacing: 10,
+        fixLeftEdge: true,
+        timeVisible: true,
+        secondsVisible: true,
       },
     });
     chartRef.current = chart;
@@ -152,52 +222,53 @@ export default function LiveCandleChart({ coinName }) {
     });
     candleSeriesRef.current = series;
 
-    chart.timeScale().applyOptions({ rightOffset: 0, barSpacing: 10 });
-    chart.timeScale().scrollToRealTime();
-
-    const resizeObserver = new ResizeObserver(() => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight,
+    const resizeObserver = new ResizeObserver((entries) => {
+      const [entry] = entries;
+      if (entry.target === container && chartRef.current) {
+        chartRef.current.applyOptions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
         });
       }
     });
-    resizeObserver.observe(chartContainerRef.current);
+
+    resizeObserver.observe(container);
 
     return () => {
       resizeObserver.disconnect();
-      chart.remove();
-      chartRef.current = null;
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+      }
       candleSeriesRef.current = null;
     };
   }, [loading]);
 
-  // Update chart data when candleData changes
   useEffect(() => {
-    if (!candleSeriesRef.current || candleData.length === 0) return;
+    if (!candleSeriesRef.current || !candleData?.length) return;
 
-    // Sort the data by time in ascending order
-    const sortedData = [];
     const seenTimes = new Set();
-
-    candleData
+    const processedData = candleData
       .map((candle) => ({
         time: Math.floor(new Date(candle.time).getTime() / 1000),
-        open: candle.open,
-        high: candle.high,
-        low: candle.low,
-        close: candle.close,
+        open: parseFloat(candle.open),
+        high: parseFloat(candle.high),
+        low: parseFloat(candle.low),
+        close: parseFloat(candle.close),
       }))
       .sort((a, b) => a.time - b.time)
-      .forEach((candle) => {
+      .filter((candle) => {
         if (!seenTimes.has(candle.time)) {
-          sortedData.push(candle);
           seenTimes.add(candle.time);
+          return true;
         }
+        return false;
       });
-    candleSeriesRef.current.setData(sortedData);
-    chartRef.current.timeScale().scrollToRealTime();
+
+    candleSeriesRef.current.setData(processedData);
+    if (chartRef.current) {
+      chartRef.current.timeScale().fitContent();
+    }
   }, [candleData]);
 
   if (loading) {
@@ -214,6 +285,51 @@ export default function LiveCandleChart({ coinName }) {
       </div>
     );
   }
+  const handleIntervalChange = async (e) => {
+    const newInterval = e.target.value;
+
+    if (newInterval !== lastIntervalRef.current) {
+      debouncedIntervalUpdate(
+        coinName,
+        newInterval,
+        lastIntervalRef,
+        setInterval
+      );
+    } // Don't do anything if interval hasn't changed
+
+    if (newInterval === lastIntervalRef.current) return;
+
+    try {
+      const response = await axios.put(
+        `${BACKEND_URL}/api/coins/interval/${coinName}`,
+        { interval: newInterval },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        lastIntervalRef.current = newInterval; // Update last successful interval
+        setInterval(newInterval);
+      } else {
+        console.error(
+          "Server rejected interval change:",
+          response.data.message
+        );
+        // Revert the select value to last successful interval
+        e.target.value = lastIntervalRef.current;
+      }
+    } catch (err) {
+      console.error(
+        "Error updating interval:",
+        err.response?.data?.message || err.message
+      );
+      // Revert the select value
+      e.target.value = lastIntervalRef.current;
+    }
+  };
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -236,7 +352,7 @@ export default function LiveCandleChart({ coinName }) {
           Interval:&nbsp;
           <select
             value={interval}
-            onChange={(e) => setInterval(e.target.value)}
+            // onChange={handleIntervalChange}
             style={{ padding: "4px 8px" }}
           >
             <option value="30s">30s</option>

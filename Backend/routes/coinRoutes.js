@@ -19,7 +19,7 @@ router.get("/price/:name", async (req, res) => {
     if (!coin) {
       return res.status(404).json({ message: "Coin not found" });
     }
-    res.json(coin.startingPrice);
+    res.json({ price: coin.currentPrice });
   } catch (err) {
     console.error("Error fetching coin:", err);
     res.status(500).json({ message: "Failed to fetch coin" });
@@ -64,7 +64,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Update a coin
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { type, name, firstName, lastName, startingPrice, profitPercentage } =
@@ -81,14 +80,14 @@ router.put("/:id", async (req, res) => {
         startingPrice,
         profitPercentage,
       },
-      { new: true } // Return the updated document
+      { new: true }
     );
 
     if (!updatedCoin) {
       return res.status(404).json({ message: "Coin not found" });
     }
 
-    const coins = await Coin.find(); // Fetch all coins after updating
+    const coins = await Coin.find();
     res.json(coins);
   } catch (err) {
     console.error("Error updating coin:", err);
@@ -96,7 +95,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete a coin
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -108,6 +106,56 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to delete coin" });
   }
 });
+
+router.put("/interval/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { interval } = req.body;
+
+    // Validate inputs more strictly
+    if (typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid coin name",
+      });
+    }
+
+    if (!["30s", "1m", "2m", "3m", "5m"].includes(interval)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid interval value",
+      });
+    }
+
+    const coin = await Coin.findOne({ name: name.trim() });
+    if (!coin) {
+      return res.status(404).json({
+        success: false,
+        message: "Coin not found",
+      });
+    }
+
+    // Only update if interval is different
+    if (coin.selectedInterval !== interval) {
+      coin.selectedInterval = interval;
+      await coin.save();
+    }
+
+    res.json({
+      success: true,
+      message: "Interval updated successfully",
+      coin,
+    });
+  } catch (err) {
+    console.error("Error updating interval:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
 router.get("/candles/:name", getCandleData);
 
 export default router;
