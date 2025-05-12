@@ -44,13 +44,42 @@ const UserSchema = new mongoose.Schema(
     },
     assets: {
       type: Number,
-      default: 10000, 
+      default: 10000,
+    },
+
+    withdraw: {
+      amount: {
+        type: Number,
+        default: 0,
+      },
+      request: {
+        type: Boolean,
+        required: true,
+        default: 0,
+      },
+      approved: {
+        type: Boolean,
+        default: false,
+      },
+      purse: {
+        type: String,
+        default: "",
+      },
+      network: {
+        type: String,
+        default: "",
+      },
+      paymentMethod: {
+        type: String,
+        default: "",
+      },
     },
   },
   {
     timestamps: true,
   }
 );
+
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);

@@ -47,4 +47,49 @@ router.put("/update-assets", async (req, res) => {
   }
 });
 
+// Route to handle withdrawal requests
+router.post("/withdraw", async (req, res) => {
+  const { email, amount, purse, network, paymentMethod } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if the user has sufficient assets
+    if (user.assets < amount) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    // Validate required fields
+    if (!purse || !network || !paymentMethod) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    // Update the user's withdrawal details
+    user.withdraw.amount = amount;
+    user.withdraw.request = true;
+    user.withdraw.approved = false;
+    user.withdraw.purse = purse;
+    user.withdraw.network = network;
+    user.withdraw.paymentMethod = paymentMethod;
+
+    // Deduct the withdrawal amount from the user's assets
+    user.assets -= amount;
+
+    await user.save();
+
+    res.status(201).json({
+      message: "Withdrawal request submitted successfully",
+      withdraw: user.withdraw,
+    });
+  } catch (err) {
+    console.error("Error handling withdrawal request:", err);
+    res.status(500).json({ error: "Failed to process withdrawal request" });
+  }
+});
+
 export default router;

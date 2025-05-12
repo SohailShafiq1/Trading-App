@@ -5,39 +5,82 @@ const s = styles;
 
 const Withdraw = () => {
   const [withdrawRequests, setWithdrawRequests] = useState([]);
-  const navigate = useNavigate(); 
+  const [error, setError] = useState(""); // To handle errors
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const mockRequests = [
-      { id: 1, user: "User1", amount: 100, status: "Pending" },
-      { id: 2, user: "User2", amount: 200, status: "Pending" },
-      { id: 3, user: "User3", amount: 150, status: "Pending" },
-      { id: 4, user: "User4", amount: 300, status: "Pending" },
-      { id: 5, user: "User5", amount: 250, status: "Pending" },
-      { id: 6, user: "User6", amount: 400, status: "Pending" },
-      { id: 7, user: "User7", amount: 350, status: "Pending" },
-      { id: 8, user: "User8", amount: 500, status: "Pending" },
-      { id: 9, user: "User9", amount: 450, status: "Pending" },
-      { id: 10, user: "User10", amount: 600, status: "Pending" },
-      { id: 11, user: "User11", amount: 700, status: "Pending" },
-      { id: 12, user: "User12", amount: 800, status: "Pending" },
-      { id: 13, user: "User13", amount: 900, status: "Pending" },
-      { id: 14, user: "User14", amount: 1000, status: "Pending" },
-      { id: 15, user: "User15", amount: 1100, status: "Pending" },
-    ];
-    setWithdrawRequests(mockRequests);
+    const fetchWithdrawRequests = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/admin/withdraw-requests", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          setError(errorData.message || "Failed to fetch withdrawal requests.");
+          return;
+        }
+
+        const data = await response.json();
+        setWithdrawRequests(data); // Set the fetched withdrawal requests
+      } catch (err) {
+        console.error("Error fetching withdrawal requests:", err);
+        setError("An error occurred while fetching withdrawal requests.");
+      }
+    };
+
+    fetchWithdrawRequests();
   }, []);
 
-  const handleAccept = (id) => {
-    setWithdrawRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: "Accepted" } : req))
-    );
+  const handleAccept = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/withdraw-accept/${email}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to accept withdrawal request.");
+        return;
+      }
+
+      setWithdrawRequests((prev) =>
+        prev.map((req) =>
+          req.email === email ? { ...req, withdraw: { ...req.withdraw, request: false, approved: true } } : req
+        )
+      );
+    } catch (err) {
+      console.error("Error accepting withdrawal request:", err);
+      setError("An error occurred while accepting the withdrawal request.");
+    }
   };
 
-  const handleReject = (id) => {
-    setWithdrawRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: "Rejected" } : req))
-    );
+  const handleReject = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/withdraw-decline/${email}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to decline withdrawal request.");
+        return;
+      }
+
+      const updatedUser = await response.json();
+
+      setWithdrawRequests((prev) =>
+        prev.map((req) =>
+          req.email === email ? { ...req, withdraw: { ...req.withdraw, request: false, approved: false } } : req
+        )
+      );
+    } catch (err) {
+      console.error("Error declining withdrawal request:", err);
+      setError("An error occurred while declining the withdrawal request.");
+    }
   };
 
   return (
@@ -46,10 +89,11 @@ const Withdraw = () => {
         Back
       </button>
       <h2>Withdrawal Requests</h2>
+      {error && <p className={s.error}>{error}</p>}
       <table className={s.table}>
         <thead>
           <tr>
-            <th>User</th>
+            <th>Email</th>
             <th>Amount</th>
             <th>Status</th>
             <th>Actions</th>
@@ -57,22 +101,22 @@ const Withdraw = () => {
         </thead>
         <tbody>
           {withdrawRequests.map((request) => (
-            <tr key={request.id}>
-              <td>{request.user}</td>
-              <td>${request.amount}</td>
-              <td>{request.status}</td>
+            <tr key={request.email}>
+              <td>{request.email}</td>
+              <td>${request.withdraw.amount}</td>
+              <td>{request.withdraw.request ? "Pending" : request.withdraw.approved ? "Accepted" : "Rejected"}</td>
               <td>
-                {request.status === "Pending" && (
+                {request.withdraw.request && (
                   <>
                     <button
                       className={s.acceptButton}
-                      onClick={() => handleAccept(request.id)}
+                      onClick={() => handleAccept(request.email)}
                     >
                       Accept
                     </button>
                     <button
                       className={s.rejectButton}
-                      onClick={() => handleReject(request.id)}
+                      onClick={() => handleReject(request.email)}
                     >
                       Reject
                     </button>
