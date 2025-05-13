@@ -52,44 +52,32 @@ router.post("/withdraw", async (req, res) => {
   const { email, amount, purse, network, paymentMethod } = req.body;
 
   try {
-    // Find the user by email
     const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.assets < amount) return res.status(400).json({ error: "Insufficient balance" });
+    if (!purse || !network || !paymentMethod) return res.status(400).json({ error: "All fields are required" });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    // Add new withdrawal to the array (instead of overwriting)
+    user.withdrawals.push({
+      amount,
+      purse,
+      network,
+      paymentMethod,
+      status: "pending",
+      createdAt: new Date()
+    });
 
-    // Check if the user has sufficient assets
-    if (user.assets < amount) {
-      return res.status(400).json({ error: "Insufficient balance" });
-    }
-
-    // Validate required fields
-    if (!purse || !network || !paymentMethod) {
-      return res.status(400).json({ error: "All fields are required." });
-    }
-
-    // Update the user's withdrawal details
-    user.withdraw.amount = amount;
-    user.withdraw.request = true;
-    user.withdraw.approved = false;
-    user.withdraw.purse = purse;
-    user.withdraw.network = network;
-    user.withdraw.paymentMethod = paymentMethod;
-
-    // Deduct the withdrawal amount from the user's assets
+    // Deduct the amount immediately
     user.assets -= amount;
 
     await user.save();
-
-    res.status(201).json({
-      message: "Withdrawal request submitted successfully",
-      withdraw: user.withdraw,
+    res.status(201).json({ 
+      message: "Withdrawal request submitted",
+      withdrawal: user.withdrawals[user.withdrawals.length - 1] // Return the latest request
     });
   } catch (err) {
-    console.error("Error handling withdrawal request:", err);
-    res.status(500).json({ error: "Failed to process withdrawal request" });
+    console.error("Error:", err);
+    res.status(500).json({ error: "Failed to process withdrawal" });
   }
 });
-
 export default router;

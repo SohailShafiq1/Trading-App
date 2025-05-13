@@ -1,122 +1,112 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import styles from "./Withdraw.module.css";
-const s = styles;
 
 const Withdraw = () => {
   const [withdrawRequests, setWithdrawRequests] = useState([]);
-  const [error, setError] = useState(""); // To handle errors
+  const [filter, setFilter] = useState("all"); // "all", "pending", "approved", "rejected"
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchWithdrawRequests = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/admin/withdraw-requests", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          setError(errorData.message || "Failed to fetch withdrawal requests.");
-          return;
-        }
-
-        const data = await response.json();
-        setWithdrawRequests(data); // Set the fetched withdrawal requests
-      } catch (err) {
-        console.error("Error fetching withdrawal requests:", err);
-        setError("An error occurred while fetching withdrawal requests.");
-      }
-    };
-
-    fetchWithdrawRequests();
-  }, []);
-
-  const handleAccept = async (email) => {
+  // Fetch requests based on filter
+  const fetchWithdrawRequests = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/withdraw-accept/${email}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
+      const url = filter === "all" 
+        ? "http://localhost:5000/api/admin/withdraw-requests"
+        : `http://localhost:5000/api/admin/withdraw-requests?status=${filter}`;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to accept withdrawal request.");
-        return;
-      }
-
-      setWithdrawRequests((prev) =>
-        prev.map((req) =>
-          req.email === email ? { ...req, withdraw: { ...req.withdraw, request: false, approved: true } } : req
-        )
-      );
+      const response = await fetch(url);
+      const data = await response.json();
+      setWithdrawRequests(data);
     } catch (err) {
-      console.error("Error accepting withdrawal request:", err);
-      setError("An error occurred while accepting the withdrawal request.");
+      setError("Failed to fetch requests");
     }
   };
 
-  const handleReject = async (email) => {
+  useEffect(() => {
+    fetchWithdrawRequests();
+  }, [filter]); // ✅ Refetch when filter changes
+
+  const handleAccept = async (withdrawalId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/withdraw-decline/${email}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to decline withdrawal request.");
-        return;
-      }
-
-      const updatedUser = await response.json();
-
-      setWithdrawRequests((prev) =>
-        prev.map((req) =>
-          req.email === email ? { ...req, withdraw: { ...req.withdraw, request: false, approved: false } } : req
-        )
+      await fetch(
+        `http://localhost:5000/api/admin/withdraw-accept/${withdrawalId}`,
+        { method: "PUT" }
       );
+      fetchWithdrawRequests(); // Refresh the list
     } catch (err) {
-      console.error("Error declining withdrawal request:", err);
-      setError("An error occurred while declining the withdrawal request.");
+      setError("Failed to approve");
+    }
+  };
+
+  const handleReject = async (withdrawalId) => {
+    try {
+      await fetch(
+        `http://localhost:5000/api/admin/withdraw-decline/${withdrawalId}`,
+        { method: "PUT" }
+      );
+      fetchWithdrawRequests(); // Refresh the list
+    } catch (err) {
+      setError("Failed to reject");
     }
   };
 
   return (
-    <div className={s.container}>
-      <button className={s.backButton} onClick={() => navigate(-1)}>
-        Back
-      </button>
+    <div className={styles.container}>
+      <button onClick={() => navigate(-1)}>Back</button>
       <h2>Withdrawal Requests</h2>
-      {error && <p className={s.error}>{error}</p>}
-      <table className={s.table}>
+
+      <select 
+        value={filter} 
+        onChange={(e) => setFilter(e.target.value)}
+        className={styles.filterDropdown}
+      >
+        <option value="all">All Requests</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <table className={styles.table}>
         <thead>
           <tr>
             <th>Email</th>
             <th>Amount</th>
             <th>Status</th>
+            <th>Date</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {withdrawRequests.map((request) => (
-            <tr key={request.email}>
+            <tr key={request.withdrawalId}>
               <td>{request.email}</td>
-              <td>${request.withdraw.amount}</td>
-              <td>{request.withdraw.request ? "Pending" : request.withdraw.approved ? "Accepted" : "Rejected"}</td>
+              <td>${request.amount}</td>
               <td>
-                {request.withdraw.request && (
+                <span className={
+                  request.status === "approved" ? styles.statusApproved :
+                  request.status === "rejected" ? styles.statusRejected :
+                  styles.statusPending
+                }>
+                  {request.status}
+                </span>
+              </td>
+              <td>{new Date(request.createdAt).toLocaleString()}</td>
+              <td>
+                {/* Show buttons only for pending requests */}
+                {request.status === "pending" && (
                   <>
-                    <button
-                      className={s.acceptButton}
-                      onClick={() => handleAccept(request.email)}
+                    <button 
+                      onClick={() => handleAccept(request.withdrawalId)}
+                      className={styles.acceptButton}
                     >
-                      Accept
+                      Approve
                     </button>
-                    <button
-                      className={s.rejectButton}
-                      onClick={() => handleReject(request.email)}
+                    <button 
+                      onClick={() => handleReject(request.withdrawalId)}
+                      className={styles.rejectButton}
                     >
                       Reject
                     </button>

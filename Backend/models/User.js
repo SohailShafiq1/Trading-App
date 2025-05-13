@@ -47,33 +47,36 @@ const UserSchema = new mongoose.Schema(
       default: 10000,
     },
 
-    withdraw: {
-      amount: {
-        type: Number,
-        default: 0,
-      },
-      request: {
-        type: Boolean,
-        required: true,
-        default: 0,
-      },
-      approved: {
-        type: Boolean,
-        default: false,
-      },
-      purse: {
-        type: String,
-        default: "",
-      },
-      network: {
-        type: String,
-        default: "",
-      },
-      paymentMethod: {
-        type: String,
-        default: "",
-      },
-    },
+  withdrawals: [{
+  amount: {
+    type: Number,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  purse: {
+    type: String,
+    required: true
+  },
+  network: {
+    type: String,
+    required: true
+  },
+  paymentMethod: {
+    type: String,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  processedAt: {
+    type: Date
+  }
+}]
   },
   {
     timestamps: true,

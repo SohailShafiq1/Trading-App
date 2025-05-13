@@ -22,87 +22,90 @@ router.get("/trend", (req, res) => {
   res.status(200).json({ trend: currentTrend });
 });
 
-// Fetch all withdrawal requests
+// Fetch all withdrawal requests// Fetch ALL withdrawal requests (with optional status filter)
 router.get("/withdraw-requests", async (req, res) => {
+  const { status } = req.query; // Allows filtering (e.g., ?status=pending)
+
   try {
-    const users = await User.find({ "withdraw.request": true }, "email withdraw");
-    if (!users.length) {
-      return res.status(404).json({ message: "No withdrawal requests found" });
-    }
-    res.status(200).json(users);
+    const users = await User.find(
+      status ? { "withdrawals.status": status } : {}, // ✅ Fetch all if no filter
+      { email: 1, withdrawals: 1 }
+    );
+
+    // Flatten all requests (or filter if `status` is provided)
+    const allRequests = users.flatMap(user => 
+      user.withdrawals
+        .filter(w => !status || w.status === status) // ✅ Apply filter if provided
+        .map(w => ({
+          email: user.email,
+          withdrawalId: w._id.toString(),
+          amount: w.amount,
+          purse: w.purse,
+          network: w.network,
+          paymentMethod: w.paymentMethod,
+          status: w.status, // ✅ Include status in response
+          createdAt: w.createdAt,
+          processedAt: w.processedAt
+        }))
+    );
+
+    res.status(200).json(allRequests);
   } catch (err) {
-    console.error("Error fetching withdrawal requests:", err);
-    res.status(500).json({ error: "Failed to fetch withdrawal requests" });
+    console.error("Error:", err);
+    res.status(500).json({ error: "Failed to fetch requests" });
   }
 });
-
 // Accept a withdrawal request
-router.put("/withdraw-accept/:email", async (req, res) => {
-  const { email } = req.params;
+router.put("/withdraw-accept/:withdrawalId", async (req, res) => {
+  const { withdrawalId } = req.params;
 
   try {
-    const user = await User.findOne({ email });
+    // Find the user with this withdrawal request
+    const user = await User.findOne({ "withdrawals._id": withdrawalId });
+    if (!user) return res.status(404).json({ error: "Request not found" });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    // Find the specific withdrawal
+    const withdrawal = user.withdrawals.id(withdrawalId);
+    if (!withdrawal || withdrawal.status !== "pending") {
+      return res.status(400).json({ error: "Invalid request" });
     }
 
-    if (!user.withdraw.request) {
-      return res.status(400).json({ error: "No pending withdrawal request for this user" });
-    }
-
-    // Deduct the withdrawal amount from the user's assets
-    if (user.assets < user.withdraw.amount) {
-      return res.status(400).json({ error: "Insufficient balance to process withdrawal" });
-    }
-
-    user.assets -= user.withdraw.amount;
-    user.withdraw.request = false;
-    user.withdraw.approved = true;
+    // Mark as approved
+    withdrawal.status = "approved";
+    withdrawal.processedAt = new Date();
 
     await user.save();
-
-    res.status(200).json({ message: "Withdrawal request approved", user });
+    res.status(200).json({ message: "Request approved" });
   } catch (err) {
-    console.error("Error approving withdrawal request:", err);
-    res.status(500).json({ error: "Failed to approve withdrawal request" });
+    console.error("Error:", err);
+    res.status(500).json({ error: "Failed to approve request" });
   }
 });
-
 // Decline a withdrawal request
-router.put("/withdraw-decline/:email", async (req, res) => {
-  const { email } = req.params;
+router.put("/withdraw-decline/:withdrawalId", async (req, res) => {
+  const { withdrawalId } = req.params;
 
   try {
-    // Find the user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ "withdrawals._id": withdrawalId });
+    if (!user) return res.status(404).json({ error: "Request not found" });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    const withdrawal = user.withdrawals.id(withdrawalId);
+    if (!withdrawal || withdrawal.status !== "pending") {
+      return res.status(400).json({ error: "Invalid request" });
     }
 
-    if (!user.withdraw.request) {
-      return res.status(400).json({ error: "No pending withdrawal request for this user" });
-    }
+    // Return the money to the user
+    user.assets += withdrawal.amount;
 
-    // Return the withdrawal amount back to the user's assets
-    user.assets += user.withdraw.amount;
-
-    // Reset the withdrawal request fields
-    user.withdraw.request = false;
-    user.withdraw.approved = false;
-    user.withdraw.amount = 0;
-    user.withdraw.purse = "";
-    user.withdraw.network = "";
-    user.withdraw.paymentMethod = "";
+    // Mark as rejected
+    withdrawal.status = "rejected";
+    withdrawal.processedAt = new Date();
 
     await user.save();
-
-    res.status(200).json({ message: "Withdrawal request declined and assets returned", user });
+    res.status(200).json({ message: "Request rejected & funds returned" });
   } catch (err) {
-    console.error("Error declining withdrawal request:", err);
-    res.status(500).json({ error: "Failed to decline withdrawal request" });
+    console.error("Error:", err);
+    res.status(500).json({ error: "Failed to reject request" });
   }
 });
-
 export default router;

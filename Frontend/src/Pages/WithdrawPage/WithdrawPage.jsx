@@ -7,30 +7,41 @@ const s = styles;
 
 const WithdrawPage = () => {
   const { userAssets, setUserAssets } = useUserAssets(); // Access and update userAssets from context
-  const { user } = useAuth(); // Get the logged-in user from AuthContext
+  const { user } = useAuth(); 
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [purse, setPurse] = useState("");
   const [network, setNetwork] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("USD Tether");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
 
   const handleWithdraw = async () => {
     if (withdrawAmount < 10) {
-      setError("Minimum withdrawal amount is $10.");
-      setSuccess("");
+      setPopupMessage("Minimum withdrawal amount is $10.");
+      setShowPopup(true);
       return;
     }
 
     if (withdrawAmount > userAssets) {
-      setError("Insufficient balance.");
-      setSuccess("");
+      setPopupMessage("Insufficient balance.");
+      setShowPopup(true);
       return;
     }
 
     if (!purse || !network) {
-      setError("Please fill in all the required fields.");
-      setSuccess("");
+      setPopupMessage("Please fill in all the required fields.");
+      setShowPopup(true);
+      return;
+    }
+
+    // Sanitize the purse field to allow only lowercase letters and numbers
+    const sanitizedPurse = purse.replace(/[^a-z0-9]/g, "");
+
+    if (sanitizedPurse !== purse) {
+      setPopupMessage("Purse can only contain lowercase letters and numbers.");
+      setShowPopup(true);
       return;
     }
 
@@ -41,7 +52,7 @@ const WithdrawPage = () => {
         body: JSON.stringify({
           email: user.email, // Use the logged-in user's email
           amount: withdrawAmount,
-          purse,
+          purse: sanitizedPurse,
           network,
           paymentMethod,
         }),
@@ -50,17 +61,23 @@ const WithdrawPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setError("");
-        setSuccess("Withdrawal request submitted successfully.");
+        setPopupMessage("Withdrawal request submitted successfully.");
+        setShowPopup(true);
         setUserAssets((prev) => prev - withdrawAmount); // Deduct locally
+
+        // Reset all fields
+        setWithdrawAmount(0);
+        setPurse("");
+        setNetwork("");
+        setPaymentMethod("USD Tether");
       } else {
-        setError(data.error || "Failed to submit withdrawal request.");
-        setSuccess("");
+        setPopupMessage(data.error || "Failed to submit withdrawal request.");
+        setShowPopup(true);
       }
     } catch (err) {
       console.error("Error submitting withdrawal request:", err);
-      setError("An error occurred. Please try again.");
-      setSuccess("");
+      setPopupMessage("An error occurred. Please try again.");
+      setShowPopup(true);
     }
   };
 
@@ -133,9 +150,6 @@ const WithdrawPage = () => {
             </select>
           </div>
 
-          {error && <p className={s.error}>{error}</p>}
-          {success && <p className={s.success}>{success}</p>}
-
           <button className={s.confirmBtn} onClick={handleWithdraw}>
             Confirm <BiRightArrowCircle className={s.icon} />
           </button>
@@ -149,6 +163,15 @@ const WithdrawPage = () => {
           </div>
         </div>
       </div>
+
+      {showPopup && (
+        <div className={s.popup}>
+          <div className={s.popupContent}>
+            <p>{popupMessage}</p>
+            <button onClick={() => setShowPopup(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
