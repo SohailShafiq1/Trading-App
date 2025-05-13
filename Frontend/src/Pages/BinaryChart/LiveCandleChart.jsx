@@ -1,193 +1,35 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { createChart } from "lightweight-charts";
 import axios from "axios";
-import { debounce } from "lodash";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const debouncedIntervalUpdate = debounce(
-  async (coinName, newInterval, lastIntervalRef, setInterval) => {
-    try {
-      const response = await axios.put(
-        `${BACKEND_URL}/api/coins/interval/${encodeURIComponent(coinName)}`,
-        { interval: newInterval },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.data.success) {
-        lastIntervalRef.current = newInterval;
-        setInterval(newInterval);
-      }
-    } catch (err) {
-      console.error("Error updating interval:", err);
-    }
-  },
-  500
-); // 500ms debounce
 
 export default function LiveCandleChart({ coinName }) {
+  // Refs
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
-  const [interval, setInterval] = useState("30s");
-  const lastIntervalRef = useRef(interval); // Track the last successful interval
 
+  // State
+  const [interval, setInterval] = useState("30s");
   const [candleData, setCandleData] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [currentTrend, setCurrentTrend] = useState("Normal");
   const [loading, setLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState("disconnected");
 
+  // Previous values refs
   const lastPriceRef = useRef(null);
   const lastCandleDataRef = useRef([]);
   const lastTrendRef = useRef("Normal");
   const abortControllerRef = useRef(new AbortController());
 
-  useEffect(() => {
-    return () => {
-      debouncedIntervalUpdate.cancel(); // Cleanup debounce on unmount
-    };
-  }, []);
-  const fetchInitialData = useCallback(async () => {
-    if (!coinName) return;
+  // WebSocket refs
+  const priceWsRef = useRef(null);
+  const candleWsRef = useRef(null);
+  const trendWsRef = useRef(null);
 
-    try {
-      setLoading(true);
-      abortControllerRef.current.abort();
-      abortControllerRef.current = new AbortController();
-
-      const [priceRes, candleRes, trendRes, coinRes] = await Promise.all([
-        axios.get(`${BACKEND_URL}/api/coins/price/${coinName}`, {
-          signal: abortControllerRef.current.signal,
-        }),
-        axios.get(`${BACKEND_URL}/api/coins/candles/${coinName}`, {
-          params: { interval },
-          signal: abortControllerRef.current.signal,
-        }),
-        axios.get(`${BACKEND_URL}/api/admin/trend`, {
-          signal: abortControllerRef.current.signal,
-        }),
-        axios.get(`${BACKEND_URL}/api/coins/type/${coinName}`, {
-          signal: abortControllerRef.current.signal,
-        }),
-      ]);
-
-      // Set the initial interval from the coin's selectedInterval
-      if (coinRes.data) {
-        const coin = await axios.get(
-          `${BACKEND_URL}/api/coins/name/${coinName}`
-        );
-        const selectedInterval = coin.data?.selectedInterval || "30s";
-        setInterval(selectedInterval);
-      }
-
-      setCurrentPrice(priceRes.data?.price || priceRes.data);
-      setCandleData(candleRes.data || []);
-      setCurrentTrend(trendRes.data?.mode || trendRes.data?.trend || "Normal");
-      lastCandleDataRef.current = candleRes.data || [];
-    } catch (err) {
-      if (!axios.isCancel(err)) {
-        console.error("Error fetching initial data:", err);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [coinName]);
-
-  useEffect(() => {
-    fetchInitialData();
-    return () => {
-      abortControllerRef.current.abort();
-    };
-  }, [fetchInitialData]);
-
-  useEffect(() => {
-    if (!coinName) return;
-
-    const updateInterval = async () => {
-      try {
-        await axios.put(`${BACKEND_URL}/api/coins/interval/${coinName}`, {
-          interval: interval, // Make sure we're sending the interval value properly
-        });
-      } catch (err) {
-        console.error("Error updating interval:", err);
-      }
-    };
-
-    updateInterval();
-  }, [interval, coinName]);
-  useEffect(() => {
-    if (!coinName || loading) return;
-
-    const priceInterval = setInterval(async () => {
-      try {
-        const res = await axios.get(
-          `${BACKEND_URL}/api/coins/price/${coinName}`
-        );
-        const newPrice = res.data?.price || res.data;
-
-        if (newPrice !== lastPriceRef.current) {
-          setCurrentPrice(newPrice);
-          lastPriceRef.current = newPrice;
-        }
-      } catch (err) {
-        console.error("Price fetch error:", err);
-      }
-    }, 5000);
-
-    return () => clearInterval(priceInterval);
-  }, [coinName, loading]);
-
-  useEffect(() => {
-    if (!coinName || loading) return;
-
-    const candleInterval = setInterval(async () => {
-      try {
-        const res = await axios.get(
-          `${BACKEND_URL}/api/coins/candles/${coinName}`,
-          {
-            params: { interval },
-          }
-        );
-        const newCandleData = res.data || [];
-
-        if (
-          JSON.stringify(newCandleData) !==
-          JSON.stringify(lastCandleDataRef.current)
-        ) {
-          setCandleData(newCandleData);
-          lastCandleDataRef.current = newCandleData;
-        }
-      } catch (err) {
-        console.error("Candle fetch error:", err);
-      }
-    }, 10000);
-
-    return () => clearInterval(candleInterval);
-  }, [coinName, interval, loading]);
-
-  useEffect(() => {
-    if (loading) return;
-
-    const trendInterval = setInterval(async () => {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/api/admin/trend`);
-        const newTrend = res.data?.mode || res.data?.trend || "Normal";
-
-        if (newTrend !== lastTrendRef.current) {
-          setCurrentTrend(newTrend);
-          lastTrendRef.current = newTrend;
-        }
-      } catch (err) {
-        console.error("Trend fetch error:", err);
-      }
-    }, 10000);
-
-    return () => clearInterval(trendInterval);
-  }, [loading]);
-
+  // Initialize chart
   useEffect(() => {
     if (loading || !chartContainerRef.current) return;
 
@@ -200,27 +42,36 @@ export default function LiveCandleChart({ coinName }) {
         textColor: "#000",
       },
       grid: {
-        vertLines: { color: "#eee" },
-        horzLines: { color: "#eee" },
+        vertLines: { visible: false },
+        horzLines: { color: "#f0f3fa" },
       },
       timeScale: {
         rightOffset: 12,
-        barSpacing: 10,
+        barSpacing: 8,
+        minBarSpacing: 4,
         fixLeftEdge: true,
         timeVisible: true,
         secondsVisible: true,
+        borderVisible: false,
+      },
+      rightPriceScale: {
+        borderVisible: false,
       },
     });
+
     chartRef.current = chart;
 
-    const series = chart.addCandlestickSeries({
+    const candleSeries = chart.addCandlestickSeries({
       upColor: "#26a69a",
       downColor: "#ef5350",
-      borderVisible: false,
+      borderUpColor: "#26a69a",
+      borderDownColor: "#ef5350",
       wickUpColor: "#26a69a",
       wickDownColor: "#ef5350",
+      priceScaleId: "right",
+      priceLineVisible: false,
     });
-    candleSeriesRef.current = series;
+    candleSeriesRef.current = candleSeries;
 
     const resizeObserver = new ResizeObserver((entries) => {
       const [entry] = entries;
@@ -244,11 +95,9 @@ export default function LiveCandleChart({ coinName }) {
     };
   }, [loading]);
 
-  useEffect(() => {
-    if (!candleSeriesRef.current || !candleData?.length) return;
-
-    const seenTimes = new Set();
-    const processedData = candleData
+  // Process candle data to ensure no duplicate timestamps
+  const processCandleData = (data) => {
+    return data
       .map((candle) => ({
         time: Math.floor(new Date(candle.time).getTime() / 1000),
         open: parseFloat(candle.open),
@@ -256,80 +105,223 @@ export default function LiveCandleChart({ coinName }) {
         low: parseFloat(candle.low),
         close: parseFloat(candle.close),
       }))
-      .sort((a, b) => a.time - b.time)
-      .filter((candle) => {
-        if (!seenTimes.has(candle.time)) {
-          seenTimes.add(candle.time);
-          return true;
-        }
-        return false;
-      });
+      .filter(
+        (candle, index, self) =>
+          index === self.findIndex((c) => c.time === candle.time)
+      )
+      .sort((a, b) => a.time - b.time);
+  };
 
-    candleSeriesRef.current.setData(processedData);
-    if (chartRef.current) {
+  // Update chart data
+  useEffect(() => {
+    if (!candleSeriesRef.current || !candleData?.length) return;
+
+    const processedData = processCandleData(candleData);
+
+    if (
+      lastCandleDataRef.current.length === 0 ||
+      JSON.stringify(candleData) !== JSON.stringify(lastCandleDataRef.current)
+    ) {
+      candleSeriesRef.current.setData(processedData);
+      lastCandleDataRef.current = candleData;
       chartRef.current.timeScale().fitContent();
+    } else if (processedData.length > 0) {
+      const lastCandle = processedData[processedData.length - 1];
+      candleSeriesRef.current.update(lastCandle);
     }
   }, [candleData]);
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        Loading chart data...
-      </div>
+  // WebSocket connection helper
+  const connectWebSocket = (type, onMessage, params = {}) => {
+    const wsUrl = `ws://${window.location.hostname}:5000`;
+    let url = `${wsUrl}/${type}/${coinName}`;
+    if (params.interval) url += `/${params.interval}`;
+
+    const ws = new WebSocket(url);
+
+    ws.onopen = () => {
+      console.log(`${type} WebSocket connected`);
+      setConnectionStatus("connected");
+    };
+
+    ws.onmessage = onMessage;
+
+    ws.onerror = (error) => {
+      console.error(`${type} WebSocket error:`, error);
+      setConnectionStatus("error");
+    };
+
+    ws.onclose = () => {
+      console.log(`${type} WebSocket disconnected`);
+      setConnectionStatus("disconnected");
+      if (!params.noRetry) {
+        setTimeout(() => connectWebSocket(type, onMessage, params), 3000);
+      }
+    };
+
+    return ws;
+  };
+
+  // Fetch initial data
+  const fetchInitialData = useCallback(async () => {
+    if (!coinName) return;
+
+    try {
+      setLoading(true);
+      abortControllerRef.current.abort();
+      abortControllerRef.current = new AbortController();
+
+      const [priceRes, candleRes, trendRes, coinRes] = await Promise.all([
+        axios.get(`${BACKEND_URL}/api/coins/price/${coinName}`, {
+          signal: abortControllerRef.current.signal,
+        }),
+        axios.get(`${BACKEND_URL}/api/coins/candles/${coinName}`, {
+          params: { interval },
+          signal: abortControllerRef.current.signal,
+        }),
+        axios.get(`${BACKEND_URL}/api/admin/trend`, {
+          signal: abortControllerRef.current.signal,
+        }),
+        axios.get(`${BACKEND_URL}/api/coins/name/${coinName}`, {
+          signal: abortControllerRef.current.signal,
+        }),
+      ]);
+
+      setCurrentPrice(priceRes.data?.price || priceRes.data);
+      setCandleData(candleRes.data || []);
+      setCurrentTrend(trendRes.data?.mode || trendRes.data?.trend || "Normal");
+      lastCandleDataRef.current = candleRes.data || [];
+
+      if (coinRes.data?.selectedInterval) {
+        setInterval(coinRes.data.selectedInterval);
+      }
+    } catch (err) {
+      if (!axios.isCancel(err)) {
+        console.error("Error fetching initial data:", err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [coinName, interval]);
+
+  useEffect(() => {
+    fetchInitialData();
+    return () => {
+      abortControllerRef.current.abort();
+    };
+  }, [fetchInitialData]);
+
+  // Price WebSocket
+  useEffect(() => {
+    if (!coinName || loading) return;
+
+    priceWsRef.current = connectWebSocket(
+      "price",
+      (event) => {
+        const newPrice = parseFloat(event.data);
+        if (newPrice !== lastPriceRef.current) {
+          setCurrentPrice(newPrice);
+          lastPriceRef.current = newPrice;
+        }
+      },
+      { noRetry: false }
     );
-  }
+
+    return () => {
+      if (priceWsRef.current) {
+        priceWsRef.current.close();
+      }
+    };
+  }, [coinName, loading]);
+
+  // Candles WebSocket - Fixed version with duplicate prevention
+  useEffect(() => {
+    if (!coinName || loading) return;
+
+    candleWsRef.current = connectWebSocket(
+      "candles",
+      (event) => {
+        const newCandles = JSON.parse(event.data);
+
+        setCandleData((prevData) => {
+          if (newCandles.length > 0) {
+            const newCandle = newCandles[0];
+            const newTime = Math.floor(
+              new Date(newCandle.time).getTime() / 1000
+            );
+
+            // First filter out any existing candle with the same time
+            const filteredData = prevData.filter(
+              (c) => Math.floor(new Date(c.time).getTime() / 1000) !== newTime
+            );
+
+            // Ensure continuity with previous candle
+            if (filteredData.length > 0) {
+              const lastCandle = filteredData[filteredData.length - 1];
+              newCandle.open = lastCandle.close;
+            }
+
+            return [...filteredData, newCandle].sort(
+              (a, b) => new Date(a.time) - new Date(b.time)
+            );
+          }
+          return prevData;
+        });
+      },
+      { interval, noRetry: false }
+    );
+
+    return () => {
+      if (candleWsRef.current) {
+        candleWsRef.current.close();
+      }
+    };
+  }, [coinName, interval, loading]);
+
+  // Trend WebSocket
+  useEffect(() => {
+    if (loading) return;
+
+    trendWsRef.current = connectWebSocket(
+      "trend",
+      (event) => {
+        const newTrend = event.data;
+        if (newTrend !== lastTrendRef.current) {
+          setCurrentTrend(newTrend);
+          lastTrendRef.current = newTrend;
+        }
+      },
+      { noRetry: false }
+    );
+
+    return () => {
+      if (trendWsRef.current) {
+        trendWsRef.current.close();
+      }
+    };
+  }, [loading]);
+
   const handleIntervalChange = async (e) => {
     const newInterval = e.target.value;
-
-    if (newInterval !== lastIntervalRef.current) {
-      debouncedIntervalUpdate(
-        coinName,
-        newInterval,
-        lastIntervalRef,
-        setInterval
-      );
-    } // Don't do anything if interval hasn't changed
-
-    if (newInterval === lastIntervalRef.current) return;
+    if (newInterval === interval) return;
 
     try {
       const response = await axios.put(
         `${BACKEND_URL}/api/coins/interval/${coinName}`,
-        { interval: newInterval },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { interval: newInterval }
       );
 
       if (response.data.success) {
-        lastIntervalRef.current = newInterval; // Update last successful interval
         setInterval(newInterval);
-      } else {
-        console.error(
-          "Server rejected interval change:",
-          response.data.message
-        );
-        // Revert the select value to last successful interval
-        e.target.value = lastIntervalRef.current;
       }
     } catch (err) {
-      console.error(
-        "Error updating interval:",
-        err.response?.data?.message || err.message
-      );
-      // Revert the select value
-      e.target.value = lastIntervalRef.current;
+      console.error("Error updating interval:", err);
     }
   };
+
+  if (loading) {
+    return <div className="loading-container">Loading chart data...</div>;
+  }
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -348,11 +340,12 @@ export default function LiveCandleChart({ coinName }) {
           alignItems: "center",
         }}
       >
+        <div className="connection-status">Status: {connectionStatus}</div>
         <label>
           Interval:&nbsp;
           <select
             value={interval}
-            // onChange={handleIntervalChange}
+            onChange={handleIntervalChange}
             style={{ padding: "4px 8px" }}
           >
             <option value="30s">30s</option>

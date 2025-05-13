@@ -1,5 +1,6 @@
 import Coin from "../models/Coin.js";
 import Trend from "../models/Trend.js";
+import webSocketService from "./websocket.js";
 
 class CandleGenerator {
   constructor() {
@@ -13,14 +14,14 @@ class CandleGenerator {
     this.activeIntervals = new Map();
     this.priceHistory = new Map();
     this.scenarioState = new Map();
+    this.volatilityState = new Map();
+    this.basePrice = new Map();
   }
 
   async initialize() {
     console.log("Initializing candle generation...");
     const coins = await Coin.find({});
-    coins.forEach((coin) => {
-      this.setupCoinGeneration(coin);
-    });
+    coins.forEach((coin) => this.setupCoinGeneration(coin));
     setInterval(() => this.checkTrend(), 5000);
   }
 
@@ -28,20 +29,26 @@ class CandleGenerator {
     const identifier = coin.name || `${coin.firstName}_${coin.lastName}`;
     console.log(`Setting up generation for ${identifier}`);
 
-    // Clear existing interval if it exists
     if (this.activeIntervals.has(identifier)) {
       clearInterval(this.activeIntervals.get(identifier));
     }
 
-    this.priceHistory.set(identifier, coin.currentPrice);
+    this.basePrice.set(identifier, coin.currentPrice || 100);
+    this.priceHistory.set(identifier, this.basePrice.get(identifier));
+
     this.scenarioState.set(identifier, {
       counter: 0,
       phase: 0,
       direction: 1,
       step: 0,
+      lastMajorMove: Date.now(),
     });
 
-    // Start generation with the coin's selected interval
+    this.volatilityState.set(identifier, {
+      base: 0.3 + Math.random() * 0.2,
+      lastChange: Date.now(),
+    });
+
     const intervalSeconds = this.intervals[coin.selectedInterval] || 30;
     await this.generateCandle(coin, intervalSeconds);
 
@@ -55,24 +62,7 @@ class CandleGenerator {
 
   async getCurrentTrend() {
     const trend = await Trend.findOne().sort({ updatedAt: -1 });
-    return trend ? trend.mode : "Random";
-  }
-
-  async startGeneration(coin) {
-    const identifier = coin.name || `${coin.firstName}_${coin.lastName}`;
-    const interval = coin.selectedInterval || "30s";
-    const intervalSeconds = this.intervals[interval];
-
-    // Generate initial candle
-    await this.generateCandle(coin, intervalSeconds);
-
-    // Set up interval for regular generation
-    const intervalId = setInterval(
-      () => this.generateCandle(coin, intervalSeconds),
-      intervalSeconds * 1000
-    );
-
-    this.activeIntervals.set(identifier, intervalId);
+    return trend?.mode || "Random";
   }
 
   async generateCandle(coin, intervalSeconds) {
@@ -89,106 +79,124 @@ class CandleGenerator {
           (intervalSeconds * 1000)
       );
 
-      let lastPrice = this.priceHistory.get(identifier) || coin.currentPrice;
+      // Get previous candle's close or use base price
+      const prevCandle = coin.candles[coin.candles.length - 1];
+      const openPrice = prevCandle
+        ? prevCandle.close
+        : this.basePrice.get(identifier);
+
       const currentTrend = await this.getCurrentTrend();
       const state = this.scenarioState.get(identifier);
+      const volatility = this.volatilityState.get(identifier);
 
-      // Generate price path with scenario effects
-      const steps = 10;
-      const pricePath = [lastPrice];
+      // Generate price movement
+      const priceChange = this.generatePriceChange(
+        currentTrend,
+        state,
+        volatility.base
+      );
 
-      for (let i = 0; i < steps; i++) {
-        const newPrice = this.generatePrice(pricePath[i], currentTrend, state);
-        pricePath.push(newPrice);
+      const closePrice = openPrice * (1 + priceChange);
+      const highPrice =
+        Math.max(openPrice, closePrice) * (1 + Math.random() * 0.005);
+      const lowPrice =
+        Math.min(openPrice, closePrice) * (1 - Math.random() * 0.005);
+
+      // Update base price occasionally
+      if (Math.random() < 0.1) {
+        this.basePrice.set(identifier, closePrice);
       }
 
-      const openPrice = pricePath[0];
-      const highPrice = Math.max(...pricePath);
-      const lowPrice = Math.min(...pricePath);
-      const closePrice = pricePath[pricePath.length - 1];
+      const newCandle = {
+        time: intervalStart,
+        open: openPrice,
+        high: highPrice,
+        low: lowPrice,
+        close: closePrice,
+        interval: intervalLabel,
+      };
 
-      // Update state
-      this.priceHistory.set(identifier, closePrice);
-      state.step++;
-      if (state.step >= steps) state.step = 0;
-
+      // Update database
       await Coin.findOneAndUpdate(
         { _id: coin._id },
         {
           $set: { currentPrice: closePrice, lastUpdated: now },
-          $push: {
-            candles: {
-              time: intervalStart,
-              open: openPrice,
-              high: highPrice,
-              low: lowPrice,
-              close: closePrice,
-              interval: intervalLabel,
-            },
-          },
+          $push: { candles: { $each: [newCandle], $slice: -500 } },
         }
       );
 
-      console.log(`Generated ${intervalLabel} candle for ${identifier}`);
+      this.priceHistory.set(identifier, closePrice);
+      this.broadcastUpdates(identifier, closePrice, newCandle);
     } catch (err) {
-      console.error(`Error generating candle for ${coin._id}:`, err);
+      console.error(`Error generating candle:`, err);
     }
   }
 
-  generatePrice(currentPrice, trend, state) {
-    if (currentPrice === undefined || currentPrice === null) {
-      currentPrice = 100;
-    }
-
-    const baseVolatility = 0.5;
-    let volatility = baseVolatility;
+  generatePriceChange(trend, state, baseVolatility) {
     let trendFactor = 0;
     let scenarioEffect = 0;
 
+    // Apply trend effects
     switch (trend) {
       case "Up":
-        volatility = baseVolatility * 0.8;
-        trendFactor = 0.3;
+        trendFactor = 0.1 + Math.random() * 0.1;
         break;
       case "Down":
-        volatility = baseVolatility * 0.8;
-        trendFactor = -0.3;
+        trendFactor = -0.1 - Math.random() * 0.1;
         break;
-      default:
-        volatility = baseVolatility;
-    }
-
-    switch (trend) {
-      case "Scenario1":
-        state.counter = (state.counter + 1) % 4;
-        scenarioEffect = state.counter === 3 ? 5 : -1.5;
+      case "Scenario1": // Gradual rise with small corrections
+        scenarioEffect = Math.sin(state.counter / 10) * 0.5;
+        state.counter++;
         break;
-      case "Scenario2":
-        state.counter = (state.counter + 1) % 10;
-        scenarioEffect = state.counter < 5 ? 4 : -4;
+      case "Scenario2": // Sawtooth pattern
+        scenarioEffect = state.counter % 10 < 7 ? 0.3 : -0.7;
+        state.counter++;
         break;
-      case "Scenario3":
-        state.phase = (state.phase + 0.2) % (2 * Math.PI);
-        scenarioEffect = Math.sin(state.phase) * 3;
+      case "Scenario3": // Sine wave pattern
+        scenarioEffect = Math.sin(state.phase) * 0.8;
+        state.phase += 0.2;
         break;
-      case "Scenario4":
+      case "Scenario4": // Spike and gradual decline
         scenarioEffect = 2 + Math.random() * 0.5;
         if (state.step % 3 === 0) scenarioEffect *= -0.7;
         break;
-      case "Scenario5":
+      case "Scenario5": // Gradual decline with spikes
         scenarioEffect = -2 - Math.random() * 0.5;
         if (state.step % 4 === 0) scenarioEffect *= -0.5;
         break;
-      default:
-        scenarioEffect = (Math.random() - 0.5) * 2;
+      default: // Random
+        trendFactor = (Math.random() - 0.5) * 0.1;
     }
 
-    const randomFactor = (Math.random() - 0.5) * 2;
-    const priceChange =
-      randomFactor * volatility + trendFactor + scenarioEffect;
+    // Random noise with normal distribution
+    const randNormal = () => {
+      let u = 0,
+        v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    };
 
-    const newPrice = Math.max(0.01, currentPrice * (1 + priceChange / 100));
-    return parseFloat(newPrice.toFixed(4));
+    const noise = randNormal() * baseVolatility;
+
+    // Calculate final price change
+    return (trendFactor + scenarioEffect + noise) / 100;
+  }
+
+  broadcastUpdates(identifier, price, candle) {
+    try {
+      webSocketService.broadcastTo("price", identifier, price.toString());
+      if (candle) {
+        webSocketService.broadcastTo(
+          "candles",
+          identifier,
+          JSON.stringify([candle]),
+          candle.interval
+        );
+      }
+    } catch (err) {
+      console.error("Error broadcasting updates:", err);
+    }
   }
 
   async checkTrend() {
@@ -198,16 +206,38 @@ class CandleGenerator {
 
       if (coins.length > 0) {
         await Coin.updateMany({}, { trend: currentTrend });
+        // Reset scenario states
         this.scenarioState.forEach((state) => {
           state.counter = 0;
           state.phase = 0;
           state.step = 0;
+          state.lastMajorMove = Date.now();
         });
         console.log(`Trend updated to ${currentTrend}`);
       }
     } catch (err) {
       console.error("Error checking trend:", err);
     }
+  }
+
+  async updateCoinInterval(coinName, newInterval) {
+    const identifier = coinName;
+    if (this.activeIntervals.has(identifier)) {
+      clearInterval(this.activeIntervals.get(identifier));
+    }
+
+    const coin = await Coin.findOne({ name: coinName });
+    if (!coin) return;
+
+    const intervalSeconds = this.intervals[newInterval] || 30;
+    await this.generateCandle(coin, intervalSeconds);
+
+    const intervalId = setInterval(
+      () => this.generateCandle(coin, intervalSeconds),
+      intervalSeconds * 1000
+    );
+
+    this.activeIntervals.set(identifier, intervalId);
   }
 }
 

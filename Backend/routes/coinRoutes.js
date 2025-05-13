@@ -1,6 +1,6 @@
 import express from "express";
 import Coin from "../models/Coin.js";
-import { getCoinPrice, getCandleData } from "../controllers/coinController.js";
+import candleGenerator from "../services/candleGenerator.js";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -16,13 +16,9 @@ router.get("/price/:name", async (req, res) => {
   try {
     const { name } = req.params;
     const coin = await Coin.findOne({ name });
-    if (!coin) {
-      return res.status(404).json({ message: "Coin not found" });
-    }
-    res.json({ price: coin.currentPrice });
+    res.json({ price: coin?.currentPrice || 0 });
   } catch (err) {
-    console.error("Error fetching coin:", err);
-    res.status(500).json({ message: "Failed to fetch coin" });
+    res.status(500).json({ message: "Failed to fetch price" });
   }
 });
 
@@ -30,78 +26,53 @@ router.get("/type/:name", async (req, res) => {
   try {
     const { name } = req.params;
     const coin = await Coin.findOne({ name });
-    if (!coin) {
-      return res.status(404).json({ message: "Coin not found" });
-    }
-    res.json(coin.type);
+    res.json(coin?.type || "");
   } catch (err) {
-    console.error("Error fetching coin:", err);
+    res.status(500).json({ message: "Failed to fetch coin type" });
+  }
+});
+
+router.get("/name/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const coin = await Coin.findOne({ name });
+    res.json(coin || null);
+  } catch (err) {
     res.status(500).json({ message: "Failed to fetch coin" });
   }
 });
 
 router.post("/", async (req, res) => {
-  const { type, name, firstName, lastName, startingPrice, profitPercentage } =
-    req.body;
-
   try {
     const newCoin = new Coin({
-      type,
-      name,
-      firstName,
-      lastName,
-      startingPrice,
-      profitPercentage,
+      ...req.body,
+      selectedInterval: "30s",
     });
     if (newCoin.type === "OTC") {
-      newCoin.name = newCoin.firstName + "-" + newCoin.lastName;
+      newCoin.name = `${newCoin.firstName}-${newCoin.lastName}`;
     }
     await newCoin.save();
-    const coins = await Coin.find();
-    res.status(201).json(coins);
+    res.status(201).json(await Coin.find());
   } catch (err) {
     res.status(500).json({ message: "Failed to add coin" });
   }
 });
 
 router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { type, name, firstName, lastName, startingPrice, profitPercentage } =
-    req.body;
-
   try {
-    const updatedCoin = await Coin.findByIdAndUpdate(
-      id,
-      {
-        type,
-        name,
-        firstName,
-        lastName,
-        startingPrice,
-        profitPercentage,
-      },
-      { new: true }
-    );
-
-    if (!updatedCoin) {
-      return res.status(404).json({ message: "Coin not found" });
-    }
-
-    const coins = await Coin.find();
-    res.json(coins);
+    const updatedCoin = await Coin.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(await Coin.find());
   } catch (err) {
-    console.error("Error updating coin:", err);
     res.status(500).json({ message: "Failed to update coin" });
   }
 });
 
 router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-
   try {
-    await Coin.findByIdAndDelete(id);
-    const coins = await Coin.find();
-    res.json(coins);
+    await Coin.findByIdAndDelete(req.params.id);
+    res.json(await Coin.find());
   } catch (err) {
     res.status(500).json({ message: "Failed to delete coin" });
   }
@@ -112,50 +83,50 @@ router.put("/interval/:name", async (req, res) => {
     const { name } = req.params;
     const { interval } = req.body;
 
-    // Validate inputs more strictly
-    if (typeof name !== "string" || name.trim() === "") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid coin name",
-      });
-    }
-
     if (!["30s", "1m", "2m", "3m", "5m"].includes(interval)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid interval value",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid interval" });
     }
 
-    const coin = await Coin.findOne({ name: name.trim() });
+    const coin = await Coin.findOneAndUpdate(
+      { name },
+      { selectedInterval: interval },
+      { new: true }
+    );
+
     if (!coin) {
-      return res.status(404).json({
-        success: false,
-        message: "Coin not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Coin not found" });
     }
 
-    // Only update if interval is different
-    if (coin.selectedInterval !== interval) {
-      coin.selectedInterval = interval;
-      await coin.save();
-    }
-
-    res.json({
-      success: true,
-      message: "Interval updated successfully",
-      coin,
-    });
+    await candleGenerator.updateCoinInterval(name, interval);
+    res.json({ success: true, coin });
   } catch (err) {
-    console.error("Error updating interval:", err);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: err.message,
-    });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update interval" });
   }
 });
 
-router.get("/candles/:name", getCandleData);
+router.get("/candles/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { interval } = req.query;
+    const coin = await Coin.findOne({ name });
+
+    if (!coin) {
+      return res.status(404).json({ message: "Coin not found" });
+    }
+
+    const candles = coin.candles.filter(
+      (c) => !interval || c.interval === interval
+    );
+    res.json(candles);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch candles" });
+  }
+});
 
 export default router;
