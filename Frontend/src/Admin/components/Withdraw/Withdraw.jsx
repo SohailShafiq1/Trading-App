@@ -9,20 +9,25 @@ const Withdraw = () => {
   const navigate = useNavigate();
 
   // Fetch requests based on filter
-  const fetchWithdrawRequests = async () => {
-    try {
-      const url = filter === "all" 
-        ? "http://localhost:5000/api/admin/withdraw-requests"
-        : `http://localhost:5000/api/admin/withdraw-requests?status=${filter}`;
+const fetchWithdrawRequests = async () => {
+  try {
+    const url = filter === "all" 
+      ? "http://localhost:5000/api/admin/withdraw-requests"
+      : `http://localhost:5000/api/admin/withdraw-requests?status=${filter}`;
 
-      const response = await fetch(url);
-      const data = await response.json();
-      setWithdrawRequests(data);
-    } catch (err) {
-      setError("Failed to fetch requests");
-    }
-  };
-
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    // Sort by newest first
+    const sortedRequests = data.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    
+    setWithdrawRequests(sortedRequests);
+  } catch (err) {
+    setError("Failed to fetch requests");
+  }
+};
   useEffect(() => {
     fetchWithdrawRequests();
   }, [filter]); // ✅ Refetch when filter changes

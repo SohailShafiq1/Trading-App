@@ -24,18 +24,17 @@ router.get("/trend", (req, res) => {
 
 // Fetch all withdrawal requests// Fetch ALL withdrawal requests (with optional status filter)
 router.get("/withdraw-requests", async (req, res) => {
-  const { status } = req.query; // Allows filtering (e.g., ?status=pending)
+  const { status } = req.query;
 
   try {
     const users = await User.find(
-      status ? { "withdrawals.status": status } : {}, // ✅ Fetch all if no filter
+      status ? { "withdrawals.status": status } : {},
       { email: 1, withdrawals: 1 }
     );
 
-    // Flatten all requests (or filter if `status` is provided)
     const allRequests = users.flatMap(user => 
       user.withdrawals
-        .filter(w => !status || w.status === status) // ✅ Apply filter if provided
+        .filter(w => !status || w.status === status)
         .map(w => ({
           email: user.email,
           withdrawalId: w._id.toString(),
@@ -43,11 +42,12 @@ router.get("/withdraw-requests", async (req, res) => {
           purse: w.purse,
           network: w.network,
           paymentMethod: w.paymentMethod,
-          status: w.status, // ✅ Include status in response
+          status: w.status,
           createdAt: w.createdAt,
           processedAt: w.processedAt
         }))
-    );
+    )
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
 
     res.status(200).json(allRequests);
   } catch (err) {
@@ -60,19 +60,26 @@ router.put("/withdraw-accept/:withdrawalId", async (req, res) => {
   const { withdrawalId } = req.params;
 
   try {
-    // Find the user with this withdrawal request
     const user = await User.findOne({ "withdrawals._id": withdrawalId });
     if (!user) return res.status(404).json({ error: "Request not found" });
 
-    // Find the specific withdrawal
     const withdrawal = user.withdrawals.id(withdrawalId);
     if (!withdrawal || withdrawal.status !== "pending") {
       return res.status(400).json({ error: "Invalid request" });
     }
 
-    // Mark as approved
+    // 1. Update withdrawal status
     withdrawal.status = "approved";
     withdrawal.processedAt = new Date();
+
+    // 2. Find and update corresponding transaction
+    const transaction = user.transactions.find(
+      t => t.orderId === withdrawal.orderId && t.type === "withdrawal"
+    );
+    
+    if (transaction) {
+      transaction.status = "success";
+    }
 
     await user.save();
     res.status(200).json({ message: "Request approved" });
@@ -81,6 +88,7 @@ router.put("/withdraw-accept/:withdrawalId", async (req, res) => {
     res.status(500).json({ error: "Failed to approve request" });
   }
 });
+
 // Decline a withdrawal request
 router.put("/withdraw-decline/:withdrawalId", async (req, res) => {
   const { withdrawalId } = req.params;
@@ -94,12 +102,21 @@ router.put("/withdraw-decline/:withdrawalId", async (req, res) => {
       return res.status(400).json({ error: "Invalid request" });
     }
 
-    // Return the money to the user
+    // 1. Return funds
     user.assets += withdrawal.amount;
 
-    // Mark as rejected
+    // 2. Update withdrawal status
     withdrawal.status = "rejected";
     withdrawal.processedAt = new Date();
+
+    // 3. Find and update corresponding transaction
+    const transaction = user.transactions.find(
+      t => t.orderId === withdrawal.orderId && t.type === "withdrawal"
+    );
+    
+    if (transaction) {
+      transaction.status = "failed";
+    }
 
     await user.save();
     res.status(200).json({ message: "Request rejected & funds returned" });

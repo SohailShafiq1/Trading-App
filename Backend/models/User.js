@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-
 const UserSchema = new mongoose.Schema(
   {
     email: {
@@ -46,43 +45,56 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 10000,
     },
-
-  withdrawals: [{
-  amount: {
-    type: Number,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
-  },
-  purse: {
-    type: String,
-    required: true
-  },
-  network: {
-    type: String,
-    required: true
-  },
-  paymentMethod: {
-    type: String,
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  processedAt: {
-    type: Date
-  }
-}]
+    
+    transactions: [
+    {
+      orderId: { type: String, required: true },
+      type: { type: String, enum: ["deposit", "withdrawal"], required: true },
+      amount: { type: Number, required: true },
+      paymentMethod: { type: String, required: true },
+      status: { 
+        type: String, 
+        enum: ["pending", "success", "failed"], 
+        default: "pending" 
+      },
+      date: { type: Date, default: Date.now }
+    }
+  ],
+    withdrawals: [{
+      amount: {
+        type: Number,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      purse: {
+        type: String,
+        required: true
+      },
+      network: {
+        type: String,
+        required: true
+      },
+      paymentMethod: {
+        type: String,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      processedAt: {
+        type: Date
+      }
+    }]
   },
   {
     timestamps: true,
   }
 );
-
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);

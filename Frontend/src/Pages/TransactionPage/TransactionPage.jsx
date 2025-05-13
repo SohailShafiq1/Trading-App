@@ -1,59 +1,40 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "../../Context/AuthContext";
 import { AiOutlineCheckCircle } from "react-icons/ai";
-import React from "react";
 import styles from "./TransactionPage.module.css";
 const s = styles;
 
 const TransactionPage = () => {
-  const transactions = [
-    {
-      order: 456985,
-      date: "16/03/2025",
-      status: "Processing",
-      type: "Deposit",
-      payment: "USD Tether (BEP-20)",
-      amount: "+$90.00",
-    },
-    {
-      order: 456947,
-      date: "27/00/2025",
-      status: "Successed",
-      type: "Deposit",
-      payment: "USD Tether (TRC-20)",
-      amount: "+$20.00",
-    },
-    {
-      order: 456964,
-      date: "19/02/2025",
-      status: "Successed",
-      type: "Deposit",
-      payment: "Bitcoin (BTC)",
-      amount: "+$40.00",
-    },
-    {
-      order: 456944,
-      date: "05/02/2025",
-      status: "Successed",
-      type: "Deposit",
-      payment: "USD Tether (BEP-20)",
-      amount: "+$50.00",
-    },
-    {
-      order: 456925,
-      date: "28/01/2025",
-      status: "Successed",
-      type: "Deposit",
-      payment: "USD Tether (TRC-20)",
-      amount: "+$20.00",
-    },
-    {
-      order: 456949,
-      date: "14/01/2025",
-      status: "Successed",
-      type: "Deposit",
-      payment: "Bitcoin (BTC)",
-      amount: "+$10.00",
-    },
-  ];
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/users/transactions/${user.email}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch transactions");
+        }
+
+        const data = await response.json();
+        setTransactions(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [user.email]);
+
+  if (loading) return <div className={s.container}>Loading...</div>;
+  if (error) return <div className={s.container}>Error: {error}</div>;
 
   return (
     <div className={s.container}>
@@ -63,26 +44,30 @@ const TransactionPage = () => {
             <tr>
               <th>Order</th>
               <th>Amount</th>
-
               <th>Date and time</th>
               <th>Payment system</th>
-
               <th>Status</th>
               <th>Transaction type</th>
             </tr>
           </thead>
           <tbody>
             {transactions.map((tx) => (
-              <tr key={tx.order}>
-                <td>{tx.order}</td>
-                <td className={s.amount}>{tx.amount}</td>
-                <td>{tx.date}</td>
-                <td>{tx.payment}</td>
+              <tr key={tx.orderId}>
+                <td>{tx.orderId || "N/A"}</td>
+                <td className={s.amount}>
+                  {tx.type === "deposit" ? "+" : "-"}${tx.amount.toFixed(2)}
+                </td>
+                <td>{new Date(tx.date).toLocaleString()}</td>
+                <td>{tx.paymentMethod}</td>
                 <td>
                   <AiOutlineCheckCircle className={s.circle} />
-                  {tx.status}
+                  {tx.status === "success"
+                    ? "Success"
+                    : tx.status === "pending"
+                    ? "Processing"
+                    : "Failed"}
                 </td>
-                <td>{tx.type}</td>
+                <td>{tx.type === "deposit" ? "Deposit" : "Withdrawal"}</td>
               </tr>
             ))}
           </tbody>

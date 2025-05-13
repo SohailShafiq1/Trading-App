@@ -55,10 +55,22 @@ router.post("/withdraw", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.assets < amount) return res.status(400).json({ error: "Insufficient balance" });
-    if (!purse || !network || !paymentMethod) return res.status(400).json({ error: "All fields are required" });
 
-    // Add new withdrawal to the array (instead of overwriting)
+    const orderId = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Create transaction (for user history)
+    user.transactions.push({
+      orderId,
+      type: "withdrawal",
+      amount,
+      paymentMethod: `${paymentMethod} (${network})`,
+      status: "pending", // Will update when admin approves/rejects
+      date: new Date()
+    });
+
+    // Create withdrawal (for admin processing)
     user.withdrawals.push({
+      orderId, // Same ID for linking
       amount,
       purse,
       network,
@@ -67,17 +79,26 @@ router.post("/withdraw", async (req, res) => {
       createdAt: new Date()
     });
 
-    // Deduct the amount immediately
     user.assets -= amount;
-
     await user.save();
-    res.status(201).json({ 
-      message: "Withdrawal request submitted",
-      withdrawal: user.withdrawals[user.withdrawals.length - 1] // Return the latest request
-    });
+    
+    res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
-    console.error("Error:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
+  }
+});
+// Get all transactions for a user
+router.get("/transactions/:email", async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const user = await User.findOne({ email }, { transactions: 1 });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.status(200).json(user.transactions || []);
+  } catch (err) {
+    console.error("Error fetching transactions:", err);
+    res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
 export default router;
