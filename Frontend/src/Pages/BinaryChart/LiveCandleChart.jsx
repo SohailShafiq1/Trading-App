@@ -55,6 +55,9 @@ const LiveCandleChart = ({ coinName }) => {
   const [interval, setInterval] = useState("30s");
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
+  const [liveCandle, setLiveCandle] = useState(null);
+
+  const trendRef = useRef("Random");
 
   useEffect(() => {
     const chart = createChart(chartContainerRef.current, {
@@ -94,87 +97,133 @@ const LiveCandleChart = ({ coinName }) => {
   }, []);
 
   useEffect(() => {
-    const loadInitial = async () => {
+    const load = async () => {
       try {
         const res = await axios.get(
           `${BACKEND_URL}/api/coins/candles/${coinName}/${interval}`
         );
-        setCandles(res.data);
+        const historical = res.data;
+        setCandles(historical);
+
+        if (historical.length) {
+          const last = historical[historical.length - 1];
+          trendRef.current =
+            last.close > last.open
+              ? "Up"
+              : last.close < last.open
+              ? "Down"
+              : "Random";
+
+          const ts = Math.floor(Date.now() / 1000);
+          setLiveCandle({
+            time: ts,
+            open: last.close,
+            high: last.close,
+            low: last.close,
+            close: last.close,
+          });
+        }
       } catch (err) {
-        console.error("Failed to fetch candles:", err);
+        console.error("Initial candle fetch failed", err);
       }
     };
-    loadInitial();
+    load();
   }, [coinName, interval]);
 
   useEffect(() => {
-    if (!seriesRef.current || !candles.length) return;
     const data = groupCandles(candles, interval);
-    seriesRef.current.setData(data);
-  }, [candles, interval]);
+    const updated = [...data];
+
+    if (liveCandle) {
+      const bucket =
+        Math.floor(liveCandle.time / intervalToSeconds[interval]) *
+        intervalToSeconds[interval];
+      const last = updated[updated.length - 1];
+
+      if (last?.time === bucket) {
+        last.high = Math.max(last.high, liveCandle.high);
+        last.low = Math.min(last.low, liveCandle.low);
+        last.close = liveCandle.close;
+      } else {
+        updated.push({
+          time: bucket,
+          open: liveCandle.open,
+          high: liveCandle.high,
+          low: liveCandle.low,
+          close: liveCandle.close,
+        });
+      }
+    }
+    const finalData = updated.slice(-200).sort((a, b) => a.time - b.time);
+    seriesRef.current?.setData(finalData);
+  }, [candles, liveCandle, interval]);
 
   useEffect(() => {
-    socket.on(`price:${coinName}`, ({ price }) => {
+    const handlePrice = ({ price }) => {
       setCurrentPrice(price);
-      setCandles((prev) => {
-        if (!prev.length) return prev;
-        const updated = [...prev];
-        const last = { ...updated.at(-1) };
 
-        // Only update high/low for realism
-        last.high = Math.max(last.high, price);
-        last.low = Math.min(last.low, price);
+      setLiveCandle((prev) => {
+        if (!prev) return null;
 
-        // 👇 Just for visual oscillation (not saved in state)
-        if (seriesRef.current) {
-          const ts = Math.floor(new Date(last.time).getTime() / 1000);
-          seriesRef.current.update({
-            time: ts,
-            open: last.open,
-            high: last.high,
-            low: last.low,
-            close: price, // 👈 Show visual tick as close temporarily
-          });
-        }
+        let constrained = price;
+        if (trendRef.current === "Up") constrained = Math.max(prev.open, price);
+        else if (trendRef.current === "Down")
+          constrained = Math.min(prev.open, price);
 
-        updated[updated.length - 1] = last;
-        return updated;
+        const updated = {
+          ...prev,
+          high: Math.max(prev.high, constrained),
+          low: Math.min(prev.low, constrained),
+          close: constrained,
+        };
+
+        const ts = Math.floor(Date.now() / 1000);
+        const bucket =
+          Math.floor(ts / intervalToSeconds[interval]) *
+          intervalToSeconds[interval];
+
+        seriesRef.current?.update({
+          ...updated,
+          time: bucket,
+        });
+
+        return { ...updated, time: bucket };
       });
-    });
+    };
 
-    socket.on(`price:${coinName}`, ({ price }) => {
-      setCurrentPrice(price);
-      setCandles((prev) => {
-        if (!prev.length) return prev;
-        const updated = [...prev];
-        const last = { ...updated.at(-1) };
+    const handleCandle = (candle) => {
+      trendRef.current =
+        candle.close > candle.open
+          ? "Up"
+          : candle.close < candle.open
+          ? "Down"
+          : "Random";
 
-        // Only update wick, NOT close
-        last.high = Math.max(last.high, price);
-        last.low = Math.min(last.low, price);
+      setCandles((prev) => [...prev.slice(-999), candle]);
 
-        updated[updated.length - 1] = last;
+      // Calculate next bucket timestamp in seconds
+      const now = Date.now();
+      const intervalSec = intervalToSeconds[interval];
+      const nextBucket =
+        Math.floor(now / 1000 / intervalSec) * intervalSec + intervalSec;
 
-        if (seriesRef.current) {
-          const ts = Math.floor(new Date(last.time).getTime() / 1000);
-          seriesRef.current.update({
-            time: ts,
-            open: last.open,
-            high: last.high,
-            low: last.low,
-            close: last.close, // preserve close from trend-based generation
-          });
-        }
-
-        return updated;
+      setLiveCandle({
+        time: nextBucket,
+        open: candle.close,
+        high: candle.close,
+        low: candle.close,
+        close: candle.close,
       });
-    });
+    };
+
+    socket.on(`price:${coinName}`, handlePrice);
+    socket.on(`candle:${coinName}`, handleCandle);
 
     return () => {
-      socket.off(`candle:${coinName}`);
-      socket.off(`price:${coinName}`);
+      socket.off(`price:${coinName}`, handlePrice);
+      socket.off(`candle:${coinName}`, handleCandle);
     };
-  }, [coinName]);
+  }, [coinName, interval]);
 
   return (
     <div

@@ -62,25 +62,22 @@ export const deleteCoin = async (req, res) => {
     res.status(500).json({ message: "Failed to delete coin" });
   }
 };
+
 export const getCoinCandles = async (req, res) => {
   try {
     const { name, interval } = req.params;
     const limit = parseInt(req.query.limit) || 200;
-    console.log(
-      `Fetching candles for ${name} with interval ${interval} and limit ${limit}`
-    );
 
     const coin = await Coin.findOne({ name });
     if (!coin) return res.status(404).json({ message: "Coin not found" });
 
     const candles = coin.candles
-      .filter((c) => c.interval === interval)
+      .filter((c) => c.interval === "30s")
       .sort((a, b) => new Date(a.time) - new Date(b.time))
       .slice(-limit);
 
     res.json(candles);
   } catch (err) {
-    console.error("Failed to fetch candles:", err);
     res.status(500).json({ message: "Failed to fetch candles" });
   }
 };
