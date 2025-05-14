@@ -21,6 +21,7 @@ import { UserAssetsProvider } from "./Context/UserAssetsContext";
 import Coins from "./Admin/components/Coins/Coins"; // adjust path accordingly
 import User from "./Admin/components/User/User";
 import Withdraw from "./Admin/components/Withdraw/Withdraw";
+import Deposit from "./Admin/components/Deposits/Deposit";
 
 const s = styles;
 
@@ -127,6 +128,13 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <User />
+                  </ProtectedRoute>
+                } />
+                 <Route
+                path="/deposits"
+                element={
+                  <ProtectedRoute>
+                    <Deposit/>
                   </ProtectedRoute>
                 } />
               <Route

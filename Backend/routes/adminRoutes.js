@@ -1,6 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
-
+import Deposit from "../models/Deposit.js";
 const router = express.Router();
 
 let currentTrend = "Normal"; // Default trend
@@ -123,6 +123,50 @@ router.put("/withdraw-decline/:withdrawalId", async (req, res) => {
   } catch (err) {
     console.error("Error:", err);
     res.status(500).json({ error: "Failed to reject request" });
+  }
+});
+// Get all deposits
+router.get("/deposits", async (req, res) => {
+  try {
+    const deposits = await Deposit.find().sort({ createdAt: -1 });
+    res.json(deposits);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch deposits" });
+  }
+});
+
+// Manually update deposit status
+router.put("/deposit-status/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const deposit = await Deposit.findById(id);
+    if (!deposit) return res.status(404).json({ error: "Deposit not found" });
+
+    deposit.status = status;
+    await deposit.save();
+
+    if (status === "verified") {
+      const user = await User.findOne({ email: deposit.userEmail });
+      user.assets += deposit.amount;
+
+      user.transactions.push({
+        orderId: Math.floor(100000 + Math.random() * 900000).toString(),
+        type: "deposit",
+        amount: deposit.amount,
+        paymentMethod: "Manual Approval (Admin)",
+        status: "success",
+        date: new Date()
+      });
+
+      await user.save();
+    }
+
+    res.json({ message: "Deposit updated" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Update failed" });
   }
 });
 export default router;

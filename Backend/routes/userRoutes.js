@@ -1,9 +1,30 @@
 import express from "express";
 import User from "../models/User.js";
+import Deposit from "../models/Deposit.js";
 
-const router = express.Router();
+const router = express.Router(); // ✅ Declare router at the top
 
-// Get all registered users
+// ✅ User Deposit Route
+router.post("/deposit", async (req, res) => {
+  const { email, amount, txId } = req.body;
+
+  try {
+    const deposit = new Deposit({
+      userEmail: email,
+      amount,
+      txId,
+      wallet: process.env.ADMIN_TRON_WALLET // Set this in your .env file
+    });
+
+    await deposit.save();
+    res.status(201).json({ message: "Deposit submitted, awaiting confirmation." });
+  } catch (err) {
+    console.error("Error creating deposit:", err);
+    res.status(500).json({ error: "Failed to create deposit." });
+  }
+});
+
+// ✅ Get all registered users
 router.get("/", async (req, res) => {
   try {
     const users = await User.find({}, { password: 0 }); // Exclude the password field
@@ -14,14 +35,12 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get a user by email
+// ✅ Get user by email
 router.get("/email/:email", async (req, res) => {
   const { email } = req.params;
   try {
-    const user = await User.findOne({ email }, { password: 0 }); // Exclude the password field
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    const user = await User.findOne({ email }, { password: 0 });
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json(user);
   } catch (err) {
     console.error("Error fetching user by email:", err);
@@ -29,17 +48,12 @@ router.get("/email/:email", async (req, res) => {
   }
 });
 
+// ✅ Update user assets
 router.put("/update-assets", async (req, res) => {
   const { email, assets } = req.body;
   try {
-    const user = await User.findOneAndUpdate(
-      { email },
-      { assets },
-      { new: true }
-    );
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    const user = await User.findOneAndUpdate({ email }, { assets }, { new: true });
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json({ message: "Assets updated successfully", user });
   } catch (err) {
     console.error("Error updating assets:", err);
@@ -47,7 +61,7 @@ router.put("/update-assets", async (req, res) => {
   }
 });
 
-// Route to handle withdrawal requests
+// ✅ User Withdrawal Route
 router.post("/withdraw", async (req, res) => {
   const { email, amount, purse, network, paymentMethod } = req.body;
 
@@ -58,19 +72,19 @@ router.post("/withdraw", async (req, res) => {
 
     const orderId = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Create transaction (for user history)
+    // Add to transaction history
     user.transactions.push({
       orderId,
       type: "withdrawal",
       amount,
       paymentMethod: `${paymentMethod} (${network})`,
-      status: "pending", // Will update when admin approves/rejects
+      status: "pending",
       date: new Date()
     });
 
-    // Create withdrawal (for admin processing)
+    // Add to pending withdrawals
     user.withdrawals.push({
-      orderId, // Same ID for linking
+      orderId,
       amount,
       purse,
       network,
@@ -81,13 +95,14 @@ router.post("/withdraw", async (req, res) => {
 
     user.assets -= amount;
     await user.save();
-    
+
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
 });
-// Get all transactions for a user
+
+// ✅ Get all user transactions
 router.get("/transactions/:email", async (req, res) => {
   const { email } = req.params;
 
@@ -101,4 +116,5 @@ router.get("/transactions/:email", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
+
 export default router;
