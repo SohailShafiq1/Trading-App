@@ -1,54 +1,86 @@
 import Coin from "../models/Coin.js";
 
+export const getAllCoins = async (_, res) => {
+  try {
+    const coins = await Coin.find();
+    res.json(coins);
+  } catch {
+    res.status(500).json({ message: "Failed to fetch coins" });
+  }
+};
+
 export const getCoinPrice = async (req, res) => {
   try {
-    const { name } = req.params;
-    const coin = await Coin.findOne({ name });
-    if (!coin) {
-      return res.status(404).json({ message: "Coin not found" });
-    }
+    const coin = await Coin.findOne({ name: req.params.name });
+    if (!coin) return res.status(404).json({ message: "Coin not found" });
     res.json({ price: coin.currentPrice });
-  } catch (err) {
-    console.error("Error fetching coin:", err);
+  } catch {
+    res.status(500).json({ message: "Failed to fetch price" });
+  }
+};
+
+export const getCoinByName = async (req, res) => {
+  try {
+    const coin = await Coin.findOne({ name: req.params.name });
+    res.json(coin || null);
+  } catch {
     res.status(500).json({ message: "Failed to fetch coin" });
   }
 };
 
-export const getCandleData = async (req, res) => {
+export const createCoin = async (req, res) => {
   try {
-    const { name } = req.params;
-    const { interval = "30s", limit = 200 } = req.query;
+    const newCoin = new Coin({
+      ...req.body,
+      name:
+        req.body.type === "OTC"
+          ? `${req.body.firstName}-${req.body.lastName}`
+          : req.body.name,
+      selectedInterval: "30s",
+    });
+    await newCoin.save();
+    res.status(201).json(await Coin.find());
+  } catch {
+    res.status(500).json({ message: "Failed to add coin" });
+  }
+};
 
-    const coin = await Coin.findOne({ name });
-    if (!coin) {
-      return res.status(404).json({ message: "Coin not found" });
-    }
+export const updateCoin = async (req, res) => {
+  try {
+    await Coin.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(await Coin.find());
+  } catch {
+    res.status(500).json({ message: "Failed to update coin" });
+  }
+};
 
-    // Get complete candles only (excluding the current incomplete candle)
-    const now = new Date();
-    const intervalMs =
-      {
-        "30s": 30000,
-        "1m": 60000,
-        "2m": 120000,
-        "3m": 180000,
-        "5m": 300000,
-      }[interval] || 30000;
-
-    const lastCompleteTime = new Date(
-      Math.floor(now.getTime() / intervalMs) * intervalMs - intervalMs
+export const deleteCoin = async (req, res) => {
+  try {
+    await Coin.findByIdAndDelete(req.params.id);
+    res.json(await Coin.find());
+  } catch {
+    res.status(500).json({ message: "Failed to delete coin" });
+  }
+};
+export const getCoinCandles = async (req, res) => {
+  try {
+    const { name, interval } = req.params;
+    const limit = parseInt(req.query.limit) || 200;
+    console.log(
+      `Fetching candles for ${name} with interval ${interval} and limit ${limit}`
     );
 
-    const filteredCandles = coin.candles
-      .filter(
-        (c) => c.interval === interval && new Date(c.time) <= lastCompleteTime
-      )
-      .sort((a, b) => new Date(b.time) - new Date(a.time))
-      .slice(0, parseInt(limit));
+    const coin = await Coin.findOne({ name });
+    if (!coin) return res.status(404).json({ message: "Coin not found" });
 
-    res.json(filteredCandles);
+    const candles = coin.candles
+      .filter((c) => c.interval === interval)
+      .sort((a, b) => new Date(a.time) - new Date(b.time))
+      .slice(-limit);
+
+    res.json(candles);
   } catch (err) {
-    console.error("Error fetching candles:", err);
+    console.error("Failed to fetch candles:", err);
     res.status(500).json({ message: "Failed to fetch candles" });
   }
 };
