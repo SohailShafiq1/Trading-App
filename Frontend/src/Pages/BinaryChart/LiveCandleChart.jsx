@@ -191,6 +191,20 @@ const LiveCandleChart = ({ coinName }) => {
             close: last.close,
           });
         }
+        //make it zoom to last candle
+        const chart = chartRef.current;
+        const timeScale = chart.timeScale();
+        const range = timeScale.getVisibleLogicalRange();
+        if (range) {
+          const lastCandle = historical[historical.length - 1];
+          const lastTime = new Date(lastCandle.time).getTime() / 1000;
+          timeScale.setVisibleRange({
+            from: lastTime - 30 * intervalToSeconds[interval],
+            to: lastTime,
+          });
+        }
+        seriesRef.current?.setData(groupCandles(historical, interval));
+        setRenderKey((k) => k + 1);
       } catch (err) {
         console.error("Initial candle fetch failed", err);
       }
