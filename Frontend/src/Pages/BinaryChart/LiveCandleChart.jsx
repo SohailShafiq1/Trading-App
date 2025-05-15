@@ -51,21 +51,73 @@ const LiveCandleChart = ({ coinName }) => {
   const chartContainerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
-
+  const [countdown, setCountdown] = useState(0);
   const [interval, setInterval] = useState("30s");
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [liveCandle, setLiveCandle] = useState(null);
-  const [renderKey, setRenderKey] = useState(0); // forces redraw
-
+  const [renderKey, setRenderKey] = useState(0);
   const trendRef = useRef("Random");
+
+  const updateCountdown = () => {
+    const intervalSec = intervalToSeconds[interval];
+    const now = Math.floor(Date.now() / 1000);
+    const nextCandle = Math.ceil(now / intervalSec) * intervalSec;
+    const remaining = nextCandle - now;
+    setCountdown(remaining);
+  };
+
+  // Smooth countdown timer
+  useEffect(() => {
+    let animationFrameId;
+    const tick = () => {
+      updateCountdown();
+      animationFrameId = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [interval]);
+
+  // 📍 Dynamic positioning of countdown label inside the candle
+  const updateCountdownPosition = () => {
+    if (!chartRef.current || !liveCandle || !seriesRef.current) return;
+
+    const chart = chartRef.current;
+    const timeScale = chart.timeScale();
+    const x = timeScale.timeToCoordinate(liveCandle.time);
+    const y = seriesRef.current.priceToCoordinate(liveCandle.close);
+    const label = document.getElementById("candle-countdown");
+
+    if (!label || x == null || y == null) return;
+
+    label.style.left = `${x}px`;
+    label.style.top = `${y}px`;
+
+    const width = timeScale.width();
+    const range = timeScale.getVisibleLogicalRange();
+    if (range) {
+      const barWidth = width / (range.to - range.from);
+      label.style.fontSize = `${Math.max(10, barWidth * 0.1)}px`;
+      label.style.padding = `${Math.max(2, barWidth * 0.1)}px ${Math.max(
+        4,
+        barWidth * 0.3
+      )}px`;
+    }
+  };
+
+  useEffect(() => {
+    let raf;
+    const animate = () => {
+      updateCountdownPosition();
+      raf = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => cancelAnimationFrame(raf);
+  }, [liveCandle, interval]);
 
   useEffect(() => {
     const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { color: "#121212" },
-        textColor: "#d1d4dc",
-      },
+      layout: { background: { color: "#121212" }, textColor: "#d1d4dc" },
       grid: {
         vertLines: { color: "#444" },
         horzLines: { color: "#444" },
@@ -74,10 +126,17 @@ const LiveCandleChart = ({ coinName }) => {
         borderColor: "#888",
         timeVisible: true,
         secondsVisible: true,
+        tickMarkFormatter: (time) => {
+          const date = new Date(time * 1000);
+          return `${date.getHours()}:${date.getMinutes()}`;
+        },
+
+        visible: true,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        borderVisible: true,
       },
-      priceScale: {
-        borderColor: "#888",
-      },
+      priceScale: { borderColor: "#888" },
       width: chartContainerRef.current.clientWidth,
       height: 400,
     });
@@ -93,6 +152,10 @@ const LiveCandleChart = ({ coinName }) => {
 
     chartRef.current = chart;
     seriesRef.current = series;
+
+    chart.timeScale().subscribeVisibleTimeRangeChange(() => {
+      updateCountdownPosition();
+    });
 
     return () => chart.remove();
   }, []);
@@ -141,15 +204,13 @@ const LiveCandleChart = ({ coinName }) => {
     const frame = requestAnimationFrame(() => {
       const data = groupCandles(candles, interval);
       const updated = [...data];
-
-      const last = updated[updated.length - 1];
       const liveTime = Number(liveCandle.time);
-
+      const last = updated[updated.length - 1];
       if (last && Number(last.time) === liveTime) {
         last.high = Math.max(last.high, liveCandle.high);
         last.low = Math.min(last.low, liveCandle.low);
         last.close = liveCandle.close;
-      } else if (!last || liveTime > Number(last.time)) {
+      } else {
         updated.push({ ...liveCandle, time: liveTime });
       }
 
@@ -157,7 +218,7 @@ const LiveCandleChart = ({ coinName }) => {
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [candles, liveCandle, interval, renderKey]); // <-- trigger redraw on key change
+  }, [candles, liveCandle, interval, renderKey]);
 
   useEffect(() => {
     const handlePrice = ({ price }) => {
@@ -177,8 +238,11 @@ const LiveCandleChart = ({ coinName }) => {
           low: Math.min(prev.low, constrained),
           close: constrained,
         };
+        seriesRef.current?.update({
+          time: Number(updated.time),
+          ...updated,
+        });
 
-        // force rerender even if values are close
         setRenderKey((k) => k + 1);
         return updated;
       });
@@ -192,7 +256,11 @@ const LiveCandleChart = ({ coinName }) => {
           ? "Down"
           : "Random";
 
-      setCandles((prev) => [...prev.slice(-999), candle]);
+      setCandles((prev) =>
+        [...prev.slice(-999), candle].sort(
+          (a, b) => new Date(a.time) - new Date(b.time)
+        )
+      );
 
       const ts = Math.floor(Date.now() / 1000);
       const bucket =
@@ -257,14 +325,31 @@ const LiveCandleChart = ({ coinName }) => {
         onChange={(e) => setInterval(e.target.value)}
         style={{ marginBottom: 10, padding: "6px 12px", borderRadius: 4 }}
       >
-        {["30s", "1m", "2m", "3m", "5m"].map((i) => (
+        {Object.keys(intervalToSeconds).map((i) => (
           <option key={i} value={i}>
             {i}
           </option>
         ))}
       </select>
 
-      <div ref={chartContainerRef} style={{ width: "100%", height: 400 }} />
+      <div style={{ position: "relative" }}>
+        <div ref={chartContainerRef} style={{ width: "100%", height: 400 }} />
+        <div
+          id="candle-countdown"
+          style={{
+            position: "absolute",
+            transform: "translate(-50%, -50%)",
+            color: "#fff",
+            borderRadius: 4,
+            pointerEvents: "none",
+            zIndex: 2,
+            fontWeight: "bold",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {countdown}s
+        </div>
+      </div>
     </div>
   );
 };
