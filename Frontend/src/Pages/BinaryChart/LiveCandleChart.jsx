@@ -115,8 +115,12 @@ const LiveCandleChart = ({ coinName }) => {
               : "Random";
 
           const ts = Math.floor(Date.now() / 1000);
+          const bucket =
+            Math.floor(ts / intervalToSeconds[interval]) *
+            intervalToSeconds[interval];
+
           setLiveCandle({
-            time: ts,
+            time: bucket,
             open: last.close,
             high: last.close,
             low: last.close,
@@ -131,31 +135,21 @@ const LiveCandleChart = ({ coinName }) => {
   }, [coinName, interval]);
 
   useEffect(() => {
+    if (!liveCandle) return;
+
     const data = groupCandles(candles, interval);
     const updated = [...data];
 
-    if (liveCandle) {
-      const bucket =
-        Math.floor(liveCandle.time / intervalToSeconds[interval]) *
-        intervalToSeconds[interval];
-      const last = updated[updated.length - 1];
-
-      if (last?.time === bucket) {
-        last.high = Math.max(last.high, liveCandle.high);
-        last.low = Math.min(last.low, liveCandle.low);
-        last.close = liveCandle.close;
-      } else {
-        updated.push({
-          time: bucket,
-          open: liveCandle.open,
-          high: liveCandle.high,
-          low: liveCandle.low,
-          close: liveCandle.close,
-        });
-      }
+    const last = updated[updated.length - 1];
+    if (last && last.time === liveCandle.time) {
+      last.high = Math.max(last.high, liveCandle.high);
+      last.low = Math.min(last.low, liveCandle.low);
+      last.close = liveCandle.close;
+    } else if (!last || liveCandle.time > last.time) {
+      updated.push({ ...liveCandle });
     }
-    const finalData = updated.slice(-200).sort((a, b) => a.time - b.time);
-    seriesRef.current?.setData(finalData);
+
+    seriesRef.current?.setData(updated.slice(-200));
   }, [candles, liveCandle, interval]);
 
   useEffect(() => {
@@ -177,17 +171,12 @@ const LiveCandleChart = ({ coinName }) => {
           close: constrained,
         };
 
-        const ts = Math.floor(Date.now() / 1000);
-        const bucket =
-          Math.floor(ts / intervalToSeconds[interval]) *
-          intervalToSeconds[interval];
-
         seriesRef.current?.update({
+          time: prev.time, // use fixed bucket time
           ...updated,
-          time: bucket,
         });
 
-        return { ...updated, time: bucket };
+        return updated; // preserve same `time`
       });
     };
 
@@ -201,14 +190,13 @@ const LiveCandleChart = ({ coinName }) => {
 
       setCandles((prev) => [...prev.slice(-999), candle]);
 
-      // Calculate next bucket timestamp in seconds
-      const now = Date.now();
-      const intervalSec = intervalToSeconds[interval];
-      const nextBucket =
-        Math.floor(now / 1000 / intervalSec) * intervalSec + intervalSec;
+      const ts = Math.floor(Date.now() / 1000);
+      const bucket =
+        Math.floor(ts / intervalToSeconds[interval]) *
+        intervalToSeconds[interval];
 
       setLiveCandle({
-        time: nextBucket,
+        time: bucket,
         open: candle.close,
         high: candle.close,
         low: candle.close,

@@ -61,18 +61,27 @@ const emitTicks = async () => {
     const last = coin.candles.filter((c) => c.interval === "30s").at(-1);
     if (!last) continue;
 
-    let price = lastPrices[coin.name] || last.close;
+    const open = last.open;
+    let price = lastPrices[coin.name] ?? last.close;
 
-    const trend = coin.trend;
     const delta = Math.random() * 0.2;
-    if (trend === "Up") price += delta;
-    else if (trend === "Down") price -= delta;
-    else price += Math.random() < 0.5 ? -delta : delta;
 
-    price = round(Math.max(0.1, price));
+    if (coin.trend === "Up") {
+      price = Math.max(open, price + delta);
+    } else if (coin.trend === "Down") {
+      price = Math.min(open, price - delta);
+    } else {
+      price += Math.random() < 0.5 ? -delta : delta;
+    }
+
+    price = parseFloat(price.toFixed(4));
+    price = Math.max(0.01, price); // safety
+
     lastPrices[coin.name] = price;
 
-    if (io) io.emit(`price:${coin.name}`, { time: new Date(), price });
+    if (io) {
+      io.emit(`price:${coin.name}`, { time: new Date(), price });
+    }
   }
 };
 
