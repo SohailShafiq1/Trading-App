@@ -35,7 +35,7 @@ const groupCandles = (candles, interval) => {
       last.close = c.close;
     } else {
       grouped.push({
-        time: bucket,
+        time: Number(bucket),
         open: c.open,
         high: c.high,
         low: c.low,
@@ -56,6 +56,7 @@ const LiveCandleChart = ({ coinName }) => {
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [liveCandle, setLiveCandle] = useState(null);
+  const [renderKey, setRenderKey] = useState(0); // forces redraw
 
   const trendRef = useRef("Random");
 
@@ -120,7 +121,7 @@ const LiveCandleChart = ({ coinName }) => {
             intervalToSeconds[interval];
 
           setLiveCandle({
-            time: bucket,
+            time: Number(bucket),
             open: last.close,
             high: last.close,
             low: last.close,
@@ -137,20 +138,26 @@ const LiveCandleChart = ({ coinName }) => {
   useEffect(() => {
     if (!liveCandle) return;
 
-    const data = groupCandles(candles, interval);
-    const updated = [...data];
+    const frame = requestAnimationFrame(() => {
+      const data = groupCandles(candles, interval);
+      const updated = [...data];
 
-    const last = updated[updated.length - 1];
-    if (last && last.time === liveCandle.time) {
-      last.high = Math.max(last.high, liveCandle.high);
-      last.low = Math.min(last.low, liveCandle.low);
-      last.close = liveCandle.close;
-    } else if (!last || liveCandle.time > last.time) {
-      updated.push({ ...liveCandle });
-    }
+      const last = updated[updated.length - 1];
+      const liveTime = Number(liveCandle.time);
 
-    seriesRef.current?.setData(updated.slice(-200));
-  }, [candles, liveCandle, interval]);
+      if (last && Number(last.time) === liveTime) {
+        last.high = Math.max(last.high, liveCandle.high);
+        last.low = Math.min(last.low, liveCandle.low);
+        last.close = liveCandle.close;
+      } else if (!last || liveTime > Number(last.time)) {
+        updated.push({ ...liveCandle, time: liveTime });
+      }
+
+      seriesRef.current?.setData(updated.slice(-200));
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [candles, liveCandle, interval, renderKey]); // <-- trigger redraw on key change
 
   useEffect(() => {
     const handlePrice = ({ price }) => {
@@ -171,12 +178,9 @@ const LiveCandleChart = ({ coinName }) => {
           close: constrained,
         };
 
-        seriesRef.current?.update({
-          time: prev.time, // use fixed bucket time
-          ...updated,
-        });
-
-        return updated; // preserve same `time`
+        // force rerender even if values are close
+        setRenderKey((k) => k + 1);
+        return updated;
       });
     };
 
@@ -196,12 +200,14 @@ const LiveCandleChart = ({ coinName }) => {
         intervalToSeconds[interval];
 
       setLiveCandle({
-        time: bucket,
+        time: Number(bucket),
         open: candle.close,
         high: candle.close,
         low: candle.close,
         close: candle.close,
       });
+
+      setRenderKey((k) => k + 1);
     };
 
     socket.on(`price:${coinName}`, handlePrice);

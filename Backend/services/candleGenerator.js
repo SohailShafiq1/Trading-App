@@ -67,9 +67,9 @@ const emitTicks = async () => {
     const delta = Math.random() * 0.2;
 
     if (coin.trend === "Up") {
-      price = Math.max(open, price + delta);
+      price = Math.max(open, price + Math.abs(delta));
     } else if (coin.trend === "Down") {
-      price = Math.min(open, price - delta);
+      price = Math.min(open, price - Math.abs(delta));
     } else {
       price += Math.random() < 0.5 ? -delta : delta;
     }
