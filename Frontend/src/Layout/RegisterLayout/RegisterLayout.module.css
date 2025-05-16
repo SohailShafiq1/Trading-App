@@ -4,7 +4,10 @@
   align-items: center;
   width: 100%;
   height: 100%;
-  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+  background: linear-gradient(
+      rgba(255, 255, 255, 0.8),
+      rgba(255, 255, 255, 0.8)
+    ),
     url("../../../assets/RegisterLayoutBG.jpeg");
   background-size: cover;
   background-position: center;
@@ -29,7 +32,6 @@
   padding-top: 2rem;
   width: 100%;
   max-width: 1400px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .logoHolder {
@@ -41,7 +43,7 @@
 }
 
 .logo {
-  height: 50px;
+  height: 80px;
   margin-left: 3rem;
 }
 
@@ -54,7 +56,7 @@
 
 .loginButton a,
 .registerButton a {
-  padding: 0.5rem 2rem;
+  padding: 0.5rem 3rem;
   text-decoration: none;
   font-weight: 500;
   font-size: 1rem;
@@ -63,24 +65,15 @@
 }
 
 .loginButton a {
-  background-color: #10a055;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   box-shadow: 0px 1px 5px rgba(10, 192, 4, 0.5);
   color: white;
 }
 
-.loginButton a:hover {
-  background-color: #1adf79;
-  color: white;
-}
 
 .registerButton a {
-  background-color: #ce1606;
+  background: linear-gradient(90deg, #ff1600, #990d00);
   box-shadow: 0px 1px 5px rgba(247, 4, 36, 0.5);
-  color: white;
-}
-
-.registerButton a:hover {
-  background-color: #ff3c00;
   color: white;
 }
 

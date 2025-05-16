@@ -26,7 +26,10 @@ const BinaryLayout = () => {
         </div>
         <div className={s.navBar}>
           <NavLink
-            style={{ backgroundColor: "#10A055" }}
+            style={{
+              background: `linear-gradient(90deg, #66b544, #1a391d)`,
+              color: "white",
+            }}
             className={s.btn}
             onClick={() => navigate(-1)}
           >
