@@ -1,3 +1,7 @@
+import { AiOutlineBgColors } from "react-icons/ai";
+import { BsBarChartFill } from "react-icons/bs";
+import { AiOutlinePlusSquare } from "react-icons/ai";
+import { BiPencil } from "react-icons/bi";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
@@ -39,7 +43,7 @@ const INDICATORS = {
 const THEMES = {
   LIGHT: {
     name: "Light",
-    background: "#ffffff",
+    background: "#ffffff  ",
     textColor: "#333333",
     gridColor: "#eeeeee",
     upColor: "#26a69a",
@@ -147,7 +151,6 @@ const calculateRSI = (data, period = 14) => {
   let gains = 0;
   let losses = 0;
 
-  // Calculate initial average gains and losses
   for (let i = 1; i <= period; i++) {
     const change = data[i].close - data[i - 1].close;
     if (change > 0) {
@@ -162,7 +165,6 @@ const calculateRSI = (data, period = 14) => {
   const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
   rsi.push({ time: data[period].time, value: 100 - 100 / (1 + rs) });
 
-  // Calculate subsequent RSI values
   for (let i = period + 1; i < data.length; i++) {
     const change = data[i].close - data[i - 1].close;
     let currentGain = 0;
@@ -196,7 +198,6 @@ const calculateMACD = (
   const emaFast = calculateEMA(data, fastPeriod);
   const emaSlow = calculateEMA(data, slowPeriod);
 
-  // Calculate MACD line (fast EMA - slow EMA)
   const macdLine = [];
   for (let i = slowPeriod - fastPeriod; i < emaSlow.length; i++) {
     macdLine.push({
@@ -205,7 +206,6 @@ const calculateMACD = (
     });
   }
 
-  // Calculate signal line (EMA of MACD line)
   const signalLine = calculateEMA(
     macdLine.map((d) => ({ close: d.value, time: d.time })),
     signalPeriod
@@ -269,8 +269,10 @@ const LiveCandleChart = ({ coinName }) => {
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
   const rsiSeriesRef = useRef(null);
+  const rsiPaneRef = useRef(null);
   const macdSeriesRef = useRef(null);
   const macdSignalSeriesRef = useRef(null);
+  const macdPaneRef = useRef(null);
   const bbUpperSeriesRef = useRef(null);
   const bbMiddleSeriesRef = useRef(null);
   const bbLowerSeriesRef = useRef(null);
@@ -278,6 +280,7 @@ const LiveCandleChart = ({ coinName }) => {
   const countdownRef = useRef();
   const activeDrawingToolRef = useRef(null);
   const drawingStartPointRef = useRef(null);
+  const drawingsRef = useRef([]);
   countdownRef.current = countdown;
 
   // Fix for the oscillation glitch
@@ -434,7 +437,6 @@ const LiveCandleChart = ({ coinName }) => {
 
     const data = groupCandles(candles, interval);
     if (candleStyle === CANDLE_STYLES.LINE) {
-      // For line series, we need to transform the data
       const lineData = data.map((candle) => ({
         time: candle.time,
         value: candle.close,
@@ -447,59 +449,38 @@ const LiveCandleChart = ({ coinName }) => {
   };
 
   const applyIndicators = () => {
-    // Remove only the indicators that were actually created
-    initializedIndicators.current.forEach((indicatorType) => {
-      try {
-        switch (indicatorType) {
-          case "SMA":
-            if (smaSeriesRef.current) {
-              chartRef.current.removeSeries(smaSeriesRef.current);
-              smaSeriesRef.current = null;
-            }
-            break;
-          case "EMA":
-            if (emaSeriesRef.current) {
-              chartRef.current.removeSeries(emaSeriesRef.current);
-              emaSeriesRef.current = null;
-            }
-            break;
-          case "RSI":
-            if (rsiSeriesRef.current) {
-              chartRef.current.removeSeries(rsiSeriesRef.current);
-              rsiSeriesRef.current = null;
-            }
-            break;
-          case "MACD":
-            if (macdSeriesRef.current) {
-              chartRef.current.removeSeries(macdSeriesRef.current);
-              macdSeriesRef.current = null;
-            }
-            if (macdSignalSeriesRef.current) {
-              chartRef.current.removeSeries(macdSignalSeriesRef.current);
-              macdSignalSeriesRef.current = null;
-            }
-            break;
-          case "BB":
-            if (bbUpperSeriesRef.current) {
-              chartRef.current.removeSeries(bbUpperSeriesRef.current);
-              bbUpperSeriesRef.current = null;
-            }
-            if (bbMiddleSeriesRef.current) {
-              chartRef.current.removeSeries(bbMiddleSeriesRef.current);
-              bbMiddleSeriesRef.current = null;
-            }
-            if (bbLowerSeriesRef.current) {
-              chartRef.current.removeSeries(bbLowerSeriesRef.current);
-              bbLowerSeriesRef.current = null;
-            }
-            break;
-        }
-      } catch (e) {
-        console.error(`Error removing indicator ${indicatorType}:`, e);
-      }
-    });
-
-    initializedIndicators.current.clear();
+    // Remove previous indicators
+    if (rsiPaneRef.current) {
+      chartRef.current.removePane(rsiPaneRef.current);
+      rsiPaneRef.current = null;
+      rsiSeriesRef.current = null;
+    }
+    if (macdPaneRef.current) {
+      chartRef.current.removePane(macdPaneRef.current);
+      macdPaneRef.current = null;
+      macdSeriesRef.current = null;
+      macdSignalSeriesRef.current = null;
+    }
+    if (smaSeriesRef.current) {
+      chartRef.current.removeSeries(smaSeriesRef.current);
+      smaSeriesRef.current = null;
+    }
+    if (emaSeriesRef.current) {
+      chartRef.current.removeSeries(emaSeriesRef.current);
+      emaSeriesRef.current = null;
+    }
+    if (bbUpperSeriesRef.current) {
+      chartRef.current.removeSeries(bbUpperSeriesRef.current);
+      bbUpperSeriesRef.current = null;
+    }
+    if (bbMiddleSeriesRef.current) {
+      chartRef.current.removeSeries(bbMiddleSeriesRef.current);
+      bbMiddleSeriesRef.current = null;
+    }
+    if (bbLowerSeriesRef.current) {
+      chartRef.current.removeSeries(bbLowerSeriesRef.current);
+      bbLowerSeriesRef.current = null;
+    }
 
     if (indicator === INDICATORS.NONE) return;
 
@@ -515,7 +496,6 @@ const LiveCandleChart = ({ coinName }) => {
               lineWidth: 2,
             });
             smaSeriesRef.current.setData(smaData);
-            initializedIndicators.current.add("SMA");
           }
           break;
         case INDICATORS.EMA:
@@ -526,56 +506,53 @@ const LiveCandleChart = ({ coinName }) => {
               lineWidth: 2,
             });
             emaSeriesRef.current.setData(emaData);
-            initializedIndicators.current.add("EMA");
           }
           break;
         case INDICATORS.RSI:
           {
             const rsiData = calculateRSI(data);
-            // Create a new pane for RSI
-            const rsiPane = chartRef.current.addPane();
-            const priceScale = {
+            rsiPaneRef.current = chartRef.current.addPane({
+              height: 100,
+              marginTop: 10,
+              marginBottom: 20,
+            });
+            rsiSeriesRef.current = chartRef.current.addLineSeries({
+              pane: rsiPaneRef.current,
+              color: "#8A2BE2",
+              lineWidth: 2,
+            });
+            rsiSeriesRef.current.setData(rsiData);
+            // Add RSI scale markers
+            chartRef.current.priceScale("right").applyOptions({
               scaleMargins: {
                 top: 0.1,
                 bottom: 0.1,
               },
-            };
-            rsiSeriesRef.current = chartRef.current.addLineSeries({
-              pane: rsiPane,
-              color: "#8A2BE2",
-              lineWidth: 2,
-              priceScale: priceScale,
             });
-            rsiSeriesRef.current.setData(rsiData);
-            initializedIndicators.current.add("RSI");
           }
           break;
         case INDICATORS.MACD:
           {
             const macdData = calculateMACD(data);
-            // Create a new pane for MACD
-            const macdPane = chartRef.current.addPane();
-            const priceScale = {
-              scaleMargins: {
-                top: 0.4,
-                bottom: 0.1,
-              },
-            };
+            console.log(macdData);
+
+            macdPaneRef.current = chartRef.current.addPane({
+              height: 100,
+              marginTop: 10,
+              marginBottom: 20,
+            });
             macdSeriesRef.current = chartRef.current.addLineSeries({
-              pane: macdPane,
+              pane: macdPaneRef.current,
               color: "#2962FF",
-              lineWidth: 1,
-              priceScale: priceScale,
+              lineWidth: 5,
             });
             macdSignalSeriesRef.current = chartRef.current.addLineSeries({
-              pane: macdPane,
+              pane: macdPaneRef.current,
               color: "#FF6D00",
-              lineWidth: 1,
-              priceScale: priceScale,
+              lineWidth: 5,
             });
             macdSeriesRef.current.setData(macdData.macd);
             macdSignalSeriesRef.current.setData(macdData.signal);
-            initializedIndicators.current.add("MACD");
           }
           break;
         case INDICATORS.BB:
@@ -596,7 +573,6 @@ const LiveCandleChart = ({ coinName }) => {
             bbUpperSeriesRef.current.setData(bbData.upper);
             bbMiddleSeriesRef.current.setData(bbData.middle);
             bbLowerSeriesRef.current.setData(bbData.lower);
-            initializedIndicators.current.add("BB");
           }
           break;
       }
@@ -609,12 +585,14 @@ const LiveCandleChart = ({ coinName }) => {
     setDrawingTool(tool);
     setShowDrawingPopup(false);
     activeDrawingToolRef.current = tool;
+    drawingStartPointRef.current = null;
   };
 
   const handleChartClick = (param) => {
-    if (!activeDrawingToolRef.current || !chartRef.current) return;
+    if (!activeDrawingToolRef.current || !chartRef.current || !param.point)
+      return;
 
-    const point = param.point || param;
+    const point = param.point;
     const price = seriesRef.current.coordinateToPrice(point.y);
     const time = chartRef.current.timeScale().coordinateToTime(point.x);
 
@@ -624,12 +602,12 @@ const LiveCandleChart = ({ coinName }) => {
     } else {
       // Second click - draw the line
       const start = drawingStartPointRef.current;
-      let line;
+      let drawing;
 
       switch (activeDrawingToolRef.current) {
         case DRAWING_TOOLS.HORIZONTAL_LINE:
-          line = chartRef.current.addPriceLine({
-            price: start.price,
+          drawing = seriesRef.current.createPriceLine({
+            price: price,
             color: "#FF0000",
             lineWidth: 2,
             lineStyle: 2, // Dashed
@@ -637,22 +615,27 @@ const LiveCandleChart = ({ coinName }) => {
           });
           break;
         case DRAWING_TOOLS.VERTICAL_LINE:
-          line = chartRef.current.addTimeLine({
-            time: start.time,
+          drawing = chartRef.current.addTimeLine({
+            time: time,
             color: "#FF0000",
             lineWidth: 2,
             lineStyle: 2, // Dashed
           });
           break;
         case DRAWING_TOOLS.TREND_LINE:
-          line = chartRef.current.addTrendLine({
+          drawing = chartRef.current.addTrendLine({
             point1: { time: start.time, price: start.price },
             point2: { time, price },
             color: "#FF0000",
             lineWidth: 2,
-            lineStyle: 0, // Solid
+            lineStyle: 2, // Solid
+            axisLabelVisible: true,
           });
           break;
+      }
+
+      if (drawing) {
+        drawingsRef.current.push(drawing);
       }
 
       // Reset drawing state
@@ -660,6 +643,13 @@ const LiveCandleChart = ({ coinName }) => {
       activeDrawingToolRef.current = null;
       setDrawingTool(DRAWING_TOOLS.NONE);
     }
+  };
+
+  const clearAllDrawings = () => {
+    drawingsRef.current.forEach((drawing) => {
+      if (drawing.remove) drawing.remove();
+    });
+    drawingsRef.current = [];
   };
 
   useEffect(() => {
@@ -772,7 +762,6 @@ const LiveCandleChart = ({ coinName }) => {
   useEffect(() => {
     if (!liveCandle) return;
 
-    // Fix for oscillation glitch - only update if the candle has actually changed
     const now = Date.now();
     if (
       lastCandleRef.current &&
@@ -1004,6 +993,140 @@ const LiveCandleChart = ({ coinName }) => {
       >
         <div style={{ position: "relative" }}>
           <button
+            onClick={() => setShowIndicatorPopup(!showIndicatorPopup)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: 4,
+              border: `1px solid ${theme.gridColor}`,
+              background: theme.background,
+              color: theme.textColor,
+              cursor: "pointer",
+            }}
+          >
+            <AiOutlinePlusSquare />
+          </button>
+          {showIndicatorPopup && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                zIndex: 100,
+                background: theme.background,
+                border: `1px solid ${theme.gridColor}`,
+                borderRadius: 4,
+                padding: 10,
+                display: "flex",
+                flexDirection: "column",
+                gap: 5,
+              }}
+            >
+              {Object.values(INDICATORS).map((ind) => (
+                <div
+                  key={ind}
+                  onClick={() => {
+                    setIndicator(ind);
+                    setShowIndicatorPopup(false);
+                  }}
+                  style={{
+                    padding: "5px 10px",
+                    borderRadius: 4,
+                    background:
+                      indicator === ind ? theme.gridColor : theme.background,
+                    color: theme.textColor,
+                    cursor: "pointer",
+                  }}
+                >
+                  {ind}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setShowDrawingPopup(!showDrawingPopup)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: 4,
+              border: `1px solid ${theme.gridColor}`,
+              background: theme.background,
+              color: theme.textColor,
+              cursor: "pointer",
+            }}
+          >
+            <BiPencil />
+          </button>
+          {showDrawingPopup && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                zIndex: 100,
+                background: theme.background,
+                border: `1px solid ${theme.gridColor}`,
+                borderRadius: 4,
+                padding: 10,
+                display: "flex",
+                flexDirection: "column",
+                gap: 5,
+              }}
+            >
+              {Object.values(DRAWING_TOOLS).map((tool) => (
+                <div
+                  key={tool}
+                  onClick={() => handleDrawingToolClick(tool)}
+                  style={{
+                    padding: "5px 10px",
+                    borderRadius: 4,
+                    background:
+                      drawingTool === tool ? theme.gridColor : theme.background,
+                    color: theme.textColor,
+                    cursor: "pointer",
+                  }}
+                >
+                  {tool}
+                </div>
+              ))}
+              <div
+                onClick={clearAllDrawings}
+                style={{
+                  padding: "5px 10px",
+                  borderRadius: 4,
+                  background: theme.background,
+                  color: theme.textColor,
+                  cursor: "pointer",
+                  borderTop: `1px solid ${theme.gridColor}`,
+                  marginTop: 5,
+                }}
+              >
+                Clear All
+              </div>
+            </div>
+          )}
+        </div>
+        <select
+          value={interval}
+          onChange={(e) => setInterval(e.target.value)}
+          style={{
+            padding: "6px 12px",
+            borderRadius: 4,
+            border: `1px solid ${theme.gridColor}`,
+            background: theme.background,
+            color: theme.textColor,
+            cursor: "pointer",
+          }}
+        >
+          {Object.keys(intervalToSeconds).map((i) => (
+            <option key={i} value={i}>
+              {i}
+            </option>
+          ))}
+        </select>
+        <div style={{ position: "relative" }}>
+          <button
             onClick={() => setShowThemePopup(!showThemePopup)}
             style={{
               padding: "6px 12px",
@@ -1014,7 +1137,7 @@ const LiveCandleChart = ({ coinName }) => {
               cursor: "pointer",
             }}
           >
-            Theme
+            <AiOutlineBgColors />
           </button>
           {showThemePopup && (
             <div
@@ -1074,7 +1197,6 @@ const LiveCandleChart = ({ coinName }) => {
             </div>
           )}
         </div>
-
         <div style={{ position: "relative" }}>
           <button
             onClick={() => setShowStylePopup(!showStylePopup)}
@@ -1087,7 +1209,7 @@ const LiveCandleChart = ({ coinName }) => {
               cursor: "pointer",
             }}
           >
-            Style: {candleStyle}
+            <BsBarChartFill />
           </button>
           {showStylePopup && (
             <div
@@ -1129,128 +1251,6 @@ const LiveCandleChart = ({ coinName }) => {
             </div>
           )}
         </div>
-
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setShowIndicatorPopup(!showIndicatorPopup)}
-            style={{
-              padding: "6px 12px",
-              borderRadius: 4,
-              border: `1px solid ${theme.gridColor}`,
-              background: theme.background,
-              color: theme.textColor,
-              cursor: "pointer",
-            }}
-          >
-            Indicator: {indicator}
-          </button>
-          {showIndicatorPopup && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                zIndex: 100,
-                background: theme.background,
-                border: `1px solid ${theme.gridColor}`,
-                borderRadius: 4,
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                gap: 5,
-              }}
-            >
-              {Object.values(INDICATORS).map((ind) => (
-                <div
-                  key={ind}
-                  onClick={() => {
-                    setIndicator(ind);
-                    setShowIndicatorPopup(false);
-                  }}
-                  style={{
-                    padding: "5px 10px",
-                    borderRadius: 4,
-                    background:
-                      indicator === ind ? theme.gridColor : theme.background,
-                    color: theme.textColor,
-                    cursor: "pointer",
-                  }}
-                >
-                  {ind}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setShowDrawingPopup(!showDrawingPopup)}
-            style={{
-              padding: "6px 12px",
-              borderRadius: 4,
-              border: `1px solid ${theme.gridColor}`,
-              background: theme.background,
-              color: theme.textColor,
-              cursor: "pointer",
-            }}
-          >
-            Drawing: {drawingTool}
-          </button>
-          {showDrawingPopup && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                zIndex: 100,
-                background: theme.background,
-                border: `1px solid ${theme.gridColor}`,
-                borderRadius: 4,
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                gap: 5,
-              }}
-            >
-              {Object.values(DRAWING_TOOLS).map((tool) => (
-                <div
-                  key={tool}
-                  onClick={() => handleDrawingToolClick(tool)}
-                  style={{
-                    padding: "5px 10px",
-                    borderRadius: 4,
-                    background:
-                      drawingTool === tool ? theme.gridColor : theme.background,
-                    color: theme.textColor,
-                    cursor: "pointer",
-                  }}
-                >
-                  {tool}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <select
-          value={interval}
-          onChange={(e) => setInterval(e.target.value)}
-          style={{
-            padding: "6px 12px",
-            borderRadius: 4,
-            border: `1px solid ${theme.gridColor}`,
-            background: theme.background,
-            color: theme.textColor,
-            cursor: "pointer",
-          }}
-        >
-          {Object.keys(intervalToSeconds).map((i) => (
-            <option key={i} value={i}>
-              {i}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div style={{ position: "relative" }}>
