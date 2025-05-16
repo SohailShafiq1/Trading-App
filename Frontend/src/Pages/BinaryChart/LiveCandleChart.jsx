@@ -19,7 +19,7 @@ const groupCandles = (candles, interval) => {
   const grouped = [];
   const sorted = [...candles]
     .filter((c) => c?.time && c?.open != null)
-    .sort((a, b) => new Date(a.time) - new Date(b.time));
+    .sort((a, b) => Number(a.time) - Number(b.time));
 
   for (const c of sorted) {
     const utc = Date.parse(c.time);
@@ -64,8 +64,7 @@ const LiveCandleChart = ({ coinName }) => {
     const intervalSec = intervalToSeconds[interval];
     const now = Math.floor(Date.now() / 1000);
     const nextCandle = Math.ceil(now / intervalSec) * intervalSec;
-    const remaining = nextCandle - now;
-    setCountdown(remaining);
+    setCountdown(nextCandle - now);
   };
 
   useEffect(() => {
@@ -127,12 +126,11 @@ const LiveCandleChart = ({ coinName }) => {
         secondsVisible: true,
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
-          return `${date.getHours()}:${date.getMinutes()}`;
+          return `${date.getHours()}:${date
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
         },
-        visible: true,
-        fixLeftEdge: true,
-        fixRightEdge: true,
-        borderVisible: true,
       },
       priceScale: { borderColor: "#888" },
       width: chartContainerRef.current.clientWidth,
@@ -172,43 +170,16 @@ const LiveCandleChart = ({ coinName }) => {
           Math.floor(ts / intervalToSeconds[interval]) *
           intervalToSeconds[interval];
 
-        if (historical.length) {
-          const last = historical[historical.length - 1];
-          trendRef.current =
-            last.close > last.open
-              ? "Up"
-              : last.close < last.open
-              ? "Down"
-              : "Random";
+        const last = historical.at(-1);
+        const lastClose = last?.close ?? 1.0;
 
-          setLiveCandle({
-            time: Number(bucket),
-            open: last.close,
-            high: last.close,
-            low: last.close,
-            close: last.close,
-          });
-        } else {
-          setLiveCandle({
-            time: Number(bucket),
-            open: 1.0,
-            high: 1.0,
-            low: 1.0,
-            close: 1.0,
-          });
-        }
-
-        const chart = chartRef.current;
-        const timeScale = chart.timeScale();
-        const range = timeScale.getVisibleLogicalRange();
-        if (range && historical.length > 0) {
-          const lastCandle = historical[historical.length - 1];
-          const lastTime = new Date(lastCandle.time).getTime() / 1000;
-          timeScale.setVisibleRange({
-            from: lastTime - 10 * intervalToSeconds[interval],
-            to: lastTime,
-          });
-        }
+        setLiveCandle({
+          time: Number(bucket),
+          open: lastClose,
+          high: lastClose,
+          low: lastClose,
+          close: lastClose,
+        });
 
         seriesRef.current?.setData(groupCandles(historical, interval));
         setRenderKey((k) => k + 1);
@@ -227,6 +198,7 @@ const LiveCandleChart = ({ coinName }) => {
       const updated = [...data];
       const liveTime = Number(liveCandle.time);
       const last = updated[updated.length - 1];
+
       if (last && Number(last.time) === liveTime) {
         last.high = Math.max(last.high, liveCandle.high);
         last.low = Math.min(last.low, liveCandle.low);
@@ -235,6 +207,7 @@ const LiveCandleChart = ({ coinName }) => {
         updated.push({ ...liveCandle, time: liveTime });
       }
 
+      updated.sort((a, b) => a.time - b.time);
       seriesRef.current?.setData(updated.slice(-200));
     });
 
@@ -251,17 +224,15 @@ const LiveCandleChart = ({ coinName }) => {
         if (!prev || !prev.time) return prev;
 
         const now = Math.floor(Date.now() / 1000);
-        const candleTime = prev.time;
+        const bucket =
+          Math.floor(now / intervalToSeconds[interval]) *
+          intervalToSeconds[interval];
+        if (bucket !== prev.time) return prev;
 
-        // 🔒 Don't apply ticks that belong to a future or old candle
-        const intervalSec = intervalToSeconds[interval];
-        const currentBucket = Math.floor(now / intervalSec) * intervalSec;
-        if (candleTime !== currentBucket) return prev;
-
-        let constrained = price;
         const t = trendRef.current;
         const c = trendCounterRef.current ?? 0;
 
+        let constrained = price;
         switch (t) {
           case "Up":
             constrained = Math.max(prev.open, price);
@@ -317,11 +288,14 @@ const LiveCandleChart = ({ coinName }) => {
     const handleCandle = (candle) => {
       if (candle.trend) trendRef.current = candle.trend;
 
-      setCandles((prev) =>
-        [...prev.slice(-999), candle].sort(
-          (a, b) => new Date(a.time) - new Date(b.time)
-        )
-      );
+      setCandles((prev) => {
+        const exists = prev.find((c) => c.time === candle.time);
+        if (exists) {
+          return prev.map((c) => (c.time === candle.time ? candle : c));
+        } else {
+          return [...prev.slice(-999), candle];
+        }
+      });
 
       const bucket = Math.floor(Date.parse(candle.time) / 1000);
 
@@ -333,11 +307,16 @@ const LiveCandleChart = ({ coinName }) => {
         close: candle.close,
       };
 
-      setLiveCandle(newCandle);
+      const merged = [...candles, candle];
+      const grouped = groupCandles(merged, interval);
 
-      const updatedData = groupCandles([...candles, candle], interval);
-      updatedData.push(newCandle);
-      seriesRef.current?.setData(updatedData.slice(-200));
+      if (!grouped.find((c) => c.time === newCandle.time)) {
+        grouped.push(newCandle);
+      }
+
+      grouped.sort((a, b) => a.time - b.time);
+      seriesRef.current?.setData(grouped.slice(-200));
+      setLiveCandle(newCandle);
       setRenderKey((k) => k + 1);
     };
 
