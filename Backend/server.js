@@ -10,16 +10,15 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import coinRoutes from "./routes/coinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import { checkTrc20Deposits } from "./utils/tronWatcher.js";
-import depositRoutes from './routes/depositRoutes.js';
-// Load environment variables
+import candleService from "./services/candleGenerator.js";
+
 dotenv.config();
 
 // Initialize express app
 const app = express();
 
 // Allowed frontend origins
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5173"];
 
 // CORS middleware
 app.use(
@@ -30,7 +29,7 @@ app.use(
   })
 );
 
-// Body parser middleware
+app.use(cors({ origin: ["http://localhost:5174"], credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -42,6 +41,21 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    candleService.initSocket(io); // Initialize WebSocket in generator
+
+    const PORT = process.env.PORT;
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+};
 app.use('/api/users', depositRoutes); 
 // Create HTTP server for socket.io
 const httpServer = createServer(app);

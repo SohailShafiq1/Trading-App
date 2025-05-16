@@ -6,18 +6,19 @@
   width: 100%;
   height: 100%;
   margin-bottom: 10rem;
+  color: black;
 }
 
 .Header {
   font-size: 55px;
-  color: white;
+  color: black;
   font-weight: 600;
   margin-bottom: 2.5rem;
   text-align: center;
 }
 
 .Form {
-  background-color: #1e1f25;
+  background-color: #ffffff;
   padding: 24px;
   border-radius: 12px;
   width: 340px;
@@ -39,7 +40,7 @@
   text-align: center;
   padding: 10px 0;
   color: white;
-  background-color: #292a31;
+  background: linear-gradient(90deg, #ff1600, #990d00);
   font-weight: bold;
   text-decoration: none;
   border-radius: 6px;
@@ -53,35 +54,29 @@
 }
 
 .activeTab {
-  background-color: #22c55e;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   color: white;
-}
-
-.activeTab:hover {
-  background-color: #22c55e;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap:1rem;
+  gap: 1rem;
 }
 
 .input {
   padding: 10px;
-  background-color: #1e1f25;
   border: none;
   border-radius: 6px;
-  color: white;
+  color: black;
   border: 1px solid #334155;
 }
-.input:nth-child(1){
+.input:nth-child(1) {
   margin-bottom: 1rem;
 }
 
 .input:focus {
   outline: 2px solid #22c55e;
-  background-color: #1e1f25;
 }
 
 .optionsRow {
@@ -112,7 +107,9 @@
   font-size: 13px;
   cursor: pointer;
 }
-
+label {
+  color: black;
+}
 .forgotLink:hover {
   text-decoration: underline;
 }
@@ -123,7 +120,7 @@
   margin-bottom: 1rem;
 }
 .loginBtn {
-  background-color: #22c55e;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   border: none;
   color: white;
   padding: 10px;
@@ -131,10 +128,6 @@
   cursor: pointer;
   font-weight: bold;
   transition: background-color 0.2s ease;
-}
-
-.loginBtn:hover {
-  background-color: #16a34a;
 }
 
 @media (max-width: 768px) {
