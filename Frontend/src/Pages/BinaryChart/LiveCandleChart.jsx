@@ -58,6 +58,7 @@ const LiveCandleChart = ({ coinName }) => {
   const [liveCandle, setLiveCandle] = useState(null);
   const [renderKey, setRenderKey] = useState(0);
   const trendRef = useRef("Random");
+  const trendCounterRef = useRef(0);
 
   const updateCountdown = () => {
     const intervalSec = intervalToSeconds[interval];
@@ -67,7 +68,6 @@ const LiveCandleChart = ({ coinName }) => {
     setCountdown(remaining);
   };
 
-  // Smooth countdown timer
   useEffect(() => {
     let animationFrameId;
     const tick = () => {
@@ -78,7 +78,6 @@ const LiveCandleChart = ({ coinName }) => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [interval]);
 
-  // 📍 Dynamic positioning of countdown label inside the candle
   const updateCountdownPosition = () => {
     if (!chartRef.current || !liveCandle || !seriesRef.current) return;
 
@@ -130,7 +129,6 @@ const LiveCandleChart = ({ coinName }) => {
           const date = new Date(time * 1000);
           return `${date.getHours()}:${date.getMinutes()}`;
         },
-
         visible: true,
         fixLeftEdge: true,
         fixRightEdge: true,
@@ -169,6 +167,11 @@ const LiveCandleChart = ({ coinName }) => {
         const historical = res.data;
         setCandles(historical);
 
+        const ts = Math.floor(Date.now() / 1000);
+        const bucket =
+          Math.floor(ts / intervalToSeconds[interval]) *
+          intervalToSeconds[interval];
+
         if (historical.length) {
           const last = historical[historical.length - 1];
           trendRef.current =
@@ -178,11 +181,6 @@ const LiveCandleChart = ({ coinName }) => {
               ? "Down"
               : "Random";
 
-          const ts = Math.floor(Date.now() / 1000);
-          const bucket =
-            Math.floor(ts / intervalToSeconds[interval]) *
-            intervalToSeconds[interval];
-
           setLiveCandle({
             time: Number(bucket),
             open: last.close,
@@ -190,19 +188,28 @@ const LiveCandleChart = ({ coinName }) => {
             low: last.close,
             close: last.close,
           });
+        } else {
+          setLiveCandle({
+            time: Number(bucket),
+            open: 1.0,
+            high: 1.0,
+            low: 1.0,
+            close: 1.0,
+          });
         }
-        //make it zoom to last candle
+
         const chart = chartRef.current;
         const timeScale = chart.timeScale();
         const range = timeScale.getVisibleLogicalRange();
-        if (range) {
+        if (range && historical.length > 0) {
           const lastCandle = historical[historical.length - 1];
           const lastTime = new Date(lastCandle.time).getTime() / 1000;
           timeScale.setVisibleRange({
-            from: lastTime - 30 * intervalToSeconds[interval],
+            from: lastTime - 10 * intervalToSeconds[interval],
             to: lastTime,
           });
         }
+
         seriesRef.current?.setData(groupCandles(historical, interval));
         setRenderKey((k) => k + 1);
       } catch (err) {
@@ -235,16 +242,64 @@ const LiveCandleChart = ({ coinName }) => {
   }, [candles, liveCandle, interval, renderKey]);
 
   useEffect(() => {
-    const handlePrice = ({ price }) => {
+    const handlePrice = ({ price, trend, counter }) => {
+      if (trend) trendRef.current = trend;
+      if (counter != null) trendCounterRef.current = counter;
       setCurrentPrice(price);
 
       setLiveCandle((prev) => {
-        if (!prev) return null;
+        if (!prev || !prev.time) return prev;
+
+        const now = Math.floor(Date.now() / 1000);
+        const candleTime = prev.time;
+
+        // 🔒 Don't apply ticks that belong to a future or old candle
+        const intervalSec = intervalToSeconds[interval];
+        const currentBucket = Math.floor(now / intervalSec) * intervalSec;
+        if (candleTime !== currentBucket) return prev;
 
         let constrained = price;
-        if (trendRef.current === "Up") constrained = Math.max(prev.open, price);
-        else if (trendRef.current === "Down")
-          constrained = Math.min(prev.open, price);
+        const t = trendRef.current;
+        const c = trendCounterRef.current ?? 0;
+
+        switch (t) {
+          case "Up":
+            constrained = Math.max(prev.open, price);
+            break;
+          case "Down":
+            constrained = Math.min(prev.open, price);
+            break;
+          case "Random":
+            constrained = price;
+            break;
+          case "Scenario1":
+            constrained =
+              c % 4 < 3
+                ? Math.max(prev.open, price)
+                : Math.min(prev.open, price);
+            break;
+          case "Scenario2":
+            constrained =
+              c % 10 < 5
+                ? Math.min(prev.open, price)
+                : Math.max(prev.open, price);
+            break;
+          case "Scenario3":
+            constrained =
+              c % 2 === 0
+                ? Math.max(prev.open, price)
+                : Math.min(prev.open, price);
+            break;
+          case "Scenario4":
+            constrained = Math.max(prev.open, price);
+            break;
+          case "Scenario5":
+            constrained = Math.min(prev.open, price);
+            break;
+          default:
+            constrained = price;
+        }
+        console.log(c);
 
         const updated = {
           ...prev,
@@ -252,23 +307,15 @@ const LiveCandleChart = ({ coinName }) => {
           low: Math.min(prev.low, constrained),
           close: constrained,
         };
-        seriesRef.current?.update({
-          time: Number(updated.time),
-          ...updated,
-        });
 
+        seriesRef.current?.update({ time: Number(updated.time), ...updated });
         setRenderKey((k) => k + 1);
         return updated;
       });
     };
 
     const handleCandle = (candle) => {
-      trendRef.current =
-        candle.close > candle.open
-          ? "Up"
-          : candle.close < candle.open
-          ? "Down"
-          : "Random";
+      if (candle.trend) trendRef.current = candle.trend;
 
       setCandles((prev) =>
         [...prev.slice(-999), candle].sort(
@@ -276,19 +323,21 @@ const LiveCandleChart = ({ coinName }) => {
         )
       );
 
-      const ts = Math.floor(Date.now() / 1000);
-      const bucket =
-        Math.floor(ts / intervalToSeconds[interval]) *
-        intervalToSeconds[interval];
+      const bucket = Math.floor(Date.parse(candle.time) / 1000);
 
-      setLiveCandle({
+      const newCandle = {
         time: Number(bucket),
         open: candle.close,
         high: candle.close,
         low: candle.close,
         close: candle.close,
-      });
+      };
 
+      setLiveCandle(newCandle);
+
+      const updatedData = groupCandles([...candles, candle], interval);
+      updatedData.push(newCandle);
+      seriesRef.current?.setData(updatedData.slice(-200));
       setRenderKey((k) => k + 1);
     };
 

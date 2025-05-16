@@ -3,11 +3,18 @@ import Coin from "../models/Coin.js";
 let io = null;
 const INTERVAL_MS = 30000;
 const lastPrices = {};
+const scenarioCounters = {};
+
 const round = (val) => parseFloat(val.toFixed(4));
 
-const generatePrice = (open, trend, lastTick = open) => {
-  const delta = Math.random() * 0.03 + 0.01;
+const generatePrice = (open, trend, lastTick = open, coinName = "") => {
+  const delta = Math.random() * 0.9 + 0.9;
   const base = lastTick;
+  const counter = scenarioCounters[coinName] ?? 0;
+
+  console.log(
+    `coinName: ${coinName}, trend: ${trend}, counter: ${counter}, base: ${base}, delta: ${delta}`
+  );
 
   switch (trend) {
     case "Up":
@@ -16,6 +23,33 @@ const generatePrice = (open, trend, lastTick = open) => {
       return round(Math.min(open, base - delta));
     case "Random":
       return round(base + (Math.random() < 0.5 ? -delta : delta));
+    case "Scenario1": {
+      const cycle = counter % 4;
+      scenarioCounters[coinName] = counter + 1;
+      return cycle < 3
+        ? round(Math.max(open, base + delta))
+        : round(Math.min(open, base - delta));
+    }
+    case "Scenario2": {
+      const cycle = counter % 10;
+      scenarioCounters[coinName] = counter + 1;
+      return cycle < 5
+        ? round(Math.min(open, base - delta))
+        : round(Math.max(open, base + delta));
+    }
+    case "Scenario3": {
+      const cycle = counter % 2;
+      scenarioCounters[coinName] = counter + 1;
+      return cycle === 0
+        ? round(Math.max(open, base + delta))
+        : round(Math.min(open, base - delta));
+    }
+    case "Scenario4":
+      scenarioCounters[coinName] = counter + 1;
+      return round(base + delta);
+    case "Scenario5":
+      scenarioCounters[coinName] = counter + 1;
+      return round(Math.max(0.01, base - delta));
     default:
       return round(base + (Math.random() < 0.7 ? delta : -delta));
   }
@@ -35,7 +69,7 @@ const updateCandles = async () => {
 
       const open = round(lastCandle?.close ?? coin.currentPrice);
       const lastTick = lastPrices[coin.name];
-      const close = generatePrice(open, coin.trend, lastTick);
+      const close = generatePrice(open, coin.trend, lastTick, coin.name);
 
       const wiggle = Math.random() * 0.05;
       const high = round(Math.max(open, close) + wiggle);
@@ -55,7 +89,7 @@ const updateCandles = async () => {
       coin.candles = coin.candles.slice(-1000);
       await coin.save();
 
-      if (io) io.emit(`candle:${coin.name}`, candle);
+      if (io) io.emit(`candle:${coin.name}`, { ...candle, trend: coin.trend });
     }
   } catch (err) {
     console.error("Error in updateCandles:", err);
@@ -93,15 +127,37 @@ const emitTicks = async () => {
       let price = lastPrices[coin.name] ?? last.close;
 
       const delta = Math.random() * 0.079 + 0.001;
-      const randomChance = Math.random();
       let direction = 1;
+      const counter = scenarioCounters[coin.name] ?? 0;
 
-      if (randomChance < 0.1) {
-        direction = Math.random() < 0.5 ? -1 : 1;
-      } else {
-        if (coin.trend === "Up") direction = 1;
-        else if (coin.trend === "Down") direction = -1;
-        else direction = Math.random() < 0.5 ? -1 : 1;
+      switch (coin.trend) {
+        case "Up":
+          direction = 1;
+          break;
+        case "Down":
+          direction = -1;
+          break;
+        case "Random":
+          direction = Math.random() < 0.5 ? -1 : 1;
+          break;
+        case "Scenario1":
+          direction = counter % 4 < 3 ? 1 : -1;
+          break;
+        case "Scenario2":
+          direction = counter % 10 < 5 ? -1 : 1;
+          break;
+        case "Scenario3":
+          direction = counter % 2 === 0 ? 1 : -1;
+          break;
+        case "Scenario4":
+          direction = 1;
+          break;
+        case "Scenario5":
+          direction = -1;
+          break;
+        default:
+          direction = Math.random() < 0.5 ? -1 : 1;
+          break;
       }
 
       price = round(Math.max(0.01, price + direction * delta));
@@ -112,7 +168,12 @@ const emitTicks = async () => {
       last.close = price;
 
       if (io) {
-        io.emit(`price:${coin.name}`, { time: new Date(), price });
+        io.emit(`price:${coin.name}`, {
+          time: new Date(),
+          price,
+          trend: coin.trend,
+          counter: counter,
+        });
       }
     }
   } catch (err) {

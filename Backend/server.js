@@ -8,7 +8,6 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import coinRoutes from "./routes/coinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import trendRoutes from "./routes/trendRoutes.js";
 import candleService from "./services/candleGenerator.js";
 
 dotenv.config();
@@ -17,13 +16,13 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5174"],
+    origin: ["http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
 });
 
-app.use(cors({ origin: ["http://localhost:5174"], credentials: true }));
+app.use(cors({ origin: ["http://localhost:5173"], credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -32,7 +31,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/admin/trend", trendRoutes);
 
 const startServer = async () => {
   try {
