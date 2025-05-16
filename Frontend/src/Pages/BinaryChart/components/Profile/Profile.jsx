@@ -1,12 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./Profile.module.css";
-const s = styles;
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../Context/AuthContext";
 
+const s = styles;
+
 const Profile = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [password, setPassword] = useState("******"); 
+  const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || "");
+  const [country, setCountry] = useState(user?.country || "");
 
   const handleLogout = () => {
     logout();
@@ -20,9 +27,9 @@ const Profile = () => {
         <div className={s.userInfo}>
           <div className={s.avatar}></div>
           <div>
-            <p className={s.email}>example@gmail.com</p>
-            <p className={s.userId}>ID: 55468924</p>
-            <p className={s.verified}>✅ Verified</p>
+            <p className={s.email}>{user?.email || "example@gmail.com"}</p>
+            <p className={s.userId}>ID: {user?.id || "55468924"}</p>
+            <p className={s.verified}>{user?.isVerified ? "✅ Verified" : "❌ Not Verified"}</p>
           </div>
         </div>
 
@@ -30,22 +37,38 @@ const Profile = () => {
           <div className={s.row}>
             <div className={s.inputBox}>
               <label>First Name</label>
-              <input type="text" value="James" />
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
             </div>
             <div className={s.inputBox}>
               <label>Last Name</label>
-              <input type="text" value="Charles" />
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
             </div>
           </div>
 
           <div className={s.row}>
             <div className={s.inputBox}>
               <label>Email</label>
-              <input type="email" value="example@gmail.com" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className={s.inputBox}>
               <label>Password</label>
-              <input type="password" value="******" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
               <div className={s.forgotBox}>
                 <NavLink to="/forgot-password" className={s.forgot}>
                   Forget Your Password?
@@ -57,12 +80,25 @@ const Profile = () => {
           <div className={s.row}>
             <div className={s.inputBox}>
               <label>Date Of Birth</label>
-              <input type="text" placeholder="DD/MM/YEAR" />
+              <input
+                type="text"
+                placeholder="DD/MM/YEAR"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+              />
             </div>
             <div className={s.inputBox}>
               <label>Country</label>
-              <select>
-                <option>Select Country</option>
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="">Select Country</option>
+                <option value="USA">USA</option>
+                <option value="Canada">Canada</option>
+                <option value="UK">UK</option>
+                <option value="India">India</option>
+                <option value="Australia">Australia</option>
               </select>
               <div className={s.deleteBox}>
                 <NavLink className={s.delete}>X Delete Account</NavLink>

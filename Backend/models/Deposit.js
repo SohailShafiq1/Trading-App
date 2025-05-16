@@ -7,7 +7,8 @@ const depositSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'verified', 'failed'], default: 'pending' },
   network: { type: String, default: 'TRC20' },
   wallet: { type: String }, // Admin's wallet address (receiver)
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  fromAddress: { type: String },
 });
 
 export default mongoose.model("Deposit", depositSchema);

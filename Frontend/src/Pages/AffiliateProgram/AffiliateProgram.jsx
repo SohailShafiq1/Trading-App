@@ -7,8 +7,12 @@ import { AiOutlineLink } from "react-icons/ai";
 import React, { useState } from "react";
 import styles from "./AffiliateProgram.module.css";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext"; // Import useAuth
+
 const s = styles;
-const AffiliateProgram = ({cash}) => {
+
+const AffiliateProgram = () => {
+  const { user } = useAuth(); // Access user data from useAuth
   const [isCopied, setIsCopied] = useState(false);
   const referralLink = "Order-ax.pro/sign-up/?lid=1249470";
 
@@ -23,7 +27,7 @@ const AffiliateProgram = ({cash}) => {
       <div className={s.top}>
         <div className={s.balance}>
           <p>Your balance</p>
-          <h1>{cash}</h1>
+          <h1>{user?.assets || "$0.00"}</h1> {/* Display real assets */}
           <NavLink
             to="/binarychart/bankinglayout/withdraw"
             className={s.withdrawalLink}

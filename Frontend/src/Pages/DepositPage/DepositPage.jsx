@@ -43,6 +43,7 @@ const DepositPage = () => {
   const [amount, setAmount] = useState("");
   const [txId, setTxId] = useState("");
   const [email, setEmail] = useState("");
+  const [fromAddress, setFromAddress] = useState("");
   const [message, setMessage] = useState("");
 
   const handleCoinClick = (coin) => {
@@ -54,8 +55,8 @@ const DepositPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !amount) {
-      setMessage("Email and amount are required.");
+    if (!email || !amount || !fromAddress) {
+      setMessage("Email, amount, and TRC20 wallet address are required.");
       return;
     }
 
@@ -64,10 +65,12 @@ const DepositPage = () => {
         email,
         amount,
         txId,
+        fromAddress,
       });
       setMessage(res.data.message);
       setAmount("");
       setTxId("");
+      setFromAddress("");
     } catch (err) {
       setMessage("Deposit failed. Try again.");
     }
@@ -102,54 +105,62 @@ const DepositPage = () => {
           <span className={s.span}> $10 </span>
         </div>
       </div>
-{showModal && (
-  <div className={s.modalOverlay}>
-    <div className={s.modal}>
-      <button className={s.closeButton} onClick={() => setShowModal(false)}>
-        ✕
-      </button>
-      <h2>{selected} Deposit</h2>
 
-      <div className={s.instructions}>
-        <p><strong>📌 Instructions:</strong></p>
-        <ol>
-          <li>Go to your crypto wallet (Trust Wallet, Binance, etc.)</li>
-          <li>Select <strong>USDT (TRC-20)</strong></li>
-          <li>Send the amount to the wallet address below</li>
-          <li>After sending, fill and submit this form</li>
-        </ol>
-      </div>
+      {showModal && (
+        <div className={s.modalOverlay}>
+          <div className={s.modal}>
+            <button className={s.closeButton} onClick={() => setShowModal(false)}>
+              ✕
+            </button>
+            <h2>{selected} Deposit</h2>
 
-      <p><strong>Send to Wallet:</strong></p>
-      <code>{ADMIN_WALLET}</code>
+            <div className={s.instructions}>
+              <p><strong>📌 Instructions:</strong></p>
+              <ol>
+                <li>Go to your crypto wallet (Trust Wallet, Binance, etc.)</li>
+                <li>Select <strong>USDT (TRC-20)</strong></li>
+                <li>Send the amount to the wallet address below</li>
+                <li>After sending, fill and submit this form</li>
+              </ol>
+            </div>
 
-      <form onSubmit={handleSubmit} className={s.form}>
-        <input
-          type="email"
-          placeholder="Your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Transaction ID (optional)"
-          value={txId}
-          onChange={(e) => setTxId(e.target.value)}
-        />
-        <button type="submit">Submit Deposit</button>
-        {message && <p className={s.message}>{message}</p>}
-      </form>
-    </div>
-  </div>
-)}
+            <p><strong>Send to Wallet:</strong></p>
+            <code>{ADMIN_WALLET}</code>
+
+            <form onSubmit={handleSubmit} className={s.form}>
+              <input
+                type="email"
+                placeholder="Your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Your TRC20 Wallet Address"
+                value={fromAddress}
+                onChange={(e) => setFromAddress(e.target.value)}
+                required
+              />
+              <input
+                type="number"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Transaction ID (optional)"
+                value={txId}
+                onChange={(e) => setTxId(e.target.value)}
+              />
+              <button type="submit">Submit Deposit</button>
+              {message && <p className={s.message}>{message}</p>}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
