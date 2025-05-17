@@ -18,7 +18,7 @@ import ERC20 from "../../../assets/ERC20.png";
 import USDpolygon from "../../../assets/USDPolygon.png";
 
 const s = styles;
-const ADMIN_WALLET = "TLvdaYm3miaXKspdFrResJpp7tHH2QojGB"; 
+const ADMIN_WALLET = "TLckAV3ZZ7Z6GG9ibVMmg3krMaEQDmrG6u"; 
 
 const CurrencyArray = [
   { name: "Bitcoin(BTC)", icon: bitcoin },
