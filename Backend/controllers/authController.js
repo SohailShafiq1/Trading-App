@@ -59,11 +59,13 @@ const register = async (req, res) => {
       const affiliate = await Affiliate.findOne({
         affiliateCode: referralCode,
       });
-      console.log("Affiliate found:", affiliate);
+      if (!affiliate) {
+        console.log("Invalid Referral Code");
+      }
       if (affiliate) {
         affiliate.team.push(newUser._id);
         console.log("Updated affiliate team:", affiliate.team);
-
+        console.log("Affiliate found:", affiliate);
         await affiliate.save();
       }
     }
