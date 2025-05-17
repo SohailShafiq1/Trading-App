@@ -16,6 +16,7 @@ const RegisterPage = () => {
     password: "",
     confirmAge: false,
     confirmTax: false,
+    referralCode: "", // <-- ✅ new field
   });
 
   const handleChange = (e) => {
@@ -92,6 +93,14 @@ const RegisterPage = () => {
                 password: e.target.value.replace(/[^a-zA-Z0-9@]/g, ""),
               }))
             }
+            className={s.input}
+          />
+          <input
+            type="text"
+            name="referralCode"
+            placeholder="Referral Code (Optional)"
+            value={form.referralCode}
+            onChange={handleChange}
             className={s.input}
           />
 

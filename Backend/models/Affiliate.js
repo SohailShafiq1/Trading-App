@@ -19,6 +19,15 @@ const AffiliateSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    country: {
+      type: String,
+      required: true,
+    },
+    currency: {
+      type: String,
+      required: true,
+      default: "USD",
+    },
     affiliateCode: {
       type: String,
       required: true,
@@ -34,10 +43,6 @@ const AffiliateSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    level: {
-      type: Number,
-      default: 1,
-    },
     totalEarnings: {
       type: Number,
       default: 0,
@@ -46,14 +51,12 @@ const AffiliateSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Hash password before save
 AffiliateSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-// For affiliate login
 AffiliateSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };

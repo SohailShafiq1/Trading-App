@@ -4,7 +4,7 @@ import crypto from "crypto";
 
 export const registerAffiliate = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, country, currency } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ msg: "User not found" });
@@ -19,6 +19,8 @@ export const registerAffiliate = async (req, res) => {
     const affiliate = new Affiliate({
       email,
       password,
+      country,
+      currency,
       user: user._id,
       affiliateCode: code,
       referralLink,
@@ -47,6 +49,7 @@ export const loginAffiliate = async (req, res) => {
 
     res.status(200).json({
       msg: "Login successful",
+      email: affiliate.email,
       affiliateId: affiliate._id,
       referralLink: affiliate.referralLink,
     });
