@@ -11,7 +11,6 @@ const socket = io("http://localhost:5000");
 const BACKEND_URL = "http://localhost:5000";
 
 const intervalToSeconds = {
-  "15s": 15,
   "30s": 30,
   "1m": 60,
   "2m": 120,
@@ -276,7 +275,6 @@ const LiveCandleChart = ({ coinName }) => {
   const bbUpperSeriesRef = useRef(null);
   const bbMiddleSeriesRef = useRef(null);
   const bbLowerSeriesRef = useRef(null);
-  const initializedIndicators = useRef(new Set());
   const countdownRef = useRef();
   const activeDrawingToolRef = useRef(null);
   const drawingStartPointRef = useRef(null);
@@ -320,17 +318,33 @@ const LiveCandleChart = ({ coinName }) => {
 
     if (!label || x == null || y == null) return;
 
-    label.style.left = `${x}px`;
-    label.style.top = `${y}px`;
+    // Get chart container bounds
+    const containerRect = chartContainerRef.current.getBoundingClientRect();
+    const labelWidth = label.offsetWidth;
+    const labelHeight = label.offsetHeight;
 
+    // Constrain position within chart bounds
+    const constrainedX = Math.max(
+      labelWidth / 2,
+      Math.min(x, containerRect.width - labelWidth / 2)
+    );
+    const constrainedY = Math.max(
+      labelHeight / 2,
+      Math.min(y, containerRect.height - labelHeight / 2)
+    );
+
+    label.style.left = `${constrainedX}px`;
+    label.style.top = `${constrainedY}px`;
+
+    // Adjust font size based on zoom level
     const width = timeScale.width();
     const range = timeScale.getVisibleLogicalRange();
     if (range) {
       const barWidth = width / (range.to - range.from);
-      label.style.fontSize = `${Math.max(10, barWidth * 0.1)}px`;
-      label.style.padding = `${Math.max(2, barWidth * 0.1)}px ${Math.max(
+      label.style.fontSize = `${Math.max(10, Math.min(16, barWidth * 0.1))}px`;
+      label.style.padding = `${Math.max(2, barWidth * 0.05)}px ${Math.max(
         4,
-        barWidth * 0.3
+        barWidth * 0.2
       )}px`;
     }
   };
@@ -450,36 +464,34 @@ const LiveCandleChart = ({ coinName }) => {
 
   const applyIndicators = () => {
     // Remove previous indicators
+    const cleanupIndicator = (ref) => {
+      if (ref.current) {
+        try {
+          chartRef.current?.removeSeries(ref.current);
+          ref.current = null;
+        } catch (e) {
+          console.error("Error removing indicator:", e);
+        }
+      }
+    };
+
+    cleanupIndicator(smaSeriesRef);
+    cleanupIndicator(emaSeriesRef);
+    cleanupIndicator(rsiSeriesRef);
+    cleanupIndicator(macdSeriesRef);
+    cleanupIndicator(macdSignalSeriesRef);
+    cleanupIndicator(bbUpperSeriesRef);
+    cleanupIndicator(bbMiddleSeriesRef);
+    cleanupIndicator(bbLowerSeriesRef);
+
     if (rsiPaneRef.current) {
-      chartRef.current.removePane(rsiPaneRef.current);
+      chartRef.current?.removePane(rsiPaneRef.current);
       rsiPaneRef.current = null;
-      rsiSeriesRef.current = null;
     }
+
     if (macdPaneRef.current) {
-      chartRef.current.removePane(macdPaneRef.current);
+      chartRef.current?.removePane(macdPaneRef.current);
       macdPaneRef.current = null;
-      macdSeriesRef.current = null;
-      macdSignalSeriesRef.current = null;
-    }
-    if (smaSeriesRef.current) {
-      chartRef.current.removeSeries(smaSeriesRef.current);
-      smaSeriesRef.current = null;
-    }
-    if (emaSeriesRef.current) {
-      chartRef.current.removeSeries(emaSeriesRef.current);
-      emaSeriesRef.current = null;
-    }
-    if (bbUpperSeriesRef.current) {
-      chartRef.current.removeSeries(bbUpperSeriesRef.current);
-      bbUpperSeriesRef.current = null;
-    }
-    if (bbMiddleSeriesRef.current) {
-      chartRef.current.removeSeries(bbMiddleSeriesRef.current);
-      bbMiddleSeriesRef.current = null;
-    }
-    if (bbLowerSeriesRef.current) {
-      chartRef.current.removeSeries(bbLowerSeriesRef.current);
-      bbLowerSeriesRef.current = null;
     }
 
     if (indicator === INDICATORS.NONE) return;
@@ -511,50 +523,51 @@ const LiveCandleChart = ({ coinName }) => {
         case INDICATORS.RSI:
           {
             const rsiData = calculateRSI(data);
-            rsiPaneRef.current = chartRef.current.addPane({
-              height: 100,
-              marginTop: 10,
-              marginBottom: 20,
-            });
             rsiSeriesRef.current = chartRef.current.addLineSeries({
-              pane: rsiPaneRef.current,
               color: "#8A2BE2",
               lineWidth: 2,
+              priceScaleId: "rsi-scale",
             });
+
+            // Configure RSI scale
+            chartRef.current.priceScale("rsi-scale").applyOptions({
+              scaleMargins: {
+                top: 0.1,
+                bottom: 0, // Give more space at bottom
+              },
+              position: "right",
+            });
+
             rsiSeriesRef.current.setData(rsiData);
-            // Add RSI scale markers
-            chartRef.current.priceScale("right").applyOptions({
+          }
+          break;
+
+        case INDICATORS.MACD:
+          {
+            const macdData = calculateMACD(data);
+            // For MACD, we'll use the main pane but separate scales
+            macdSeriesRef.current = chartRef.current.addLineSeries({
+              color: "#2962FF",
+              lineWidth: 2,
+              priceScaleId: "macd", // Custom scale
+            });
+            macdSignalSeriesRef.current = chartRef.current.addLineSeries({
+              color: "#FF6D00",
+              lineWidth: 2,
+              priceScaleId: "macd", // Same scale
+            });
+            chartRef.current.priceScale("macd").applyOptions({
               scaleMargins: {
                 top: 0.1,
                 bottom: 0.1,
               },
-            });
-          }
-          break;
-        case INDICATORS.MACD:
-          {
-            const macdData = calculateMACD(data);
-            console.log(macdData);
-
-            macdPaneRef.current = chartRef.current.addPane({
-              height: 100,
-              marginTop: 10,
-              marginBottom: 20,
-            });
-            macdSeriesRef.current = chartRef.current.addLineSeries({
-              pane: macdPaneRef.current,
-              color: "#2962FF",
-              lineWidth: 5,
-            });
-            macdSignalSeriesRef.current = chartRef.current.addLineSeries({
-              pane: macdPaneRef.current,
-              color: "#FF6D00",
-              lineWidth: 5,
+              position: "right",
             });
             macdSeriesRef.current.setData(macdData.macd);
             macdSignalSeriesRef.current.setData(macdData.signal);
           }
           break;
+
         case INDICATORS.BB:
           {
             const bbData = calculateBollingerBands(data);
@@ -682,7 +695,7 @@ const LiveCandleChart = ({ coinName }) => {
         borderColor: theme.gridColor,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: 500,
     });
 
     chartRef.current = chart;
@@ -737,6 +750,19 @@ const LiveCandleChart = ({ coinName }) => {
           low: lastClose,
           close: lastClose,
         });
+        const chart = chartRef.current;
+        const timeScale = chart.timeScale();
+        const range = timeScale.getVisibleLogicalRange();
+        if (range && historical.length > 0) {
+          const lastCandle = historical[historical.length - 1];
+          const lastTime = new Date(lastCandle.time).getTime() / 1000;
+          timeScale.setVisibleRange({
+            from: lastTime - 40 * intervalToSeconds[interval],
+            to: lastTime,
+          });
+        }
+
+        seriesRef.current?.setData(groupCandles(historical, interval));
 
         const grouped = groupCandles(historical, interval);
         if (seriesRef.current) {
@@ -950,7 +976,18 @@ const LiveCandleChart = ({ coinName }) => {
       socket.off(`candle:${coinName}`, handleCandle);
     };
   }, [coinName, interval, candleStyle]);
-
+  useEffect(() => {
+    if (chartRef.current) {
+      chartRef.current.timeScale().applyOptions({
+        rightOffset: 0,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        lockVisibleTimeRangeOnResize: true,
+        handleScroll: false,
+        handleScale: false,
+      });
+    }
+  }, []);
   return (
     <div
       style={{
@@ -1254,7 +1291,10 @@ const LiveCandleChart = ({ coinName }) => {
       </div>
 
       <div style={{ position: "relative" }}>
-        <div ref={chartContainerRef} style={{ width: "100%", height: 400 }} />
+        <div
+          ref={chartContainerRef}
+          style={{ width: "100%", height: "500px", overflow: "hidden" }}
+        />
         <div
           id="candle-countdown"
           style={{
