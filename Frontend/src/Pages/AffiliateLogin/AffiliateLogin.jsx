@@ -20,13 +20,12 @@ const AffiliateLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/affiliate/login",
-        form
-      );
-      login(res.data); // save affiliate context
+      await login({
+        email: form.email,
+        password: form.password,
+      });
       alert("Affiliate login successful!");
-      navigate("/affiliate"); // dashboard or main affiliate route
+      navigate("/affiliate"); 
     } catch (err) {
       alert(err?.response?.data?.msg || "Login failed.");
     }

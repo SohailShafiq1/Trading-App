@@ -16,7 +16,7 @@ const RegisterPage = () => {
     password: "",
     confirmAge: false,
     confirmTax: false,
-    referralCode: "", // <-- ✅ new field
+    referralCode: "", 
   });
 
   const handleChange = (e) => {
