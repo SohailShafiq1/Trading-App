@@ -17,9 +17,10 @@ const AffiliateProgram = () => {
   const [isCopied, setIsCopied] = useState(false);
   const referralLink = "Order-ax.pro/sign-up/?lid=1249470";
   const { affiliate } = useAffiliateAuth(); // From affiliate login
+  console.log("Affiliate:", affiliate);
 
   // Redirect if not both logins
-  if (!user || !affiliate) {
+  if (!user && !affiliate) {
     return <Navigate to="/affiliate/login" />;
   }
 

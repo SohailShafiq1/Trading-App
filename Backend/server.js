@@ -46,7 +46,6 @@ app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/users", depositRoutes);
 app.use("/api/affiliate", affiliateRoutes);
-
 // Create HTTP server for socket.io
 const httpServer = createServer(app);
 

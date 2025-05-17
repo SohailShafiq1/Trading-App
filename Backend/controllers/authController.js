@@ -1,3 +1,4 @@
+import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 import bcrypt from "bcryptjs";
@@ -36,7 +37,8 @@ const googleLogin = async (req, res) => {
 };
 
 const register = async (req, res) => {
-  const { email, password, country, currency } = req.body;
+  const { email, password, country, currency, referralCode } = req.body;
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -49,7 +51,24 @@ const register = async (req, res) => {
       country,
       currency,
     });
+
     await newUser.save();
+
+    // ✅ If referral code provided, find affiliate and update their team
+    if (referralCode) {
+      const affiliate = await Affiliate.findOne({
+        affiliateCode: referralCode,
+      });
+      if (!affiliate) {
+        console.log("Invalid Referral Code");
+      }
+      if (affiliate) {
+        affiliate.team.push(newUser._id);
+        console.log("Updated affiliate team:", affiliate.team);
+        console.log("Affiliate found:", affiliate);
+        await affiliate.save();
+      }
+    }
 
     const token = generateToken(newUser._id);
     res.status(201).json({ token, user: newUser });

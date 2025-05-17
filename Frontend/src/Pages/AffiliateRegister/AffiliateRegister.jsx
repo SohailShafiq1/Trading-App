@@ -11,7 +11,7 @@ const AffiliateRegister = () => {
     email: "",
     password: "",
     country: "",
-    currency: "USD",
+    currency: "",
   });
 
   const handleChange = (e) => {
@@ -22,14 +22,15 @@ const AffiliateRegister = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/affiliate/register",
-        form
-      );
+      await axios.post("http://localhost:5000/api/affiliate/register", form);
       alert("Affiliate registration successful!");
       navigate("/affiliate/login");
     } catch (err) {
-      alert(err?.response?.data?.msg || "Registration failed.");
+      if (!err.response) {
+        alert("Network error: Please check your internet connection.");
+      } else {
+        console.log(err.response.data.message);
+      }
     }
   };
 
