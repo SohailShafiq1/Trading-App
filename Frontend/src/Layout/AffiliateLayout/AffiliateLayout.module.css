@@ -1,0 +1,167 @@
+.container {
+  width: 100%;
+  max-width: 100%;
+  height: 80px;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.logo {
+  height: 50px;
+  min-width: 120px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.logo:hover {
+  transform: scale(1.03);
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.btn {
+  position: relative;
+  width: 100px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: black;
+  text-decoration: none;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  background-color: #e0e0e0;
+  border: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.btn:hover {
+  background: #b1afaf;
+}
+
+.btn.active {
+  color: #ffffff;
+  background: rgba(16, 160, 85, 0.15);
+}
+
+.icons {
+  font-size: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.withdraw {
+  background-color: #e0e0e0;
+  color: black;
+  border: 1px solid #334155;
+}
+
+.deposit {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  gap: 0.5rem;
+}
+.link {
+  text-decoration: none;
+  color: black;
+}
+.footer {
+  display: none;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  background: #1e293b;
+  border-top: 1px solid #334155;
+}
+
+.footBar {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.footBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 0.5rem;
+  flex: 1;
+  height: 100%;
+}
+
+.footBtn .icons {
+  font-size: 1.5rem;
+  margin-bottom: 0.2rem;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    padding: 0 1rem;
+  }
+  .btn {
+    min-width: 90px;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  .liveAcc {
+    min-width: 100px;
+  }
+}
+@media (max-width: 992px) {
+  .btn {
+    width: 80px;
+  }
+}
+@media (max-width: 880px) {
+  .container {
+    height: 70px;
+  }
+  .footer {
+    display: block;
+  }
+  .navBar {
+    display: none;
+  }
+  .logo {
+    min-width: 100px;
+    height: 40px;
+  }
+  .liveAcc {
+    height: 50px;
+    padding: 0.6rem;
+  }
+  .withdraw,
+  .deposit {
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+  }
+  .footBar {
+    height: 60px;
+  }
+  .footBtn .icons {
+    font-size: 1.3rem;
+  }
+}

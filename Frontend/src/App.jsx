@@ -22,133 +22,169 @@ import Coins from "./Admin/components/Coins/Coins"; // adjust path accordingly
 import User from "./Admin/components/User/User";
 import Withdraw from "./Admin/components/Withdraw/Withdraw";
 import Deposit from "./Admin/components/Deposits/Deposit";
+import AffiliateLayout from "./Layout/AffiliateLayout/AffiliateLayout";
+import AffiliateLogin from "./Pages/AffiliateLogin/AffiliateLogin";
+import AffiliateRegister from "./Pages/AffiliateRegister/AffiliateRegister";
+import AffiliateProtectedRoute from "./Route/ProtectedRoute/AffiliateProtectedRoute";
+import { AffiliateAuthProvider } from "./Context/AffiliateAuthContext";
 
 const s = styles;
 
 const App = () => {
   return (
     <AuthProvider>
-      <UserAssetsProvider>
-        <div className={s.container}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<RegisterLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/login" element={<LoginPage />} />
-              </Route>
-              <Route
-                path="/binarychart"
-                element={
-                  <ProtectedRoute>
-                    <BinaryLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<BinaryChart />} />
+      <AffiliateAuthProvider>
+        <UserAssetsProvider>
+          <div className={s.container}>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<RegisterLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                </Route>
                 <Route
-                  path="/binarychart/profile"
+                  path="/binarychart"
                   element={
                     <ProtectedRoute>
-                      <Profile />
+                      <BinaryLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<BinaryChart />} />
+                  <Route
+                    path="/binarychart/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/binarychart/bankinglayout"
+                    element={
+                      <ProtectedRoute>
+                        <BankingLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route
+                      path="/binarychart/bankinglayout/deposit"
+                      element={
+                        <ProtectedRoute>
+                          <DepositPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/binarychart/bankinglayout/withdraw"
+                      element={
+                        <ProtectedRoute>
+                          <WithdrawPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/binarychart/bankinglayout/transactions"
+                      element={
+                        <ProtectedRoute>
+                          <TransactionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+                </Route>
+
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminLayout />
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/binarychart/affiliateprogram"
+                  path="/coins"
                   element={
                     <ProtectedRoute>
-                      <AffiliateProgram cash="500" />
+                      <Coins /> {/* Add the new Coins component here */}
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/binarychart/prizepool"
+                  path="/user"
                   element={
                     <ProtectedRoute>
-                      <PrizePool />
+                      <User />
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/binarychart/bankinglayout"
+                  path="/deposits"
                   element={
                     <ProtectedRoute>
-                      <BankingLayout />
+                      <Deposit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/withdraw"
+                  element={
+                    <ProtectedRoute>
+                      <Withdraw /> {/* Add the new Withdraw component here */}
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/affiliate"
+                  element={
+                    <ProtectedRoute>
+                      <AffiliateLayout />
                     </ProtectedRoute>
                   }
                 >
                   <Route
-                    path="/binarychart/bankinglayout/deposit"
+                    path="/affiliate/login"
                     element={
                       <ProtectedRoute>
-                        <DepositPage />
+                        <AffiliateLogin />
                       </ProtectedRoute>
                     }
                   />
                   <Route
-                    path="/binarychart/bankinglayout/withdraw"
+                    path="/affiliate/register"
                     element={
                       <ProtectedRoute>
-                        <WithdrawPage />
+                        <AffiliateRegister />
                       </ProtectedRoute>
                     }
                   />
                   <Route
-                    path="/binarychart/bankinglayout/transactions"
+                    index
                     element={
                       <ProtectedRoute>
-                        <TransactionsPage />
+                        <AffiliateProtectedRoute>
+                          <AffiliateProgram />
+                        </AffiliateProtectedRoute>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/affiliate/prizepool"
+                    element={
+                      <ProtectedRoute>
+                        <AffiliateProtectedRoute>
+                          <PrizePool />
+                        </AffiliateProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
                 </Route>
-              </Route>
-
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-
-                }
-              />
-              <Route
-                path="/coins"
-                element={
-                  <ProtectedRoute>
-                    <Coins /> {/* Add the new Coins component here */}
-                  </ProtectedRoute>
-                }
-
-              />
-              <Route
-                path="/user"
-                element={
-                  <ProtectedRoute>
-                    <User />
-                  </ProtectedRoute>
-                } />
-                 <Route
-                path="/deposits"
-                element={
-                  <ProtectedRoute>
-                    <Deposit/>
-                  </ProtectedRoute>
-                } />
-              <Route
-                path="/withdraw"
-                element={
-                  <ProtectedRoute>
-                    <Withdraw /> {/* Add the new Withdraw component here */}
-                  </ProtectedRoute>
-                } />
-
-            </Routes>
-          </BrowserRouter>
-        </div>
-      </UserAssetsProvider>
+              </Routes>
+            </BrowserRouter>
+          </div>
+        </UserAssetsProvider>
+      </AffiliateAuthProvider>
     </AuthProvider>
   );
 };

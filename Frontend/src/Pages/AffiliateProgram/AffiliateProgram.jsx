@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import styles from "./AffiliateProgram.module.css";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext"; // Import useAuth
+import { useAffiliateAuth } from "../../Context/AffiliateAuthContext"; // Import useAffiliateAuth
 
 const s = styles;
 
@@ -15,6 +16,12 @@ const AffiliateProgram = () => {
   const { user } = useAuth(); // Access user data from useAuth
   const [isCopied, setIsCopied] = useState(false);
   const referralLink = "Order-ax.pro/sign-up/?lid=1249470";
+  const { affiliate } = useAffiliateAuth(); // From affiliate login
+
+  // Redirect if not both logins
+  if (!user || !affiliate) {
+    return <Navigate to="/affiliate/login" />;
+  }
 
   const handleCopyClick = () => {
     navigator.clipboard.writeText(referralLink);
@@ -74,7 +81,7 @@ const AffiliateProgram = () => {
           <span>0</span>
           <p>Registrations</p>
         </div>
-        <NavLink to={"/binarychart/prizepool"} className={s.statsBox}>
+        <NavLink to={"/affiliate/prizepool"} className={s.statsBox}>
           <GiMedal />
           <p>Prize Pool</p>
         </NavLink>
