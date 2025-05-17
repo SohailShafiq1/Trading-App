@@ -44,7 +44,7 @@ const BinaryLayout = () => {
             <CgProfile className={s.icons} />
             Profile
           </NavLink>
-          <NavLink className={s.btn} to="/binarychart/affiliateprogram">
+          <NavLink className={s.btn} to="/affiliate">
             <CgMoreAlt className={s.icons} />
             More
           </NavLink>
@@ -94,7 +94,7 @@ const BinaryLayout = () => {
           <NavLink className={s.footBtn} to="/binarychart">
             <AiFillTrophy className={s.icons} />
           </NavLink>
-          <NavLink className={s.footBtn} to="/binarychart/affiliateprogram">
+          <NavLink className={s.footBtn} to="/affiliate">
             <CgMoreAlt className={s.icons} />
           </NavLink>
         </div>

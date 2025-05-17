@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import styles from "./HomePage.module.css";
 import HomeContent from "../../../assets/HomeContect.png";
-import { NavLink } from "react-router-dom";
+import { Navigate, NavLink } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext"; // Import useAuth
+
 const s = styles;
+
 const HomePage = () => {
   return (
     <>
       <div className={s.homeContainer}>
         <p className={s.homeDescription}>
-          Smart and Innovative 
-          Platform for Investments
+          Smart and Innovative Platform for Investments
         </p>
         <div className={s.homeParagraph}>
           Sign up and get 10,000 USD to your demo account to learn how to trade

@@ -10,7 +10,10 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import coinRoutes from "./routes/coinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import depositRoutes from "./routes/depositRoutes.js";
 import candleService from "./services/candleGenerator.js";
+import { checkTrc20Deposits } from "./utils/tronWatcher.js";
+import affiliateRoutes from "./routes/affiliateRoutes.js";
 
 dotenv.config();
 
@@ -29,7 +32,7 @@ app.use(
   })
 );
 
-app.use(cors({ origin: ["http://localhost:5174"], credentials: true }));
+app.use(cors({ origin: ["http://localhost:5173"], credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,22 +44,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/users", depositRoutes);
+app.use("/api/affiliate", affiliateRoutes);
 
-const startServer = async () => {
-  try {
-    await connectDB();
-    candleService.initSocket(io); // Initialize WebSocket in generator
-
-    const PORT = process.env.PORT;
-    httpServer.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error("Failed to start server:", err);
-    process.exit(1);
-  }
-};
-app.use('/api/users', depositRoutes); 
 // Create HTTP server for socket.io
 const httpServer = createServer(app);
 
@@ -79,9 +69,21 @@ io.on("connection", (socket) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    candleService.initSocket(io); // Initialize WebSocket in generator
 
+    const PORT = process.env.PORT;
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
+// Check TRC20 deposits periodically
 setInterval(checkTrc20Deposits, 30000);

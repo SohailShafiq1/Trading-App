@@ -1,0 +1,148 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  margin-bottom: 10rem;
+  color: black;
+}
+
+.Header {
+  font-size: 55px;
+  color: black;
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.Form {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 340px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  gap: 8px;
+}
+
+.tabs a,
+.loginTab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  color: white;
+  background: linear-gradient(90deg, #ff1600, #990d00);
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+.tabs a:hover,
+.loginTab:hover {
+  background-color: #334155;
+}
+
+.activeTab {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  color: white;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  color: black;
+  border: 1px solid #334155;
+}
+.input:nth-child(1) {
+  margin-bottom: 1rem;
+}
+
+.input:focus {
+  outline: 2px solid #22c55e;
+}
+
+.optionsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.checkboxGroup {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.4;
+  font-size: 13px;
+}
+
+.checkboxGroup input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.forgotLink {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+label {
+  color: black;
+}
+.forgotLink:hover {
+  text-decoration: underline;
+}
+.rememberForgot {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.loginBtn {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .Header {
+    margin-top: 3rem;
+    font-size: 30px;
+  }
+
+  .Form {
+    width: 70%;
+  }
+  .form {
+    width: 100%;
+  }
+  .rememberForgot {
+    margin-bottom: 2rem;
+  }
+}
