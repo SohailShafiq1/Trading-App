@@ -1,3 +1,4 @@
+import { log } from "console";
 import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
@@ -40,13 +41,12 @@ export const registerAffiliate = async (req, res) => {
 export const loginAffiliate = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const affiliate = await Affiliate.findOne({ email });
     if (!affiliate) return res.status(404).json({ msg: "Affiliate not found" });
 
     const isMatch = await affiliate.comparePassword(password);
     if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
-
+    console.log("Affiliate login successful", affiliate);
     res.status(200).json({
       msg: "Login successful",
       email: affiliate.email,

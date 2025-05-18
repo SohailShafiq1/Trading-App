@@ -6,6 +6,7 @@ import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 
 const AffiliateLogin = () => {
   const navigate = useNavigate();
+
   const { login } = useAffiliateAuth();
 
   const [form, setForm] = useState({
@@ -20,12 +21,7 @@ const AffiliateLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/affiliate/login",
-        form
-      );
-      login(res.data); // save affiliate context
-      alert("Affiliate login successful!");
+      await login({ email: form.email, password: form.password });
       navigate("/affiliate"); // dashboard or main affiliate route
     } catch (err) {
       alert(err?.response?.data?.msg || "Login failed.");
