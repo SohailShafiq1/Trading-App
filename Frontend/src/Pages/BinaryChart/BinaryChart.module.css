@@ -40,7 +40,7 @@ body {
 .box {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.5rem;
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -113,12 +113,13 @@ body {
 }
 
 .control h1 {
+  text-align: center;
   font-size: 1.5rem;
   margin: 0;
 }
 
 .control p {
-  margin: 0.5rem 0;
+  margin: 0rem 0;
 }
 
 .controlStuff {
@@ -134,10 +135,12 @@ body {
   justify-content: space-between;
   border-radius: 8px;
   padding: 0.5rem;
+  border: 2px solid #1f1f1f;
+  border-radius: 30px;
 }
 
 .value {
-  color: #ffffff;
+  color: black;
   font-size: 1.1rem;
   font-weight: 500;
   text-align: center;
@@ -147,7 +150,7 @@ body {
 .moneyBox input {
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: black;
   font-size: 1.1rem;
   text-align: center;
   width: 100%;
@@ -155,10 +158,10 @@ body {
 }
 
 .iconBtn {
-  background: #3d3f4e;
+  background: #1f1f1f;
   color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 30px;
   width: 36px;
   height: 36px;
   font-size: 1.2rem;
@@ -169,65 +172,58 @@ body {
   transition: all 0.2s;
 }
 
-.iconBtn:hover {
-  background: #57596a;
-}
-
 .buySelling {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
+  justify-content: center;
+  align-items: center;
   margin-top: 1rem;
+  width: 100%;
 }
 
 .buyBox,
 .SellBox {
-  flex: 1;
+  width: 70%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 0;
-  border-radius: 8px;
+  gap: 2rem;
+  padding: 1rem 1rem;
+  border-radius: 90px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .buyBox {
-  background: rgba(16, 160, 85, 0.2);
-  border: 1px solid #10a055;
-}
-
-.buyBox:hover {
-  background: rgba(16, 160, 85, 0.3);
+  background: linear-gradient(90deg, #66b544, #1a391d);
 }
 
 .SellBox {
-  background: rgba(255, 22, 0, 0.2);
-  border: 1px solid #ff1600;
-}
-
-.SellBox:hover {
-  background: rgba(255, 22, 0, 0.3);
+  background: linear-gradient(90deg, #ff1600, #990d00);
 }
 
 .icons {
   font-size: 1.5rem;
-  margin-bottom: 0.5rem;
 }
 
 .buyBox .icons {
-  color: #10a055;
-  transform: rotate(-45deg);
+  color: white;
+  transform: rotate(270deg);
+  font-size: 3rem;
 }
 
 .SellBox .icons {
-  color: #ff1600;
-  transform: rotate(135deg);
+  color: white;
+  transform: rotate(0deg);
+  font-size: 3rem;
 }
 
 .buyBox p,
 .SellBox p {
-  color: #ffffff;
+  color: white;
+  font-size: 3rem;
   font-weight: 500;
   margin: 0;
 }
@@ -235,12 +231,19 @@ body {
 .tradeHistory {
   margin-top: 1.5rem;
   overflow: hidden;
+  border-top: 2px solid #10a055;
+  border-bottom: 2px solid #ff1600;
+  border-radius: 1rem;
+  padding-bottom: 2rem;
 }
 
 .tradeHistory p {
-  color: #ffffff;
+  color: black;
+  font-size: 1.2rem;
+  text-align: center;
   font-weight: 500;
   margin-bottom: 0.5rem;
+  padding-top: 0.5rem;
 }
 
 .tradeHistory ul {
@@ -252,7 +255,6 @@ body {
 }
 
 .tradeHistory li {
-  background: #1e1f25;
   border-radius: 6px;
   padding: 0.8rem;
   margin-bottom: 0.5rem;

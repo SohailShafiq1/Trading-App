@@ -10,6 +10,33 @@
   box-sizing: border-box;
   background: #ffffff;
 }
+.popup {
+  display: none;
+  position: absolute;
+  top: 100px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.popupItem {
+  color: white;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.popup button:hover {
+  background: #f1f1f1;
+}
 
 .logo {
   height: 50px;
@@ -51,10 +78,8 @@
   color: black;
   text-decoration: none;
   padding: 0.8rem 1rem;
-  border-radius: 10px;
   transition: all 0.3s ease;
   background-color: #e0e0e0;
-  border: 1px solid #334155;
   flex-shrink: 0;
 }
 
@@ -83,16 +108,15 @@
 .liveAcc {
   min-width: 120px;
   height: 60px;
-  background: #1e1f25;
+  background: #e0e0e0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   font-size: 0.85rem;
-  color: #f8fafc;
+  color: black;
   border-radius: 10px;
   padding: 0.8rem 1rem;
-  border: 1px solid #334155;
   text-decoration: none;
 }
 
@@ -112,11 +136,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 5rem;
   text-decoration: none;
   border: none;
   white-space: nowrap;
@@ -125,7 +149,6 @@
 .withdraw {
   background-color: #e0e0e0;
   color: black;
-  border: 1px solid #334155;
 }
 
 .deposit {

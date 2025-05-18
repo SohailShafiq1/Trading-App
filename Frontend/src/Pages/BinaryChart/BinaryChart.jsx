@@ -160,6 +160,7 @@ const BinaryChart = () => {
         email: user.email,
         trade,
       });
+      console.log("Trade saved successfully:", trade);
     } catch (err) {
       console.error("Failed to save trade:", err);
     }
@@ -275,7 +276,7 @@ const BinaryChart = () => {
         );
         setPopupColor(isWin ? "#10A055" : "#FF1600");
         setShowPopup(true);
-        setTimeout(() => setShowPopup(false), 3000);
+        setTimeout(() => setShowPopup(false), 100);
       } catch (err) {
         console.error("Failed to check trade result:", err);
       }
@@ -283,7 +284,8 @@ const BinaryChart = () => {
   };
 
   const formatTime = (seconds) => {
-    if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0) return "00:00";
+    if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0)
+      return "00:00";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
@@ -302,7 +304,11 @@ const BinaryChart = () => {
   // Fetch trades from backend on mount
   useEffect(() => {
     const fetchTrades = async () => {
-      if (!user?.email) return;
+      if (!user?.email) {
+        console.error("User email not found");
+        return;
+      }
+
       try {
         const response = await axios.get(
           `http://localhost:5000/api/users/trades/${user.email}`
@@ -318,6 +324,8 @@ const BinaryChart = () => {
           }
           return { ...trade, remainingTime: 0 };
         });
+        console.log("Fetched trades:", tradesWithTime);
+
         setTrades(tradesWithTime.reverse()); // latest trade at top
       } catch (err) {
         console.error("Failed to fetch trades:", err);
@@ -383,7 +391,7 @@ const BinaryChart = () => {
           </div>
 
           <div className={styles.control}>
-            <h1>{selectedCoin || "Select Coin"} Trading</h1>
+            <h1>{selectedCoin || "Select Coin"}</h1>
             <p>
               Current Price: $
               {selectedCoinType === "OTC" ? otcPrice : livePrice}
@@ -436,6 +444,11 @@ const BinaryChart = () => {
                 </button>
               </div>
             </div>
+            <div>
+              <p style={{ textAlign: "center" }}>
+                Your Payout : {investment * selectedCoin.profitPercentage}
+              </p>
+            </div>
 
             <div className={styles.buySelling}>
               <div
@@ -470,7 +483,6 @@ const BinaryChart = () => {
       )}
 
       <ToastContainer />
-
     </>
   );
 };
