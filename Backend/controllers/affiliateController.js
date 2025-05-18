@@ -32,6 +32,8 @@ export const registerAffiliate = async (req, res) => {
       msg: "Affiliate account created",
       referralCode: code,
       referralLink,
+      level: affiliate.level, // <-- add this
+      team: affiliate.team,   // <-- add this if you want registrations
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
@@ -52,12 +54,13 @@ export const loginAffiliate = async (req, res) => {
       email: affiliate.email,
       affiliateId: affiliate._id,
       referralLink: affiliate.referralLink,
+      level: affiliate.level, 
+      team: affiliate.team,  
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
-
 export const getAffiliateDetails = async (req, res) => {
   try {
     const user = await Affiliate.findById(req.userId);

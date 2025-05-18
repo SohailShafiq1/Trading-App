@@ -6,7 +6,7 @@ import { FiCopy } from "react-icons/fi";
 import { AiOutlineLink } from "react-icons/ai";
 import React, { useState } from "react";
 import styles from "./AffiliateProgram.module.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, Navigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext"; // Import useAuth
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext"; // Import useAffiliateAuth
 
@@ -79,7 +79,7 @@ const AffiliateProgram = () => {
         </div>
         <div className={s.statsBox}>
           <BsFillPersonFill />
-          <span>0</span>
+          <span>{affiliate?.team ? affiliate.team.length : 0}</span>
           <p>Registrations</p>
         </div>
         <NavLink to={"/affiliate/prizepool"} className={s.statsBox}>

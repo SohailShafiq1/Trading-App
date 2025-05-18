@@ -154,6 +154,17 @@ const BinaryChart = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const saveTradeToDB = async (trade) => {
+    try {
+      await axios.post("http://localhost:5000/api/users/trade", {
+        email: user.email,
+        trade,
+      });
+    } catch (err) {
+      console.error("Failed to save trade:", err);
+    }
+  };
+
   const handleTrade = async (tradeType) => {
     if (!selectedCoin) {
       toast.error("Please select a coin first!");
@@ -243,6 +254,20 @@ const BinaryChart = () => {
           )
         );
 
+        const tradeData = {
+          type: tradeType,
+          coin: selectedCoin,
+          investment,
+          entryPrice: tradePrice,
+          exitPrice: endPrice,
+          result: isWin ? "win" : "loss",
+          reward: parseFloat(reward),
+          createdAt: new Date(),
+          startedAt: new Date(), // <-- add this
+          duration: timer, // <-- add this
+        };
+        saveTradeToDB(tradeData);
+
         setPopupMessage(
           isWin
             ? `Trade Win! You got $${reward}`
@@ -258,6 +283,7 @@ const BinaryChart = () => {
   };
 
   const formatTime = (seconds) => {
+    if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0) return "00:00";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
@@ -272,6 +298,35 @@ const BinaryChart = () => {
   useEffect(() => {
     if (selectedCoin) localStorage.setItem("selectedCoin", selectedCoin);
   }, [selectedCoin]);
+
+  // Fetch trades from backend on mount
+  useEffect(() => {
+    const fetchTrades = async () => {
+      if (!user?.email) return;
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/users/trades/${user.email}`
+        );
+        const now = Date.now();
+        const tradesWithTime = response.data.map((trade) => {
+          if (trade.status === "running" && trade.startedAt && trade.duration) {
+            const elapsed = Math.floor(
+              (now - new Date(trade.startedAt).getTime()) / 1000
+            );
+            const remaining = Math.max(trade.duration - elapsed, 0);
+            return { ...trade, remainingTime: remaining };
+          }
+          return { ...trade, remainingTime: 0 };
+        });
+        setTrades(tradesWithTime.reverse()); // latest trade at top
+      } catch (err) {
+        console.error("Failed to fetch trades:", err);
+      }
+    };
+    fetchTrades();
+  }, [user?.email]);
+
+  const latestTrade = trades.length > 0 ? trades[trades.length - 1] : null;
 
   return (
     <>
@@ -403,7 +458,7 @@ const BinaryChart = () => {
               </div>
             </div>
 
-            <Trades trades={trades} formatTime={formatTime} />
+            <Trades trades={[...trades].reverse()} formatTime={formatTime} />
           </div>
         </div>
       </div>
@@ -415,6 +470,7 @@ const BinaryChart = () => {
       )}
 
       <ToastContainer />
+
     </>
   );
 };

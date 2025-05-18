@@ -21,8 +21,12 @@ const AffiliateLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login({ email: form.email, password: form.password });
-      navigate("/affiliate"); // dashboard or main affiliate route
+      await login({
+        email: form.email,
+        password: form.password,
+      });
+      alert("Affiliate login successful!");
+      navigate("/affiliate"); 
     } catch (err) {
       alert(err?.response?.data?.msg || "Login failed.");
     }
