@@ -33,7 +33,7 @@ export const registerAffiliate = async (req, res) => {
       referralCode: code,
       referralLink,
       level: affiliate.level, // <-- add this
-      team: affiliate.team,   // <-- add this if you want registrations
+      team: affiliate.team, // <-- add this if you want registrations
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
@@ -50,12 +50,12 @@ export const loginAffiliate = async (req, res) => {
     if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
     console.log("Affiliate login successful", affiliate);
     res.status(200).json({
-      msg: "Login successful",
       email: affiliate.email,
       affiliateId: affiliate._id,
       referralLink: affiliate.referralLink,
-      level: affiliate.level, 
-      team: affiliate.team,  
+      level: affiliate.level,
+      team: affiliate.team,
+      code: affiliate.affiliateCode,
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });

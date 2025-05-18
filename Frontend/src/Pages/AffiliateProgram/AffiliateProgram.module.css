@@ -20,24 +20,23 @@
   flex-direction: column;
   padding: 1.5rem;
   border-radius: 10px;
-  background-color: #1e1f25;
+  background-color: #e0e0e0;
   box-sizing: border-box;
 }
 
 .balance p {
   margin: 0;
-  color: #3f474c;
   font-size: 1.2rem;
+  font-weight: bold;
 }
 
 .balance h1 {
-  color: white;
   font-size: 2rem;
   margin: 0.5rem 0;
 }
 
 .withdrawalLink {
-  background-color: #10a055;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   padding: 0.8rem;
   text-decoration: none;
   color: white;
@@ -49,7 +48,7 @@
 
 .earning {
   margin-top: 1rem;
-  background-color: #3f474c;
+  background-color: #1f1f1f;
   padding: 1rem;
   border-radius: 5px;
 }
@@ -68,7 +67,8 @@
 
 .partnerLink {
   width: 100%;
-  background-color: #1e1f25;
+  background-color: #e0e0e0;
+
   border-radius: 10px;
   margin-top: 1rem;
 }
@@ -83,7 +83,6 @@
 }
 
 .header {
-  color: white;
   font-size: 1.1rem;
 }
 
@@ -99,16 +98,6 @@
   flex-direction: row;
   gap: 0.5rem;
   flex-wrap: wrap;
-}
-
-.option button {
-  background-color: #3f474c;
-  color: white;
-  border: none;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.8rem;
 }
 
 .linkContainer {
@@ -136,7 +125,7 @@
 }
 
 .generate {
-  background-color: #10a055;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   color: white;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -156,48 +145,50 @@
 .statsBox {
   flex: 1 1 calc(50% - 1rem);
   min-width: 120px;
-  background-color: #1e1f25;
+  background-color: #e0e0e0;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  text-align: left;
   box-sizing: border-box;
 }
 .statsBox:last-child {
   text-decoration: none;
-  background-color: #10a055;
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  align-items: center;
   svg {
     font-size: 58px;
+    color: white;
   }
   p {
-    font-size: 20px;
+    font-size: 35px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #66b544, #1a391d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     background-color: white;
-    color: #10a055;
     padding: 0.5rem 1rem;
     border-radius: 30px;
   }
 }
 
 .statsBox svg {
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   margin-bottom: 0.5rem;
-  color: white;
 }
 
 .statsBox p {
   margin: 0;
-  font-size: 0.8rem;
-  color: white;
+  font-size: 1.2rem;
   margin-bottom: 0.3rem;
 }
 
 .statsBox span {
   font-size: 1rem;
   font-weight: bold;
-  color: white;
 }
 
 @media (min-width: 768px) {
@@ -268,4 +259,19 @@
   .linkContainer span {
     font-size: 1.2rem;
   }
+}
+
+.pLink,
+.pCode {
+  color: white;
+  border: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  background-color: #3f474c;
+}
+.pCode {
+  background-color: #3f474c66;
+  color: black;
 }
