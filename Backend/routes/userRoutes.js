@@ -13,11 +13,13 @@ router.post("/deposit", async (req, res) => {
       userEmail: email,
       amount,
       txId,
-      wallet: process.env.ADMIN_TRON_WALLET // Set this in your .env file
+      wallet: process.env.ADMIN_TRON_WALLET, // Set this in your .env file
     });
 
     await deposit.save();
-    res.status(201).json({ message: "Deposit submitted, awaiting confirmation." });
+    res
+      .status(201)
+      .json({ message: "Deposit submitted, awaiting confirmation." });
   } catch (err) {
     console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
@@ -52,7 +54,11 @@ router.get("/email/:email", async (req, res) => {
 router.put("/update-assets", async (req, res) => {
   const { email, assets } = req.body;
   try {
-    const user = await User.findOneAndUpdate({ email }, { assets }, { new: true });
+    const user = await User.findOneAndUpdate(
+      { email },
+      { assets },
+      { new: true }
+    );
     if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json({ message: "Assets updated successfully", user });
   } catch (err) {
@@ -68,7 +74,8 @@ router.post("/withdraw", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.assets < amount) return res.status(400).json({ error: "Insufficient balance" });
+    if (user.assets < amount)
+      return res.status(400).json({ error: "Insufficient balance" });
 
     const orderId = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -79,7 +86,7 @@ router.post("/withdraw", async (req, res) => {
       amount,
       paymentMethod: `${paymentMethod} (${network})`,
       status: "pending",
-      date: new Date()
+      date: new Date(),
     });
 
     // Add to pending withdrawals
@@ -90,7 +97,7 @@ router.post("/withdraw", async (req, res) => {
       network,
       paymentMethod,
       status: "pending",
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     user.assets -= amount;
@@ -114,6 +121,32 @@ router.get("/transactions/:email", async (req, res) => {
   } catch (err) {
     console.error("Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
+  }
+});
+
+// ✅ Save user trade
+router.post("/trade", async (req, res) => {
+  const { email, trade } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.trades.push(trade); // <-- this appends, not replaces
+    await user.save();
+    res.status(201).json({ message: "Trade saved", trades: user.trades });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save trade" });
+  }
+});
+
+// ✅ Get user trades
+router.get("/trades/:email", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user.trades || []);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
 

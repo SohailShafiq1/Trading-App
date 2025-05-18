@@ -89,7 +89,19 @@ const UserSchema = new mongoose.Schema(
       processedAt: {
         type: Date
       }
-    }]
+    }],
+    trades: [
+      {
+        type: { type: String, enum: ["Buy", "Sell"], required: true },
+        coin: { type: String, required: true },
+        investment: { type: Number, required: true },
+        entryPrice: { type: Number, required: true },
+        exitPrice: { type: Number },
+        result: { type: String, enum: ["win", "loss", "pending"], default: "pending" },
+        reward: { type: Number, default: 0 },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   {
     timestamps: true,
