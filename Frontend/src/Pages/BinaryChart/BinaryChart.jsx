@@ -14,7 +14,7 @@ import Trades from "./components/Trades/Trades";
 const BinaryChart = () => {
   // State declarations
   const [coins, setCoins] = useState([]);
-  const [selectedCoin, setSelectedCoin] = useState("BTC");
+  const [selectedCoin, setSelectedCoin] = useState("");
   const [selectedCoinType, setSelectedCoinType] = useState("");
   const [livePrice, setLivePrice] = useState(0);
   const [otcPrice, setOtcPrice] = useState(0);
@@ -84,9 +84,9 @@ const BinaryChart = () => {
         );
         const data = await response.json();
         if (isMounted) {
-          setLivePrice(parseFloat(data.price).toFixed(2));
-          setPriceLoaded(true);
+          setLivePrice(parseFloat(data.price));
           setIsLoading(false);
+          setPriceLoaded(true);
         }
       } catch (err) {
         console.error("Failed to fetch live price:", err);
@@ -118,9 +118,11 @@ const BinaryChart = () => {
           `http://localhost:5000/api/coins/price/${selectedCoin}`
         );
         if (isMounted) {
-          setOtcPrice(parseFloat(response.data).toFixed(2));
-          setPriceLoaded(true);
+          // Extract price whether it comes as object or direct value
+          const priceValue = response.data.price || response.data;
+          setOtcPrice(parseFloat(priceValue));
           setIsLoading(false);
+          setPriceLoaded(true);
         }
       } catch (err) {
         console.error("Failed to fetch OTC price:", err);
@@ -221,7 +223,10 @@ const BinaryChart = () => {
           const response = await axios.get(
             `http://localhost:5000/api/coins/price/${selectedCoin}`
           );
-          endPrice = parseFloat(response.data);
+          endPrice =
+            typeof response.data === "object"
+              ? parseFloat(response.data.price)
+              : parseFloat(response.data);
         }
 
         const coinData = coins.find((c) => c.name === selectedCoin);
@@ -264,8 +269,8 @@ const BinaryChart = () => {
           result: isWin ? "win" : "loss",
           reward: parseFloat(reward),
           createdAt: new Date(),
-          startedAt: new Date(), // <-- add this
-          duration: timer, // <-- add this
+          startedAt: new Date(),
+          duration: timer,
         };
         saveTradeToDB(tradeData);
 
@@ -324,17 +329,14 @@ const BinaryChart = () => {
           }
           return { ...trade, remainingTime: 0 };
         });
-        console.log("Fetched trades:", tradesWithTime);
 
-        setTrades(tradesWithTime.reverse()); // latest trade at top
+        setTrades(tradesWithTime.reverse());
       } catch (err) {
         console.error("Failed to fetch trades:", err);
       }
     };
     fetchTrades();
   }, [user?.email]);
-
-  const latestTrade = trades.length > 0 ? trades[trades.length - 1] : null;
 
   return (
     <>
@@ -394,8 +396,13 @@ const BinaryChart = () => {
             <h1>{selectedCoin || "Select Coin"}</h1>
             <p>
               Current Price: $
-              {selectedCoinType === "OTC" ? otcPrice : livePrice}
-              {isLoading && !priceLoaded && " (Loading...)"}
+              {selectedCoinType === "OTC"
+                ? !isNaN(otcPrice)
+                  ? otcPrice.toFixed(2)
+                  : "Loading..."
+                : selectedCoinType === "Live"
+                ? livePrice.toFixed(2)
+                : "N/A"}
             </p>
 
             <div className={styles.controlStuff}>
@@ -446,10 +453,15 @@ const BinaryChart = () => {
             </div>
             <div>
               <p style={{ textAlign: "center" }}>
-                Your Payout : {investment * selectedCoin.profitPercentage}
+                Your Payout:{" "}
+                {investment +
+                  investment *
+                    ((coins.find((c) => c.name === selectedCoin)
+                      ?.profitPercentage || 0) /
+                      100)}
+                $
               </p>
             </div>
-
             <div className={styles.buySelling}>
               <div
                 className={`${styles.buyBox} ${
