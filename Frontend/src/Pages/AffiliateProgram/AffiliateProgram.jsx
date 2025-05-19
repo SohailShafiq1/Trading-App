@@ -53,7 +53,7 @@ const AffiliateProgram = () => {
               <AiOutlineLink className={s.headerIcon} /> Your Partner Link
             </div>
             <div className={s.option}>
-              <button>Partner Link</button>
+              <button className={s.pLink}>Partner Link</button>
               <button>Partner code</button>
             </div>
           </div>

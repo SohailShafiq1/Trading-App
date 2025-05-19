@@ -20,24 +20,23 @@
   flex-direction: column;
   padding: 1.5rem;
   border-radius: 10px;
-  background-color: #1e1f25;
+  background-color: #e0e0e0;
   box-sizing: border-box;
 }
 
 .balance p {
   margin: 0;
-  color: #3f474c;
   font-size: 1.2rem;
+  font-weight: bold;
 }
 
 .balance h1 {
-  color: white;
   font-size: 2rem;
   margin: 0.5rem 0;
 }
 
 .withdrawalLink {
-  background-color: #10a055;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   padding: 0.8rem;
   text-decoration: none;
   color: white;
@@ -49,7 +48,7 @@
 
 .earning {
   margin-top: 1rem;
-  background-color: #3f474c;
+  background-color: #1f1f1f;
   padding: 1rem;
   border-radius: 5px;
 }
@@ -68,7 +67,8 @@
 
 .partnerLink {
   width: 100%;
-  background-color: #1e1f25;
+  background-color: #e0e0e0;
+
   border-radius: 10px;
   margin-top: 1rem;
 }
@@ -83,7 +83,6 @@
 }
 
 .header {
-  color: white;
   font-size: 1.1rem;
 }
 
@@ -101,7 +100,7 @@
   flex-wrap: wrap;
 }
 
-.option button {
+.pLink {
   background-color: #3f474c;
   color: white;
   border: none;

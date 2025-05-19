@@ -9,6 +9,7 @@ export const registerAffiliate = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ msg: "User not found" });
+    console.log(user)
 
     const existing = await Affiliate.findOne({ email });
     if (existing)

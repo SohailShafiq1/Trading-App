@@ -4,7 +4,7 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import connectDB from "./config/db.js";
-
+import mongoose from "mongoose";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";

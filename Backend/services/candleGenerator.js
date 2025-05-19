@@ -12,9 +12,7 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
   const base = lastTick;
   const counter = scenarioCounters[coinName] ?? 0;
 
-  console.log(
-    `coinName: ${coinName}, trend: ${trend}, counter: ${counter}, base: ${base}, delta: ${delta}`
-  );
+
 
   switch (trend) {
     case "Up":
