@@ -4,7 +4,7 @@ import { HiCursorClick } from "react-icons/hi";
 import { BiLineChartDown } from "react-icons/bi";
 import { FiCopy } from "react-icons/fi";
 import { AiOutlineLink } from "react-icons/ai";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styles from "./AffiliateProgram.module.css";
 import { NavLink, Navigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext"; // Import useAuth
@@ -15,20 +15,9 @@ const s = styles;
 const AffiliateProgram = () => {
   const { user } = useAuth(); // Access user data from useAuth
   const [isCopied, setIsCopied] = useState(false);
-  const [referralLink, setReferralLink] = useState("");
-  const [referralCode, setReferralCode] = useState("");
-  const [displayType, setDisplayType] = useState("link"); // State to track display type
+  const referralLink = "Order-ax.pro/sign-up/?lid=1249470";
   const { affiliate } = useAffiliateAuth(); // From affiliate login
   console.log("Affiliate:", affiliate);
-
-  useEffect(() => {
-    if (affiliate) {
-      setReferralLink(affiliate.referralLink);
-      setReferralCode(affiliate.code);
-      console.log("Referral Link:", affiliate.referralLink);
-      console.log("Referral Code:", affiliate.code);
-    }
-  }, [affiliate]);
 
   // Redirect if not both logins
   if (!user && !affiliate) {
@@ -36,8 +25,7 @@ const AffiliateProgram = () => {
   }
 
   const handleCopyClick = () => {
-    const textToCopy = displayType === "link" ? referralLink : referralCode;
-    navigator.clipboard.writeText(textToCopy);
+    navigator.clipboard.writeText(referralLink);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -65,12 +53,12 @@ const AffiliateProgram = () => {
               <AiOutlineLink className={s.headerIcon} /> Your Partner Link
             </div>
             <div className={s.option}>
-              <button className={s.pLink}
-                className={`${s.pLink} ${
-    button            </div>
+              <button>Partner Link</button>
+              <button>Partner code</button>
+            </div>
           </div>
           <div className={s.linkContainer}>
-            <span>{displayType === "link" ? referralLink : referralCode}</span>
+            <span>{referralLink}</span>
             <div className={s.copyButton} onClick={handleCopyClick}>
               <FiCopy /> {isCopied ? "Copied!" : "Copy"}
             </div>
@@ -96,15 +84,7 @@ const AffiliateProgram = () => {
         </div>
         <NavLink to={"/affiliate/prizepool"} className={s.statsBox}>
           <GiMedal />
-          <div
-            style={{
-              background: "white",
-              borderRadius: "30px",
-              padding: "0rem 2rem",
-            }}
-          >
-            <p>Prize Pool</p>
-          </div>
+          <p>Prize Pool</p>
         </NavLink>
       </div>
     </div>
