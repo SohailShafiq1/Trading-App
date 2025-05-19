@@ -1,3 +1,4 @@
+import { AiOutlinePlus } from "react-icons/ai";
 import { AiOutlineBgColors } from "react-icons/ai";
 import { BsBarChartFill } from "react-icons/bs";
 import { AiOutlinePlusSquare } from "react-icons/ai";
@@ -340,8 +341,11 @@ const LiveCandleChart = ({ coinName }) => {
     const width = timeScale.width();
     const range = timeScale.getVisibleLogicalRange();
     if (range) {
-      const barWidth = width / (range.to - range.from);
-      label.style.fontSize = `${Math.max(10, Math.min(16, barWidth * 0.1))}px`;
+      const barWidth = width / (range.to - range.from) - 250;
+      label.style.fontSize = `${Math.max(
+        10,
+        Math.min(16, barWidth * 0.1) + 30
+      )}px`;
       label.style.padding = `${Math.max(2, barWidth * 0.05)}px ${Math.max(
         4,
         barWidth * 0.2
@@ -1032,15 +1036,25 @@ const LiveCandleChart = ({ coinName }) => {
           <button
             onClick={() => setShowIndicatorPopup(!showIndicatorPopup)}
             style={{
-              padding: "6px 12px",
+              fontSize: "1rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               borderRadius: 4,
               border: `1px solid ${theme.gridColor}`,
-              background: theme.background,
               color: theme.textColor,
               cursor: "pointer",
+              background: "linear-gradient(90deg, #66b544, #1a391d)",
+              height: 40,
             }}
           >
-            <AiOutlinePlusSquare />
+            <AiOutlinePlus
+              style={{
+                color: "white",
+                fontSize: "1.5rem",
+                fontWeight: "bolder",
+              }}
+            />
           </button>
           {showIndicatorPopup && (
             <div
@@ -1091,6 +1105,8 @@ const LiveCandleChart = ({ coinName }) => {
               background: theme.background,
               color: theme.textColor,
               cursor: "pointer",
+              height: 40,
+              fontSize: "1.5rem",
             }}
           >
             <BiPencil />
@@ -1154,6 +1170,8 @@ const LiveCandleChart = ({ coinName }) => {
             background: theme.background,
             color: theme.textColor,
             cursor: "pointer",
+            height: 40,
+            fontSize: "1rem",
           }}
         >
           {Object.keys(intervalToSeconds).map((i) => (
@@ -1172,6 +1190,8 @@ const LiveCandleChart = ({ coinName }) => {
               background: theme.background,
               color: theme.textColor,
               cursor: "pointer",
+              height: 40,
+              fontSize: "1.5rem",
             }}
           >
             <AiOutlineBgColors />
@@ -1244,6 +1264,8 @@ const LiveCandleChart = ({ coinName }) => {
               background: theme.background,
               color: theme.textColor,
               cursor: "pointer",
+              height: 40,
+              fontSize: "1.5rem",
             }}
           >
             <BsBarChartFill />
@@ -1301,7 +1323,7 @@ const LiveCandleChart = ({ coinName }) => {
             position: "absolute",
             transform: "translate(-50%, -50%)",
             color: theme.textColor,
-            background: theme.upColor,
+            background: "rgba(0, 0, 0, 0.2)",
             borderRadius: 4,
             pointerEvents: "none",
             zIndex: 2,

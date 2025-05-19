@@ -31,13 +31,3 @@ button {
   border-radius: 4px;
   cursor: pointer;
 }
-
-button:first-child {
-  background-color: #28a745;
-  color: white;
-}
-
-button:last-child {
-  background-color: #dc3545;
-  color: white;
-}

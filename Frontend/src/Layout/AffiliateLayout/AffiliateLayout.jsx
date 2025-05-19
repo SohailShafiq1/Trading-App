@@ -8,7 +8,7 @@ const AffiliateLayout = () => {
   const navigate = useNavigate();
   return (
     <>
-      <div className={s.container}>
+      <div style={{ background: "#E0E0E0" }} className={s.container}>
         <div className={s.logo}>
           <img src={logo} alt="" />
         </div>

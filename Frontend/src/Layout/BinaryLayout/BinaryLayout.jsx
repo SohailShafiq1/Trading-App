@@ -3,27 +3,45 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { CgMoreAlt } from "react-icons/cg";
 import { CgProfile } from "react-icons/cg";
 import { IoMdImage } from "react-icons/io";
-import axios from "axios";
 import { MdUndo } from "react-icons/md";
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
-import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
-const s = styles;
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../../assets/WealthXLogo.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 
+const s = styles;
+
 const BinaryLayout = () => {
   const { user } = useAuth();
-  const { userAssets } = useUserAssets(); // Access context
-
+  const { userAssets } = useUserAssets();
+  const assets =
+    typeof userAssets === "number" ? userAssets.toFixed(2) : "0.00";
   const navigate = useNavigate();
+
+  const [popupVisible, setPopupVisible] = useState(false);
+  const popupRef = useRef();
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
+        setPopupVisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
   return (
     <>
       <div className={s.container}>
         <div className={s.logo}>
-          <img src={logo} alt="" />
+          <img src={logo} alt="WealthX Logo" />
         </div>
+
         <div className={s.navBar}>
           <NavLink
             style={{
@@ -36,26 +54,73 @@ const BinaryLayout = () => {
             <MdUndo className={s.icons} />
             Back
           </NavLink>
+
           <NavLink to="/binarychart" className={s.btn}>
             <IoMdImage className={s.icons} />
             Trade
           </NavLink>
+
           <NavLink className={s.btn} to="/binarychart/profile">
             <CgProfile className={s.icons} />
             Profile
           </NavLink>
-          <NavLink className={s.btn} to="/affiliate">
-            <CgMoreAlt className={s.icons} />
-            More
-          </NavLink>
-        </div>
-        <div className={s.asset}>
+
+          {/* Click-Based Popup More Menu */}
+          <div className={s.moreWrapper} ref={popupRef}>
+            <div className={s.btn}>
+              <NavLink
+                className={s.btn}
+                onClick={() => setPopupVisible((v) => !v)}
+              >
+                <CgMoreAlt className={s.icons} />
+                More
+              </NavLink>
+            </div>
+            {popupVisible && (
+              <div className={s.popup}>
+                <div
+                  className={s.popupItem}
+                  style={{ background: "#2C2D35" }}
+                  onClick={() => {
+                    navigate("/support");
+                    setPopupVisible(false);
+                  }}
+                >
+                  Support
+                </div>
+                <div
+                  className={s.popupItem}
+                  style={{ background: "#3F474C" }}
+                  onClick={() => {
+                    navigate("/leaderboard");
+                    setPopupVisible(false);
+                  }}
+                >
+                  Top
+                </div>
+                <div
+                  className={s.popupItem}
+                  style={{ background: "#64B243" }}
+                  onClick={() => {
+                    navigate("/affiliate");
+                    setPopupVisible(false);
+                  }}
+                >
+                  Affiliate Program
+                </div>
+              </div>
+            )}
+          </div>
+
           <NavLink className={s.liveAcc}>
             <p>
               Live account
-              <br /> {userAssets}$
+              <br /> {assets}$
             </p>
           </NavLink>
+        </div>
+
+        <div className={s.asset}>
           <div className={s.bankbtns}>
             <div className={s.withdraw}>
               <NavLink
@@ -77,9 +142,11 @@ const BinaryLayout = () => {
           </div>
         </div>
       </div>
+
       <div style={{ marginBottom: "5rem" }}>
         <Outlet />
       </div>
+
       <div className={s.footer}>
         <div className={s.footBar}>
           <NavLink className={s.footBtn} onClick={() => navigate(-1)}>

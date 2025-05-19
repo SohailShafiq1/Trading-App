@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import styles from './Deposit.module.css';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import styles from "./Deposit.module.css";
+import axios from "axios";
 
 const s = styles;
 
@@ -9,10 +9,10 @@ const Deposit = () => {
 
   const fetchDeposits = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/deposits');
+      const res = await axios.get("http://localhost:5000/api/admin/deposits");
       setDeposits(res.data);
     } catch (err) {
-      console.error('Error fetching deposits:', err);
+      console.error("Error fetching deposits:", err);
     }
   };
 
@@ -23,7 +23,7 @@ const Deposit = () => {
       });
       fetchDeposits(); // refresh
     } catch (err) {
-      console.error('Error updating deposit status:', err);
+      console.error("Error updating deposit status:", err);
     }
   };
 
@@ -51,13 +51,23 @@ const Deposit = () => {
               <td>{dep.userEmail}</td>
               <td>${dep.amount}</td>
               <td>{dep.status}</td>
-              <td>{dep.txId || '-'}</td>
+              <td>{dep.txId || "-"}</td>
               <td>{new Date(dep.createdAt).toLocaleString()}</td>
               <td>
-                {dep.status === 'pending' && (
+                {dep.status === "pending" && (
                   <>
-                    <button onClick={() => handleAction(dep._id, 'verified')}>✅ Accept</button>
-                    <button onClick={() => handleAction(dep._id, 'failed')}>❌ Reject</button>
+                    <button
+                      style={{ background: "#28a745", color: "white" }}
+                      onClick={() => handleAction(dep._id, "verified")}
+                    >
+                      ✅ Accept
+                    </button>
+                    <button
+                      style={{ background: "#dc3545", color: "white" }}
+                      onClick={() => handleAction(dep._id, "failed")}
+                    >
+                      ❌ Reject
+                    </button>
                   </>
                 )}
               </td>
