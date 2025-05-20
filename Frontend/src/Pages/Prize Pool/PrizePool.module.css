@@ -1,7 +1,6 @@
 .container {
   padding: 2rem;
-  background-color: #0f0f0f;
-  color: #ffffff;
+  background-color: #ffffff;
 }
 
 .prizePool {
@@ -10,7 +9,6 @@
 }
 
 .box {
-  background-color: #1e1f25;
   padding: 2rem;
   padding-top: 0.5rem;
   border-radius: 12px;
@@ -24,7 +22,7 @@
 }
 
 .box p {
-  color: #d1d5db;
+  color: #1f1f1f;
   font-size: 1.6rem;
   margin-bottom: 2rem;
   line-height: 1.4;
@@ -37,7 +35,7 @@
 }
 
 .prize {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: #e0e0e0;
   display: flex;
   align-items: center;
   padding: 1rem 1.5rem;
@@ -49,8 +47,7 @@
 }
 
 .id {
-  background-color: #1e1f25;
-  color: #b0b0b0;
+  background-color: #ffffff;
   padding: 0.6rem 1.2rem;
   border-radius: 50%;
   margin-right: 1.5rem;
@@ -68,7 +65,6 @@
 
 .name {
   flex-grow: 1;
-  color: #ffffff;
   font-size: 1.8rem;
   font-weight: 300;
   margin-right: 1rem;
@@ -76,7 +72,7 @@
 }
 
 .button {
-  background-color: #10a055;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   border: none;
   color: white;
   padding: 0.6rem 1.8rem;
@@ -87,11 +83,6 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-
-.button:hover {
-  background-color: #16a34a;
-}
-
 
 .popupOverlay {
   position: fixed;

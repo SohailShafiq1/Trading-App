@@ -2,7 +2,7 @@ import express from "express";
 import {
   registerAffiliate,
   loginAffiliate,
-  getAffiliateDetails
+  getAffiliateDetails,
 } from "../controllers/affiliateController.js";
 
 const router = express.Router();

@@ -1,12 +1,15 @@
 .container {
   width: 100%;
   max-width: 100%;
-  height: 80px;
+  height: 100%;
   margin: 1rem 0;
+  margin-top: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
   box-sizing: border-box;
   background: #ffffff;
 }
@@ -43,7 +46,6 @@
   border-radius: 10px;
   transition: all 0.3s ease;
   background-color: #e0e0e0;
-  border: 1px solid #334155;
   flex-shrink: 0;
 }
 
@@ -113,7 +115,6 @@
 
 @media (max-width: 1200px) {
   .container {
-    padding: 0 1rem;
   }
   .btn {
     min-width: 90px;

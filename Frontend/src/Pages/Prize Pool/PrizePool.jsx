@@ -30,7 +30,7 @@ const PrizePool = () => {
           <div className={s.prizes}>
             {PrizeArray.map((item) => (
               <div key={item.id} className={s.prize}>
-                <h2 className={s.id}>{item.id}</h2>
+                <h2 className={s.id}>Level {item.id}</h2>
                 <h2 className={s.name}>{item.prize}</h2>
                 {item.id <= userLevel ? (
                   <button
@@ -43,7 +43,7 @@ const PrizePool = () => {
                   <button
                     className={s.button}
                     disabled
-                    style={{ background: "#ccc", cursor: "not-allowed" }}
+                    style={{ background: "#ccc", cursor: "not-allowed",color: "#000" }}
                   >
                     Locked
                   </button>

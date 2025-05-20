@@ -1,10 +1,31 @@
 import express from "express";
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
+import mongoose from "mongoose";  
+const router = express.Router(); 
 
-const router = express.Router(); // ✅ Declare router at the top
+// Middleware
+router.use(express.json());
 
-// ✅ User Deposit Route
+// Health check endpoint
+router.get("/health", async (req, res) => {
+  try {
+    await mongoose.connection.db.admin().ping();
+    res.status(200).json({
+      status: "healthy",
+      dbState: mongoose.connection.readyState,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: "unhealthy",
+      dbState: mongoose.connection.readyState,
+      error: err.message
+    });
+  }
+});
+
+// User Deposit Route
 router.post("/deposit", async (req, res) => {
   const { email, amount, txId } = req.body;
 
@@ -13,23 +34,21 @@ router.post("/deposit", async (req, res) => {
       userEmail: email,
       amount,
       txId,
-      wallet: process.env.ADMIN_TRON_WALLET, // Set this in your .env file
+      wallet: process.env.ADMIN_TRON_WALLET,
     });
 
     await deposit.save();
-    res
-      .status(201)
-      .json({ message: "Deposit submitted, awaiting confirmation." });
+    res.status(201).json({ message: "Deposit submitted, awaiting confirmation." });
   } catch (err) {
     console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
   }
 });
 
-// ✅ Get all registered users
+// Get all registered users
 router.get("/", async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0 }); // Exclude the password field
+    const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
   } catch (err) {
     console.error("Error fetching users:", err);
@@ -37,7 +56,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Get user by email
+// Get user by email
 router.get("/email/:email", async (req, res) => {
   const { email } = req.params;
   try {
@@ -50,7 +69,7 @@ router.get("/email/:email", async (req, res) => {
   }
 });
 
-// ✅ Update user assets
+// Update user assets
 router.put("/update-assets", async (req, res) => {
   const { email, assets } = req.body;
   try {
@@ -67,7 +86,7 @@ router.put("/update-assets", async (req, res) => {
   }
 });
 
-// ✅ User Withdrawal Route
+// User Withdrawal Route
 router.post("/withdraw", async (req, res) => {
   const { email, amount, purse, network, paymentMethod } = req.body;
 
@@ -79,7 +98,6 @@ router.post("/withdraw", async (req, res) => {
 
     const orderId = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Add to transaction history
     user.transactions.push({
       orderId,
       type: "withdrawal",
@@ -89,7 +107,6 @@ router.post("/withdraw", async (req, res) => {
       date: new Date(),
     });
 
-    // Add to pending withdrawals
     user.withdrawals.push({
       orderId,
       amount,
@@ -109,7 +126,7 @@ router.post("/withdraw", async (req, res) => {
   }
 });
 
-// ✅ Get all user transactions
+// Get all user transactions
 router.get("/transactions/:email", async (req, res) => {
   const { email } = req.params;
 
@@ -124,30 +141,146 @@ router.get("/transactions/:email", async (req, res) => {
   }
 });
 
-// ✅ Save user trade
+// Save user trade (development version without transactions)
 router.post("/trade", async (req, res) => {
-  const { email, trade } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ error: "Database not connected" });
+  }
 
-    user.trades.push(trade); // <-- this appends, not replaces
+  try {
+    console.log("Incoming trade request:", req.body);
+    
+    const { email, trade } = req.body;
+    
+    if (!email || !trade) {
+      return res.status(400).json({ 
+        error: "Missing email or trade data",
+        received: req.body 
+      });
+    }
+
+    const { type, coin, investment, entryPrice, startedAt, duration } = trade;
+    
+    const requiredFields = ['type', 'coin', 'investment', 'entryPrice', 'startedAt', 'duration'];
+    const missingFields = requiredFields.filter(field => !trade[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        error: "Missing required trade fields",
+        missingFields
+      });
+    }
+
+    if (isNaN(investment) || investment <= 0) {
+      return res.status(400).json({ error: "Investment must be a positive number" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.assets < investment) {
+      return res.status(400).json({ 
+        error: "Insufficient funds",
+        currentBalance: user.assets,
+        required: investment
+      });
+    }
+
+    const newTrade = {
+      type,
+      coin,
+      investment,
+      entryPrice,
+      startedAt: new Date(startedAt),
+      duration,
+      result: "pending",
+      reward: 0,
+      createdAt: new Date()
+    };
+
+    user.assets -= investment;
+    user.trades.push(newTrade);
+
     await user.save();
-    res.status(201).json({ message: "Trade saved", trades: user.trades });
+    
+    console.log("Trade saved successfully:", newTrade);
+    
+    return res.status(201).json({ 
+      message: "Trade saved successfully",
+      trade: newTrade,
+      newBalance: user.assets
+    });
+
   } catch (err) {
-    res.status(500).json({ error: "Failed to save trade" });
+    console.error("Error saving trade:", {
+      error: err.message,
+      stack: err.stack,
+      body: req.body
+    });
+    return res.status(500).json({ 
+      error: "Failed to save trade",
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
-// ✅ Get user trades
+// Update trade result (development version without transactions)
+router.put("/trade/result", async (req, res) => {
+  try {
+    const { email, startedAt, result, reward, exitPrice } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const tradeIndex = user.trades.findIndex(
+      (t) => t.startedAt && new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
+    );
+
+    if (tradeIndex === -1) {
+      return res.status(404).json({ error: "Trade not found" });
+    }
+
+    user.trades[tradeIndex].result = result;
+    user.trades[tradeIndex].reward = reward;
+    user.trades[tradeIndex].exitPrice = exitPrice;
+
+    if (result === "win") {
+      user.assets += reward;
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: "Trade result updated", user });
+  } catch (err) {
+    console.error("Error updating trade result:", err);
+    res.status(500).json({ error: "Failed to update trade result" });
+  }
+});
+
+// Get user trades
 router.get("/trades/:email", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user.trades || []);
+
+    const validTrades = user.trades
+      .filter(trade => trade.startedAt && trade.duration)
+      .map(trade => ({
+        ...trade.toObject(),
+        startedAt: trade.startedAt.toISOString(),
+        createdAt: trade.createdAt.toISOString(),
+      }));
+
+    res.status(200).json(validTrades.reverse());
   } catch (err) {
+    console.error("Error fetching trades:", err);
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
+
 
 export default router;

@@ -25,7 +25,7 @@ export const AffiliateAuthProvider = ({ children }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setAffiliate(res.data); // or res.data.affiliate based on your backend
+      setAffiliate(res.data);
     } catch {
       logout();
     } finally {
@@ -48,9 +48,8 @@ export const AffiliateAuthProvider = ({ children }) => {
       email,
       password,
     });
-
     localStorage.setItem("affiliate_token", res.data.token);
-    setAffiliate(res.data); // assumes { token, affiliate } from backend
+    setAffiliate(res.data);
   };
 
   const logout = () => {

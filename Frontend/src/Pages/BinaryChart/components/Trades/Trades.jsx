@@ -11,13 +11,8 @@ const Trades = ({ trades, formatTime }) => (
         <li
           key={index}
           style={{
-            color:
-              trade.status === "win"
-                ? "#10A055"
-                : trade.status === "loss"
-                ? "#FF1600"
-                : "#FFF",
-            padding: "10px", // Add padding for better readability
+            color: "black",
+            padding: "2px", // Add padding for better readability
           }}
         >
           {/* First Row: Coin Name and Trade Duration */}
@@ -25,14 +20,16 @@ const Trades = ({ trades, formatTime }) => (
             style={{
               marginBottom: "8px",
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "space-around",
             }}
           >
             <strong>{trade.coinName}</strong>
             <span>
               {trade.status === "running"
                 ? `Time Left: ${formatTime(trade.remainingTime)}`
-                : formatTime(typeof trade.duration === "number" ? trade.duration : 0)}
+                : formatTime(
+                    typeof trade.duration === "number" ? trade.duration : 0
+                  )}
             </span>{" "}
             {/* Display trade duration */}
           </div>
@@ -41,11 +38,31 @@ const Trades = ({ trades, formatTime }) => (
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "space-around",
             }}
           >
-            <span>Trade: ${trade.price}</span>
-            <span>
+            <span
+              style={{
+                color:
+                  trade.status === "win"
+                    ? "#10A055"
+                    : trade.status === "loss"
+                    ? "#FF0000"
+                    : "black", // Change color of trade.price based on status
+              }}
+            >
+              Trade: ${trade.price}
+            </span>
+            <span
+              style={{
+                color:
+                  trade.status === "win"
+                    ? "#10A055"
+                    : trade.status === "loss"
+                    ? "#FF0000"
+                    : "black", // Change color of trade.reward based on status
+              }}
+            >
               {trade.status === "running"
                 ? `Time Left: ${trade.remainingTime}s`
                 : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}

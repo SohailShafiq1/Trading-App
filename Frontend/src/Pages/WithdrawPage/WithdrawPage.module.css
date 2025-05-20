@@ -14,10 +14,8 @@
 }
 .account {
   width: 18%;
-  background-color: #141518;
   padding: 20px;
   border-radius: 6px;
-  color: white;
   height: 95%;
 }
 
@@ -28,16 +26,16 @@
 }
 
 .accountInfo {
+  color: #9197a4;
   font-size: 20px;
   margin-bottom: 15px;
-  color: #9197a4;
 }
 
 .amount {
+  color: black;
   font-weight: bold;
   font-size: 22px;
   margin-top: 5px;
-  color: white;
 }
 
 .divider {
@@ -47,10 +45,9 @@
 
 .form {
   width: 76%;
-  background-color: #141518;
   padding: 20px;
   border-radius: 6px;
-  color: white;
+  color: black;
   height: 95%;
 }
 
@@ -69,7 +66,7 @@
 
 .inputGroup label {
   font-size: 12px;
-  color: #aaa;
+  color: black;
   margin-bottom: 5px;
 }
 
@@ -79,7 +76,7 @@
   border: 1px solid #3a3b3d;
   border-radius: 3px;
   background-color: transparent;
-  color: white;
+  color: black;
   font-size: 14px;
 }
 
@@ -102,7 +99,7 @@
 }
 
 .confirmBtn {
-  background-color: #1cb954;
+  background: linear-gradient(90deg, #66b544, #1a391d);
   color: white;
   padding: 10px 30px;
   border: none;
@@ -116,10 +113,6 @@
   gap: 45px;
 }
 
-.confirmBtn:hover {
-  background-color: #18a34c;
-}
-
 .note {
   display: flex;
   align-items: center;
@@ -129,10 +122,14 @@
 }
 
 .green {
-  color: #00ff7f;
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .icon {
+  position: relative;
+  top: -5px;
   font-size: 22px;
 }
 

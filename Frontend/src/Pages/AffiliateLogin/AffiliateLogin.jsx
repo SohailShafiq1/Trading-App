@@ -6,6 +6,7 @@ import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 
 const AffiliateLogin = () => {
   const navigate = useNavigate();
+
   const { login } = useAffiliateAuth();
 
   const [form, setForm] = useState({

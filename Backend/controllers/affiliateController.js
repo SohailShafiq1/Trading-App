@@ -1,3 +1,4 @@
+import { log } from "console";
 import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
@@ -8,6 +9,7 @@ export const registerAffiliate = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ msg: "User not found" });
+    console.log(user)
 
     const existing = await Affiliate.findOne({ email });
     if (existing)
@@ -32,7 +34,7 @@ export const registerAffiliate = async (req, res) => {
       referralCode: code,
       referralLink,
       level: affiliate.level, // <-- add this
-      team: affiliate.team,   // <-- add this if you want registrations
+      team: affiliate.team, // <-- add this if you want registrations
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
@@ -42,20 +44,19 @@ export const registerAffiliate = async (req, res) => {
 export const loginAffiliate = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const affiliate = await Affiliate.findOne({ email });
     if (!affiliate) return res.status(404).json({ msg: "Affiliate not found" });
 
     const isMatch = await affiliate.comparePassword(password);
     if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
-
+    console.log("Affiliate login successful", affiliate);
     res.status(200).json({
-      msg: "Login successful",
       email: affiliate.email,
       affiliateId: affiliate._id,
       referralLink: affiliate.referralLink,
-      level: affiliate.level, 
-      team: affiliate.team,  
+      level: affiliate.level,
+      team: affiliate.team,
+      code: affiliate.affiliateCode,
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
