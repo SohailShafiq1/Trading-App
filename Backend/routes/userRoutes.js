@@ -38,7 +38,9 @@ router.post("/deposit", async (req, res) => {
     });
 
     await deposit.save();
-    res.status(201).json({ message: "Deposit submitted, awaiting confirmation." });
+    res
+      .status(201)
+      .json({ message: "Deposit submitted, awaiting confirmation." });
   } catch (err) {
     console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
@@ -162,8 +164,15 @@ router.post("/trade", async (req, res) => {
 
     const { type, coin, investment, entryPrice, startedAt, duration } = trade;
 
-    const requiredFields = ['type', 'coin', 'investment', 'entryPrice', 'startedAt', 'duration'];
-    const missingFields = requiredFields.filter(field => !trade[field]);
+    const requiredFields = [
+      "type",
+      "coin",
+      "investment",
+      "entryPrice",
+      "startedAt",
+      "duration",
+    ];
+    const missingFields = requiredFields.filter((field) => !trade[field]);
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -173,7 +182,9 @@ router.post("/trade", async (req, res) => {
     }
 
     if (isNaN(investment) || investment <= 0) {
-      return res.status(400).json({ error: "Investment must be a positive number" });
+      return res
+        .status(400)
+        .json({ error: "Investment must be a positive number" });
     }
 
     const user = await User.findOne({ email });
@@ -213,7 +224,6 @@ router.post("/trade", async (req, res) => {
       trade: newTrade,
       newBalance: user.assets,
     });
-
   } catch (err) {
     console.error("Error saving trade:", {
       error: err.message,
@@ -238,7 +248,9 @@ router.put("/trade/result", async (req, res) => {
     }
 
     const tradeIndex = user.trades.findIndex(
-      (t) => t.startedAt && new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
+      (t) =>
+        t.startedAt &&
+        new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
     );
 
     if (tradeIndex === -1) {
@@ -248,6 +260,22 @@ router.put("/trade/result", async (req, res) => {
     user.trades[tradeIndex].result = result;
     user.trades[tradeIndex].reward = reward;
     user.trades[tradeIndex].exitPrice = exitPrice;
+
+    const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    let profitChange = 0;
+    if (result === "win") {
+      profitChange = reward;
+    } else if (result === "loss") {
+      profitChange = -user.trades[tradeIndex].investment;
+    }
+
+    // Find today's profit entry
+    let dailyEntry = user.dailyProfits.find((p) => p.date === today);
+    if (dailyEntry) {
+      dailyEntry.profit += profitChange;
+    } else {
+      user.dailyProfits.push({ date: today, profit: profitChange });
+    }
 
     if (result === "win") {
       user.assets += reward;

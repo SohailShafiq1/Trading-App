@@ -1,57 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { AiOutlineClose } from "react-icons/ai";
+import axios from "axios";
+import { useAuth } from "../../Context/AuthContext"; // adjust path if needed
 
 const LeaderboardPopup = ({ onClose }) => {
+  const [leaders, setLeaders] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const { user } = useAuth();
 
-  const leaders = [
-    {
-      id: "#55445289",
-      amount: 16156,
-      trades: 26,
-      profit: 1096.15,
-      country: "Pakistan",
-      username: "haseeb_trading",
-      profitable: 18,
-    },
-    {
-      id: "#55444258",
-      amount: 12106,
-      trades: 20,
-      profit: 950.0,
-      country: "USA",
-      username: "john_trader",
-      profitable: 15,
-    },
-    {
-      id: "#55441148",
-      amount: 11100,
-      trades: 22,
-      profit: 870.25,
-      country: "UK",
-      username: "lisa_trade",
-      profitable: 16,
-    },
-    {
-      id: "#55468924",
-      amount: 10500,
-      trades: 19,
-      profit: 800,
-      country: "India",
-      username: "amitx",
-      profitable: 13,
-    },
-    {
-      id: "#55440058",
-      amount: 8589,
-      trades: 16,
-      profit: 600,
-      country: "Canada",
-      username: "maple_fx",
-      profitable: 10,
-    },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/users");
+        // Sort users by profit (assuming you want today's profit)
+        const today = new Date().toISOString().slice(0, 10);
+        const sorted = res.data
+          .map((u) => ({
+            ...u,
+            todayProfit:
+              u.dailyProfits?.find((p) => p.date === today)?.profit || 0,
+          }))
+          .sort((a, b) => b.todayProfit - a.todayProfit);
+        setLeaders(sorted);
+      } catch (err) {
+        setLeaders([]);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Find current user's position
+  const userIndex = leaders.findIndex((l) => l.email === user?.email);
 
   return (
     <>
@@ -67,42 +47,48 @@ const LeaderboardPopup = ({ onClose }) => {
           </button>
         </div>
 
-        <div className={styles.lbHighlight}>
-          <div>
-            <strong>#55468924</strong>
-            <div>Your Position: 4</div>
+        {user && userIndex !== -1 && (
+          <div className={styles.lbHighlight}>
+            <div>
+              <strong>
+                {leaders[userIndex].userId || leaders[userIndex].email}
+              </strong>
+              <div>Your Position: {userIndex + 1}</div>
+            </div>
+            <span>${leaders[userIndex].todayProfit.toLocaleString()}</span>
           </div>
-          <span>$10,500</span>
-        </div>
+        )}
 
         <div className={styles.lbList}>
           {leaders.map((entry, i) => (
             <div
-              key={i}
+              key={entry._id}
               className={`${styles.lbItem} ${
-                entry.id === "#55468924" ? styles.lbActive : ""
+                user && entry.email === user.email ? styles.lbActive : ""
               }`}
               onClick={() => setSelectedUser(entry)}
             >
               <span className={styles.lbRank}>
                 {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
               </span>
-              <span className={styles.lbId}>{entry.id}</span>
+              <span className={styles.lbId}>{entry.userId || entry.email}</span>
               <span className={styles.lbAmount}>
-                ${entry.amount.toLocaleString()}
+                ${entry.todayProfit.toLocaleString()}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* User Stats Popup (positioned left of the sidebar) */}
+      {/* User Stats Popup */}
       {selectedUser && (
         <div className={styles.userPopup}>
           <div className={styles.userHeader}>
             <div>
               <strong>{selectedUser.country}</strong>
-              <div className={styles.username}>{selectedUser.username}</div>
+              <div className={styles.username}>
+                {selectedUser.username || selectedUser.email}
+              </div>
             </div>
             <button
               className={styles.userClose}
@@ -113,29 +99,22 @@ const LeaderboardPopup = ({ onClose }) => {
           </div>
           <div className={styles.userStats}>
             <div>
-              <div>{selectedUser.trades}</div>
+              <div>{selectedUser.trades?.length || 0}</div>
               <div>Trades count</div>
             </div>
             <div>
-              <div>{selectedUser.profitable}</div>
+              <div>
+                {selectedUser.trades
+                  ? selectedUser.trades.filter((t) => t.result === "win").length
+                  : 0}
+              </div>
               <div>Profitable trades</div>
             </div>
             <div>
-              <div>${selectedUser.amount.toLocaleString()}</div>
-              <div>Trades profit</div>
+              <div>${selectedUser.todayProfit.toLocaleString()}</div>
+              <div>Today's profit</div>
             </div>
-            <div>
-              <div>${selectedUser.profit}</div>
-              <div>Average profit</div>
-            </div>
-            <div>
-              <div>$2,000.00</div>
-              <div>Min trade amount</div>
-            </div>
-            <div>
-              <div>$3,000.00</div>
-              <div>Max trade amount</div>
-            </div>
+            {/* Add more stats as needed */}
           </div>
         </div>
       )}
