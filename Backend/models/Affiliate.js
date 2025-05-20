@@ -49,7 +49,7 @@ const AffiliateSchema = new mongoose.Schema(
     },
     level: {
       type: Number,
-      default: 4,
+      default: 1,
     },
   },
   { timestamps: true }
