@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./BinaryChart.module.css";
+import styles from "./CoinSelector.module.css";
 import axios from "axios";
 
 const CoinSelector = ({ selectedCoin, setSelectedCoin, disabled }) => {

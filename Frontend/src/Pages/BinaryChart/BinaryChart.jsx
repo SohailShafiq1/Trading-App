@@ -10,7 +10,7 @@ import axios from "axios";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
-import CoinSelector from './CoinSelector'
+import CoinSelector from './components/CoinSelector/CoinSelector'
 const BinaryChart = () => {
   // State declarations
   const [coins, setCoins] = useState([]);

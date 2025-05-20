@@ -1,0 +1,94 @@
+.coinSelectorWrapper {
+  position: relative;
+  width: 220px;
+}
+
+.coinSelectCustom {
+  color: black;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  background-color: #f8fafc;
+  text-align: left;
+}
+
+.coinPopup {
+  position: absolute;
+  top: 3.2rem;
+  left: 0;
+  width: 320px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  z-index: 999;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+}
+
+.coinTabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.coinTab {
+  flex: 1;
+  background: #e5e5e5;
+  border: none;
+  padding: 0.4rem;
+  margin: 0 0.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.coinTab.active {
+  background: #64b243;
+  color: white;
+}
+
+.coinSearch {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.coinListPopup {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.coinHeader {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.coinRow {
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.coinRow:hover {
+  background-color: #e8f5e9;
+}
