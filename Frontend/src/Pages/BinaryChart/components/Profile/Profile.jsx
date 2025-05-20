@@ -8,10 +8,11 @@ const s = styles;
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [firstName, setFirstName] = useState(user?.firstName || "");
-  const [lastName, setLastName] = useState(user?.lastName || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [password, setPassword] = useState("******"); 
+
+  const [firstName, setFirstName] = useState(user?.firstName || "James");
+  const [lastName, setLastName] = useState(user?.lastName || "Charles");
+  const [email, setEmail] = useState(user?.email || "example@gmail.com");
+  const [password, setPassword] = useState("*******");
   const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || "");
   const [country, setCountry] = useState(user?.country || "");
 
@@ -24,12 +25,13 @@ const Profile = () => {
     <div className={s.container}>
       <div className={s.profileBox}>
         <h2 className={s.title}>Personal data:</h2>
+
         <div className={s.userInfo}>
-          <div className={s.avatar}></div>
+          <div className={s.avatar}>
+            <span className={s.cameraIcon}>📷</span>
+          </div>
           <div>
-            <p className={s.email}>{user?.email || "example@gmail.com"}</p>
             <p className={s.userId}>ID: {user?.id || "55468924"}</p>
-            <p className={s.verified}>{user?.isVerified ? "✅ Verified" : "❌ Not Verified"}</p>
           </div>
         </div>
 
@@ -58,6 +60,7 @@ const Profile = () => {
               <label>Email</label>
               <input
                 type="email"
+                placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -100,14 +103,12 @@ const Profile = () => {
                 <option value="India">India</option>
                 <option value="Australia">Australia</option>
               </select>
-              <div className={s.deleteBox}>
-                <NavLink className={s.delete}>X Delete Account</NavLink>
-              </div>
             </div>
           </div>
 
           <div className={s.actions}>
             <button className={s.saveBtn}>Save</button>
+            <NavLink className={s.delete}>X Delete Account</NavLink>
           </div>
           <button className={s.logout} onClick={handleLogout}>
             Logout

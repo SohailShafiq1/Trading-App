@@ -9,7 +9,12 @@ const AffiliateLayout = () => {
   return (
     <>
       <div style={{ background: "#E0E0E0" }} className={s.container}>
-        <div className={s.logo}>
+        <div
+          className={s.logo}
+          onClick={() => {
+            navigate("/binarychart");
+          }}
+        >
           <img src={logo} alt="" />
         </div>
         <div className={s.navBar}>
