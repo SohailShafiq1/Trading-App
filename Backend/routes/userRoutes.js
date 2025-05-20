@@ -339,9 +339,7 @@ router.put(
       update.profilePicture = `/bucket/${req.file.filename}`;
     }
     try {
-      const user = await User.findOneAndUpdate({ email }, update, {
-        new: true,
-      });
+      const user = await User.findOneAndUpdate({ email }, update, { new: true });
       if (!user) return res.status(404).json({ error: "User not found" });
       res.status(200).json({ message: "Profile updated successfully", user });
     } catch (err) {

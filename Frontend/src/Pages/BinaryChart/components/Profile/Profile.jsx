@@ -117,15 +117,10 @@ const Profile = () => {
         <h2 className={s.title}>Personal data:</h2>
         <div className={s.userInfo}>
           <div className={s.avatar}>
-            <label htmlFor="profilePicInput" style={{ cursor: "pointer" }}>
-              <div className={s.avatarImgWrapper}>
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="Profile Preview"
-                    className={s.avatarImg}
-                  />
-                ) : profilePicture ? (
+            <div className={s.avatarImgWrapper}>
+              {verified ? (
+                // If verified, just show the image or icon (no upload)
+                profilePicture ? (
                   <img
                     src={`http://localhost:5000${profilePicture}`}
                     alt="Profile"
@@ -133,17 +128,36 @@ const Profile = () => {
                   />
                 ) : (
                   <span className={s.cameraIcon}>📷</span>
-                )}
-              </div>
-              <input
-                id="profilePicInput"
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                ref={fileInputRef}
-                onChange={handleImageChange}
-              />
-            </label>
+                )
+              ) : (
+                // If unverified, allow upload
+                <label htmlFor="profilePicInput" style={{ cursor: "pointer" }}>
+                  {preview ? (
+                    <img
+                      src={preview}
+                      alt="Profile Preview"
+                      className={s.avatarImg}
+                    />
+                  ) : profilePicture ? (
+                    <img
+                      src={`http://localhost:5000${profilePicture}`}
+                      alt="Profile"
+                      className={s.avatarImg}
+                    />
+                  ) : (
+                    <span className={s.cameraIcon}>📷</span>
+                  )}
+                  <input
+                    id="profilePicInput"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    ref={fileInputRef}
+                    onChange={handleImageChange}
+                  />
+                </label>
+              )}
+            </div>
           </div>
           <div>
             <p className={s.userId}>ID: {userId || "55468924"}</p>
