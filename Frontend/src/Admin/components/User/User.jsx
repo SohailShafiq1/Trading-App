@@ -22,6 +22,17 @@ const User = () => {
     fetchUsers();
   }, []);
 
+  const handleVerify = async (userId) => {
+    try {
+      await axios.put(`${BACKEND_URL}/api/users/verify/${userId}`);
+      // Refresh users list after verification
+      const response = await axios.get(`${BACKEND_URL}/api/users`);
+      setUsers(response.data);
+    } catch (err) {
+      console.error("Error verifying user:", err);
+    }
+  };
+
   return (
     <div className={s.section}>
       <button className={s.backButton} onClick={() => navigate(-1)}>
@@ -37,6 +48,8 @@ const User = () => {
             <th>Currency</th>
             <th>Role</th>
             <th>Assets</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -48,6 +61,12 @@ const User = () => {
               <td>{user.currency}</td>
               <td>{user.isAdmin ? "Admin" : "User"}</td>
               <td> {user.assets}</td>
+              <td>{user.verified ? "Verified" : "Unverified"}</td>
+              <td>
+                {!user.verified && (
+                  <button onClick={() => handleVerify(user._id)}>Verify</button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

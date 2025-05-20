@@ -155,7 +155,15 @@
   cursor: pointer;
   font-size: 14px;
 }
+.verified {
+  color: #22c55e; /* green */
+  font-weight: bold;
+}
 
+.unverified {
+  color: #ef4444; /* red */
+  font-weight: bold;
+}
 @media (max-width: 768px) {
   .row {
     flex-direction: column;

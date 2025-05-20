@@ -51,6 +51,10 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 10000,
     },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
 
     transactions: [
       {
