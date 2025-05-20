@@ -46,8 +46,6 @@ const UserSchema = new mongoose.Schema(
       default: 10000,
     },
 
-    depositCount: { type: Number, default: 0 },
-
     transactions: [
       {
         orderId: { type: String, required: true },
@@ -107,9 +105,11 @@ const UserSchema = new mongoose.Schema(
           default: "pending",
         },
         reward: { type: Number, default: 0 },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ]
+        startedAt: { type: Date },
+        duration: { type: Number },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,
