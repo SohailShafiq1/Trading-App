@@ -20,7 +20,7 @@
   flex-direction: column;
   padding: 1.5rem;
   border-radius: 10px;
-  background-color: #1e1f25;
+  background-color: #e0e0e0;
   box-sizing: border-box;
 }
 
@@ -98,16 +98,6 @@
   flex-direction: row;
   gap: 0.5rem;
   flex-wrap: wrap;
-}
-
-.option button {
-  background-color: #3f474c;
-  color: white;
-  border: none;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.8rem;
 }
 
 .linkContainer {
