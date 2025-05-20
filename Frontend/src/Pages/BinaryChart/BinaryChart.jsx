@@ -120,9 +120,11 @@ const BinaryChart = () => {
           `http://localhost:5000/api/coins/price/${selectedCoin}`
         );
         if (isMounted) {
-          setOtcPrice(parseFloat(response.data).toFixed(2));
-          setPriceLoaded(true);
+          // Extract price whether it comes as object or direct value
+          const priceValue = response.data.price || response.data;
+          setOtcPrice(parseFloat(priceValue));
           setIsLoading(false);
+          setPriceLoaded(true);
         }
       } catch (err) {
         console.error("Failed to fetch OTC price:", err);
@@ -158,10 +160,13 @@ const BinaryChart = () => {
 
   const saveTradeToDB = async (trade) => {
     try {
-      const response = await axios.post("http://localhost:5000/api/users/trade", {
-        email: user.email,
-        trade,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/users/trade",
+        {
+          email: user.email,
+          trade,
+        }
+      );
       return response.data;
     } catch (err) {
       console.error("Failed to save trade:", err);
@@ -172,7 +177,10 @@ const BinaryChart = () => {
 
   const updateTradeResultInDB = async (tradeData) => {
     try {
-      await axios.put("http://localhost:5000/api/users/trade/result", tradeData);
+      await axios.put(
+        "http://localhost:5000/api/users/trade/result",
+        tradeData
+      );
     } catch (err) {
       console.error("Failed to update trade result:", err);
       toast.error("Failed to update trade result");
@@ -182,7 +190,7 @@ const BinaryChart = () => {
 
   const handleTrade = async (tradeType) => {
     if (isProcessingTrade) return;
-    
+
     if (!selectedCoin) {
       toast.error("Please select a coin first!");
       return;
@@ -257,7 +265,10 @@ const BinaryChart = () => {
             const response = await axios.get(
               `http://localhost:5000/api/coins/price/${selectedCoin}`
             );
-            endPrice = parseFloat(response.data);
+            endPrice =
+              typeof response.data === "object"
+                ? parseFloat(response.data.price)
+                : parseFloat(response.data);
           }
 
           const coinData = coins.find((c) => c.name === selectedCoin);
@@ -347,7 +358,7 @@ const BinaryChart = () => {
           `http://localhost:5000/api/users/trades/${user.email}`
         );
         const now = Date.now();
-        
+
         const recoveredTrades = await Promise.all(
           response.data.map(async (trade) => {
             // Skip if trade already completed
@@ -383,9 +394,10 @@ const BinaryChart = () => {
                   currentPrice = parseFloat(priceRes.data);
                 }
 
-                const isWin = trade.type === "Buy" 
-                  ? currentPrice > trade.entryPrice 
-                  : currentPrice < trade.entryPrice;
+                const isWin =
+                  trade.type === "Buy"
+                    ? currentPrice > trade.entryPrice
+                    : currentPrice < trade.entryPrice;
 
                 const coinData = coins.find((c) => c.name === trade.coin);
                 const profitPercentage = coinData?.profitPercentage || 0;
@@ -502,9 +514,14 @@ const BinaryChart = () => {
           <div className={styles.control}>
             <h1>{selectedCoin || "Select Coin"} Trading</h1>
             <p>
-              Current Price: $
-              {selectedCoinType === "OTC" ? otcPrice : livePrice}
-              {isLoading && !priceLoaded && " (Loading...)"}
+              Current Price:{" "}
+              {selectedCoinType === "OTC"
+                ? !isNaN(otcPrice)
+                  ? otcPrice.toFixed(2)
+                  : "Loading..."
+                : selectedCoinType === "Live"
+                ? livePrice
+                : "N/A"}
             </p>
 
             <div className={styles.controlStuff}>
@@ -553,7 +570,17 @@ const BinaryChart = () => {
                 </button>
               </div>
             </div>
-
+            <div>
+              <p style={{ textAlign: "center" }}>
+                Your Payout:{" "}
+                {investment +
+                  investment *
+                    ((coins.find((c) => c.name === selectedCoin)
+                      ?.profitPercentage || 0) /
+                      100)}
+                $
+              </p>
+            </div>
             <div className={styles.buySelling}>
               <div
                 className={`${styles.buyBox} ${
@@ -562,7 +589,10 @@ const BinaryChart = () => {
                     : ""
                 }`}
                 onClick={() =>
-                  !isLoading && priceLoaded && !isProcessingTrade && handleTrade("Buy")
+                  !isLoading &&
+                  priceLoaded &&
+                  !isProcessingTrade &&
+                  handleTrade("Buy")
                 }
               >
                 <FiArrowDownRight className={styles.icons} />
@@ -575,7 +605,10 @@ const BinaryChart = () => {
                     : ""
                 }`}
                 onClick={() =>
-                  !isLoading && priceLoaded && !isProcessingTrade && handleTrade("Sell")
+                  !isLoading &&
+                  priceLoaded &&
+                  !isProcessingTrade &&
+                  handleTrade("Sell")
                 }
               >
                 <FiArrowDownRight className={styles.icons} />
