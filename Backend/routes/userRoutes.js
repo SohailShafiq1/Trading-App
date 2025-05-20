@@ -282,4 +282,5 @@ router.get("/trades/:email", async (req, res) => {
   }
 });
 
+
 export default router;

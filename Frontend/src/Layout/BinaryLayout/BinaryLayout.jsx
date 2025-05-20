@@ -10,10 +10,11 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../../assets/WealthXLogo.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
-
+import LeaderboardPopup from "./LeaderboardPopup";
 const s = styles;
 
 const BinaryLayout = () => {
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const { user } = useAuth();
   const { userAssets } = useUserAssets();
   const assets =
@@ -92,12 +93,13 @@ const BinaryLayout = () => {
                   className={s.popupItem}
                   style={{ background: "#3F474C" }}
                   onClick={() => {
-                    navigate("/leaderboard");
+                    setShowLeaderboard(true);
                     setPopupVisible(false);
                   }}
                 >
                   Top
                 </div>
+
                 <div
                   className={s.popupItem}
                   style={{ background: "#64B243" }}
@@ -166,6 +168,9 @@ const BinaryLayout = () => {
           </NavLink>
         </div>
       </div>
+      {showLeaderboard && (
+  <LeaderboardPopup onClose={() => setShowLeaderboard(false)} />
+)}
     </>
   );
 };

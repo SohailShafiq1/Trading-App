@@ -194,6 +194,138 @@
   font-size: 1.5rem;
   margin-bottom: 0.2rem;
 }
+.lbSidebar {
+  position: fixed; /* CHANGE THIS from relative to fixed */
+  top: 120px;
+  right: 400px; /* keep it near right */
+  width: 300px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  padding: 1rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid #64b243;
+}
+
+.lbHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.lbTitle {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #000;
+}
+
+.lbSubTitle {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.lbClose {
+  background: none;
+  border: none;
+  color: #64b243;
+  cursor: pointer;
+}
+
+.lbHighlight {
+  background-color: #64b243;
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.lbList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lbItem {
+  background-color: #f6f6f6;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lbRank {
+  width: 30px;
+  font-weight: bold;
+}
+
+.lbId {
+  flex-grow: 1;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.lbAmount {
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.lbActive {
+  background-color: #e1f5e5;
+  border-left: 5px solid #4caf50;
+}
+
+.userPopup {
+  position: fixed;
+  top: 120px;
+  right: 740px; /* popup appears to the left of sidebar */
+  width: 320px;
+  background: #f2f2f2;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  z-index: 2000;
+}
+
+
+.userHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.username {
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.userClose {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.userStats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.userStats div > div:first-child {
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: #000;
+}
 
 @media (max-width: 1200px) {
   .container {
