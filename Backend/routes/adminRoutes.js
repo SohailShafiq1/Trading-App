@@ -137,36 +137,35 @@ router.get("/deposits", async (req, res) => {
 
 // Manually update deposit status
 router.put("/deposit-status/:id", async (req, res) => {
-  const { id } = req.params;
   const { status } = req.body;
-
   try {
-    const deposit = await Deposit.findById(id);
+    const deposit = await Deposit.findById(req.params.id);
     if (!deposit) return res.status(404).json({ error: "Deposit not found" });
 
     deposit.status = status;
     await deposit.save();
 
+    // If admin verifies, credit user
     if (status === "verified") {
       const user = await User.findOne({ email: deposit.userEmail });
-      user.assets += deposit.amount;
-
-      user.transactions.push({
-        orderId: Math.floor(100000 + Math.random() * 900000).toString(),
-        type: "deposit",
-        amount: deposit.amount,
-        paymentMethod: "Manual Approval (Admin)",
-        status: "success",
-        date: new Date()
-      });
-
-      await user.save();
+      if (user) {
+        user.assets += Number(deposit.amount);
+        user.depositCount = (user.depositCount || 0) + 1;
+        user.transactions.push({
+          orderId: Math.floor(100000 + Math.random() * 900000).toString(),
+          type: "deposit",
+          amount: deposit.amount,
+          paymentMethod: deposit.network + " Wallet",
+          status: "success",
+          date: new Date(),
+        });
+        await user.save();
+      }
     }
 
-    res.json({ message: "Deposit updated" });
+    res.json({ message: "Deposit status updated" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Update failed" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 export default router;

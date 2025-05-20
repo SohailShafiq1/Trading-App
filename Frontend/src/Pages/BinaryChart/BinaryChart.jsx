@@ -10,7 +10,7 @@ import axios from "axios";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
-
+import CoinSelector from './components/CoinSelector/CoinSelector'
 const BinaryChart = () => {
   // State declarations
   const [coins, setCoins] = useState([]);
@@ -462,23 +462,12 @@ const BinaryChart = () => {
         <div className={styles.box}>
           <div className={styles.chart}>
             <div className={styles.coinList}>
-              <select
-                className={styles.coinSelect}
-                value={selectedCoin}
-                onChange={(e) => setSelectedCoin(e.target.value)}
-                disabled={isProcessingTrade}
-              >
-                <option value="" disabled>
-                  Select a coin
-                </option>
-                {coins.map((coin) => (
-                  <option key={coin._id} value={coin.name}>
-                    {coin.type === "OTC"
-                      ? `${coin.firstName}/${coin.lastName}`
-                      : coin.name}
-                  </option>
-                ))}
-              </select>
+              <CoinSelector
+  coins={coins}
+  selectedCoin={selectedCoin}
+  setSelectedCoin={setSelectedCoin}
+  disabled={isProcessingTrade}
+/>
               {trades.length > 0 && (
                 <div className={styles.timer}>
                   <p>

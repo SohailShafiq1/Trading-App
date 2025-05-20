@@ -1,8 +1,8 @@
 import express from "express";
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
-import mongoose from "mongoose";  
-const router = express.Router(); 
+import mongoose from "mongoose";
+const router = express.Router();
 
 // Middleware
 router.use(express.json());
@@ -14,13 +14,13 @@ router.get("/health", async (req, res) => {
     res.status(200).json({
       status: "healthy",
       dbState: mongoose.connection.readyState,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   } catch (err) {
     res.status(503).json({
       status: "unhealthy",
       dbState: mongoose.connection.readyState,
-      error: err.message
+      error: err.message,
     });
   }
 });
@@ -102,7 +102,7 @@ router.post("/withdraw", async (req, res) => {
       orderId,
       type: "withdrawal",
       amount,
-      paymentMethod: `${paymentMethod} (${network})`,
+      paymentMethod: `${paymentMethod} (${network})`, // ✅ FIXED HERE
       status: "pending",
       date: new Date(),
     });
@@ -122,6 +122,7 @@ router.post("/withdraw", async (req, res) => {
 
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
+    console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
 });
@@ -141,7 +142,7 @@ router.get("/transactions/:email", async (req, res) => {
   }
 });
 
-// Save user trade (development version without transactions)
+// Save user trade
 router.post("/trade", async (req, res) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ error: "Database not connected" });
@@ -149,25 +150,25 @@ router.post("/trade", async (req, res) => {
 
   try {
     console.log("Incoming trade request:", req.body);
-    
+
     const { email, trade } = req.body;
-    
+
     if (!email || !trade) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Missing email or trade data",
-        received: req.body 
+        received: req.body,
       });
     }
 
     const { type, coin, investment, entryPrice, startedAt, duration } = trade;
-    
+
     const requiredFields = ['type', 'coin', 'investment', 'entryPrice', 'startedAt', 'duration'];
     const missingFields = requiredFields.filter(field => !trade[field]);
-    
+
     if (missingFields.length > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Missing required trade fields",
-        missingFields
+        missingFields,
       });
     }
 
@@ -181,10 +182,10 @@ router.post("/trade", async (req, res) => {
     }
 
     if (user.assets < investment) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Insufficient funds",
         currentBalance: user.assets,
-        required: investment
+        required: investment,
       });
     }
 
@@ -197,36 +198,36 @@ router.post("/trade", async (req, res) => {
       duration,
       result: "pending",
       reward: 0,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     user.assets -= investment;
     user.trades.push(newTrade);
 
     await user.save();
-    
+
     console.log("Trade saved successfully:", newTrade);
-    
-    return res.status(201).json({ 
+
+    return res.status(201).json({
       message: "Trade saved successfully",
       trade: newTrade,
-      newBalance: user.assets
+      newBalance: user.assets,
     });
 
   } catch (err) {
     console.error("Error saving trade:", {
       error: err.message,
       stack: err.stack,
-      body: req.body
+      body: req.body,
     });
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: "Failed to save trade",
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
 });
 
-// Update trade result (development version without transactions)
+// Update trade result
 router.put("/trade/result", async (req, res) => {
   try {
     const { email, startedAt, result, reward, exitPrice } = req.body;
@@ -268,8 +269,8 @@ router.get("/trades/:email", async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const validTrades = user.trades
-      .filter(trade => trade.startedAt && trade.duration)
-      .map(trade => ({
+      .filter((trade) => trade.startedAt && trade.duration)
+      .map((trade) => ({
         ...trade.toObject(),
         startedAt: trade.startedAt.toISOString(),
         createdAt: trade.createdAt.toISOString(),
@@ -281,6 +282,5 @@ router.get("/trades/:email", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
-
 
 export default router;
