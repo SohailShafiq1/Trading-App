@@ -74,15 +74,15 @@ const Trades = ({ trades, formatTime }) => (
   </div>
 );
 
-// Example trade data
-const tradeData = {
-  coinName: "BTC/USD",
-  price: 10000,
-  status: "running",
-  reward: 0,
-  duration: 300,
-  startedAt: new Date(),
-  // ...other fields
+const handleCoinClick = (coin) => {
+  setSelected(coin.name);
+  if (coin.name === "USD Tether(TRC-20)") {
+    setShowModal(true);
+  } else {
+    toast.info(
+      "We are working on this deposit method. Please use TRC-20 USDT for now."
+    );
+  }
 };
 
 export default Trades;
