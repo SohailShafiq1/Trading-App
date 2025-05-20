@@ -7,30 +7,27 @@ import { AiOutlineLink } from "react-icons/ai";
 import React, { useEffect, useState } from "react";
 import styles from "./AffiliateProgram.module.css";
 import { NavLink, Navigate } from "react-router-dom";
-import { useAuth } from "../../Context/AuthContext"; // Import useAuth
-import { useAffiliateAuth } from "../../Context/AffiliateAuthContext"; // Import useAffiliateAuth
+import { useAuth } from "../../Context/AuthContext";
+import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 
 const s = styles;
 
 const AffiliateProgram = () => {
-  const { user } = useAuth(); // Access user data from useAuth
+  const { user } = useAuth();
   const [isCopied, setIsCopied] = useState(false);
   const [referralLink, setReferralLink] = useState("");
   const [referralCode, setReferralCode] = useState("");
-  const [displayType, setDisplayType] = useState("link"); // State to track display type
-  const { affiliate } = useAffiliateAuth(); // From affiliate login
-  console.log("Affiliate:", affiliate);
+  const [displayType, setDisplayType] = useState("link");
+  const { affiliate } = useAffiliateAuth();
+  const [activeTable, setActiveTable] = useState("traders");
 
   useEffect(() => {
     if (affiliate) {
       setReferralLink(affiliate.referralLink);
       setReferralCode(affiliate.code);
-      console.log("Referral Link:", affiliate.referralLink);
-      console.log("Referral Code:", affiliate.code);
     }
   }, [affiliate]);
 
-  // Redirect if not both logins
   if (!user && !affiliate) {
     return <Navigate to="/affiliate/login" />;
   }
@@ -42,12 +39,38 @@ const AffiliateProgram = () => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const traders = [
+    {
+      id: "#557585",
+      linkId: "#680710",
+      balance: "$4.75",
+      deposits: 1,
+      depositSum: "$30.00",
+      bonuses: "$0.00",
+      withdrawals: "$0.00",
+    },
+    {
+      id: "#557347",
+      linkId: "#680710",
+      balance: "$0.00",
+      deposits: 0,
+      depositSum: "$0.00",
+      bonuses: "$0.00",
+      withdrawals: "$0.00",
+    },
+  ];
+
+  const profits = [
+    { id: "#557585", country: "🇧🇷", deposit: "$0.00", profit: "$0.00" },
+    { id: "#557347", country: "🇧🇷", deposit: "$0.00", profit: "$0.00" },
+  ];
+
   return (
     <div className={s.container}>
       <div className={s.top}>
         <div className={s.balance}>
           <p>Your balance</p>
-          <h1>{user?.assets || "$0.00"}</h1> {/* Display real assets */}
+          <h1>{user?.assets || "$0.00"}</h1>
           <NavLink
             to="/binarychart/bankinglayout/withdraw"
             className={s.withdrawalLink}
@@ -92,6 +115,7 @@ const AffiliateProgram = () => {
           </div>
         </div>
       </div>
+
       <div className={s.line}>
         <div className={s.statsBox}>
           <BiLineChartDown />
@@ -120,6 +144,75 @@ const AffiliateProgram = () => {
             <p>Prize Pool</p>
           </div>
         </NavLink>
+      </div>
+
+      {/* Toggle Tabs */}
+      <div className={s.toggleButtons}>
+        <button
+          className={activeTable === "traders" ? s.activeToggle : ""}
+          onClick={() => setActiveTable("traders")}
+        >
+          TRADER
+        </button>
+        <button
+          className={activeTable === "profits" ? s.activeToggle : ""}
+          onClick={() => setActiveTable("profits")}
+        >
+          Overall Stats
+        </button>
+      </div>
+
+      {/* Table Display */}
+      <div className={s.tableContainer}>
+        {activeTable === "traders" ? (
+          <table className={s.dataTable}>
+            <thead>
+              <tr>
+                <th>TRADER</th>
+                <th>LINK ID</th>
+                <th>BALANCE</th>
+                <th>DEPOSITS</th>
+                <th>DEPOSITS SUM</th>
+                <th>BONUSES</th>
+                <th>WITHDRAWALS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {traders.map((t, i) => (
+                <tr key={i}>
+                  <td>{t.id}</td>
+                  <td className={s.greenLink}>{t.linkId}</td>
+                  <td>{t.balance}</td>
+                  <td>{t.deposits}</td>
+                  <td>{t.depositSum}</td>
+                  <td>{t.bonuses}</td>
+                  <td>{t.withdrawals}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <table className={s.dataTable}>
+            <thead>
+              <tr>
+                <th>TRADER</th>
+                <th>Countries</th>
+                <th>Total Deposit</th>
+                <th>Total Profit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profits.map((p, i) => (
+                <tr key={i}>
+                  <td>{p.id}</td>
+                  <td>{p.country}</td>
+                  <td>{p.deposit}</td>
+                  <td>{p.profit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
