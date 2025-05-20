@@ -33,6 +33,17 @@ const User = () => {
     }
   };
 
+  const handleUnverify = async (userId) => {
+    try {
+      await axios.put(`${BACKEND_URL}/api/users/unverify/${userId}`);
+      // Refresh users list after unverification
+      const response = await axios.get(`${BACKEND_URL}/api/users`);
+      setUsers(response.data);
+    } catch (err) {
+      console.error("Error unverifying user:", err);
+    }
+  };
+
   return (
     <div className={s.section}>
       <button className={s.backButton} onClick={() => navigate(-1)}>
@@ -63,8 +74,12 @@ const User = () => {
               <td> {user.assets}</td>
               <td>{user.verified ? "Verified" : "Unverified"}</td>
               <td>
-                {!user.verified && (
+                {!user.verified ? (
                   <button onClick={() => handleVerify(user._id)}>Verify</button>
+                ) : (
+                  <button onClick={() => handleUnverify(user._id)}>
+                    Unverify
+                  </button>
                 )}
               </td>
             </tr>

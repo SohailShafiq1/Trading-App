@@ -2,10 +2,24 @@ import express from "express";
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
+import multer from "multer";
+import path from "path";
 const router = express.Router();
 
 // Middleware
 router.use(express.json());
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "bucket/"); // Save to 'bucket' folder in backend root
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
 // Health check endpoint
 router.get("/health", async (req, res) => {
@@ -312,20 +326,29 @@ router.get("/trades/:email", async (req, res) => {
 });
 
 // Update user profile (firstName, lastName)
-router.put("/update-profile", async (req, res) => {
-  const { email, firstName, lastName, dateOfBirth } = req.body;
-  try {
+router.put(
+  "/update-profile",
+  upload.single("profilePicture"),
+  async (req, res) => {
+    const { email, firstName, lastName, dateOfBirth } = req.body;
     const update = { firstName, lastName };
     if (dateOfBirth && dateOfBirth !== "") {
       update.dateOfBirth = new Date(dateOfBirth);
     }
-    const user = await User.findOneAndUpdate({ email }, update, { new: true });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json({ message: "Profile updated successfully", user });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update profile" });
+    if (req.file) {
+      update.profilePicture = `/bucket/${req.file.filename}`;
+    }
+    try {
+      const user = await User.findOneAndUpdate({ email }, update, {
+        new: true,
+      });
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.status(200).json({ message: "Profile updated successfully", user });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update profile" });
+    }
   }
-});
+);
 
 // Verify user by admin
 router.put("/verify/:id", async (req, res) => {
@@ -339,6 +362,21 @@ router.put("/verify/:id", async (req, res) => {
     res.status(200).json({ message: "User verified", user });
   } catch (err) {
     res.status(500).json({ error: "Failed to verify user" });
+  }
+});
+
+// Unverify user by admin
+router.put("/unverify/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { verified: false },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json({ message: "User unverified", user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to unverify user" });
   }
 });
 

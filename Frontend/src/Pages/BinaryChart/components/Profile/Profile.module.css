@@ -35,6 +35,32 @@
   background-color: #6abf4b;
   border-radius: 50%;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Add a border for a clear green ring */
+  border: 4px solid #6abf4b;
+  box-sizing: border-box;
+}
+
+.avatarImgWrapper {
+  width: 72px; /* slightly smaller than .avatar */
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .cameraIcon {

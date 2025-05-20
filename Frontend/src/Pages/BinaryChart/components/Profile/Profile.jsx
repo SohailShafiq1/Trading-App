@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import styles from "./Profile.module.css";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../Context/AuthContext";
@@ -18,6 +18,9 @@ const Profile = () => {
   const [country, setCountry] = useState(user?.country || "");
   const [userId, setUserId] = useState(""); // <-- Add userId state
   const [verified, setVerified] = useState(false); // <-- Add verified state
+  const [profilePicture, setProfilePicture] = useState("");
+  const [preview, setPreview] = useState("");
+  const fileInputRef = useRef(null);
 
   // Fetch user profile from backend on mount
   useEffect(() => {
@@ -35,6 +38,7 @@ const Profile = () => {
         setCountry(res.data.country || "");
         setUserId(res.data.userId || ""); // <-- Set userId from backend
         setVerified(res.data.verified || false); // <-- Set verified status
+        setProfilePicture(res.data.profilePicture || "");
       } catch (err) {
         // handle error if needed
       }
@@ -45,6 +49,14 @@ const Profile = () => {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+      setProfilePicture(file);
+    }
   };
 
   const handleSave = async () => {
@@ -64,12 +76,22 @@ const Profile = () => {
     }
 
     try {
-      await axios.put("http://localhost:5000/api/users/update-profile", {
-        email,
-        firstName,
-        lastName,
-        dateOfBirth,
-      });
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("firstName", firstName);
+      formData.append("lastName", lastName);
+      formData.append("dateOfBirth", dateOfBirth);
+      if (profilePicture && profilePicture instanceof File) {
+        formData.append("profilePicture", profilePicture);
+      }
+
+      await axios.put(
+        "http://localhost:5000/api/users/update-profile",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       alert("Profile updated!");
       // Fetch updated profile
       const res = await axios.get(
@@ -93,10 +115,35 @@ const Profile = () => {
     <div className={s.container}>
       <div className={s.profileBox}>
         <h2 className={s.title}>Personal data:</h2>
-
         <div className={s.userInfo}>
           <div className={s.avatar}>
-            <span className={s.cameraIcon}>📷</span>
+            <label htmlFor="profilePicInput" style={{ cursor: "pointer" }}>
+              <div className={s.avatarImgWrapper}>
+                {preview ? (
+                  <img
+                    src={preview}
+                    alt="Profile Preview"
+                    className={s.avatarImg}
+                  />
+                ) : profilePicture ? (
+                  <img
+                    src={`http://localhost:5000${profilePicture}`}
+                    alt="Profile"
+                    className={s.avatarImg}
+                  />
+                ) : (
+                  <span className={s.cameraIcon}>📷</span>
+                )}
+              </div>
+              <input
+                id="profilePicInput"
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                ref={fileInputRef}
+                onChange={handleImageChange}
+              />
+            </label>
           </div>
           <div>
             <p className={s.userId}>ID: {userId || "55468924"}</p>
