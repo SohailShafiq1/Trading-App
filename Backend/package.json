@@ -27,6 +27,7 @@
     "fs": "^0.0.1-security",
     "google-auth-library": "^9.15.1",
     "https": "^1.0.0",
+    "morgan": "^1.10.0",
     "multer": "^2.0.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",

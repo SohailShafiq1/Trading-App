@@ -4,8 +4,9 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import connectDB from "./config/db.js";
-import mongoose from "mongoose";
 import path from "path";
+import morgan from "morgan"; // Added for request logging
+
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -16,77 +17,139 @@ import candleService from "./services/candleGenerator.js";
 import { checkTrc20Deposits } from "./utils/tronWatcher.js";
 import affiliateRoutes from "./routes/affiliateRoutes.js";
 
+// Load environment variables
 dotenv.config();
 
 // Initialize express app
 const app = express();
 
-// Allowed frontend origins
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5173"];
+// Configure CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-// CORS middleware
 app.use(
   cors({
     origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(cors({ origin: ["http://localhost:5173"], credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middlewares
+app.use(morgan("dev")); // HTTP request logger
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Serve bucket folder statically
+// Static files
 app.use("/bucket", express.static(path.join(process.cwd(), "bucket")));
 
-// Connect to MongoDB
-connectDB();
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
-// REST API Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/users", depositRoutes);
+app.use("/api/deposits", depositRoutes);
 app.use("/api/affiliate", affiliateRoutes);
-// Create HTTP server for socket.io
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("[ERROR]", err.stack);
+  res.status(500).json({
+    error: {
+      message: err.message || "Internal Server Error",
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    },
+  });
+});
+
+// Create HTTP server
 const httpServer = createServer(app);
 
-// Initialize socket.io server
+// Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+    skipMiddlewares: true,
+  },
 });
 
-// Socket.io connection
+// Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("🔌 New client connected:", socket.id);
+  console.log(`🔌 New client connected: ${socket.id}`);
 
-  socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
+  socket.on("disconnect", (reason) => {
+    console.log(`❌ Client disconnected (${reason}): ${socket.id}`);
+  });
+
+  socket.on("error", (err) => {
+    console.error(`⚠️ Socket error (${socket.id}):`, err);
   });
 });
 
-// Start the server
+// Database connection and server startup
 const startServer = async () => {
   try {
     await connectDB();
-    candleService.initSocket(io); // Initialize WebSocket in generator
+    console.log("✅ MongoDB connected successfully");
 
-    const PORT = process.env.PORT;
+    candleService.initSocket(io);
+    console.log("📊 Candle service initialized");
+
+    const PORT = process.env.PORT || 5000;
     httpServer.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🌍 Allowed origins: ${allowedOrigins.join(", ")}`);
     });
+
+    // Start TRC20 deposit checker
+    setInterval(checkTrc20Deposits, 30000);
+    console.log("🔍 TRC20 deposit checker started");
   } catch (err) {
-    console.error("Failed to start server:", err);
+    console.error("💥 Failed to start server:", err);
     process.exit(1);
   }
 };
 
+// Start the application
 startServer();
-// Check TRC20 deposits periodically
-setInterval(checkTrc20Deposits, 30000);
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("🛑 SIGTERM received. Shutting down gracefully...");
+  httpServer.close(() => {
+    console.log("💤 Server terminated");
+    process.exit(0);
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("🛑 SIGINT received. Shutting down gracefully...");
+  httpServer.close(() => {
+    console.log("💤 Server terminated");
+    process.exit(0);
+  });
+});

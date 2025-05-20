@@ -1,11 +1,135 @@
-import Affiliate from "../models/Affiliate.js";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
-import bcrypt from "bcryptjs";
+import Affiliate from "../models/Affiliate.js";
 import { OAuth2Client } from "google-auth-library";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// Generate JWT Token
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || "30d",
+  });
+};
+
+// Register User
+const register = async (req, res) => {
+  const { email, password, country, currency, referralCode } = req.body;
+
+  // Validate required fields
+  if (!email || !password || !country) {
+    return res.status(400).json({
+      success: false,
+      message: "Email, password, and country are required",
+    });
+  }
+
+  try {
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists with this email",
+      });
+    }
+
+    // Create user
+    const user = await User.create({
+      email,
+      password,
+      country,
+      currency: currency || "USD",
+    });
+
+    // Handle referral if provided
+    if (referralCode) {
+      try {
+        const affiliate = await Affiliate.findOne({
+          affiliateCode: referralCode,
+        });
+        if (affiliate) {
+          affiliate.team.push(user._id);
+          await affiliate.save();
+        }
+      } catch (affiliateError) {
+        console.error("Referral processing error:", affiliateError);
+      }
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    // Return response without password
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: userResponse,
+      message: "Registration successful",
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// Login User
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const token = generateToken(user._id);
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: userResponse,
+      message: "Login successful",
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// Google Login
 const googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
@@ -14,128 +138,97 @@ const googleLogin = async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-
+    const { email, name, picture } = ticket.getPayload();
     let user = await User.findOne({ email });
 
     if (!user) {
       user = await User.create({
         email,
-        fullName: name,
+        firstName: name?.split(" ")[0] || "",
+        lastName: name?.split(" ")[1] || "",
         profilePicture: picture,
         authType: "google",
+        country: "Unknown", // Default country for Google users
+        password:
+          Math.random().toString(36).slice(-16) +
+          Math.random().toString(36).slice(-16), // Random password
       });
     }
 
     const jwtToken = generateToken(user._id);
-    res.status(200).json({ token: jwtToken, user });
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(200).json({
+      success: true,
+      token: jwtToken,
+      user: userResponse,
+      message: "Google login successful",
+    });
   } catch (error) {
     console.error("Google login error:", error);
-    res.status(401).json({ message: "Google login failed" });
-  }
-};
-
-const register = async (req, res) => {
-  const { email, password, country, currency, referralCode } = req.body;
-
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already registered" });
-    }
-
-    const newUser = new User({
-      email,
-      password,
-      country,
-      currency,
+    res.status(401).json({
+      success: false,
+      message: "Google authentication failed",
     });
-
-    await newUser.save();
-
-    // ✅ If referral code provided, find affiliate and update their team
-    if (referralCode) {
-      const affiliate = await Affiliate.findOne({
-        affiliateCode: referralCode,
-      });
-      if (!affiliate) {
-        console.log("Invalid Referral Code");
-      }
-      if (affiliate) {
-        affiliate.team.push(newUser._id);
-        console.log("Updated affiliate team:", affiliate.team);
-        console.log("Affiliate found:", affiliate);
-        await affiliate.save();
-      }
-    }
-
-    const token = generateToken(newUser._id);
-    res.status(201).json({ token, user: newUser });
-  } catch (error) {
-    console.error("Registration Error:", error);
-    res.status(500).json({ message: "Error Registering User" });
   }
 };
 
-const login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
-  }
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Incorrect password" });
-    }
-
-    const token = generateToken(user._id);
-    if (!token) {
-      return res.status(500).json({ message: "Error generating token" });
-    }
-
-    res.status(200).json({ message: "Login successful", token, user });
-  } catch (error) {
-    console.error("Login error:", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
+// Get Current User
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
-    res.json({ user });
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
   } catch (error) {
-    console.error("Error getting user data:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Get user error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user data",
+    });
   }
 };
 
+// Verify Token
 const verifyToken = async (req, res) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    return res.status(401).json({ message: "No token provided" });
+    return res.status(401).json({
+      success: false,
+      message: "No authentication token provided",
+    });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
-    res.status(200).json({ user });
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
   } catch (error) {
-    res.status(401).json({ message: "Invalid or expired token" });
+    res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
   }
 };
 
