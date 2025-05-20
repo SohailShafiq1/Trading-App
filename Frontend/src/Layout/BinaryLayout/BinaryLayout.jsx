@@ -39,7 +39,11 @@ const BinaryLayout = () => {
     <>
       <div className={s.container}>
         <div className={s.logo}>
-          <img src={logo} alt="WealthX Logo" />
+          <img
+            src={logo}
+            onClick={() => navigate("/binarychart")}
+            alt="WealthX Logo"
+          />
         </div>
 
         <div className={s.navBar}>

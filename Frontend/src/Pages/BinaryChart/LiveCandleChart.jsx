@@ -754,17 +754,6 @@ const LiveCandleChart = ({ coinName }) => {
           low: lastClose,
           close: lastClose,
         });
-        const chart = chartRef.current;
-        const timeScale = chart.timeScale();
-        const range = timeScale.getVisibleLogicalRange();
-        if (range && historical.length > 0) {
-          const lastCandle = historical[historical.length - 1];
-          const lastTime = new Date(lastCandle.time).getTime() / 1000;
-          timeScale.setVisibleRange({
-            from: lastTime - 40 * intervalToSeconds[interval],
-            to: lastTime,
-          });
-        }
 
         seriesRef.current?.setData(groupCandles(historical, interval));
 

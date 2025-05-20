@@ -1,105 +1,110 @@
 .container {
   width: 100%;
-  height: 100%;
-  margin-top: 10px;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: white;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .profileBox {
-  width: 90%;
-  background-color: #141518;
+  width: 100%;
   padding: 2rem;
 }
 
 .title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-  margin-bottom: 25px;
+  text-align: left;
+  color: #000;
+  margin-bottom: 30px;
 }
 
 .userInfo {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 35px;
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .avatar {
-  width: 65px;
-  height: 65px;
-  background-color: #007aff;
+  width: 80px;
+  height: 80px;
+  background-color: #6abf4b;
   border-radius: 50%;
   position: relative;
 }
 
-.email,
-.userId,
-.verified {
-  margin: 2px 0;
-  font-size: 14px;
+.cameraIcon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  padding: 2px;
+  border-radius: 50%;
 }
 
-.verified {
-  color: #00ff7f;
+.userId {
+  font-size: 14px;
+  color: #000;
 }
 
 .form {
-  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 25px;
+  width: 100%;
 }
 
 .row {
   display: flex;
   gap: 20px;
   flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  max-width: 90%;
-  width: 100%;
-  margin-top: 1rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .inputBox {
-  width: 70%;
+  flex: 1;
+  min-width: 250px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .inputBox label {
-  margin-bottom: 5px;
   font-size: 12px;
-  color: #aaa;
+  color: #000;
+  margin-bottom: 5px;
 }
 
 .inputBox input,
 .inputBox select {
-  width: 80%;
-  padding: 12px 14px;
-  border: 1px solid #3a3b3d;
-  border-radius: 1px;
-  background-color: transparent;
-  color: white;
+  padding: 10px 12px;
   font-size: 14px;
-  transition: border-color 0.3s ease;
+  border: 1px solid #ccc;
+  color: #000;
+  background-color: #fff;
+  border-radius: 4px;
+  outline: none;
 }
 
-.inputBox input:focus,
-.inputBox select:focus {
-  outline: none;
-  border-color: #0a84ff;
+.inputBox input::placeholder {
+  color: #888;
+}
+
+.forgotBox {
+  margin-top: 6px;
+  text-align: right;
+  width: 100%;
 }
 
 .forgot {
   font-size: 12px;
-  color: #3ea6ff;
+  color: #3b82f6;
   text-decoration: none;
 }
 
@@ -108,7 +113,7 @@
 }
 
 .actions {
-  margin-top: 30px;
+  margin-top: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -116,26 +121,25 @@
 }
 
 .saveBtn {
-  background-color: #1cb954;
+  background-color: #0e6b0e;
   color: white;
   padding: 10px 30px;
   border: none;
-  border-radius: 6px;
-  font-weight: bold;
+  border-radius: 4px;
+  font-weight: 500;
   font-size: 15px;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 
 .saveBtn:hover {
-  background-color: #18a34c;
+  background-color: #0a570a;
 }
 
 .delete {
   color: red;
   text-decoration: none;
   font-size: 14px;
-  align-self: flex-end;
 }
 
 .delete:hover {
@@ -143,98 +147,33 @@
 }
 
 .logout {
+  align-self: flex-start;
   color: red;
   text-decoration: none;
-  margin-top: 10px;
-  width: 6rem;
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
 }
 
-.logout:hover {
-  text-decoration: underline;
-}
-.deleteBox,
-.forgotBox {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-end;
-  width: 80%;
-}
-@media (max-width: 1025px) {
-  .container {
-    width: 100%;
+@media (max-width: 768px) {
+  .row {
     flex-direction: column;
   }
-  .profileBox {
-    width: 90%;
-  }
-  .row {
-    gap: 20px;
-  }
+
   .inputBox {
     width: 100%;
   }
+
   .actions {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  .saveBtn {
-    width: 100%;
-    text-align: center;
-  }
+
+  .saveBtn,
   .logout {
     width: 100%;
     text-align: center;
-  }
-}
-@media (max-width: 768px) {
-  .profileBox {
-    width: 80%;
-  }
-  .form{
-    gap: 15px;
-  }
-  .row {
-    flex-direction: column;
-    gap: 15px;
-  }
-  .row {
-    width: 100%;
-    margin-top: 0;
-  }
-  .inputBox {
-    width: 100%;
-  }
-  .inputBox input,
-  .inputBox select {
-    width: 100%;
-    padding: 1rem 0.3rem;
-  }
-  .forgotBox,
-  .deleteBox {
-    width: 100%;
-  }
-}
-
-@media (max-width: 560px) {
-  .profileBox {
-    max-width: 430px;
-  }
-  .forgot {
-    font-size: 13px;
-  }
-  .delete {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 450px) {
-  .inputBox input,
-  .inputBox select {
-    font-size: 11px;
   }
 }

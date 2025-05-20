@@ -48,7 +48,6 @@
 
 .id {
   background-color: #ffffff;
-
   padding: 0.6rem 1.2rem;
   border-radius: 50%;
   margin-right: 1.5rem;
@@ -74,7 +73,6 @@
 
 .button {
   background: linear-gradient(90deg, #66b544, #1a391d);
-
   border: none;
   color: white;
   padding: 0.6rem 1.8rem;

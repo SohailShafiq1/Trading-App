@@ -1,13 +1,13 @@
 import { BiRightArrowCircle } from "react-icons/bi";
 import React, { useState } from "react";
 import styles from "./WithdrawPage.module.css";
-import { useUserAssets } from "../../Context/UserAssetsContext"; // Import useUserAssets
-import { useAuth } from "../../Context/AuthContext"; // Import useAuth for logged-in user
+import { useUserAssets } from "../../Context/UserAssetsContext";
+import { useAuth } from "../../Context/AuthContext";
 const s = styles;
 
 const WithdrawPage = () => {
-  const { userAssets, setUserAssets } = useUserAssets(); // Access and update userAssets from context
-  const { user } = useAuth(); 
+  const { userAssets, setUserAssets } = useUserAssets();
+  const { user } = useAuth();
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [purse, setPurse] = useState("");
   const [network, setNetwork] = useState("");
@@ -36,7 +36,6 @@ const WithdrawPage = () => {
       return;
     }
 
-    // Sanitize the purse field to allow only lowercase letters and numbers
     const sanitizedPurse = purse.replace(/[^a-z0-9]/g, "");
 
     if (sanitizedPurse !== purse) {
