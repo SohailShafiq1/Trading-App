@@ -1,16 +1,20 @@
+// Import required libraries and icons
 import { AiOutlinePlus } from "react-icons/ai";
 import { AiOutlineBgColors } from "react-icons/ai";
 import { BsBarChartFill } from "react-icons/bs";
 import { AiOutlinePlusSquare } from "react-icons/ai";
 import { BiPencil } from "react-icons/bi";
+import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import { io } from "socket.io-client";
 
+// Initialize socket connection to backend
 const socket = io("http://localhost:5000");
 const BACKEND_URL = "http://localhost:5000";
 
+// Time interval mapping to seconds
 const intervalToSeconds = {
   "30s": 30,
   "1m": 60,
@@ -24,6 +28,7 @@ const intervalToSeconds = {
   "1d": 86400,
 };
 
+// Chart style options
 const CANDLE_STYLES = {
   CANDLE: "Candlestick",
   BAR: "Bar",
@@ -31,6 +36,7 @@ const CANDLE_STYLES = {
   HOLLOW: "Hollow Candle",
 };
 
+// Indicator options
 const INDICATORS = {
   NONE: "None",
   SMA: "SMA (20)",
@@ -40,10 +46,11 @@ const INDICATORS = {
   BB: "Bollinger Bands",
 };
 
+// Theme options
 const THEMES = {
   LIGHT: {
     name: "Light",
-    background: "#ffffff  ",
+    background: "#ffffff",
     textColor: "#333333",
     gridColor: "#eeeeee",
     upColor: "#26a69a",
@@ -73,6 +80,7 @@ const THEMES = {
   },
 };
 
+// Drawing tool options
 const DRAWING_TOOLS = {
   NONE: "None",
   HORIZONTAL_LINE: "Horizontal Line",
@@ -80,6 +88,7 @@ const DRAWING_TOOLS = {
   TREND_LINE: "Trend Line",
 };
 
+// Function to group raw candle data into specified intervals
 const groupCandles = (candles, interval) => {
   const intervalSec = intervalToSeconds[interval];
   const grouped = [];
@@ -115,6 +124,7 @@ const groupCandles = (candles, interval) => {
   return grouped;
 };
 
+// Function to calculate Simple Moving Average
 const calculateSMA = (data, period) => {
   if (!data || data.length < period) return [];
   const sma = [];
@@ -130,6 +140,7 @@ const calculateSMA = (data, period) => {
   return sma;
 };
 
+// Function to calculate Exponential Moving Average
 const calculateEMA = (data, period) => {
   if (!data || data.length < period) return [];
   const ema = [];
@@ -145,6 +156,7 @@ const calculateEMA = (data, period) => {
   return ema;
 };
 
+// Function to calculate Relative Strength Index
 const calculateRSI = (data, period = 14) => {
   if (!data || data.length <= period) return [];
   const rsi = [];
@@ -186,6 +198,7 @@ const calculateRSI = (data, period = 14) => {
   return rsi;
 };
 
+// Function to calculate Moving Average Convergence Divergence
 const calculateMACD = (
   data,
   fastPeriod = 12,
@@ -217,6 +230,7 @@ const calculateMACD = (
   };
 };
 
+// Function to calculate Bollinger Bands
 const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
   if (!data || data.length < period)
     return { upper: [], middle: [], lower: [] };
@@ -246,10 +260,14 @@ const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
   return bands;
 };
 
+// Main chart component
 const LiveCandleChart = ({ coinName }) => {
+  // Refs for chart elements
   const chartContainerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
+
+  // State for various chart controls
   const [countdown, setCountdown] = useState(0);
   const [interval, setInterval] = useState("1m");
   const [candles, setCandles] = useState([]);
@@ -266,6 +284,8 @@ const LiveCandleChart = ({ coinName }) => {
   const [showStylePopup, setShowStylePopup] = useState(false);
   const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
   const [showDrawingPopup, setShowDrawingPopup] = useState(false);
+
+  // Refs for indicators
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
   const rsiSeriesRef = useRef(null);
@@ -276,16 +296,25 @@ const LiveCandleChart = ({ coinName }) => {
   const bbUpperSeriesRef = useRef(null);
   const bbMiddleSeriesRef = useRef(null);
   const bbLowerSeriesRef = useRef(null);
+
+  // Refs for drawing tools
   const countdownRef = useRef();
   const activeDrawingToolRef = useRef(null);
   const drawingStartPointRef = useRef(null);
   const drawingsRef = useRef([]);
+
+  // State for zoom control
+  const [autoZoom, setAutoZoom] = useState(true);
+  const [firstLoad, setFirstLoad] = useState(true);
+
+  // Update countdown reference
   countdownRef.current = countdown;
 
   // Fix for the oscillation glitch
   const lastCandleRef = useRef(null);
   const lastUpdateRef = useRef(0);
 
+  // Countdown timer for next candle
   const updateCountdown = () => {
     const intervalSec = intervalToSeconds[interval];
     const now = Math.floor(Date.now() / 1000);
@@ -298,6 +327,7 @@ const LiveCandleChart = ({ coinName }) => {
     }
   };
 
+  // Effect for countdown animation
   useEffect(() => {
     let animationFrameId;
     const tick = () => {
@@ -308,6 +338,7 @@ const LiveCandleChart = ({ coinName }) => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [interval]);
 
+  // Position the countdown label on the chart
   const updateCountdownPosition = () => {
     if (!chartRef.current || !liveCandle || !seriesRef.current) return;
 
@@ -353,6 +384,7 @@ const LiveCandleChart = ({ coinName }) => {
     }
   };
 
+  // Effect for countdown position animation
   useEffect(() => {
     let raf;
     const animate = () => {
@@ -363,6 +395,7 @@ const LiveCandleChart = ({ coinName }) => {
     return () => cancelAnimationFrame(raf);
   }, [liveCandle, interval]);
 
+  // Apply selected theme to chart
   const applyTheme = () => {
     if (!chartRef.current) return;
 
@@ -402,6 +435,7 @@ const LiveCandleChart = ({ coinName }) => {
     }
   };
 
+  // Apply selected candle style to chart
   const applyCandleStyle = () => {
     if (!chartRef.current) return;
 
@@ -466,6 +500,7 @@ const LiveCandleChart = ({ coinName }) => {
     applyIndicators();
   };
 
+  // Apply selected indicators to chart
   const applyIndicators = () => {
     // Remove previous indicators
     const cleanupIndicator = (ref) => {
@@ -537,7 +572,7 @@ const LiveCandleChart = ({ coinName }) => {
             chartRef.current.priceScale("rsi-scale").applyOptions({
               scaleMargins: {
                 top: 0.1,
-                bottom: 0, // Give more space at bottom
+                bottom: 0,
               },
               position: "right",
             });
@@ -549,16 +584,15 @@ const LiveCandleChart = ({ coinName }) => {
         case INDICATORS.MACD:
           {
             const macdData = calculateMACD(data);
-            // For MACD, we'll use the main pane but separate scales
             macdSeriesRef.current = chartRef.current.addLineSeries({
               color: "#2962FF",
               lineWidth: 2,
-              priceScaleId: "macd", // Custom scale
+              priceScaleId: "macd",
             });
             macdSignalSeriesRef.current = chartRef.current.addLineSeries({
               color: "#FF6D00",
               lineWidth: 2,
-              priceScaleId: "macd", // Same scale
+              priceScaleId: "macd",
             });
             chartRef.current.priceScale("macd").applyOptions({
               scaleMargins: {
@@ -598,6 +632,7 @@ const LiveCandleChart = ({ coinName }) => {
     }
   };
 
+  // Handle drawing tool selection
   const handleDrawingToolClick = (tool) => {
     setDrawingTool(tool);
     setShowDrawingPopup(false);
@@ -605,6 +640,7 @@ const LiveCandleChart = ({ coinName }) => {
     drawingStartPointRef.current = null;
   };
 
+  // Handle chart click events for drawing tools
   const handleChartClick = (param) => {
     if (!activeDrawingToolRef.current || !chartRef.current || !param.point)
       return;
@@ -627,7 +663,7 @@ const LiveCandleChart = ({ coinName }) => {
             price: price,
             color: "#FF0000",
             lineWidth: 2,
-            lineStyle: 2, // Dashed
+            lineStyle: 2,
             axisLabelVisible: true,
           });
           break;
@@ -636,7 +672,7 @@ const LiveCandleChart = ({ coinName }) => {
             time: time,
             color: "#FF0000",
             lineWidth: 2,
-            lineStyle: 2, // Dashed
+            lineStyle: 2,
           });
           break;
         case DRAWING_TOOLS.TREND_LINE:
@@ -645,7 +681,7 @@ const LiveCandleChart = ({ coinName }) => {
             point2: { time, price },
             color: "#FF0000",
             lineWidth: 2,
-            lineStyle: 2, // Solid
+            lineStyle: 2,
             axisLabelVisible: true,
           });
           break;
@@ -662,6 +698,7 @@ const LiveCandleChart = ({ coinName }) => {
     }
   };
 
+  // Clear all drawings from chart
   const clearAllDrawings = () => {
     drawingsRef.current.forEach((drawing) => {
       if (drawing.remove) drawing.remove();
@@ -669,6 +706,15 @@ const LiveCandleChart = ({ coinName }) => {
     drawingsRef.current = [];
   };
 
+  // Toggle auto-zoom behavior
+  const toggleAutoZoom = () => {
+    setAutoZoom(!autoZoom);
+    if (!autoZoom) {
+      chartRef.current.timeScale().fitContent();
+    }
+  };
+
+  // Initialize chart
   useEffect(() => {
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -715,6 +761,16 @@ const LiveCandleChart = ({ coinName }) => {
     // Subscribe to click events for drawing tools
     chart.subscribeClick(handleChartClick);
 
+    // Configure time scale behavior
+    chart.timeScale().applyOptions({
+      rightOffset: autoZoom ? 0 : 10,
+      fixLeftEdge: false,
+      fixRightEdge: autoZoom,
+      lockVisibleTimeRangeOnResize: autoZoom,
+      handleScroll: !autoZoom,
+      handleScale: !autoZoom,
+    });
+
     chart.timeScale().subscribeVisibleTimeRangeChange(() => {
       updateCountdownPosition();
     });
@@ -724,12 +780,14 @@ const LiveCandleChart = ({ coinName }) => {
     };
   }, []);
 
+  // Apply theme, style and indicators when they change
   useEffect(() => {
     applyTheme();
     applyCandleStyle();
     applyIndicators();
   }, [theme, candleStyle, indicator]);
 
+  // Load initial data
   useEffect(() => {
     const load = async () => {
       try {
@@ -755,8 +813,6 @@ const LiveCandleChart = ({ coinName }) => {
           close: lastClose,
         });
 
-        seriesRef.current?.setData(groupCandles(historical, interval));
-
         const grouped = groupCandles(historical, interval);
         if (seriesRef.current) {
           if (candleStyle === CANDLE_STYLES.LINE) {
@@ -769,6 +825,14 @@ const LiveCandleChart = ({ coinName }) => {
             seriesRef.current.setData(grouped);
           }
         }
+
+        if (firstLoad) {
+          chartRef.current.timeScale().fitContent();
+          setFirstLoad(false);
+        } else if (autoZoom) {
+          chartRef.current.timeScale().fitContent();
+        }
+
         applyIndicators();
         setRenderKey((k) => k + 1);
       } catch (err) {
@@ -778,6 +842,7 @@ const LiveCandleChart = ({ coinName }) => {
     load();
   }, [coinName, interval]);
 
+  // Update chart when data changes
   useEffect(() => {
     if (!liveCandle) return;
 
@@ -826,6 +891,7 @@ const LiveCandleChart = ({ coinName }) => {
     return () => cancelAnimationFrame(frame);
   }, [candles, liveCandle, interval, renderKey, candleStyle]);
 
+  // Socket event handlers
   useEffect(() => {
     const handlePrice = ({ price, trend, counter }) => {
       if (trend) trendRef.current = trend;
@@ -969,18 +1035,26 @@ const LiveCandleChart = ({ coinName }) => {
       socket.off(`candle:${coinName}`, handleCandle);
     };
   }, [coinName, interval, candleStyle]);
+
+  // Update timeScale when autoZoom changes
   useEffect(() => {
     if (chartRef.current) {
       chartRef.current.timeScale().applyOptions({
-        rightOffset: 0,
-        fixLeftEdge: true,
-        fixRightEdge: true,
-        lockVisibleTimeRangeOnResize: true,
-        handleScroll: false,
-        handleScale: false,
+        rightOffset: autoZoom ? 0 : 10,
+        fixLeftEdge: false,
+        fixRightEdge: autoZoom,
+        lockVisibleTimeRangeOnResize: autoZoom,
+        handleScroll: !autoZoom,
+        handleScale: !autoZoom,
       });
+
+      if (autoZoom) {
+        chartRef.current.timeScale().fitContent();
+      }
     }
-  }, []);
+  }, [autoZoom]);
+
+  // Render the chart component
   return (
     <div
       style={{
@@ -1021,6 +1095,7 @@ const LiveCandleChart = ({ coinName }) => {
           flexWrap: "wrap",
         }}
       >
+        {/* Indicator button */}
         <div style={{ position: "relative" }}>
           <button
             onClick={() => setShowIndicatorPopup(!showIndicatorPopup)}
