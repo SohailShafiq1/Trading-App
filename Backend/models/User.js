@@ -45,51 +45,54 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 10000,
     },
-    
+    depositCount: { type: Number, default: 0 },
+
     transactions: [
-    {
-      orderId: { type: String, required: true },
-      type: { type: String, enum: ["deposit", "withdrawal"], required: true },
-      amount: { type: Number, required: true },
-      paymentMethod: { type: String, required: true },
-      status: { 
-        type: String, 
-        enum: ["pending", "success", "failed"], 
-        default: "pending" 
+      {
+        orderId: { type: String, required: true },
+        type: { type: String, enum: ["deposit", "withdrawal"], required: true },
+        amount: { type: Number, required: true },
+        paymentMethod: { type: String, required: true },
+        status: {
+          type: String,
+          enum: ["pending", "success", "failed"],
+          default: "pending",
+        },
+        date: { type: Date, default: Date.now },
       },
-      date: { type: Date, default: Date.now }
-    }
-  ],
-    withdrawals: [{
-      amount: {
-        type: Number,
-        required: true
+    ],
+    withdrawals: [
+      {
+        amount: {
+          type: Number,
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ["pending", "approved", "rejected"],
+          default: "pending",
+        },
+        purse: {
+          type: String,
+          required: true,
+        },
+        network: {
+          type: String,
+          required: true,
+        },
+        paymentMethod: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        processedAt: {
+          type: Date,
+        },
       },
-      status: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
-      },
-      purse: {
-        type: String,
-        required: true
-      },
-      network: {
-        type: String,
-        required: true
-      },
-      paymentMethod: {
-        type: String,
-        required: true
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      },
-      processedAt: {
-        type: Date
-      }
-    }],
+    ],
     trades: [
       {
         type: { type: String, enum: ["Buy", "Sell"], required: true },
@@ -97,11 +100,15 @@ const UserSchema = new mongoose.Schema(
         investment: { type: Number, required: true },
         entryPrice: { type: Number, required: true },
         exitPrice: { type: Number },
-        result: { type: String, enum: ["win", "loss", "pending"], default: "pending" },
+        result: {
+          type: String,
+          enum: ["win", "loss", "pending"],
+          default: "pending",
+        },
         reward: { type: Number, default: 0 },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ]
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,
