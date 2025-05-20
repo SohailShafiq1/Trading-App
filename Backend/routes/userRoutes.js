@@ -2,10 +2,24 @@ import express from "express";
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
+import multer from "multer";
+import path from "path";
 const router = express.Router();
 
 // Middleware
 router.use(express.json());
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "bucket/"); // Save to 'bucket' folder in backend root
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
 // Health check endpoint
 router.get("/health", async (req, res) => {
@@ -38,7 +52,9 @@ router.post("/deposit", async (req, res) => {
     });
 
     await deposit.save();
-    res.status(201).json({ message: "Deposit submitted, awaiting confirmation." });
+    res
+      .status(201)
+      .json({ message: "Deposit submitted, awaiting confirmation." });
   } catch (err) {
     console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
@@ -162,8 +178,15 @@ router.post("/trade", async (req, res) => {
 
     const { type, coin, investment, entryPrice, startedAt, duration } = trade;
 
-    const requiredFields = ['type', 'coin', 'investment', 'entryPrice', 'startedAt', 'duration'];
-    const missingFields = requiredFields.filter(field => !trade[field]);
+    const requiredFields = [
+      "type",
+      "coin",
+      "investment",
+      "entryPrice",
+      "startedAt",
+      "duration",
+    ];
+    const missingFields = requiredFields.filter((field) => !trade[field]);
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -173,7 +196,9 @@ router.post("/trade", async (req, res) => {
     }
 
     if (isNaN(investment) || investment <= 0) {
-      return res.status(400).json({ error: "Investment must be a positive number" });
+      return res
+        .status(400)
+        .json({ error: "Investment must be a positive number" });
     }
 
     const user = await User.findOne({ email });
@@ -213,7 +238,6 @@ router.post("/trade", async (req, res) => {
       trade: newTrade,
       newBalance: user.assets,
     });
-
   } catch (err) {
     console.error("Error saving trade:", {
       error: err.message,
@@ -238,7 +262,9 @@ router.put("/trade/result", async (req, res) => {
     }
 
     const tradeIndex = user.trades.findIndex(
-      (t) => t.startedAt && new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
+      (t) =>
+        t.startedAt &&
+        new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
     );
 
     if (tradeIndex === -1) {
@@ -248,6 +274,22 @@ router.put("/trade/result", async (req, res) => {
     user.trades[tradeIndex].result = result;
     user.trades[tradeIndex].reward = reward;
     user.trades[tradeIndex].exitPrice = exitPrice;
+
+    const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    let profitChange = 0;
+    if (result === "win") {
+      profitChange = reward;
+    } else if (result === "loss") {
+      profitChange = -user.trades[tradeIndex].investment;
+    }
+
+    // Find today's profit entry
+    let dailyEntry = user.dailyProfits.find((p) => p.date === today);
+    if (dailyEntry) {
+      dailyEntry.profit += profitChange;
+    } else {
+      user.dailyProfits.push({ date: today, profit: profitChange });
+    }
 
     if (result === "win") {
       user.assets += reward;
@@ -280,6 +322,59 @@ router.get("/trades/:email", async (req, res) => {
   } catch (err) {
     console.error("Error fetching trades:", err);
     res.status(500).json({ error: "Failed to fetch trades" });
+  }
+});
+
+// Update user profile (firstName, lastName)
+router.put(
+  "/update-profile",
+  upload.single("profilePicture"),
+  async (req, res) => {
+    const { email, firstName, lastName, dateOfBirth } = req.body;
+    const update = { firstName, lastName };
+    if (dateOfBirth && dateOfBirth !== "") {
+      update.dateOfBirth = new Date(dateOfBirth);
+    }
+    if (req.file) {
+      update.profilePicture = `/bucket/${req.file.filename}`;
+    }
+    try {
+      const user = await User.findOneAndUpdate({ email }, update, { new: true });
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.status(200).json({ message: "Profile updated successfully", user });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  }
+);
+
+// Verify user by admin
+router.put("/verify/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { verified: true },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json({ message: "User verified", user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to verify user" });
+  }
+});
+
+// Unverify user by admin
+router.put("/unverify/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { verified: false },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json({ message: "User unverified", user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to unverify user" });
   }
 });
 

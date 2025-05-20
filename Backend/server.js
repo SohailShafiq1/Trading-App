@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import connectDB from "./config/db.js";
 import mongoose from "mongoose";
+import path from "path";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -35,6 +36,9 @@ app.use(
 app.use(cors({ origin: ["http://localhost:5173"], credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve bucket folder statically
+app.use("/bucket", express.static(path.join(process.cwd(), "bucket")));
 
 // Connect to MongoDB
 connectDB();
@@ -75,7 +79,7 @@ const startServer = async () => {
 
     const PORT = process.env.PORT;
     httpServer.listen(PORT, () => {
-       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error("Failed to start server:", err);

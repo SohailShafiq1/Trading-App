@@ -12,6 +12,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    userId: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+
     country: {
       type: String,
       required: true,
@@ -44,6 +50,10 @@ const UserSchema = new mongoose.Schema(
     assets: {
       type: Number,
       default: 10000,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
     },
 
     transactions: [
@@ -110,6 +120,12 @@ const UserSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    dailyProfits: [
+      {
+        date: { type: String, required: true }, // Format: 'YYYY-MM-DD'
+        profit: { type: Number, default: 0 },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -118,6 +134,22 @@ const UserSchema = new mongoose.Schema(
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
+
+  // Only assign userId if it's a new user and not set
+  if (this.isNew && !this.userId) {
+    let unique = false;
+    while (!unique) {
+      const randomId = Math.floor(
+        10000000 + Math.random() * 90000000
+      ).toString();
+      const existing = await mongoose.models.User.findOne({ userId: randomId });
+      if (!existing) {
+        this.userId = randomId;
+        unique = true;
+      }
+    }
+  }
+
   next();
 });
 
