@@ -52,6 +52,10 @@ const AffiliateSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
+    levelStartTime: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );

@@ -134,6 +134,21 @@
   cursor: pointer;
   color: #000;
 }
+
+.timer {
+  color: #fff;
+  background: linear-gradient(90deg, #ff5858, #f09819);
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(255, 88, 88, 0.15);
+  display: inline-block;
+  margin-left: 0.5rem;
+  margin-bottom: 2rem;
+}
+
 @media (max-width: 1024px) {
   .box h1 {
     font-size: 2.2rem;
