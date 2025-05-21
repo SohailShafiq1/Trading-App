@@ -1,0 +1,36 @@
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  color: #333;
+}
+
+.dataTable th {
+  text-align: left;
+  color: #aaa;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dataTable td {
+  padding: 12px 14px;
+  font-weight: 400;
+  color: #222;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dataTable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.greenLink {
+  color: #00b894;
+  font-weight: 500;
+  cursor: pointer;
+}
