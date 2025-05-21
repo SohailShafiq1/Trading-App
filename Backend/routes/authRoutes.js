@@ -6,6 +6,7 @@ import {
   getMe,
   verifyToken,
   deleteAccount,
+  checkAdmin,
 } from "../controllers/authController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
@@ -17,4 +18,5 @@ router.post("/google-login", googleLogin);
 router.get("/me", authMiddleware, getMe);
 router.get("/verify", verifyToken);
 router.delete("/delete-account", authMiddleware, deleteAccount);
+router.post("/check-admin", checkAdmin);
 export default router;

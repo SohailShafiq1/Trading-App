@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
@@ -10,7 +10,8 @@ import axios from "axios";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
-import CoinSelector from './components/CoinSelector/CoinSelector'
+import CoinSelector from "./components/CoinSelector/CoinSelector";
+
 const BinaryChart = () => {
   // State declarations
   const [coins, setCoins] = useState([]);
@@ -29,6 +30,25 @@ const BinaryChart = () => {
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
   const { user } = useAuth();
   const { userAssets, setUserAssets } = useUserAssets();
+  const coinSelectorRef = useRef(null);
+  const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
+
+  // Close CoinSelector on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        coinSelectorRef.current &&
+        !coinSelectorRef.current.contains(event.target)
+      ) {
+        setIsCoinSelectorOpen(false); // Close the CoinSelector
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Update user assets in database
   const updateUserAssetsInDB = async (newAssets) => {
@@ -463,11 +483,14 @@ const BinaryChart = () => {
           <div className={styles.chart}>
             <div className={styles.coinList}>
               <CoinSelector
-  coins={coins}
-  selectedCoin={selectedCoin}
-  setSelectedCoin={setSelectedCoin}
-  disabled={isProcessingTrade}
-/>
+                ref={coinSelectorRef}
+                coins={coins}
+                selectedCoin={selectedCoin}
+                setSelectedCoin={setSelectedCoin}
+                disabled={isProcessingTrade}
+                isOpen={isCoinSelectorOpen}
+                setIsOpen={setIsCoinSelectorOpen}
+              />
               {trades.length > 0 && (
                 <div className={styles.timer}>
                   <p>

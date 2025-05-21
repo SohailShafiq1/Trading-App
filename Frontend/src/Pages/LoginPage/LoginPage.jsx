@@ -34,23 +34,36 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const res = await fetch("http://localhost:5000/api/auth/check-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: form.email }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.message || "Failed to check admin status");
+      }
+
       await login({ email: form.email, password: form.password });
+
       if (form.rememberMe) {
         localStorage.setItem("rememberedEmail", form.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-      console.log(user.isAdmin);
 
-      setTimeout(() => {
-        if (user?.isAdmin === true) {
-          navigate("/admin");
-        } else {
-          navigate("/binarychart");
-        }
-      }, 2000); // Wait for 2 seconds before checking
+      if (data.isAdmin === true) {
+        navigate("/admin");
+      } else {
+        navigate("/binarychart");
+      }
     } catch (err) {
       alert(err.message || "Login failed");
+      s;
     }
   };
 

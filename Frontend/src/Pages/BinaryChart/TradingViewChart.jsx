@@ -16,13 +16,19 @@ const TradingViewChart = ({ coinName }) => {
           symbol: `BINANCE:${coinName}USDT`,
           interval: "1",
           timezone: "Etc/UTC",
-          theme: "dark",
+          theme: "light",
           style: "1",
           locale: "en",
           toolbar_bg: "#1e1e1e",
           enable_publishing: false,
           allow_symbol_change: false,
           hide_top_toolbar: false,
+          overrides: {
+            "paneProperties.background": "#0d0d0d", // main chart bg
+            "paneProperties.vertGridProperties.color": "#2a2e39",
+            "paneProperties.horzGridProperties.color": "#2a2e39",
+            "scalesProperties.textColor": "#AAA", // axis text
+          },
         });
       }
     };
