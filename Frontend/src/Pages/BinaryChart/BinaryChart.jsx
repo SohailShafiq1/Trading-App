@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
@@ -10,7 +10,8 @@ import axios from "axios";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
-import CoinSelector from './components/CoinSelector/CoinSelector'
+import CoinSelector from "./components/CoinSelector/CoinSelector";
+
 const BinaryChart = () => {
   // State declarations
   const [coins, setCoins] = useState([]);
@@ -27,8 +28,53 @@ const BinaryChart = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [priceLoaded, setPriceLoaded] = useState(false);
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(true);
   const { user } = useAuth();
   const { userAssets, setUserAssets } = useUserAssets();
+  const coinSelectorRef = useRef(null);
+  const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
+
+  // Check verification status
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!user?._id) {
+        setCheckingVerification(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/users/is-verified/${user._id}`
+        );
+        setIsVerified(response.data.verified);
+      } catch (err) {
+        console.error("Error checking verification status:", err);
+        toast.error("Failed to check verification status");
+      } finally {
+        setCheckingVerification(false);
+      }
+    };
+
+    checkVerification();
+  }, [user?._id]);
+
+  // Close CoinSelector on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        coinSelectorRef.current &&
+        !coinSelectorRef.current.contains(event.target)
+      ) {
+        setIsCoinSelectorOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Update user assets in database
   const updateUserAssetsInDB = async (newAssets) => {
@@ -120,7 +166,6 @@ const BinaryChart = () => {
           `http://localhost:5000/api/coins/price/${selectedCoin}`
         );
         if (isMounted) {
-          // Extract price whether it comes as object or direct value
           const priceValue = response.data.price || response.data;
           setOtcPrice(parseFloat(priceValue));
           setIsLoading(false);
@@ -190,6 +235,11 @@ const BinaryChart = () => {
 
   const handleTrade = async (tradeType) => {
     if (isProcessingTrade) return;
+
+    if (!isVerified) {
+      toast.error("Please verify your account to start trading");
+      return;
+    }
 
     if (!selectedCoin) {
       toast.error("Please select a coin first!");
@@ -361,7 +411,6 @@ const BinaryChart = () => {
 
         const recoveredTrades = await Promise.all(
           response.data.map(async (trade) => {
-            // Skip if trade already completed
             if (trade.result !== "pending") {
               return {
                 ...trade,
@@ -372,12 +421,10 @@ const BinaryChart = () => {
               };
             }
 
-            // Calculate elapsed time
             const elapsed = Math.floor(
               (now - new Date(trade.startedAt).getTime()) / 1000
             );
 
-            // If trade should be completed but still pending
             if (elapsed > trade.duration) {
               try {
                 let currentPrice;
@@ -405,7 +452,6 @@ const BinaryChart = () => {
                   ? (trade.investment * (1 + profitPercentage / 100)).toFixed(2)
                   : -trade.investment;
 
-                // Update in database
                 await updateTradeResultInDB({
                   email: user.email,
                   startedAt: trade.startedAt,
@@ -429,13 +475,12 @@ const BinaryChart = () => {
                   price: trade.investment,
                   coinName: trade.coin,
                   remainingTime: 0,
-                  status: "loss", // Default to loss if recovery fails
+                  status: "loss",
                   reward: -trade.investment,
                 };
               }
             }
 
-            // Trade still running
             return {
               ...trade,
               price: trade.investment,
@@ -456,6 +501,14 @@ const BinaryChart = () => {
     fetchAndRecoverTrades();
   }, [user?.email, coins]);
 
+  const handleTradeButtonClick = (tradeType) => {
+    if (!isVerified) {
+      toast.error("Please verify your account to start trading");
+      return;
+    }
+    handleTrade(tradeType);
+  };
+
   return (
     <>
       <div className={styles.container}>
@@ -463,11 +516,14 @@ const BinaryChart = () => {
           <div className={styles.chart}>
             <div className={styles.coinList}>
               <CoinSelector
-  coins={coins}
-  selectedCoin={selectedCoin}
-  setSelectedCoin={setSelectedCoin}
-  disabled={isProcessingTrade}
-/>
+                ref={coinSelectorRef}
+                coins={coins}
+                selectedCoin={selectedCoin}
+                setSelectedCoin={setSelectedCoin}
+                disabled={isProcessingTrade}
+                isOpen={isCoinSelectorOpen}
+                setIsOpen={setIsCoinSelectorOpen}
+              />
               {trades.length > 0 && (
                 <div className={styles.timer}>
                   <p>
@@ -518,7 +574,7 @@ const BinaryChart = () => {
                 <button
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
-                  disabled={isLoading || isProcessingTrade}
+                  disabled={isLoading || isProcessingTrade || !isVerified}
                 >
                   −
                 </button>
@@ -526,7 +582,7 @@ const BinaryChart = () => {
                 <button
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
-                  disabled={isLoading || isProcessingTrade}
+                  disabled={isLoading || isProcessingTrade || !isVerified}
                 >
                   +
                 </button>
@@ -536,7 +592,7 @@ const BinaryChart = () => {
                 <button
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
-                  disabled={isLoading || isProcessingTrade}
+                  disabled={isLoading || isProcessingTrade || !isVerified}
                 >
                   −
                 </button>
@@ -548,12 +604,12 @@ const BinaryChart = () => {
                     setInvestment(Math.max(parseInt(e.target.value) || 1, 1))
                   }
                   min="1"
-                  disabled={isLoading || isProcessingTrade}
+                  disabled={isLoading || isProcessingTrade || !isVerified}
                 />
                 <button
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => prev + 1)}
-                  disabled={isLoading || isProcessingTrade}
+                  disabled={isLoading || isProcessingTrade || !isVerified}
                 >
                   +
                 </button>
@@ -573,32 +629,22 @@ const BinaryChart = () => {
             <div className={styles.buySelling}>
               <div
                 className={`${styles.buyBox} ${
-                  isLoading || !priceLoaded || isProcessingTrade
+                  isLoading || !priceLoaded || isProcessingTrade || !isVerified
                     ? styles.disabled
                     : ""
                 }`}
-                onClick={() =>
-                  !isLoading &&
-                  priceLoaded &&
-                  !isProcessingTrade &&
-                  handleTrade("Buy")
-                }
+                onClick={() => handleTradeButtonClick("Buy")}
               >
                 <FiArrowDownRight className={styles.icons} />
                 <p>Buy</p>
               </div>
               <div
                 className={`${styles.SellBox} ${
-                  isLoading || !priceLoaded || isProcessingTrade
+                  isLoading || !priceLoaded || isProcessingTrade || !isVerified
                     ? styles.disabled
                     : ""
                 }`}
-                onClick={() =>
-                  !isLoading &&
-                  priceLoaded &&
-                  !isProcessingTrade &&
-                  handleTrade("Sell")
-                }
+                onClick={() => handleTradeButtonClick("Sell")}
               >
                 <FiArrowDownRight className={styles.icons} />
                 <p>Sell</p>

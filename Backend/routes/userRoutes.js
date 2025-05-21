@@ -385,4 +385,23 @@ router.put("/unverify/:id", async (req, res) => {
   }
 });
 
+router.get("/is-verified/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid user ID format" });
+  }
+
+  try {
+    const user = await User.findById(id, { verified: 1 });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json({ verified: user.verified });
+  } catch (err) {
+    console.error("Error checking verification status:", err);
+    res.status(500).json({ error: "Failed to check verification status" });
+  }
+});
+
 export default router;
