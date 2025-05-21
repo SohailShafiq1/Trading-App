@@ -7,7 +7,7 @@ import { NavLink } from "react-router-dom";
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const LoginPage = () => {
-  const { login, googleLogin, resetPassword } = useAuth();
+  const { login, googleLogin, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -40,7 +40,15 @@ const LoginPage = () => {
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-      navigate("/binarychart");
+      console.log(user.isAdmin);
+
+      setTimeout(() => {
+        if (user?.isAdmin === true) {
+          navigate("/admin");
+        } else {
+          navigate("/binarychart");
+        }
+      }, 2000); // Wait for 2 seconds before checking
     } catch (err) {
       alert(err.message || "Login failed");
     }

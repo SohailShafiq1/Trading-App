@@ -20,7 +20,7 @@ const UserSchema = new mongoose.Schema(
       select: false,
     },
     userId: {
-      type: String,
+      type: Number,
       unique: true,
       required: true,
       default: () => Math.floor(10000000 + Math.random() * 90000000).toString(),
