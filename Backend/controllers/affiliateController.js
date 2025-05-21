@@ -102,3 +102,33 @@ export const getAffiliateDetails = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getTeamUsersByAffiliateEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    // 1. Find affiliate by email
+    const affiliate = await Affiliate.findOne({ email: email.toLowerCase() });
+    if (!affiliate) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Affiliate not found" });
+    }
+
+    // 2. Get users whose emails match those in the affiliate's team
+    const teamUsers = await User.find({
+      email: { $in: affiliate.team },
+    }).select("-password"); // exclude password field
+
+    return res.status(200).json({
+      success: true,
+      teamUsers,
+    });
+  } catch (err) {
+    console.error("Error fetching affiliate team users:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

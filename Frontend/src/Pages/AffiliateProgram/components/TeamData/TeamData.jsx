@@ -1,8 +1,69 @@
-import React from 'react';
-import styles from './TeamData.module.css';
+import React, { useEffect, useState } from "react";
+import styles from "./TeamData.module.css";
+import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
+
 const s = styles;
 
-const TeamData = ({ activeTable, traders, profits }) => {
+const TeamData = ({ activeTable }) => {
+  const { affiliate } = useAffiliateAuth();
+  const [teamUsers, setTeamUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/affiliate/team/${affiliate.email}`
+        );
+        const data = await res.json();
+        if (data.success) {
+          setTeamUsers(data.teamUsers);
+        } else {
+          console.error(data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching team users:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (affiliate?.email) {
+      fetchTeam();
+    }
+  }, [affiliate]);
+
+  // Transformations
+  const traders = teamUsers.map((user) => ({
+    id: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+    linkId: user.userId,
+    balance: user.assets,
+    deposits:
+      user.transactions?.filter((t) => t.type === "deposit").length || 0,
+    depositSum:
+      user.transactions?.reduce((sum, t) => {
+        return t.type === "deposit" && t.status === "success"
+          ? sum + t.amount
+          : sum;
+      }, 0) || 0,
+    bonuses: 0,
+    withdrawals: user.withdrawals?.reduce((sum, w) => sum + w.amount, 0) || 0,
+  }));
+
+  const profits = teamUsers.map((user) => ({
+    id: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+    country: user.country,
+    deposit:
+      user.transactions?.reduce((sum, t) => {
+        return t.type === "deposit" && t.status === "success"
+          ? sum + t.amount
+          : sum;
+      }, 0) || 0,
+    profit: user.dailyProfits?.reduce((sum, d) => sum + d.profit, 0) || 0,
+  }));
+
+  if (loading) return <div className={s.loader}>Loading team data...</div>;
+
   return (
     <div className={s.container}>
       {activeTable === "traders" ? (
