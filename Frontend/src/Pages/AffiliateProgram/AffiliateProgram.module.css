@@ -68,7 +68,6 @@
 .partnerLink {
   width: 100%;
   background-color: #e0e0e0;
-
   border-radius: 10px;
   margin-top: 1rem;
 }
@@ -112,7 +111,7 @@
 .linkContainer span {
   color: #067be8;
   font-size: 1rem;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .copyButton {
@@ -122,6 +121,9 @@
   background: none;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .generate {
@@ -154,25 +156,28 @@
   text-align: left;
   box-sizing: border-box;
 }
+
 .statsBox:last-child {
   text-decoration: none;
   background: linear-gradient(90deg, #66b544, #1a391d);
   align-items: center;
-  svg {
-    font-size: 58px;
-    color: white;
-  }
-  p {
-    font-size: 30px;
-    font-weight: bold;
-    background: linear-gradient(90deg, #66b544, #1a391d);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    background-color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 30px;
-  }
+}
+
+.statsBox:last-child svg {
+  font-size: 58px;
+  color: white;
+}
+
+.statsBox:last-child p {
+  font-size: 30px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
 }
 
 .statsBox svg {
@@ -274,4 +279,72 @@
 .pCode {
   background-color: #3f474c66;
   color: black;
+}
+
+.toggleButtons {
+  display: flex;
+  align-items: left;
+  width: 100%;
+  gap: 1.5rem;
+  margin: 2rem 0 1rem;
+  padding-left: 0.5rem;
+}
+
+.toggleButtons button {
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: black;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+
+.toggleButtons button:hover {
+  color: #00b894;
+  background-color: white;
+}
+
+.activeToggle {
+  color: #00b894;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  color: #333;
+}
+
+.dataTable th {
+  text-align: left;
+  color: #aaa;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dataTable td {
+  padding: 12px 14px;
+  font-weight: 400;
+  color: #222;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dataTable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.greenLink {
+  color: #00b894;
+  font-weight: 500;
+  cursor: pointer;
 }

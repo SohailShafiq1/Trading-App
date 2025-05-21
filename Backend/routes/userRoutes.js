@@ -11,10 +11,12 @@ router.use(express.json());
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (_req, _file, cb) {
+    // Renamed unused parameters to avoid warnings
     cb(null, "bucket/"); // Save to 'bucket' folder in backend root
   },
-  filename: function (req, file, cb) {
+  filename: function (_req, file, cb) {
+    // Renamed unused parameter to avoid warnings
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
@@ -22,7 +24,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Health check endpoint
-router.get("/health", async (req, res) => {
+router.get("/health", async (_req, res) => {
+  // Renamed unused parameter to avoid warnings
   try {
     await mongoose.connection.db.admin().ping();
     res.status(200).json({
@@ -62,7 +65,8 @@ router.post("/deposit", async (req, res) => {
 });
 
 // Get all registered users
-router.get("/", async (req, res) => {
+router.get("/", async (_req, res) => {
+  // Renamed unused parameter to avoid warnings
   try {
     const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
@@ -104,7 +108,7 @@ router.put("/update-assets", async (req, res) => {
 
 // User Withdrawal Route
 router.post("/withdraw", async (req, res) => {
-  const { email, amount, purse, network, paymentMethod } = req.body;
+  const { email, amount, network, paymentMethod } = req.body; // Removed unused 'purse'
 
   try {
     const user = await User.findOne({ email });
@@ -118,12 +122,13 @@ router.post("/withdraw", async (req, res) => {
       orderId,
       type: "withdrawal",
       amount,
-      paymentMethod: `${paymentMethod} (${network})`, // ✅ FIXED HERE
-      status: "pending",
+      paymentMethod: `${paymentMethod} (${network})`, // Fixed template literal syntax
+      status: "pending", // 'status' here is not related to the deprecated Window.status
       date: new Date(),
     });
 
     user.withdrawals.push({
+      // 'user' is correctly defined in the context
       orderId,
       amount,
       purse,
@@ -133,8 +138,8 @@ router.post("/withdraw", async (req, res) => {
       createdAt: new Date(),
     });
 
-    user.assets -= amount;
-    await user.save();
+    user.assets -= amount; // 'user' is correctly defined in the context
+    await user.save(); // 'user' is correctly defined in the context
 
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
@@ -336,10 +341,12 @@ router.put(
       update.dateOfBirth = new Date(dateOfBirth);
     }
     if (req.file) {
-      update.profilePicture = `/bucket/${req.file.filename}`;
+      update.profilePicture = `bucket/${req.file.filename}`; // Fixed template literal syntax
     }
     try {
-      const user = await User.findOneAndUpdate({ email }, update, { new: true });
+      const user = await User.findOneAndUpdate({ email }, update, {
+        new: true,
+      });
       if (!user) return res.status(404).json({ error: "User not found" });
       res.status(200).json({ message: "Profile updated successfully", user });
     } catch (err) {

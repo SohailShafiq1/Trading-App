@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+
 const UserSchema = new mongoose.Schema(
   {
     email: {
@@ -7,41 +8,66 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        "Please enter a valid email",
+      ],
     },
     password: {
       type: String,
       required: true,
+      minlength: 6,
+      select: false,
     },
     userId: {
       type: String,
       unique: true,
       required: true,
+      default: () => Math.floor(10000000 + Math.random() * 90000000).toString(),
     },
 
     country: {
       type: String,
       required: true,
+      trim: true,
     },
     currency: {
       type: String,
       required: true,
       default: "USD",
+      enum: ["USD", "EUR", "GBP"],
     },
     firstName: {
       type: String,
       default: "",
+      trim: true,
+      maxlength: 50,
     },
     lastName: {
       type: String,
       default: "",
+      trim: true,
+      maxlength: 50,
     },
     dateOfBirth: {
       type: Date,
       default: null,
+      validate: {
+        validator: function (dob) {
+          return !dob || dob < new Date();
+        },
+        message: "Date of birth must be in the past",
+      },
     },
     profilePicture: {
       type: String,
       default: "",
+      validate: {
+        validator: function (url) {
+          return url === "" || url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+        },
+        message: "Please provide a valid image URL",
+      },
     },
     isAdmin: {
       type: Boolean,
@@ -50,6 +76,7 @@ const UserSchema = new mongoose.Schema(
     assets: {
       type: Number,
       default: 10000,
+      min: 0,
     },
     verified: {
       type: Boolean,
@@ -58,16 +85,33 @@ const UserSchema = new mongoose.Schema(
 
     transactions: [
       {
-        orderId: { type: String, required: true },
-        type: { type: String, enum: ["deposit", "withdrawal"], required: true },
-        amount: { type: Number, required: true },
-        paymentMethod: { type: String, required: true },
+        orderId: {
+          type: String,
+          required: true,
+        },
+        type: {
+          type: String,
+          enum: ["deposit", "withdrawal"],
+          required: true,
+        },
+        amount: {
+          type: Number,
+          required: true,
+          min: 0.01,
+        },
+        paymentMethod: {
+          type: String,
+          required: true,
+        },
         status: {
           type: String,
           enum: ["pending", "success", "failed"],
           default: "pending",
         },
-        date: { type: Date, default: Date.now },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     withdrawals: [
@@ -75,6 +119,7 @@ const UserSchema = new mongoose.Schema(
         amount: {
           type: Number,
           required: true,
+          min: 0.01,
         },
         status: {
           type: String,
@@ -84,10 +129,12 @@ const UserSchema = new mongoose.Schema(
         purse: {
           type: String,
           required: true,
+          trim: true,
         },
         network: {
           type: String,
           required: true,
+          enum: ["BTC", "ETH", "TRX", "BSC", "LTC", "XRP"],
         },
         paymentMethod: {
           type: String,
@@ -104,55 +151,90 @@ const UserSchema = new mongoose.Schema(
     ],
     trades: [
       {
-        type: { type: String, enum: ["Buy", "Sell"], required: true },
-        coin: { type: String, required: true },
-        investment: { type: Number, required: true },
-        entryPrice: { type: Number, required: true },
-        exitPrice: { type: Number },
+        type: {
+          type: String,
+          enum: ["Buy", "Sell"],
+          required: true,
+        },
+        coin: {
+          type: String,
+          required: true,
+          uppercase: true,
+        },
+        investment: {
+          type: Number,
+          required: true,
+          min: 0.01,
+        },
+        entryPrice: {
+          type: Number,
+          required: true,
+          min: 0.00000001,
+        },
+        exitPrice: {
+          type: Number,
+          min: 0.00000001,
+        },
         result: {
           type: String,
           enum: ["win", "loss", "pending"],
           default: "pending",
         },
-        reward: { type: Number, default: 0 },
-        startedAt: { type: Date },
-        duration: { type: Number },
-        createdAt: { type: Date, default: Date.now },
+        reward: {
+          type: Number,
+          default: 0,
+        },
+        startedAt: {
+          type: Date,
+        },
+        duration: {
+          type: Number,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     dailyProfits: [
       {
-        date: { type: String, required: true }, // Format: 'YYYY-MM-DD'
-        profit: { type: Number, default: 0 },
+        date: {
+          type: String,
+          required: true,
+          match: [/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"],
+        },
+        profit: {
+          type: Number,
+          default: 0,
+        },
       },
     ],
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: function (doc, ret) {
+        delete ret.password; // Never send password in responses
+        return ret;
+      },
+    },
   }
 );
+
+// Simplified password hashing middleware
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
 
-  // Only assign userId if it's a new user and not set
-  if (this.isNew && !this.userId) {
-    let unique = false;
-    while (!unique) {
-      const randomId = Math.floor(
-        10000000 + Math.random() * 90000000
-      ).toString();
-      const existing = await mongoose.models.User.findOne({ userId: randomId });
-      if (!existing) {
-        this.userId = randomId;
-        unique = true;
-      }
-    }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
   }
-
-  next();
 });
 
+// Password comparison method
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };

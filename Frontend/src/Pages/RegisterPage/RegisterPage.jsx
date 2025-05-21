@@ -16,7 +16,7 @@ const RegisterPage = () => {
     password: "",
     confirmAge: false,
     confirmTax: false,
-    referralCode: "", 
+    referralCode: "",
   });
 
   const handleChange = (e) => {
@@ -27,17 +27,29 @@ const RegisterPage = () => {
     }));
   };
 
+  // In your RegisterPage component, add validation before submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.country) {
+      alert("Please select your country");
+      return;
+    }
+
     if (!form.confirmAge || !form.confirmTax) {
       alert("Please confirm age and tax status.");
       return;
     }
+
     try {
       await register(form);
       navigate("/login");
     } catch (err) {
-      alert(err.response?.data?.message || "Registration failed");
+      alert(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Registration failed"
+      );
     }
   };
 
