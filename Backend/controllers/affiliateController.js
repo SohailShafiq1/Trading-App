@@ -5,39 +5,67 @@ import crypto from "crypto";
 
 export const registerAffiliate = async (req, res) => {
   try {
-    const { email, password, country, currency } = req.body;
+    const { email, password, country, currency = "USD" } = req.body;
 
+    // Basic validation
+    if (!email || !password || !country) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, password, and country are required",
+      });
+    }
+
+    // Check if user exists
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ msg: "User not found" });
-    console.log(user)
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-    const existing = await Affiliate.findOne({ email });
-    if (existing)
-      return res.status(400).json({ msg: "Already registered as affiliate" });
+    // Check for existing affiliate
+    const existingAffiliate = await Affiliate.findOne({ email });
+    if (existingAffiliate) {
+      return res.status(400).json({
+        success: false,
+        message: "Already registered as affiliate",
+      });
+    }
 
-    const code = crypto.randomBytes(3).toString("hex").toUpperCase(); // A1B2C3
-    const referralLink = `https://yourapp.com/signup?ref=${code}`;
+    // Generate affiliate code and link
+    const code = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const referralLink = `${process.env.BASE_URL}/signup?ref=${code}`;
 
+    // Create new affiliate
     const affiliate = new Affiliate({
       email,
       password,
       country,
-      currency,
+      currency: currency.toUpperCase(), // Normalize to uppercase
       user: user._id,
       affiliateCode: code,
       referralLink,
     });
 
     await affiliate.save();
+
     res.status(201).json({
-      msg: "Affiliate account created",
-      referralCode: code,
-      referralLink,
-      level: affiliate.level, // <-- add this
-      team: affiliate.team, // <-- add this if you want registrations
+      success: true,
+      message: "Affiliate registration successful",
+      data: {
+        referralCode: code,
+        referralLink,
+        currency: affiliate.currency,
+      },
     });
-  } catch (err) {
-    res.status(500).json({ msg: "Server error", error: err.message });
+  } catch (error) {
+    console.error("Affiliate registration error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 

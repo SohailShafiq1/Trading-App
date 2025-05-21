@@ -231,5 +231,53 @@ const verifyToken = async (req, res) => {
     });
   }
 };
+// Delete User Account and Affiliate
+const deleteAccount = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-export { register, login, googleLogin, getMe, verifyToken };
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    // Delete user and affiliate in parallel
+    await Promise.all([
+      User.findOneAndDelete({ email }),
+      Affiliate.deleteMany({ email }), // or affiliateEmail depending on your schema
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "Account and associated affiliate data deleted successfully",
+    });
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete account",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+export { register, login, googleLogin, getMe, verifyToken, deleteAccount };

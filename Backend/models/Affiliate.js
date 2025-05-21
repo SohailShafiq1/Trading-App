@@ -26,6 +26,7 @@ const AffiliateSchema = new mongoose.Schema(
     currency: {
       type: String,
       required: true,
+      uppercase: true,
       default: "USD",
     },
     affiliateCode: {

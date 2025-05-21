@@ -3,16 +3,17 @@ import styles from "./AffiliateRegister.module.css";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const s = styles;
-
 const AffiliateRegister = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     email: "",
     password: "",
     country: "",
-    currency: "",
+    currency: "USD",
   });
+  const [error, setError] = useState("");
+
+  const currencyOptions = ["USD", "EUR", "GBP", "JPY"];
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,58 +21,84 @@ const AffiliateRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    // Client-side validation
+    if (!form.email || !form.password || !form.country) {
+      setError("Please fill in all required fields");
+      return;
+    }
 
     try {
-      await axios.post("http://localhost:5000/api/affiliate/register", form);
-      alert("Affiliate registration successful!");
-      navigate("/affiliate/login");
+      const response = await axios.post(
+        "http://localhost:5000/api/affiliate/register",
+        {
+          ...form,
+          currency: form.currency.toUpperCase(),
+        }
+      );
+
+      if (response.data.success) {
+        alert(
+          `Registration successful! Your referral code: ${response.data.data.referralCode}`
+        );
+        navigate("/affiliate/login");
+      }
     } catch (err) {
-      if (!err.response) {
-        alert("Network error: Please check your internet connection.");
+      console.error("Registration error:", err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        console.log(err.response.data.message);
+        setError("Registration failed. Please try again.");
       }
     }
   };
 
   return (
-    <div className={s.container}>
-      <div className={s.Header}>Register for the Affiliate Program</div>
-      <div className={s.Form}>
-        <div className={s.tabs}>
+    <div className={styles.container}>
+      <div className={styles.Header}>Register for the Affiliate Program</div>
+      <div className={styles.Form}>
+        <div className={styles.tabs}>
           <NavLink to="/affiliate/login">Login</NavLink>
-          <div className={`${s.registerTab} ${s.activeTab}`}>Register</div>
+          <div className={`${styles.registerTab} ${styles.activeTab}`}>
+            Register
+          </div>
         </div>
 
-        <form className={s.form} onSubmit={handleSubmit}>
+        {error && <div className={styles.errorMessage}>{error}</div>}
+
+        <form className={styles.form} onSubmit={handleSubmit}>
           <select
             name="country"
-            className={s.input}
+            className={styles.input}
             value={form.country}
             onChange={handleChange}
             required
           >
             <option value="">Select Country</option>
             <option value="USA">USA</option>
-            <option value="Pakistan">Pakistan</option>
             <option value="UK">UK</option>
           </select>
 
           <select
             name="currency"
-            className={s.input}
+            className={styles.input}
             value={form.currency}
             onChange={handleChange}
+            required
           >
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
+            {currencyOptions.map((currency) => (
+              <option key={currency} value={currency}>
+                {currency}
+              </option>
+            ))}
           </select>
 
           <input
             type="email"
             name="email"
             placeholder="Your Email"
-            className={s.input}
+            className={styles.input}
             value={form.email}
             onChange={handleChange}
             required
@@ -80,28 +107,32 @@ const AffiliateRegister = () => {
           <input
             type="password"
             name="password"
-            placeholder="Your Password"
-            className={s.input}
+            placeholder="Your Password (min 6 characters)"
+            className={styles.input}
             value={form.password}
             onChange={handleChange}
+            minLength={6}
             required
           />
 
-          <label className={s.checkboxGroup}>
-            <input type="checkbox" required className={s.checkBox} />I confirm
-            that I am 18+ and accept the terms.
+          {/* First Checkbox */}
+          <label className={styles.checkboxGroup}>
+            <input type="checkbox" required className={styles.checkBox} />I
+            confirm that I am 18 years old or older and accept Service
+            Agreement.
           </label>
 
-          <label className={s.checkboxGroup}>
-            <input type="checkbox" required className={s.checkBox} />I declare
-            I'm not a US tax resident.
+          {/* Second Checkbox (US Tax Residency) */}
+          <label className={styles.checkboxGroup}>
+            <input type="checkbox" required className={styles.checkBox} />I
+            declare that I am not a citizen/resident of the US for tax purposes
           </label>
 
-          <button type="submit" className={s.registerBtn}>
+          <button type="submit" className={styles.registerBtn}>
             Register
           </button>
 
-          <button type="button" className={s.googleBtn}>
+          <button type="button" className={styles.googleBtn}>
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
               alt="Google"

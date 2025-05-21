@@ -3,8 +3,30 @@ import styles from "./Profile.module.css";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../Context/AuthContext";
 import axios from "axios";
+import Modal from "react-modal";
 
 const s = styles;
+
+// Modal styles
+const customStyles = {
+  content: {
+    top: "50%",
+    left: "50%",
+    right: "auto",
+    bottom: "auto",
+    marginRight: "-50%",
+    transform: "translate(-50%, -50%)",
+    maxWidth: "400px",
+    width: "90%",
+    padding: "20px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+  },
+  overlay: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    zIndex: 1000,
+  },
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -16,11 +38,19 @@ const Profile = () => {
   const [password, setPassword] = useState("*******");
   const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || "");
   const [country, setCountry] = useState(user?.country || "");
-  const [userId, setUserId] = useState(""); // <-- Add userId state
-  const [verified, setVerified] = useState(false); // <-- Add verified state
+  const [userId, setUserId] = useState("");
+  const [verified, setVerified] = useState(false);
   const [profilePicture, setProfilePicture] = useState("");
   const [preview, setPreview] = useState("");
   const fileInputRef = useRef(null);
+
+  // Delete account modal state
+  const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+
+  // Set app element for react-modal (for accessibility)
+  Modal.setAppElement("#root");
 
   // Fetch user profile from backend on mount
   useEffect(() => {
@@ -36,11 +66,11 @@ const Profile = () => {
           res.data.dateOfBirth ? res.data.dateOfBirth.slice(0, 10) : ""
         );
         setCountry(res.data.country || "");
-        setUserId(res.data.userId || ""); // <-- Set userId from backend
-        setVerified(res.data.verified || false); // <-- Set verified status
+        setUserId(res.data.userId || "");
+        setVerified(res.data.verified || false);
         setProfilePicture(res.data.profilePicture || "");
       } catch (err) {
-        // handle error if needed
+        console.error("Error fetching profile:", err);
       }
     };
     if (user?.email) fetchProfile();
@@ -104,13 +134,50 @@ const Profile = () => {
         res.data.dateOfBirth ? res.data.dateOfBirth.slice(0, 10) : ""
       );
       setCountry(res.data.country || "");
-      setUserId(res.data.userId || ""); // <-- Update userId after save
-      setVerified(res.data.verified || false); // <-- Update verified status
+      setUserId(res.data.userId || "");
+      setVerified(res.data.verified || false);
     } catch (err) {
       alert("Failed to update profile");
     }
   };
 
+  const openDeleteModal = () => {
+    setDeleteModalIsOpen(true);
+    setDeletePassword("");
+    setDeleteError("");
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalIsOpen(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteError("Please enter your password");
+      return;
+    }
+
+    try {
+      await axios.delete("http://localhost:5000/api/auth/delete-account", {
+        data: {
+          email: user.email, // Pass current user's email
+          password: deletePassword,
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      alert("Your account has been deleted successfully");
+      logout();
+      navigate("/register");
+    } catch (err) {
+      setDeleteError(
+        err.response?.data?.message ||
+          "Failed to delete account. Please try again."
+      );
+    }
+  };
   return (
     <div className={s.container}>
       <div className={s.profileBox}>
@@ -119,7 +186,6 @@ const Profile = () => {
           <div className={s.avatar}>
             <div className={s.avatarImgWrapper}>
               {verified ? (
-                // If verified, just show the image or icon (no upload)
                 profilePicture ? (
                   <img
                     src={`http://localhost:5000${profilePicture}`}
@@ -130,7 +196,6 @@ const Profile = () => {
                   <span className={s.cameraIcon}>📷</span>
                 )
               ) : (
-                // If unverified, allow upload
                 <label htmlFor="profilePicInput" style={{ cursor: "pointer" }}>
                   {preview ? (
                     <img
@@ -160,9 +225,9 @@ const Profile = () => {
             </div>
           </div>
           <div>
-            <p className={s.userId}>ID: {userId || "55468924"}</p>
+            <p className={s.userId}>ID: {userId || "N/A"}</p>
             <p className={verified ? s.verified : s.unverified}>
-              {verified ? " Verified" : " Unverified"}
+              {verified ? "Verified" : "Unverified"}
             </p>
           </div>
         </div>
@@ -203,6 +268,7 @@ const Profile = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled
               />
               <div className={s.forgotBox}>
                 <NavLink to="/forgot-password" className={s.forgot}>
@@ -242,13 +308,49 @@ const Profile = () => {
             <button className={s.saveBtn} onClick={handleSave}>
               Save
             </button>
-            <NavLink className={s.delete}>X Delete Account</NavLink>
+            <button className={s.delete} onClick={openDeleteModal}>
+              X Delete Account
+            </button>
           </div>
           <button className={s.logout} onClick={handleLogout}>
             Logout
           </button>
         </div>
       </div>
+
+      {/* Delete Account Modal */}
+      <Modal
+        isOpen={deleteModalIsOpen}
+        onRequestClose={closeDeleteModal}
+        style={customStyles}
+        contentLabel="Delete Account Confirmation"
+      >
+        <h2>Delete Account</h2>
+        <p>
+          Are you sure you want to delete your account? This action cannot be
+          undone.
+        </p>
+
+        <div className={s.inputBox}>
+          <label>Enter your password to confirm:</label>
+          <input
+            type="password"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            placeholder="Your password"
+          />
+          {deleteError && <p className={s.errorText}>{deleteError}</p>}
+        </div>
+
+        <div className={s.modalActions}>
+          <button className={s.cancelBtn} onClick={closeDeleteModal}>
+            Cancel
+          </button>
+          <button className={s.deleteBtn} onClick={handleDeleteAccount}>
+            Delete Account
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
