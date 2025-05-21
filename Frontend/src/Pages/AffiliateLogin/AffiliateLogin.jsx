@@ -26,7 +26,7 @@ const AffiliateLogin = () => {
         password: form.password,
       });
       alert("Affiliate login successful!");
-      navigate("/affiliate"); 
+      navigate("/affiliate");
     } catch (err) {
       alert(err?.response?.data?.msg || "Login failed.");
     }

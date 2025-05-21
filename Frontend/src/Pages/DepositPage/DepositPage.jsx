@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./DepositPage.module.css";
 import { BsCurrencyBitcoin } from "react-icons/bs";
 import { AiFillBank } from "react-icons/ai";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "../../Context/AuthContext"; // adjust path if needed
 
 import bitcoin from "../../../assets/bitcoin.png";
 import ethereum from "../../../assets/ethereum.png";
@@ -18,7 +21,7 @@ import ERC20 from "../../../assets/ERC20.png";
 import USDpolygon from "../../../assets/USDPolygon.png";
 
 const s = styles;
-const ADMIN_WALLET = "TLckAV3ZZ7Z6GG9ibVMmg3krMaEQDmrG6u"; 
+const ADMIN_WALLET = "TLckAV3ZZ7Z6GG9ibVMmg3krMaEQDmrG6u";
 
 const CurrencyArray = [
   { name: "Bitcoin(BTC)", icon: bitcoin },
@@ -38,18 +41,23 @@ const CurrencyArray = [
 const supportedCoins = ["USD Tether(TRC-20)"];
 
 const DepositPage = () => {
+  const { user } = useAuth();
   const [selected, setSelected] = useState("USD Tether(TRC-20)");
   const [showModal, setShowModal] = useState(false);
   const [amount, setAmount] = useState("");
   const [txId, setTxId] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
   const [fromAddress, setFromAddress] = useState("");
   const [message, setMessage] = useState("");
 
   const handleCoinClick = (coin) => {
     setSelected(coin.name);
-    if (supportedCoins.includes(coin.name)) {
+    if (coin.name === "USD Tether(TRC-20)") {
       setShowModal(true);
+    } else {
+      toast.info(
+        "We are working on this deposit method. Please use TRC-20 USDT for now."
+      );
     }
   };
 
@@ -76,6 +84,11 @@ const DepositPage = () => {
     }
   };
 
+  // Optionally update email if user changes (e.g. after login)
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
+
   return (
     <div className={s.container}>
       <div className={s.rightSide}>
@@ -92,7 +105,11 @@ const DepositPage = () => {
               onClick={() => handleCoinClick(currency)}
             >
               <div className={s.imageBox}>
-                <img src={currency.icon} alt={currency.name} className={s.image} />
+                <img
+                  src={currency.icon}
+                  alt={currency.name}
+                  className={s.image}
+                />
               </div>
               <p>{currency.name}</p>
             </div>
@@ -109,22 +126,31 @@ const DepositPage = () => {
       {showModal && (
         <div className={s.modalOverlay}>
           <div className={s.modal}>
-            <button className={s.closeButton} onClick={() => setShowModal(false)}>
+            <button
+              className={s.closeButton}
+              onClick={() => setShowModal(false)}
+            >
               ✕
             </button>
             <h2>{selected} Deposit</h2>
 
             <div className={s.instructions}>
-              <p><strong>📌 Instructions:</strong></p>
+              <p>
+                <strong>📌 Instructions:</strong>
+              </p>
               <ol>
                 <li>Go to your crypto wallet (Trust Wallet, Binance, etc.)</li>
-                <li>Select <strong>USDT (TRC-20)</strong></li>
+                <li>
+                  Select <strong>USDT (TRC-20)</strong>
+                </li>
                 <li>Send the amount to the wallet address below</li>
                 <li>After sending, fill and submit this form</li>
               </ol>
             </div>
 
-            <p><strong>Send to Wallet:</strong></p>
+            <p>
+              <strong>Send to Wallet:</strong>
+            </p>
             <code>{ADMIN_WALLET}</code>
 
             <form onSubmit={handleSubmit} className={s.form}>
@@ -161,6 +187,7 @@ const DepositPage = () => {
           </div>
         </div>
       )}
+      <ToastContainer position="top-center" autoClose={2000} />
     </div>
   );
 };
