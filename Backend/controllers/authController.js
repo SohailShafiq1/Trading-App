@@ -49,7 +49,7 @@ const register = async (req, res) => {
           affiliateCode: referralCode,
         });
         if (affiliate) {
-          affiliate.team.push(user._id);
+          affiliate.team.push(email); // Add user email instead of ID
           await affiliate.save();
         }
       } catch (affiliateError) {

@@ -40,8 +40,7 @@ const AffiliateSchema = new mongoose.Schema(
     },
     team: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String,
       },
     ],
     totalEarnings: {
