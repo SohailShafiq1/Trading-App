@@ -240,7 +240,7 @@ const PrizePool = () => {
             If you don't complete a level in time, you'll be reset to Level 1.
           </p>
 
-          {error && <div className={styles.error}>{error}</div>}
+      
 
           <div className={styles.timerContainer}>
             <b>Time left for Level {affiliateData?.level || 1}: </b>
@@ -261,10 +261,7 @@ const PrizePool = () => {
                 >
                   <h2 className={styles.id}>Level {item.id}</h2>
                   <h2 className={styles.name}>{item.prize}</h2>
-                  <p className={styles.timeLimit}>
-                    Time Limit: {item.timeLimit} days
-                  </p>
-
+                
                   {status === "completed" ? (
                     <button
                       className={`${styles.button} ${styles.completedButton}`}
