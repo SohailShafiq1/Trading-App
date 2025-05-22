@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
@@ -20,7 +26,7 @@ export const AffiliateAuthProvider = ({ children }) => {
     if (token && !isTokenExpired(token)) {
       try {
         const decoded = jwtDecode(token);
-        return { id: decoded.id, email: decoded.email }; // Adjust if your token contains other info
+        return { id: decoded.id, email: decoded.email };
       } catch {
         return null;
       }
@@ -30,21 +36,30 @@ export const AffiliateAuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(true);
 
-  const fetchAffiliate = async (token) => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/affiliate/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setAffiliate(res.data.affiliate || res.data);
-      console.log("Affiliate fetched successfully:", res.data.affiliate);
-    } catch {
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const logout = useCallback(() => {
+    localStorage.removeItem("affiliate_token");
+    setAffiliate(null);
+  }, []);
+
+  const fetchAffiliate = useCallback(
+    async (token) => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/affiliate/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setAffiliate(res.data.affiliate || res.data);
+        console.log("Affiliate fetched successfully:", res.data.affiliate);
+      } catch (err) {
+        console.error("Error fetching affiliate:", err);
+        logout();
+      } finally {
+        setLoading(false);
+      }
+    },
+    [logout]
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("affiliate_token");
@@ -53,21 +68,30 @@ export const AffiliateAuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [fetchAffiliate]);
 
   const login = async ({ email, password }) => {
-    const res = await axios.post(`${BACKEND_URL}/api/affiliate/login`, {
-      email,
-      password,
-    });
-    localStorage.setItem("affiliate_token", res.data.token);
-    setAffiliate(res.data.affiliate || res.data); // Adjust based on structure
-    setLoading(false);
-  };
+    try {
+      const res = await axios.post(`${BACKEND_URL}/api/affiliate/login`, {
+        email,
+        password,
+      });
 
-  const logout = () => {
-    localStorage.removeItem("affiliate_token");
-    setAffiliate(null);
+      const token = res.data.token;
+
+      if (token) {
+        localStorage.setItem("affiliate_token", token);
+        await fetchAffiliate(token); // Refetch full affiliate details
+      } else {
+        console.error("No token in response:", res.data);
+      }
+
+      console.log("Login successful:", res.data);
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

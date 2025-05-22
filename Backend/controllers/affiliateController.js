@@ -1,13 +1,21 @@
-import { log } from "console";
+// controllers/affiliate.controller.js
 import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
+
+const createToken = (affiliate) => {
+  return jwt.sign(
+    { id: affiliate._id, email: affiliate.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+};
 
 export const registerAffiliate = async (req, res) => {
   try {
     const { email, password, country, currency = "USD" } = req.body;
 
-    // Basic validation
     if (!email || !password || !country) {
       return res.status(400).json({
         success: false,
@@ -15,16 +23,13 @@ export const registerAffiliate = async (req, res) => {
       });
     }
 
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    // Check for existing affiliate
     const existingAffiliate = await Affiliate.findOne({ email });
     if (existingAffiliate) {
       return res.status(400).json({
@@ -33,16 +38,14 @@ export const registerAffiliate = async (req, res) => {
       });
     }
 
-    // Generate affiliate code and link
     const code = crypto.randomBytes(3).toString("hex").toUpperCase();
     const referralLink = `${process.env.BASE_URL}/signup?ref=${code}`;
 
-    // Create new affiliate
     const affiliate = new Affiliate({
       email,
       password,
       country,
-      currency: currency.toUpperCase(), // Normalize to uppercase
+      currency: currency.toUpperCase(),
       user: user._id,
       affiliateCode: code,
       referralLink,
@@ -50,7 +53,7 @@ export const registerAffiliate = async (req, res) => {
 
     await affiliate.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Affiliate registration successful",
       data: {
@@ -72,38 +75,67 @@ export const registerAffiliate = async (req, res) => {
 export const loginAffiliate = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const affiliate = await Affiliate.findOne({ email });
-    if (!affiliate) return res.status(404).json({ msg: "Affiliate not found" });
+
+    const affiliate = await Affiliate.findOne({ email }).select("+password");
+    if (!affiliate)
+      return res
+        .status(404)
+        .json({ success: false, message: "Affiliate not found" });
 
     const isMatch = await affiliate.comparePassword(password);
-    if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
-    console.log("Affiliate login successful", affiliate);
-    res.status(200).json({
-      email: affiliate.email,
-      affiliateId: affiliate._id,
-      referralLink: affiliate.referralLink,
-      level: affiliate.level,
-      team: affiliate.team,
-      code: affiliate.affiliateCode,
+    if (!isMatch)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+
+    const token = createToken(affiliate);
+
+    return res.status(200).json({
+      success: true,
+      token,
+      affiliate: {
+        id: affiliate._id,
+        email: affiliate.email,
+        referralLink: affiliate.referralLink,
+        level: affiliate.level,
+        team: affiliate.team,
+        code: affiliate.affiliateCode,
+      },
+      message: "Affiliate login successful",
     });
   } catch (err) {
-    res.status(500).json({ msg: "Server error", error: err.message });
+    console.error("Login error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error", error: err.message });
   }
 };
 
 export const getAffiliateDetails = async (req, res) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
-
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "No authentication token provided",
-    });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const affiliate = await Affiliate.findById(decoded.id);
+    const authHeader = req.header("Authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No authentication token provided",
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired token",
+      });
+    }
+
+    const affiliate = await Affiliate.findById(decoded.id).select("-password");
 
     if (!affiliate) {
       return res.status(404).json({
@@ -112,15 +144,15 @@ export const getAffiliateDetails = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       affiliate,
     });
   } catch (error) {
-    console.error("Fetch affiliate error:", error);
-    res.status(401).json({
+    console.error("Server error while fetching affiliate details:", error);
+    return res.status(500).json({
       success: false,
-      message: "Invalid or expired token",
+      message: "Server error while fetching affiliate details",
     });
   }
 };
@@ -129,7 +161,6 @@ export const getTeamUsersByAffiliateEmail = async (req, res) => {
   try {
     const { email } = req.params;
 
-    // 1. Find affiliate by email
     const affiliate = await Affiliate.findOne({ email: email.toLowerCase() });
     if (!affiliate) {
       return res
@@ -137,10 +168,9 @@ export const getTeamUsersByAffiliateEmail = async (req, res) => {
         .json({ success: false, message: "Affiliate not found" });
     }
 
-    // 2. Get users whose emails match those in the affiliate's team
     const teamUsers = await User.find({
       email: { $in: affiliate.team },
-    }).select("-password"); // exclude password field
+    }).select("-password");
 
     return res.status(200).json({
       success: true,
