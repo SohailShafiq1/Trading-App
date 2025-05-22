@@ -1,63 +1,127 @@
 import React, { useState, useEffect } from "react";
 import styles from "./PrizePool.module.css";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
-const s = styles;
 
 const PrizeArray = [
-  { id: 1, prize: "100$", timeLimit: 5, conditions: { deposit: "$2500", profit: "$2000", ftds: "10" } },
-  { id: 2, prize: "300$", timeLimit: 5, conditions: { deposit: "$3000", profit: "$2500", ftds: "15" } },
-  { id: 3, prize: "500$", timeLimit: 5, conditions: { deposit: "$4000", profit: "$3000", ftds: "20" } },
-  { id: 4, prize: "1000$", timeLimit: 5, conditions: { deposit: "$5000", profit: "$4000", ftds: "25" } },
-  { id: 5, prize: "5000$", timeLimit: 5, conditions: { deposit: "$7000", profit: "$6000", ftds: "35" } },
-  { id: 6, prize: "15,000$", timeLimit: 3, conditions: { deposit: "$10000", profit: "$9000", ftds: "50" } },
-  { id: 7, prize: "30,000$", timeLimit: 3, conditions: { deposit: "$15000", profit: "$14000", ftds: "70" } },
+  { id: 1, prize: "100$", timeLimit: 5, conditions: { deposit: 2500, profit: 2000 } },
+  { id: 2, prize: "300$", timeLimit: 5, conditions: { deposit: 3000, profit: 2500 } },
+  { id: 3, prize: "500$", timeLimit: 5, conditions: { deposit: 4000, profit: 3000 } },
+  { id: 4, prize: "1000$", timeLimit: 5, conditions: { deposit: 5000, profit: 4000 } },
+  { id: 5, prize: "5000$", timeLimit: 5, conditions: { deposit: 7000, profit: 6000 } },
+  { id: 6, prize: "15,000$", timeLimit: 3, conditions: { deposit: 10000, profit: 9000 } },
+  { id: 7, prize: "30,000$", timeLimit: 3, conditions: { deposit: 15000, profit: 14000 } },
 ];
 
 const PrizePool = () => {
-  const [activePopup, setActivePopup] = useState(null);
   const { affiliate } = useAffiliateAuth();
-  const userLevel = affiliate?.level || 1;
-  const [levelStartTime, setLevelStartTime] = useState(
-    () => localStorage.getItem("levelStartTime") || Date.now()
-  );
+  const [activePopup, setActivePopup] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [affiliateData, setAffiliateData] = useState(affiliate);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [timeExpired, setTimeExpired] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // Fetch and update affiliate data
   useEffect(() => {
-    const currentLevel = PrizeArray.find((l) => l.id === userLevel);
-    const start = new Date(levelStartTime).getTime();
-    const now = Date.now();
-    const msLeft = start + currentLevel.timeLimit * 24 * 60 * 60 * 1000 - now;
-    setTimeLeft(msLeft > 0 ? msLeft : 0);
+    const fetchData = async () => {
+      if (!affiliate?.email) return;
 
-    const timer = setInterval(() => {
-      const now = Date.now();
-      const msLeft = start + currentLevel.timeLimit * 24 * 60 * 60 * 1000 - now;
-      setTimeLeft(msLeft > 0 ? msLeft : 0);
-      if (msLeft <= 0) {
-        setLevelStartTime(Date.now());
-        localStorage.setItem("levelStartTime", Date.now());
+      try {
+        setIsLoading(true);
+        
+        // First update team totals
+        await fetch(
+          `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
+          { credentials: "include" }
+        );
+
+        // Then get updated affiliate data
+        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+          credentials: "include",
+        });
+        
+        if (!res.ok) throw new Error("Failed to fetch affiliate data");
+        
+        const data = await res.json();
+        setAffiliateData(data.user || data);
+        
+        // Check level status after loading data
+        await checkLevelStatus();
+      } catch (err) {
+        console.error("Error fetching affiliate data:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+        setIsInitialLoad(false);
       }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [userLevel, levelStartTime]);
+    };
 
-  const checkConditionsMet = (level) => {
-    return false;
-  };
+    fetchData();
+  }, [affiliate?.email]);
 
-  const handleLevelComplete = () => {
-    const currentLevel = PrizeArray.find((l) => l.id === userLevel);
-    if (checkConditionsMet(currentLevel)) {
-      if (userLevel < PrizeArray.length) {
-        setLevelStartTime(Date.now());
-        localStorage.setItem("levelStartTime", Date.now());
+  // Check level status and timer
+  const checkLevelStatus = async () => {
+    if (!affiliate?.email) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/affiliate/check-level-status/${affiliate.email}`,
+        { credentials: "include" }
+      );
+      const data = await response.json();
+
+      if (data.timeExpired) {
+        setTimeExpired(true);
+        // Refresh affiliate data if level was reset
+        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+          credentials: "include",
+        });
+        const updated = await res.json();
+        setAffiliateData(updated.user || updated);
+      } else {
+        setTimeExpired(false);
       }
-    } else {
-      setActivePopup(currentLevel);
+
+      if (data.timeLeft !== undefined) {
+        setTimeLeft(data.timeLeft);
+      }
+    } catch (err) {
+      console.error("Error checking level status:", err);
     }
   };
 
+  // Set up interval for checking level status
+  useEffect(() => {
+    if (isInitialLoad) return;
+
+    const interval = setInterval(() => {
+      checkLevelStatus();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [isInitialLoad, affiliate?.email]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1000) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
   const formatTime = (ms) => {
+    if (ms <= 0) return "Time expired";
+
     const totalSeconds = Math.floor(ms / 1000);
     const days = Math.floor(totalSeconds / (24 * 3600));
     const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
@@ -66,65 +130,262 @@ const PrizePool = () => {
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
   };
 
+  const checkLevelConditions = (level) => {
+    if (!affiliateData) return false;
+    
+    const depositMet = affiliateData.totalDeposit >= level.conditions.deposit;
+    const profitMet = affiliateData.totalProfit >= level.conditions.profit;
+    
+    return {
+      allMet: depositMet && profitMet,
+      depositMet,
+      profitMet,
+      requiredDeposit: level.conditions.deposit,
+      requiredProfit: level.conditions.profit,
+      currentDeposit: affiliateData.totalDeposit || 0,
+      currentProfit: affiliateData.totalProfit || 0,
+    };
+  };
+
+  const handleLevelComplete = async () => {
+    if (!affiliate?.email) return;
+    setIsLoading(true);
+    setError(null);
+    setTimeExpired(false);
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/affiliate/complete-level/${affiliate.email}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to complete level");
+      }
+
+      if (data.timeExpired) {
+        setTimeExpired(true);
+      }
+
+      if (data.success) {
+        // Refresh data after level completion
+        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+          credentials: "include",
+        });
+        const updated = await res.json();
+        setAffiliateData(updated.user || updated);
+        
+        // Check the new level status
+        await checkLevelStatus();
+      } else {
+        const currentLevel = PrizeArray.find(
+          (l) => l.id === (affiliateData?.level || 1)
+        );
+        
+        if (currentLevel) {
+          const conditions = checkLevelConditions(currentLevel);
+          setActivePopup({
+            ...currentLevel,
+            ...conditions
+          });
+        }
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error("Error completing level:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getLevelStatus = (levelId) => {
+    const currentLevel = affiliateData?.level || 1;
+    if (levelId < currentLevel) {
+      return "completed";
+    } else if (levelId === currentLevel) {
+      const level = PrizeArray.find(l => l.id === levelId);
+      const conditions = checkLevelConditions(level);
+      return conditions.allMet ? "current-completed" : "current";
+    } else {
+      return "locked";
+    }
+  };
+
+  if (isInitialLoad) {
+    return <div className={styles.loading}>Loading prize pool data...</div>;
+  }
+
   return (
-    <div className={s.container}>
-      <div className={s.prizePool}>
-        <div className={s.box}>
-          <h1>Prize Pool</h1>
-          <p>
-            Hit all three targets to claim your reward. You can choose to take
-            the prize or receive a cash alternative.
+    <div className={styles.container}>
+      {timeExpired && (
+        <div className={styles.timeExpiredBanner}>
+          Time expired! You've been reset to Level 1
+        </div>
+      )}
+      
+      <div className={styles.prizePool}>
+        <div className={styles.box}>
+          <h1 className={styles.Header}>Prize Pool</h1>
+          <p className={styles.description}>
+            Hit all targets within the time limit to claim your reward. 
+            First 5 levels have 5 days each, last 2 levels have 3 days each.
+            If you don't complete a level in time, you'll be reset to Level 1.
           </p>
-          <div>
-            <b>Time left for Level {userLevel}: </b>
-            <span className={s.timer}>{formatTime(timeLeft)}</span>
+
+          {error && <div className={styles.error}>{error}</div>}
+
+          <div className={styles.timerContainer}>
+            <b>Time left for Level {affiliateData?.level || 1}: </b>
+            <span className={styles.timer}>{formatTime(timeLeft)}</span>
           </div>
-          <div className={s.prizes}>
-            {PrizeArray.map((item) => (
-              <div key={item.id} className={s.prize}>
-                <h2 className={s.id}>Level {item.id}</h2>
-                <h2 className={s.name}>{item.prize}</h2>
-                
-                {item.id === userLevel ? (
-                  <button
-                    className={s.button}
-                    onClick={handleLevelComplete}
-                  >
-                    Claim
-                  </button>
-                ) : (
-                  <button
-                    className={s.button}
-                    disabled
-                    style={{
-                      background: "#ccc",
-                      cursor: "not-allowed",
-                      color: "#000",
-                    }}
-                  >
-                    {item.id < userLevel ? "Completed" : "Locked"}
-                  </button>
-                )}
-              </div>
-            ))}
+
+          <div className={styles.prizes}>
+            {PrizeArray.map((item) => {
+              const status = getLevelStatus(item.id);
+              return (
+                <div
+                  key={item.id}
+                  className={`${styles.prize} ${
+                    status === "completed" ? styles.completed : ""
+                  } ${status === "current" ? styles.current : ""} ${
+                    status === "current-completed" ? styles.currentCompleted : ""
+                  }`}
+                >
+                  <h2 className={styles.id}>Level {item.id}</h2>
+                  <h2 className={styles.name}>{item.prize}</h2>
+                  <p className={styles.timeLimit}>
+                    Time Limit: {item.timeLimit} days
+                  </p>
+
+                  {status === "completed" ? (
+                    <button
+                      className={`${styles.button} ${styles.completedButton}`}
+                      disabled
+                    >
+                      Completed
+                    </button>
+                  ) : status === "current-completed" ? (
+                    <button
+                      className={`${styles.button} ${styles.registerBtn}`}
+                      onClick={handleLevelComplete}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Processing..." : "Claim Now"}
+                    </button>
+                  ) : status === "current" ? (
+                    <button
+                      className={`${styles.button} ${styles.currentButton}`}
+                      onClick={() => {
+                        const conditions = checkLevelConditions(item);
+                        setActivePopup({
+                          ...item,
+                          ...conditions
+                        });
+                      }}
+                    >
+                      View Requirements
+                    </button>
+                  ) : (
+                    <button
+                      className={`${styles.button} ${styles.lockedButton}`}
+                      disabled
+                    >
+                      Locked
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
       {activePopup && (
-        <div className={s.popupOverlay}>
-          <div className={s.popup}>
-            <h3 className={s.levelTitle}>
-              Level {activePopup.id}
-              <span className={s.close} onClick={() => setActivePopup(null)}>
+        <div className={styles.popupOverlay}>
+          <div className={styles.popup}>
+            <h3 className={styles.levelTitle}>
+              Level {activePopup.id} Requirements
+              <span
+                className={styles.close}
+                onClick={() => setActivePopup(null)}
+              >
                 ×
               </span>
             </h3>
-            <ul>
-              <li>🟢 Minimum deposit {activePopup.conditions.deposit}</li>
-              <li>🟢 Minimum profit must be {activePopup.conditions.profit}</li>
-              <li>🟢 Minimum FTDs should be {activePopup.conditions.ftds}</li>
-            </ul>
+
+            <div className={styles.timeLimitInfo}>
+              Time Limit: {activePopup.timeLimit} days
+            </div>
+
+            <div className={styles.requirementsList}>
+              <div className={styles.requirementItem}>
+                <span className={styles.requirementLabel}>
+                  Minimum Deposit:
+                </span>
+                <span className={styles.requirementValue}>
+                  ${activePopup.requiredDeposit}
+                </span>
+                <span
+                  className={
+                    activePopup.depositMet
+                      ? styles.requirementMet
+                      : styles.requirementNotMet
+                  }
+                >
+                  {activePopup.depositMet ? "✓" : "✗"}
+                </span>
+                <span className={styles.yourValue}>
+                  (Your team: ${activePopup.currentDeposit})
+                </span>
+              </div>
+
+              <div className={styles.requirementItem}>
+                <span className={styles.requirementLabel}>Minimum Profit:</span>
+                <span className={styles.requirementValue}>
+                  ${activePopup.requiredProfit}
+                </span>
+                <span
+                  className={
+                    activePopup.profitMet
+                      ? styles.requirementMet
+                      : styles.requirementNotMet
+                  }
+                >
+                  {activePopup.profitMet ? "✓" : "✗"}
+                </span>
+                <span className={styles.yourValue}>
+                  (Your team: ${activePopup.currentProfit})
+                </span>
+              </div>
+            </div>
+
+            {activePopup.allMet ? (
+              <button
+                className={styles.claimButton}
+                onClick={() => {
+                  setActivePopup(null);
+                  handleLevelComplete();
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "Claiming..." : "Claim Prize"}
+              </button>
+            ) : (
+              <button
+                className={styles.closePopup}
+                onClick={() => setActivePopup(null)}
+              >
+                Close
+              </button>
+            )}
           </div>
         </div>
       )}

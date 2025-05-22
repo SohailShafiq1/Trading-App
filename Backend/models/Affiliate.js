@@ -47,6 +47,14 @@ const AffiliateSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalDeposit: {
+      type: Number,
+      default: 0,
+    },
+    totalProfit: {
+      type: Number,
+      default: 0,
+    },
     level: {
       type: Number,
       default: 1,

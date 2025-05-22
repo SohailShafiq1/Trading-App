@@ -3,6 +3,16 @@ import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
 
+const PrizeArray = [
+  { id: 1, prize: "100$", timeLimit: 5, conditions: { deposit: "$2500", profit: "$2000" } },
+  { id: 2, prize: "300$", timeLimit: 5, conditions: { deposit: "$3000", profit: "$2500" } },
+  { id: 3, prize: "500$", timeLimit: 5, conditions: { deposit: "$4000", profit: "$3000" } },
+  { id: 4, prize: "1000$", timeLimit: 5, conditions: { deposit: "$5000", profit: "$4000" } },
+  { id: 5, prize: "5000$", timeLimit: 5, conditions: { deposit: "$7000", profit: "$6000" } },
+  { id: 6, prize: "15,000$", timeLimit: 3, conditions: { deposit: "$10000", profit: "$9000" } },
+  { id: 7, prize: "30,000$", timeLimit: 3, conditions: { deposit: "$15000", profit: "$14000" } },
+];
+
 export const registerAffiliate = async (req, res) => {
   try {
     const { email, password, country, currency = "USD" } = req.body;
@@ -130,5 +140,136 @@ export const getTeamUsersByAffiliateEmail = async (req, res) => {
       success: false,
       message: "Server error",
     });
+  }
+};
+
+export const updateTeamTotals = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const affiliate = await Affiliate.findOne({ email });
+    if (!affiliate) return res.status(404).json({ error: "Affiliate not found" });
+
+    // Find all team users by email
+    const teamUsers = await User.find({ email: { $in: affiliate.team } });
+
+    let totalDeposit = 0;
+    let totalProfit = 0;
+
+    teamUsers.forEach((user) => {
+      if (Array.isArray(user.transactions)) {
+        totalDeposit += user.transactions
+          .filter((t) => t.type === "deposit" && t.status === "success")
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+      }
+      if (Array.isArray(user.dailyProfits)) {
+        totalProfit += user.dailyProfits.reduce(
+          (sum, d) => sum + (d.profit || 0),
+          0
+        );
+      }
+    });
+
+    affiliate.totalDeposit = totalDeposit;
+    affiliate.totalProfit = totalProfit;
+    await affiliate.save();
+
+    res.json({ success: true, totalDeposit, totalProfit });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update team totals" });
+  }
+};
+// Update the completeLevel function
+export const completeLevel = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const affiliate = await Affiliate.findOne({ email });
+    if (!affiliate) return res.status(404).json({ error: "Affiliate not found" });
+
+    const currentLevel = affiliate.level || 1;
+    const prize = PrizeArray.find((l) => l.id === currentLevel);
+    if (!prize) return res.status(400).json({ error: "Invalid level" });
+
+    // Check if time has expired
+    const timeElapsed = Date.now() - new Date(affiliate.levelStartTime).getTime();
+    const timeLimitMs = prize.timeLimit * 24 * 60 * 60 * 1000;
+    
+    if (timeElapsed > timeLimitMs) {
+      // Time expired - reset to level 1
+      affiliate.level = 1;
+      affiliate.levelStartTime = Date.now();
+      await affiliate.save();
+      
+      return res.status(400).json({
+        success: false,
+        message: "Time expired! You've been reset to Level 1",
+        timeExpired: true
+      });
+    }
+
+    // Check conditions
+    if (
+      affiliate.totalDeposit < prize.conditions.deposit ||
+      affiliate.totalProfit < prize.conditions.profit
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Conditions not met",
+        current: {
+          deposit: affiliate.totalDeposit,
+          profit: affiliate.totalProfit,
+        },
+        timeLeft: timeLimitMs - timeElapsed
+      });
+    }
+
+    // Update level
+    affiliate.level = currentLevel + 1;
+    affiliate.levelStartTime = Date.now();
+    await affiliate.save();
+
+    res.json({ success: true, newLevel: affiliate.level });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Add this new function to check level status
+export const checkLevelStatus = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const affiliate = await Affiliate.findOne({ email });
+    if (!affiliate) return res.status(404).json({ error: "Affiliate not found" });
+
+    const currentLevel = affiliate.level || 1;
+    const prize = PrizeArray.find((l) => l.id === currentLevel);
+    if (!prize) return res.status(400).json({ error: "Invalid level" });
+
+    const timeElapsed = Date.now() - new Date(affiliate.levelStartTime).getTime();
+    const timeLimitMs = prize.timeLimit * 24 * 60 * 60 * 1000;
+    const timeLeft = Math.max(0, timeLimitMs - timeElapsed);
+
+    // Check if time has expired
+    if (timeElapsed > timeLimitMs) {
+      // Time expired - reset to level 1
+      affiliate.level = 1;
+      affiliate.levelStartTime = Date.now();
+      await affiliate.save();
+      
+      return res.json({
+        level: 1,
+        timeExpired: true,
+        timeLeft: PrizeArray[0].timeLimit * 24 * 60 * 60 * 1000
+      });
+    }
+
+    res.json({
+      level: affiliate.level,
+      timeLeft,
+      conditions: prize.conditions,
+      currentDeposit: affiliate.totalDeposit,
+      currentProfit: affiliate.totalProfit
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
   }
 };
