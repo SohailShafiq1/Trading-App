@@ -25,7 +25,7 @@ const AffiliateProgram = () => {
   useEffect(() => {
     if (affiliate) {
       setReferralLink(affiliate.referralLink);
-      setReferralCode(affiliate.code);
+      setReferralCode(affiliate.affiliateCode);
     }
   }, [affiliate]);
 
@@ -165,7 +165,11 @@ const AffiliateProgram = () => {
 
       {/* Table Display */}
       <div className={s.tableContainer}>
-        <TeamData activeTable={activeTable} traders={traders} profits={profits} />
+        <TeamData
+          activeTable={activeTable}
+          traders={traders}
+          profits={profits}
+        />
       </div>
     </div>
   );
