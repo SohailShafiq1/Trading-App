@@ -1,55 +1,117 @@
 import { BiRightArrowCircle } from "react-icons/bi";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./WithdrawPage.module.css";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import { useAuth } from "../../Context/AuthContext";
+import { useAccountType } from "../../Context/AccountTypeContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 const s = styles;
 
 const WithdrawPage = () => {
   const { userAssets, setUserAssets } = useUserAssets();
   const { user } = useAuth();
+  const { isDemo } = useAccountType();
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [purse, setPurse] = useState("");
   const [network, setNetwork] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("USD Tether");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(true);
+
+  // Check verification status
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!user?._id) {
+        setCheckingVerification(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/users/is-verified/${user._id}`
+        );
+        const data = await response.json();
+        setIsVerified(data.verified);
+
+        if (!data.verified) {
+          toast.warn("Please verify your account to make withdrawals", {
+            autoClose: 3000,
+          });
+        }
+      } catch (err) {
+        console.error("Error checking verification status:", err);
+        toast.error("Failed to check verification status", {
+          autoClose: 2000,
+        });
+      } finally {
+        setCheckingVerification(false);
+      }
+    };
+
+    checkVerification();
+  }, [user?._id]);
 
   const handleWithdraw = async () => {
+    if (isDemo) {
+      toast.error("Please switch to a Live account to make withdrawals", {
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    if (!isVerified) {
+      toast.error("Please verify your account to make withdrawals", {
+        autoClose: 3000,
+      });
+      return;
+    }
+
     if (withdrawAmount < 10) {
-      setPopupMessage("Minimum withdrawal amount is $10.");
-      setShowPopup(true);
+      toast.warn("Minimum withdrawal amount is $10", {
+        autoClose: 2500,
+      });
       return;
     }
 
     if (withdrawAmount > userAssets) {
-      setPopupMessage("Insufficient balance.");
-      setShowPopup(true);
+      toast.error("Insufficient balance for withdrawal", {
+        autoClose: 2500,
+      });
       return;
     }
 
     if (!purse || !network) {
-      setPopupMessage("Please fill in all the required fields.");
-      setShowPopup(true);
+      toast.error("Please fill in all the required fields", {
+        autoClose: 2500,
+      });
       return;
     }
 
     const sanitizedPurse = purse.replace(/[^a-z0-9]/g, "");
 
     if (sanitizedPurse !== purse) {
-      setPopupMessage("Purse can only contain lowercase letters and numbers.");
-      setShowPopup(true);
+      toast.error(
+        "Wallet address can only contain lowercase letters and numbers",
+        {
+          autoClose: 3000,
+        }
+      );
       return;
     }
+
+    // Show loading toast
+    const toastId = toast.loading("Processing your withdrawal request...");
 
     try {
       const response = await fetch("http://localhost:5000/api/users/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: user.email, // Use the logged-in user's email
+          email: user.email,
           amount: withdrawAmount,
           purse: sanitizedPurse,
           network,
@@ -60,23 +122,39 @@ const WithdrawPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setPopupMessage("Withdrawal request submitted successfully.");
-        setShowPopup(true);
-        setUserAssets((prev) => prev - withdrawAmount); // Deduct locally
+        toast.update(toastId, {
+          render: "Withdrawal request submitted successfully!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
 
-        // Reset all fields
+        setUserAssets((prev) => prev - withdrawAmount);
         setWithdrawAmount(0);
         setPurse("");
         setNetwork("");
         setPaymentMethod("USD Tether");
+
+        // Additional success toast
+        toast.success(`$${withdrawAmount} withdrawal initiated`, {
+          autoClose: 3000,
+        });
       } else {
-        setPopupMessage(data.error || "Failed to submit withdrawal request.");
-        setShowPopup(true);
+        toast.update(toastId, {
+          render: data.error || "Failed to process withdrawal",
+          type: "error",
+          isLoading: false,
+          autoClose: 3000,
+        });
       }
     } catch (err) {
       console.error("Error submitting withdrawal request:", err);
-      setPopupMessage("An error occurred. Please try again.");
-      setShowPopup(true);
+      toast.update(toastId, {
+        render: "Network error. Please try again",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     }
   };
 
@@ -99,6 +177,21 @@ const WithdrawPage = () => {
         <div className={s.form}>
           <h3 className={s.sectionTitle}>Withdrawal:</h3>
 
+          {isDemo && (
+            <div className={s.demoWarning}>
+              <p>
+                ⚠️ You cannot withdraw from a demo account. Please switch to a
+                Live account.
+              </p>
+            </div>
+          )}
+
+          {!isVerified && !isDemo && (
+            <div className={s.verificationWarning}>
+              <p>⚠️ Please verify your account to make withdrawals.</p>
+            </div>
+          )}
+
           <div className={s.row}>
             <div className={s.inputGroup}>
               <label>Amount</label>
@@ -108,6 +201,8 @@ const WithdrawPage = () => {
                   placeholder="10"
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+                  disabled={isDemo || !isVerified}
+                  min="10"
                 />
                 <span className={s.suffix}>USD</span>
               </div>
@@ -118,6 +213,7 @@ const WithdrawPage = () => {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
+                disabled={isDemo || !isVerified}
               >
                 <option>USD Tether</option>
                 <option>PayPal</option>
@@ -133,6 +229,7 @@ const WithdrawPage = () => {
               placeholder="Enter your wallet address or account"
               value={purse}
               onChange={(e) => setPurse(e.target.value)}
+              disabled={isDemo || !isVerified}
             />
           </div>
 
@@ -141,6 +238,7 @@ const WithdrawPage = () => {
             <select
               value={network}
               onChange={(e) => setNetwork(e.target.value)}
+              disabled={isDemo || !isVerified}
             >
               <option value="">Select Network</option>
               <option>Ethereum</option>
@@ -149,8 +247,17 @@ const WithdrawPage = () => {
             </select>
           </div>
 
-          <button className={s.confirmBtn} onClick={handleWithdraw}>
-            Confirm <BiRightArrowCircle className={s.icon} />
+          <button
+            className={s.confirmBtn}
+            onClick={handleWithdraw}
+            disabled={isDemo || !isVerified}
+          >
+            {isDemo
+              ? "Switch to Live Account"
+              : !isVerified
+              ? "Verify Your Account"
+              : "Confirm"}
+            <BiRightArrowCircle className={s.icon} />
           </button>
 
           <div className={s.note}>
@@ -163,14 +270,18 @@ const WithdrawPage = () => {
         </div>
       </div>
 
-      {showPopup && (
-        <div className={s.popup}>
-          <div className={s.popupContent}>
-            <p>{popupMessage}</p>
-            <button onClick={() => setShowPopup(false)}>Close</button>
-          </div>
-        </div>
-      )}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };

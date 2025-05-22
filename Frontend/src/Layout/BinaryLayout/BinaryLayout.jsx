@@ -24,7 +24,7 @@ const BinaryLayout = () => {
   const { user, logout } = useAuth();
   const { logoutAffiliate } = useAffiliateAuth();
   const { userAssets } = useUserAssets();
-  const { isDemo, setIsDemo, demo_assets } = useAccountType();
+  const { isDemo, setIsDemo, demo_assets, setDemo_assets } = useAccountType();
   const assets =
     typeof userAssets === "number" ? userAssets.toFixed(2) : "0.00";
 

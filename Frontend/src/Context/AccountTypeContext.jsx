@@ -5,7 +5,7 @@ const AccountTypeContext = createContext();
 
 export const AccountTypeProvider = ({ children }) => {
   const [isDemo, setIsDemo] = useState(false); // default to Live
-  const demo_assets = 10000;
+  const [demo_assets, setDemo_assets] = useState(10000);
 
   // On mount: read from localStorage
   useEffect(() => {
@@ -21,7 +21,9 @@ export const AccountTypeProvider = ({ children }) => {
   }, [isDemo]);
 
   return (
-    <AccountTypeContext.Provider value={{ isDemo, setIsDemo, demo_assets }}>
+    <AccountTypeContext.Provider
+      value={{ isDemo, setIsDemo, demo_assets, setDemo_assets }}
+    >
       {children}
     </AccountTypeContext.Provider>
   );

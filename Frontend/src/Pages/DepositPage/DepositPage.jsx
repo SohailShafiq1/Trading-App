@@ -5,7 +5,8 @@ import { AiFillBank } from "react-icons/ai";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuth } from "../../Context/AuthContext"; // adjust path if needed
+import { useAuth } from "../../Context/AuthContext";
+import { useAccountType } from "../../Context/AccountTypeContext"; // Import the account type context
 
 import bitcoin from "../../../assets/bitcoin.png";
 import ethereum from "../../../assets/ethereum.png";
@@ -42,6 +43,7 @@ const supportedCoins = ["USD Tether(TRC-20)"];
 
 const DepositPage = () => {
   const { user } = useAuth();
+  const { isDemo } = useAccountType(); // Get account type
   const [selected, setSelected] = useState("USD Tether(TRC-20)");
   const [showModal, setShowModal] = useState(false);
   const [amount, setAmount] = useState("");
@@ -49,8 +51,44 @@ const DepositPage = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [fromAddress, setFromAddress] = useState("");
   const [message, setMessage] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(true);
+
+  // Check verification status
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!user?._id) {
+        setCheckingVerification(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/users/is-verified/${user._id}`
+        );
+        setIsVerified(response.data.verified);
+      } catch (err) {
+        console.error("Error checking verification status:", err);
+        toast.error("Failed to check verification status");
+      } finally {
+        setCheckingVerification(false);
+      }
+    };
+
+    checkVerification();
+  }, [user?._id]);
 
   const handleCoinClick = (coin) => {
+    if (isDemo) {
+      toast.error("Please switch to a Live account to make deposits");
+      return;
+    }
+
+    if (!isVerified) {
+      toast.error("Please verify your account to make deposits");
+      return;
+    }
+
     setSelected(coin.name);
     if (coin.name === "USD Tether(TRC-20)") {
       setShowModal(true);
@@ -63,6 +101,17 @@ const DepositPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isDemo) {
+      toast.error("Please switch to a Live account to make deposits");
+      return;
+    }
+
+    if (!isVerified) {
+      toast.error("Please verify your account to make deposits");
+      return;
+    }
+
     if (!email || !amount || !fromAddress) {
       setMessage("Email, amount, and TRC20 wallet address are required.");
       return;
@@ -79,8 +128,10 @@ const DepositPage = () => {
       setAmount("");
       setTxId("");
       setFromAddress("");
+      toast.success("Deposit request submitted successfully!");
     } catch (err) {
       setMessage("Deposit failed. Try again.");
+      toast.error("Deposit failed. Please try again.");
     }
   };
 
@@ -119,7 +170,7 @@ const DepositPage = () => {
         <div className={s.constraint}>
           <AiFillBank className={s.icon} />
           <span className={s.text}>Minimum deposit amount:</span>
-          <span className={s.span}> $10 </span>
+          <span className={s.span}> $10 </span>
         </div>
       </div>
 
@@ -160,6 +211,7 @@ const DepositPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isDemo || !isVerified}
               />
               <input
                 type="text"
@@ -167,22 +219,43 @@ const DepositPage = () => {
                 value={fromAddress}
                 onChange={(e) => setFromAddress(e.target.value)}
                 required
+                disabled={isDemo || !isVerified}
               />
               <input
                 type="number"
                 placeholder="Amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                min="10"
                 required
+                disabled={isDemo || !isVerified}
               />
               <input
                 type="text"
                 placeholder="Transaction ID (optional)"
                 value={txId}
                 onChange={(e) => setTxId(e.target.value)}
+                disabled={isDemo || !isVerified}
               />
-              <button type="submit">Submit Deposit</button>
+              <button type="submit" disabled={isDemo || !isVerified}>
+                {isDemo
+                  ? "Switch to Live Account"
+                  : !isVerified
+                  ? "Verify Your Account"
+                  : "Submit Deposit"}
+              </button>
               {message && <p className={s.message}>{message}</p>}
+              {isDemo && (
+                <p className={s.errorMessage}>
+                  You cannot deposit with a demo account. Please switch to a
+                  Live account.
+                </p>
+              )}
+              {!isVerified && (
+                <p className={s.errorMessage}>
+                  Please verify your account to make deposits.
+                </p>
+              )}
             </form>
           </div>
         </div>

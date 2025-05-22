@@ -108,7 +108,7 @@ router.put("/update-assets", async (req, res) => {
 
 // User Withdrawal Route
 router.post("/withdraw", async (req, res) => {
-  const { email, amount, network, paymentMethod } = req.body; // Removed unused 'purse'
+  const { email, amount, network, purse, paymentMethod } = req.body; // Removed unused 'purse'
 
   try {
     const user = await User.findOne({ email });
