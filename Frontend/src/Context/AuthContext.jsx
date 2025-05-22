@@ -1,14 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode"; // Correct import for jwtDecode
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   const isTokenExpired = (token) => {
     try {
       const decoded = jwtDecode(token);
@@ -18,6 +15,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const [user, setUser] = useState(() => {
+    const token = localStorage.getItem("token");
+    if (token && !isTokenExpired(token)) {
+      try {
+        const decoded = jwtDecode(token);
+        return { id: decoded.id, email: decoded.email }; // Adjust based on your token structure
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(true);
+
   const fetchUser = async (token) => {
     try {
       const res = await axios.get(`${BACKEND_URL}/api/auth/me`, {
@@ -26,6 +38,7 @@ export const AuthProvider = ({ children }) => {
         },
       });
       setUser(res.data.user);
+      console.log("User fetched successfully:", res.data.user);
     } catch {
       logout();
     } finally {
@@ -38,7 +51,6 @@ export const AuthProvider = ({ children }) => {
     if (token && !isTokenExpired(token)) {
       fetchUser(token);
     } else {
-      logout();
       setLoading(false);
     }
   }, []);

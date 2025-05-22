@@ -134,7 +134,6 @@ const UserSchema = new mongoose.Schema(
         network: {
           type: String,
           required: true,
-          enum: ["BTC", "ETH", "TRX", "BSC", "LTC", "XRP"],
         },
         paymentMethod: {
           type: String,

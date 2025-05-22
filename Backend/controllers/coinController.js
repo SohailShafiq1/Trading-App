@@ -66,15 +66,13 @@ export const deleteCoin = async (req, res) => {
 export const getCoinCandles = async (req, res) => {
   try {
     const { name, interval } = req.params;
-    const limit = parseInt(req.query.limit) || 200;
 
     const coin = await Coin.findOne({ name });
     if (!coin) return res.status(404).json({ message: "Coin not found" });
 
     const candles = coin.candles
       .filter((c) => c.interval === "30s")
-      .sort((a, b) => new Date(a.time) - new Date(b.time))
-      .slice(-limit);
+      .sort((a, b) => new Date(a.time) - new Date(b.time));
 
     res.json(candles);
   } catch (err) {

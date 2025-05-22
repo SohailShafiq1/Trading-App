@@ -11,9 +11,11 @@ import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import { useAccountType } from "../../Context/AccountTypeContext";
 
 const BinaryChart = () => {
   // State declarations
+  const { isDemo, demo_assets, setDemo_assets } = useAccountType();
   const [coins, setCoins] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState("BTC");
   const [selectedCoinType, setSelectedCoinType] = useState("");
@@ -34,9 +36,15 @@ const BinaryChart = () => {
   const { userAssets, setUserAssets } = useUserAssets();
   const coinSelectorRef = useRef(null);
   const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
+  const [demoAssets, setDemoAssets] = useState(demo_assets);
 
-  // Check verification status
+  // Check verification status (only for real account)
   useEffect(() => {
+    if (isDemo) {
+      setCheckingVerification(false);
+      return;
+    }
+
     const checkVerification = async () => {
       if (!user?._id) {
         setCheckingVerification(false);
@@ -57,7 +65,7 @@ const BinaryChart = () => {
     };
 
     checkVerification();
-  }, [user?._id]);
+  }, [user?._id, isDemo]);
 
   // Close CoinSelector on outside click
   useEffect(() => {
@@ -76,8 +84,10 @@ const BinaryChart = () => {
     };
   }, []);
 
-  // Update user assets in database
+  // Update user assets in database (only for real account)
   const updateUserAssetsInDB = async (newAssets) => {
+    if (isDemo) return;
+
     try {
       await axios.put(`http://localhost:5000/api/users/update-assets`, {
         email: user.email,
@@ -204,6 +214,8 @@ const BinaryChart = () => {
   }, []);
 
   const saveTradeToDB = async (trade) => {
+    if (isDemo) return { status: "demo" };
+
     try {
       const response = await axios.post(
         "http://localhost:5000/api/users/trade",
@@ -221,6 +233,8 @@ const BinaryChart = () => {
   };
 
   const updateTradeResultInDB = async (tradeData) => {
+    if (isDemo) return;
+
     try {
       await axios.put(
         "http://localhost:5000/api/users/trade/result",
@@ -233,10 +247,44 @@ const BinaryChart = () => {
     }
   };
 
+  // Save demo trades to localStorage
+  const saveDemoTrades = (trades) => {
+    const tradesToSave = trades.map((trade) => ({
+      ...trade,
+      startedAt:
+        trade.startedAt instanceof Date
+          ? trade.startedAt.toISOString()
+          : trade.startedAt,
+    }));
+    localStorage.setItem("demoTrades", JSON.stringify(tradesToSave));
+  };
+
+  // Load demo trades from localStorage
+  const loadDemoTrades = () => {
+    const savedTrades = localStorage.getItem("demoTrades");
+    if (!savedTrades) return [];
+
+    try {
+      const parsedTrades = JSON.parse(savedTrades).map((trade) => ({
+        ...trade,
+        startedAt: new Date(trade.startedAt),
+      }));
+      return parsedTrades;
+    } catch (err) {
+      console.error("Error parsing demo trades:", err);
+      return [];
+    }
+  };
+
+  // Save demo assets to localStorage
+  const saveDemoAssets = (assets) => {
+    localStorage.setItem("demoAssets", assets.toString());
+  };
+
   const handleTrade = async (tradeType) => {
     if (isProcessingTrade) return;
 
-    if (!isVerified) {
+    if (!isDemo && !isVerified) {
       toast.error("Please verify your account to start trading");
       return;
     }
@@ -251,7 +299,8 @@ const BinaryChart = () => {
       return;
     }
 
-    if (investment > userAssets) {
+    const currentAssets = isDemo ? demoAssets : userAssets;
+    if (investment > currentAssets) {
       toast.error("Insufficient funds!");
       return;
     }
@@ -264,8 +313,8 @@ const BinaryChart = () => {
       const tradeId = Date.now();
       const startedAt = new Date();
 
-      // Create trade object for database
-      const dbTrade = {
+      // Create trade object
+      const trade = {
         type: tradeType,
         coin: selectedCoin,
         coinType: selectedCoinType,
@@ -277,29 +326,59 @@ const BinaryChart = () => {
         reward: 0,
       };
 
-      // Save to database first
-      await saveTradeToDB(dbTrade);
+      // For demo, just use localStorage
+      if (isDemo) {
+        // Deduct investment from demo assets
+        const newDemoAssets = demoAssets - investment;
+        setDemoAssets(newDemoAssets);
+        saveDemoAssets(newDemoAssets);
+        setDemo_assets(newDemoAssets);
 
-      // Deduct investment
-      const newAssets = userAssets - investment;
-      await updateUserAssetsInDB(newAssets);
-      setUserAssets(newAssets);
+        // Add to local state
+        const newTrade = {
+          id: tradeId,
+          type: tradeType,
+          price: investment,
+          coinPrice: tradePrice,
+          coinName: selectedCoin,
+          remainingTime: timer,
+          status: "running",
+          reward: 0,
+          startedAt,
+          duration: timer,
+          coinType: selectedCoinType,
+          entryPrice: tradePrice,
+          investment: investment,
+        };
 
-      // Add to local state
-      const newTrade = {
-        id: tradeId,
-        type: tradeType,
-        price: investment,
-        coinPrice: tradePrice,
-        coinName: selectedCoin,
-        remainingTime: timer,
-        status: "running",
-        reward: 0,
-        startedAt,
-        duration: timer,
-      };
+        const updatedTrades = [...trades, newTrade];
+        setTrades(updatedTrades);
+        saveDemoTrades(updatedTrades);
+      } else {
+        // For real account, save to database
+        await saveTradeToDB(trade);
 
-      setTrades((prev) => [...prev, newTrade]);
+        // Deduct investment
+        const newAssets = userAssets - investment;
+        await updateUserAssetsInDB(newAssets);
+        setUserAssets(newAssets);
+
+        // Add to local state
+        const newTrade = {
+          id: tradeId,
+          type: tradeType,
+          price: investment,
+          coinPrice: tradePrice,
+          coinName: selectedCoin,
+          remainingTime: timer,
+          status: "running",
+          reward: 0,
+          startedAt,
+          duration: timer,
+        };
+
+        setTrades((prev) => [...prev, newTrade]);
+      }
 
       // Set timeout for trade completion
       setTimeout(async () => {
@@ -331,35 +410,73 @@ const BinaryChart = () => {
             ? (investment * (1 + profitPercentage / 100)).toFixed(2)
             : -investment;
 
-          // Update trade result in database
-          await updateTradeResultInDB({
-            email: user.email,
-            startedAt,
-            result: isWin ? "win" : "loss",
-            reward: parseFloat(reward),
-            exitPrice: endPrice,
-          });
+          if (isDemo) {
+            // Update demo assets if win
+            if (isWin) {
+              const updatedDemoAssets = demoAssets + parseFloat(reward);
+              setDemoAssets(updatedDemoAssets);
+              saveDemoAssets(updatedDemoAssets);
+              setDemo_assets(updatedDemoAssets);
+            }
 
-          // Update assets if win
-          if (isWin) {
-            const updatedAssets = newAssets + parseFloat(reward);
-            await updateUserAssetsInDB(updatedAssets);
-            setUserAssets(updatedAssets);
+            // Update local state
+            setTrades((prev) =>
+              prev.map((trade) =>
+                trade.id === tradeId
+                  ? {
+                      ...trade,
+                      status: isWin ? "win" : "loss",
+                      reward: parseFloat(reward),
+                      remainingTime: 0,
+                    }
+                  : trade
+              )
+            );
+
+            // Save updated trades to localStorage
+            saveDemoTrades(
+              trades.map((trade) =>
+                trade.id === tradeId
+                  ? {
+                      ...trade,
+                      status: isWin ? "win" : "loss",
+                      reward: parseFloat(reward),
+                      remainingTime: 0,
+                    }
+                  : trade
+              )
+            );
+          } else {
+            // For real account, update in database
+            await updateTradeResultInDB({
+              email: user.email,
+              startedAt,
+              result: isWin ? "win" : "loss",
+              reward: parseFloat(reward),
+              exitPrice: endPrice,
+            });
+
+            // Update assets if win
+            if (isWin) {
+              const updatedAssets = userAssets + parseFloat(reward);
+              await updateUserAssetsInDB(updatedAssets);
+              setUserAssets(updatedAssets);
+            }
+
+            // Update local state
+            setTrades((prev) =>
+              prev.map((trade) =>
+                trade.id === tradeId
+                  ? {
+                      ...trade,
+                      status: isWin ? "win" : "loss",
+                      reward: parseFloat(reward),
+                      remainingTime: 0,
+                    }
+                  : trade
+              )
+            );
           }
-
-          // Update local state
-          setTrades((prev) =>
-            prev.map((trade) =>
-              trade.id === tradeId
-                ? {
-                    ...trade,
-                    status: isWin ? "win" : "loss",
-                    reward: parseFloat(reward),
-                    remainingTime: 0,
-                  }
-                : trade
-            )
-          );
 
           setPopupMessage(
             isWin
@@ -399,10 +516,54 @@ const BinaryChart = () => {
     if (selectedCoin) localStorage.setItem("selectedCoin", selectedCoin);
   }, [selectedCoin]);
 
-  // Fetch and recover trades
+  // Initialize demo assets and trades
   useEffect(() => {
+    if (isDemo) {
+      // Load demo assets
+      const savedDemoAssets = localStorage.getItem("demoAssets");
+      if (savedDemoAssets) {
+        const assets = parseFloat(savedDemoAssets);
+        setDemoAssets(assets);
+        setDemo_assets(assets);
+      } else {
+        setDemoAssets(demo_assets);
+        saveDemoAssets(demo_assets);
+      }
+
+      // Load and recover demo trades
+      const now = new Date();
+      const loadedTrades = loadDemoTrades().map((trade) => {
+        if (trade.status !== "running") return trade;
+
+        const elapsed = Math.floor((now - new Date(trade.startedAt)) / 1000);
+        const remaining = Math.max(trade.duration - elapsed, 0);
+
+        if (remaining <= 0) {
+          // Trade should be completed but wasn't - mark as loss
+          return {
+            ...trade,
+            remainingTime: 0,
+            status: "loss",
+            reward: -trade.price,
+          };
+        }
+
+        return {
+          ...trade,
+          remainingTime: remaining,
+        };
+      });
+
+      setTrades(loadedTrades);
+    }
+  }, [isDemo, demo_assets]);
+
+  // Fetch and recover trades (only for real account)
+  useEffect(() => {
+    if (isDemo) return;
+    if (!user?.email) return;
+
     const fetchAndRecoverTrades = async () => {
-      if (!user?.email) return;
       try {
         const response = await axios.get(
           `http://localhost:5000/api/users/trades/${user.email}`
@@ -499,15 +660,17 @@ const BinaryChart = () => {
     };
 
     fetchAndRecoverTrades();
-  }, [user?.email, coins]);
+  }, [user?.email, coins, isDemo]);
 
   const handleTradeButtonClick = (tradeType) => {
-    if (!isVerified) {
+    if (!isDemo && !isVerified) {
       toast.error("Please verify your account to start trading");
       return;
     }
     handleTrade(tradeType);
   };
+
+  const currentAssets = isDemo ? demoAssets : userAssets;
 
   return (
     <>
@@ -559,6 +722,9 @@ const BinaryChart = () => {
           <div className={styles.control}>
             <h1>{selectedCoin || "Select Coin"} Trading</h1>
             <p>
+              {isDemo ? "Demo Balance" : "Your Balance"}: ${currentAssets}
+            </p>
+            <p>
               Current Price:{" "}
               {selectedCoinType === "OTC"
                 ? !isNaN(otcPrice)
@@ -574,7 +740,9 @@ const BinaryChart = () => {
                 <button
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
-                  disabled={isLoading || isProcessingTrade || !isVerified}
+                  disabled={
+                    isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                  }
                 >
                   −
                 </button>
@@ -582,7 +750,9 @@ const BinaryChart = () => {
                 <button
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
-                  disabled={isLoading || isProcessingTrade || !isVerified}
+                  disabled={
+                    isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                  }
                 >
                   +
                 </button>
@@ -592,7 +762,9 @@ const BinaryChart = () => {
                 <button
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
-                  disabled={isLoading || isProcessingTrade || !isVerified}
+                  disabled={
+                    isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                  }
                 >
                   −
                 </button>
@@ -604,12 +776,16 @@ const BinaryChart = () => {
                     setInvestment(Math.max(parseInt(e.target.value) || 1, 1))
                   }
                   min="1"
-                  disabled={isLoading || isProcessingTrade || !isVerified}
+                  disabled={
+                    isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                  }
                 />
                 <button
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => prev + 1)}
-                  disabled={isLoading || isProcessingTrade || !isVerified}
+                  disabled={
+                    isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                  }
                 >
                   +
                 </button>
@@ -629,7 +805,10 @@ const BinaryChart = () => {
             <div className={styles.buySelling}>
               <div
                 className={`${styles.buyBox} ${
-                  isLoading || !priceLoaded || isProcessingTrade || !isVerified
+                  isLoading ||
+                  !priceLoaded ||
+                  isProcessingTrade ||
+                  (!isDemo && !isVerified)
                     ? styles.disabled
                     : ""
                 }`}
@@ -640,7 +819,10 @@ const BinaryChart = () => {
               </div>
               <div
                 className={`${styles.SellBox} ${
-                  isLoading || !priceLoaded || isProcessingTrade || !isVerified
+                  isLoading ||
+                  !priceLoaded ||
+                  isProcessingTrade ||
+                  (!isDemo && !isVerified)
                     ? styles.disabled
                     : ""
                 }`}

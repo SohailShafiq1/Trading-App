@@ -10,6 +10,108 @@
   box-sizing: border-box;
   background: #ffffff;
 }
+.accountWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.accountPopup {
+  display: flex;
+  position: absolute;
+  top: 105px;
+  right: 370px; /* Adjust this value to position the popup */
+  background-color: white;
+  border: 1px solid #64b243;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.accountSection {
+  background: #e3e3e3;
+  padding: 15px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 180px;
+}
+
+.accountItem {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.accountItem:hover {
+  background: #d9d9d9;
+}
+
+.active {
+  background: #d0d0d0;
+}
+
+.radioCircle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #888;
+  border-radius: 50%;
+  margin-right: 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radioCheck {
+  color: green;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.accountText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 12px;
+  color: #555;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.amount {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+  color: #111;
+}
+
+.menuSection {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 15px 10px;
+  width: 150px;
+}
+
+.menuItem {
+  font-size: 14px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.menuItem:hover {
+  background: #f0f0f0;
+}
+
+.logout {
+  color: red;
+}
+
 .popup {
   display: none;
   position: absolute;
@@ -110,12 +212,11 @@
   height: 60px;
   background: #e0e0e0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
   color: black;
-  border-radius: 10px;
   padding: 0.8rem 1rem;
   text-decoration: none;
 }
@@ -292,7 +393,6 @@
   padding: 1rem;
   z-index: 2000;
 }
-
 
 .userHeader {
   display: flex;

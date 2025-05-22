@@ -174,10 +174,20 @@ const googleLogin = async (req, res) => {
   }
 };
 
-// Get Current User
 const getMe = async (req, res) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "No authentication token provided",
+    });
+  }
+
   try {
-    const user = await User.findById(req.userId);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -190,14 +200,13 @@ const getMe = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Get user error:", error);
-    res.status(500).json({
+    console.error("Fetch user error:", error);
+    res.status(401).json({
       success: false,
-      message: "Failed to fetch user data",
+      message: "Invalid or expired token",
     });
   }
 };
-
 // Verify Token
 const verifyToken = async (req, res) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
