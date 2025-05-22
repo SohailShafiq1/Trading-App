@@ -36,7 +36,7 @@ export const AffiliateAuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(true);
 
-  const logout = useCallback(() => {
+  const logoutAffiliate = useCallback(() => {
     localStorage.removeItem("affiliate_token");
     setAffiliate(null);
   }, []);
@@ -53,12 +53,12 @@ export const AffiliateAuthProvider = ({ children }) => {
         console.log("Affiliate fetched successfully:", res.data.affiliate);
       } catch (err) {
         console.error("Error fetching affiliate:", err);
-        logout();
+        logoutAffiliate();
       } finally {
         setLoading(false);
       }
     },
-    [logout]
+    [logoutAffiliate]
   );
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export const AffiliateAuthProvider = ({ children }) => {
 
   return (
     <AffiliateAuthContext.Provider
-      value={{ affiliate, login, logout, loading }}
+      value={{ affiliate, login, logoutAffiliate, loading }}
     >
       {children}
     </AffiliateAuthContext.Provider>

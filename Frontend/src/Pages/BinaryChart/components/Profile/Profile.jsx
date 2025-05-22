@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import styles from "./Profile.module.css";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../Context/AuthContext";
+import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
 import axios from "axios";
 import Modal from "react-modal";
 
@@ -31,6 +32,7 @@ const customStyles = {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { logoutAffiliate } = useAffiliateAuth();
 
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
@@ -78,6 +80,7 @@ const Profile = () => {
 
   const handleLogout = () => {
     logout();
+    logoutAffiliate();
     navigate("/login");
   };
 

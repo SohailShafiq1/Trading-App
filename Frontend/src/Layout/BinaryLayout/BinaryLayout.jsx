@@ -1,7 +1,10 @@
-import { AiFillTrophy } from "react-icons/ai";
-import { AiOutlinePlus } from "react-icons/ai";
-import { CgMoreAlt } from "react-icons/cg";
-import { CgProfile } from "react-icons/cg";
+import { RiArrowDropDownLine } from "react-icons/ri";
+import {
+  AiFillTrophy,
+  AiOutlineArrowDown,
+  AiOutlinePlus,
+} from "react-icons/ai";
+import { CgMoreAlt, CgProfile } from "react-icons/cg";
 import { IoMdImage } from "react-icons/io";
 import { MdUndo } from "react-icons/md";
 import React, { useState, useRef, useEffect } from "react";
@@ -10,24 +13,36 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../../assets/WealthXLogo.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
+import { useAccountType } from "../../Context/AccountTypeContext";
+import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 import LeaderboardPopup from "./LeaderboardPopup";
+
 const s = styles;
 
 const BinaryLayout = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { logoutAffiliate } = useAffiliateAuth();
   const { userAssets } = useUserAssets();
+  const { isDemo, setIsDemo, demo_assets } = useAccountType();
   const assets =
     typeof userAssets === "number" ? userAssets.toFixed(2) : "0.00";
+
   const navigate = useNavigate();
 
   const [popupVisible, setPopupVisible] = useState(false);
   const popupRef = useRef();
 
+  const [accountPopupVisible, setAccountPopupVisible] = useState(false);
+  const accountRef = useRef();
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
         setPopupVisible(false);
+      }
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setAccountPopupVisible(false);
       }
     };
     document.addEventListener("mousedown", handleOutsideClick);
@@ -70,7 +85,7 @@ const BinaryLayout = () => {
             Profile
           </NavLink>
 
-          {/* Click-Based Popup More Menu */}
+          {/* More Button Popup */}
           <div className={s.moreWrapper} ref={popupRef}>
             <div className={s.btn}>
               <NavLink
@@ -103,7 +118,6 @@ const BinaryLayout = () => {
                 >
                   Top
                 </div>
-
                 <div
                   className={s.popupItem}
                   style={{ background: "#64B243" }}
@@ -118,12 +132,104 @@ const BinaryLayout = () => {
             )}
           </div>
 
-          <NavLink className={s.liveAcc}>
-            <p>
-              Live account
-              <br /> {assets}$
-            </p>
-          </NavLink>
+          {/* Account Switch Popup */}
+          <div className={s.accountWrapper} ref={accountRef}>
+            <div
+              className={s.liveAcc}
+              onClick={() => setAccountPopupVisible((v) => !v)}
+              style={{ cursor: "pointer" }}
+            >
+              <p>
+                {isDemo ? "Demo Account" : "Live Account"}
+                <br /> ${isDemo ? demo_assets.toLocaleString() : assets}
+              </p>
+              <div className={s.arrow}>
+                <RiArrowDropDownLine style={{ fontSize: "2rem" }} />
+              </div>
+            </div>
+
+            {accountPopupVisible && (
+              <div className={s.accountPopup}>
+                <div className={s.accountSection}>
+                  <div
+                    className={`${s.accountItem} ${!isDemo ? s.active : ""}`}
+                    onClick={() => {
+                      setIsDemo(false);
+                      setAccountPopupVisible(false);
+                    }}
+                  >
+                    <div className={s.radioCircle}>
+                      {!isDemo && <span className={s.radioCheck}>✔</span>}
+                    </div>
+                    <div className={s.accountText}>
+                      <p className={s.label}>LIVE ACCOUNT</p>
+                      <p className={s.amount}>${assets}</p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`${s.accountItem} ${isDemo ? s.active : ""}`}
+                    onClick={() => {
+                      setIsDemo(true);
+                      setAccountPopupVisible(false);
+                    }}
+                  >
+                    <div className={s.radioCircle}>
+                      {isDemo && <span className={s.radioCheck}>✔</span>}
+                    </div>
+                    <div className={s.accountText}>
+                      <p className={s.label}>DEMO ACCOUNT</p>
+                      <p className={s.amount}>
+                        ${demo_assets.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={s.menuSection}>
+                  <div
+                    onClick={() =>
+                      navigate("/binarychart/bankinglayout/deposit")
+                    }
+                    className={s.menuItem}
+                  >
+                    Deposit
+                  </div>
+                  <div
+                    onClick={() =>
+                      navigate("/binarychart/bankinglayout/withdraw")
+                    }
+                    className={s.menuItem}
+                  >
+                    Withdrawal
+                  </div>
+                  <div
+                    onClick={() =>
+                      navigate("/binarychart/bankinglayout/transactions")
+                    }
+                    className={s.menuItem}
+                  >
+                    Transactions
+                  </div>
+                  <div
+                    onClick={() => navigate("/binarychart/profile")}
+                    className={s.menuItem}
+                  >
+                    Account
+                  </div>
+                  <div
+                    onClick={() => {
+                      logout();
+                      logoutAffiliate();
+                    }}
+                    className={`${s.menuItem} ${s.logout}`}
+                  >
+                    Logout
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={s.asset}>
@@ -172,9 +278,10 @@ const BinaryLayout = () => {
           </NavLink>
         </div>
       </div>
+
       {showLeaderboard && (
-  <LeaderboardPopup onClose={() => setShowLeaderboard(false)} />
-)}
+        <LeaderboardPopup onClose={() => setShowLeaderboard(false)} />
+      )}
     </>
   );
 };
