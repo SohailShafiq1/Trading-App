@@ -52,45 +52,22 @@ const App = () => {
                   }
                 >
                   <Route index element={<BinaryChart />} />
-                  <Route
-                    path="/binarychart/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
+                  <Route path="/binarychart/profile" element={<Profile />} />
                   <Route
                     path="/binarychart/bankinglayout"
-                    element={
-                      <ProtectedRoute>
-                        <BankingLayout />
-                      </ProtectedRoute>
-                    }
+                    element={<BankingLayout />}
                   >
                     <Route
                       path="/binarychart/bankinglayout/deposit"
-                      element={
-                        <ProtectedRoute>
-                          <DepositPage />
-                        </ProtectedRoute>
-                      }
+                      element={<DepositPage />}
                     />
                     <Route
                       path="/binarychart/bankinglayout/withdraw"
-                      element={
-                        <ProtectedRoute>
-                          <WithdrawPage />
-                        </ProtectedRoute>
-                      }
+                      element={<WithdrawPage />}
                     />
                     <Route
                       path="/binarychart/bankinglayout/transactions"
-                      element={
-                        <ProtectedRoute>
-                          <TransactionsPage />
-                        </ProtectedRoute>
-                      }
+                      element={<TransactionsPage />}
                     />
                   </Route>
                 </Route>
@@ -103,38 +80,10 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/coins"
-                  element={
-                    <ProtectedRoute>
-                      <Coins /> {/* Add the new Coins component here */}
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/user"
-                  element={
-                    <ProtectedRoute>
-                      <User />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/deposits"
-                  element={
-                    <ProtectedRoute>
-                      <Deposit />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/withdraw"
-                  element={
-                    <ProtectedRoute>
-                      <Withdraw /> {/* Add the new Withdraw component here */}
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/coins" element={<Coins />} />
+                <Route path="/user" element={<User />} />
+                <Route path="/deposits" element={<Deposit />} />
+                <Route path="/withdraw" element={<Withdraw />} />
                 <Route
                   path="/affiliate"
                   element={
@@ -143,40 +92,25 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 >
-                  <Route
-                    path="/affiliate/login"
-                    element={
-                      <ProtectedRoute>
-                        <AffiliateLogin />
-                      </ProtectedRoute>
-                    }
-                  />
+                  <Route path="/affiliate/login" element={<AffiliateLogin />} />
                   <Route
                     path="/affiliate/register"
-                    element={
-                      <ProtectedRoute>
-                        <AffiliateRegister />
-                      </ProtectedRoute>
-                    }
+                    element={<AffiliateRegister />}
                   />
                   <Route
                     index
                     element={
-                      <ProtectedRoute>
-                        <AffiliateProtectedRoute>
-                          <AffiliateProgram />
-                        </AffiliateProtectedRoute>
-                      </ProtectedRoute>
+                      <AffiliateProtectedRoute>
+                        <AffiliateProgram />
+                      </AffiliateProtectedRoute>
                     }
                   />
                   <Route
                     path="/affiliate/prizepool"
                     element={
-                      <ProtectedRoute>
-                        <AffiliateProtectedRoute>
-                          <PrizePool />
-                        </AffiliateProtectedRoute>
-                      </ProtectedRoute>
+                      <AffiliateProtectedRoute>
+                        <PrizePool />
+                      </AffiliateProtectedRoute>
                     }
                   />
                 </Route>

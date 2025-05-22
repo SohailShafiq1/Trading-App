@@ -90,16 +90,38 @@ export const loginAffiliate = async (req, res) => {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
+
 export const getAffiliateDetails = async (req, res) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "No authentication token provided",
+    });
+  }
+
   try {
-    const user = await Affiliate.findById(req.userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const affiliate = await Affiliate.findById(decoded.id);
+
+    if (!affiliate) {
+      return res.status(404).json({
+        success: false,
+        message: "Affiliate not found",
+      });
     }
-    res.json({ user });
+
+    res.status(200).json({
+      success: true,
+      affiliate,
+    });
   } catch (error) {
-    console.error("Error getting user data:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Fetch affiliate error:", error);
+    res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
   }
 };
 
