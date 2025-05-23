@@ -280,7 +280,6 @@ const WithdrawPage = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
       />
     </div>
   );
