@@ -30,18 +30,73 @@ export const getCoinByName = async (req, res) => {
 
 export const createCoin = async (req, res) => {
   try {
-    const newCoin = new Coin({
-      ...req.body,
-      name:
-        req.body.type === "OTC"
-          ? `${req.body.firstName}-${req.body.lastName}`
-          : req.body.name,
-      selectedInterval: "30s",
-    });
+    const {
+      type,
+      name,
+      firstName,
+      lastName,
+      startingPrice,
+      profitPercentage,
+      trend,
+    } = req.body;
+
+    // Validate input
+    if (type === "Live" && !name) {
+      return res
+        .status(400)
+        .json({ message: "Name is required for Live coins" });
+    }
+
+    if (type === "OTC" && (!firstName || !lastName || !startingPrice)) {
+      return res.status(400).json({
+        message:
+          "First name, last name, and starting price are required for OTC coins",
+      });
+    }
+
+    const coinData = {
+      type,
+      profitPercentage,
+      ...(type === "Live"
+        ? {
+            name,
+            trend: undefined, // Live coins shouldn't have trends
+          }
+        : {
+            firstName,
+            lastName,
+            startingPrice,
+            name: `${firstName}-${lastName}`,
+            trend: trend || "Normal", // Default trend for OTC coins
+            selectedInterval: "30s",
+          }),
+    };
+
+    const newCoin = new Coin(coinData);
     await newCoin.save();
+
     res.status(201).json(await Coin.find());
-  } catch {
-    res.status(500).json({ message: "Failed to add coin" });
+  } catch (err) {
+    console.error("Error adding coin:", err);
+
+    if (err.code === 11000) {
+      return res
+        .status(400)
+        .json({ message: "Coin with this name already exists" });
+    }
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        message: Object.values(err.errors)
+          .map((val) => val.message)
+          .join(", "),
+      });
+    }
+
+    res.status(500).json({
+      message: "Failed to add coin",
+      error: err.message,
+    });
   }
 };
 
@@ -77,5 +132,59 @@ export const getCoinCandles = async (req, res) => {
     res.json(candles);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch candles" });
+  }
+};
+
+export const updateCoinTrend = async (req, res) => {
+  try {
+    const { coinName, mode } = req.body;
+
+    // Validate trend mode
+    const validTrends = [
+      "Up",
+      "Down",
+      "Random",
+      "Scenario1",
+      "Scenario2",
+      "Scenario3",
+      "Scenario4",
+      "Scenario5",
+    ];
+    if (!validTrends.includes(mode)) {
+      return res.status(400).json({ message: "Invalid trend mode" });
+    }
+
+    // Find and update the OTC coin
+    const updatedCoin = await Coin.findOneAndUpdate(
+      {
+        $or: [
+          { name: coinName, type: "OTC" },
+          {
+            $expr: {
+              $eq: [{ $concat: ["$firstName", " ", "$lastName"] }, coinName],
+            },
+            type: "OTC",
+          },
+        ],
+      },
+      { trend: mode },
+      { new: true }
+    );
+
+    if (!updatedCoin) {
+      return res.status(404).json({ message: "OTC coin not found" });
+    }
+
+    res.json({
+      success: true,
+      coins: await Coin.find(),
+      updatedCoin,
+    });
+  } catch (err) {
+    console.error("Error updating coin trend:", err);
+    res.status(500).json({
+      message: "Failed to update coin trend",
+      error: err.message,
+    });
   }
 };

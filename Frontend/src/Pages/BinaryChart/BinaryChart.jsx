@@ -12,9 +12,12 @@ import { useUserAssets } from "../../Context/UserAssetsContext";
 import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
+import { io } from "socket.io-client";
 
 const BinaryChart = () => {
   // State declarations
+  const socket = io("http://localhost:5000");
+
   const { isDemo, demo_assets, setDemo_assets } = useAccountType();
   const [coins, setCoins] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState("BTC");

@@ -269,7 +269,7 @@ const LiveCandleChart = ({ coinName }) => {
 
   // State for various chart controls
   const [countdown, setCountdown] = useState(0);
-  const [interval, setInterval] = useState("1m");
+  const [interval, setInterval] = useState("30s");
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [liveCandle, setLiveCandle] = useState(null);
@@ -729,6 +729,9 @@ const LiveCandleChart = ({ coinName }) => {
       crosshair: {
         mode: CrosshairMode.Normal,
       },
+      watermark: {
+        visible: false,
+      },
       timeScale: {
         borderColor: theme.gridColor,
         timeVisible: true,
@@ -880,9 +883,9 @@ const LiveCandleChart = ({ coinName }) => {
             time: candle.time,
             value: candle.close,
           }));
-          seriesRef.current.setData(lineData.slice(-999));
+          seriesRef.current.setData(lineData);
         } else {
-          seriesRef.current.setData(updated.slice(-999));
+          seriesRef.current.setData(updated);
         }
       }
       applyIndicators();
@@ -989,7 +992,7 @@ const LiveCandleChart = ({ coinName }) => {
         if (exists) {
           return prev.map((c) => (c.time === candle.time ? candle : c));
         } else {
-          return [...prev.slice(-999), candle];
+          return [...prev, candle];
         }
       });
 
@@ -1017,9 +1020,9 @@ const LiveCandleChart = ({ coinName }) => {
             time: c.time,
             value: c.close,
           }));
-          seriesRef.current.setData(lineData.slice(-999));
+          seriesRef.current.setData(lineData);
         } else {
-          seriesRef.current.setData(grouped.slice(-999));
+          seriesRef.current.setData(grouped);
         }
       }
       setLiveCandle(newCandle);
