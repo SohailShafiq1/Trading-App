@@ -6,7 +6,6 @@ import {
   getTeamUsersByAffiliateEmail,
   updateTeamTotals,
   completeLevel,
-  checkLevelStatus,
 } from "../controllers/affiliateController.js";
 
 const router = express.Router();
@@ -17,5 +16,4 @@ router.get("/me", getAffiliateDetails);
 router.get("/team/:email", getTeamUsersByAffiliateEmail);
 router.get("/update-team-totals/:email", updateTeamTotals);
 router.post("/complete-level/:email", completeLevel);
-router.get('/check-level-status/:email', checkLevelStatus);
 export default router;

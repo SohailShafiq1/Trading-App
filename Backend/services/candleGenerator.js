@@ -12,8 +12,6 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
   const base = lastTick;
   const counter = scenarioCounters[coinName] ?? 0;
 
-
-
   switch (trend) {
     case "Up":
       return round(Math.max(open, base + delta));
@@ -84,7 +82,7 @@ const updateCandles = async () => {
 
       coin.candles.push(candle);
       coin.currentPrice = close;
-      coin.candles = coin.candles.slice(-1000);
+      coin.candles = coin.candles;
       await coin.save();
 
       if (io) io.emit(`candle:${coin.name}`, { ...candle, trend: coin.trend });

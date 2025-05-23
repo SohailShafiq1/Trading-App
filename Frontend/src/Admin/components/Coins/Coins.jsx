@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./Coin.module.css";
-import Trends from "../Trends/Trends"; // Import the Trends component
+import Trends from "../Trends/Trends";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const s = styles;
@@ -16,29 +16,24 @@ const Coins = () => {
     lastName: "",
     startingPrice: "",
     profitPercentage: "",
+    trend: "Random",
   });
   const [editingCoin, setEditingCoin] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showTrendPopup, setShowTrendPopup] = useState(false); // State to control the popup
+  const [showTrendPopup, setShowTrendPopup] = useState(false);
+  const [currentTrendCoin, setCurrentTrendCoin] = useState(null);
   const navigate = useNavigate();
 
   const fetchCoins = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${BACKEND_URL}/api/coins`);
-      if (Array.isArray(response.data)) {
-        setCoins(response.data);
-      } else if (Array.isArray(response.data?.coins)) {
-        setCoins(response.data.coins);
-      } else {
-        setError("Invalid data format received from server");
-        setCoins([]);
-      }
+      setCoins(response.data);
+      setError("");
     } catch (err) {
       console.error("Error fetching coins:", err);
       setError("Failed to fetch coins. Please try again.");
-      setCoins([]);
     } finally {
       setIsLoading(false);
     }
@@ -52,8 +47,22 @@ const Coins = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/coins`, newCoin);
-      setCoins(response.data.coins);
+      const coinData = {
+        type: newCoin.type,
+        profitPercentage: newCoin.profitPercentage,
+        ...(newCoin.type === "Live"
+          ? { name: newCoin.name }
+          : {
+              firstName: newCoin.firstName,
+              lastName: newCoin.lastName,
+              startingPrice: newCoin.startingPrice,
+              name: `${newCoin.firstName}-${newCoin.lastName}`,
+              trend: newCoin.trend,
+            }),
+      };
+
+      const response = await axios.post(`${BACKEND_URL}/api/coins`, coinData);
+      setCoins(response.data);
       setNewCoin({
         type: "Live",
         name: "",
@@ -61,15 +70,17 @@ const Coins = () => {
         lastName: "",
         startingPrice: "",
         profitPercentage: "",
+        trend: "Random",
       });
       setError("");
     } catch (err) {
       console.error("Error adding coin:", err);
-      setError("Failed to add coin. Please try again.");
+      setError(
+        err.response?.data?.message || "Failed to add coin. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
-    await fetchCoins();
   };
 
   const updateCoin = async (e) => {
@@ -82,7 +93,7 @@ const Coins = () => {
         `${BACKEND_URL}/api/coins/${editingCoin._id}`,
         editingCoin
       );
-      setCoins(response.data.coins);
+      setCoins(response.data);
       setEditingCoin(null);
       setError("");
     } catch (err) {
@@ -91,7 +102,6 @@ const Coins = () => {
     } finally {
       setIsLoading(false);
     }
-    await fetchCoins();
   };
 
   const deleteCoin = async (id) => {
@@ -99,7 +109,7 @@ const Coins = () => {
       setIsLoading(true);
       try {
         const response = await axios.delete(`${BACKEND_URL}/api/coins/${id}`);
-        setCoins(response.data.coins);
+        setCoins(response.data);
         setError("");
       } catch (err) {
         console.error("Error deleting coin:", err);
@@ -108,7 +118,6 @@ const Coins = () => {
         setIsLoading(false);
       }
     }
-    await fetchCoins();
   };
 
   const handleInputChange = (e) => {
@@ -121,12 +130,54 @@ const Coins = () => {
     setEditingCoin((prev) => ({ ...prev, [name]: value }));
   };
 
-  const openTrendPopup = () => {
-    setShowTrendPopup(true); // Show the popup
+  const openTrendPopup = (coin) => {
+    if (coin.type === "OTC") {
+      setCurrentTrendCoin(coin);
+      setShowTrendPopup(true);
+    }
   };
 
   const closeTrendPopup = () => {
-    setShowTrendPopup(false); // Close the popup
+    setShowTrendPopup(false);
+    setCurrentTrendCoin(null);
+  };
+
+  const handleTrendUpdate = async (newTrend) => {
+    if (!currentTrendCoin) return;
+
+    try {
+      setIsLoading(true);
+
+      if (currentTrendCoin._id) {
+        const coinName =
+          currentTrendCoin.type === "Live"
+            ? currentTrendCoin.name
+            : `${currentTrendCoin.firstName} ${currentTrendCoin.lastName}`;
+
+        await axios.post(`${BACKEND_URL}/api/coins/trend`, {
+          coinName,
+          mode: newTrend,
+        });
+
+        setCoins((prevCoins) =>
+          prevCoins.map((coin) =>
+            coin._id === currentTrendCoin._id
+              ? { ...coin, trend: newTrend }
+              : coin
+          )
+        );
+      } else {
+        setNewCoin((prev) => ({ ...prev, trend: newTrend }));
+      }
+
+      setError("");
+    } catch (err) {
+      console.error("Error updating trend:", err);
+      setError(err.response?.data?.message || "Failed to update trend");
+    } finally {
+      setIsLoading(false);
+      closeTrendPopup();
+    }
   };
 
   return (
@@ -146,16 +197,14 @@ const Coins = () => {
         </select>
 
         {newCoin.type === "Live" ? (
-          <>
-            <input
-              type="text"
-              name="name"
-              placeholder="Coin Name"
-              value={newCoin.name}
-              onChange={handleInputChange}
-              required
-            />
-          </>
+          <input
+            type="text"
+            name="name"
+            placeholder="Coin Name"
+            value={newCoin.name}
+            onChange={handleInputChange}
+            required
+          />
         ) : (
           <>
             <input
@@ -187,7 +236,8 @@ const Coins = () => {
             <button
               type="button"
               className={s.trendButton}
-              onClick={openTrendPopup} // Open the popup for Trends
+              onClick={() => openTrendPopup(newCoin)}
+              disabled={newCoin.type !== "OTC"}
             >
               Set OTC Trend
             </button>
@@ -210,7 +260,6 @@ const Coins = () => {
         </button>
       </form>
 
-      {/* Coin List Table */}
       <table className={s.table}>
         <thead>
           <tr>
@@ -218,72 +267,71 @@ const Coins = () => {
             <th>Name</th>
             <th>Starting Price</th>
             <th>Profit %</th>
-            <th>Trend</th> {/* New Trend column */}
+            <th>Trend</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {coins &&
-            coins.map((coin) => (
-              <tr key={coin._id}>
-                <td>{coin.type}</td>
-                <td>
-                  {coin.type === "Live"
-                    ? coin.name
-                    : `${coin.firstName} ${coin.lastName}`}
-                </td>
-                <td>{coin.startingPrice || "N/A"}</td>
-                <td>{coin.profitPercentage}%</td>
-                <td>
-                  {coin.type === "OTC" ? (
+          {coins.map((coin) => (
+            <tr key={coin._id}>
+              <td>{coin.type}</td>
+              <td>
+                {coin.type === "Live"
+                  ? coin.name
+                  : `${coin.firstName} ${coin.lastName}`}
+              </td>
+              <td>{coin.startingPrice || "N/A"}</td>
+              <td>{coin.profitPercentage}%</td>
+              <td>
+                {coin.type === "OTC" ? (
+                  <>
+                    {coin.trend || "Random"}
                     <button
                       className={s.trendButton}
-                      onClick={() => openTrendPopup()} // Open Trend popup for OTC
+                      onClick={() => openTrendPopup(coin)}
                     >
                       Set Trend
                     </button>
-                  ) : (
-                    "N/A"
-                  )}
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => setEditingCoin(coin)}
-                    disabled={isLoading}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteCoin(coin._id)}
-                    disabled={isLoading}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </>
+                ) : (
+                  "N/A"
+                )}
+              </td>
+              <td>
+                <button
+                  type="button"
+                  onClick={() => setEditingCoin(coin)}
+                  disabled={isLoading}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteCoin(coin._id)}
+                  disabled={isLoading}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
-      {/* Edit Coin Modal */}
       {editingCoin && (
         <div className={s.modalOverlay}>
           <div className={s.modal}>
             <h3>Edit Coin</h3>
             <form onSubmit={updateCoin}>
               {editingCoin.type === "Live" ? (
-                <>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Coin Name"
-                    value={editingCoin.name}
-                    onChange={handleEditInputChange}
-                    required
-                  />
-                </>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Coin Name"
+                  value={editingCoin.name}
+                  onChange={handleEditInputChange}
+                  required
+                />
               ) : (
                 <>
                   <input
@@ -314,7 +362,6 @@ const Coins = () => {
                   />
                 </>
               )}
-
               <input
                 type="number"
                 name="profitPercentage"
@@ -343,14 +390,21 @@ const Coins = () => {
         </div>
       )}
 
-      {/* Trend Popup */}
-      {showTrendPopup && (
+      {showTrendPopup && currentTrendCoin && (
         <div className={s.modalOverlay}>
           <div className={s.modal}>
             <button className={s.closeButton} onClick={closeTrendPopup}>
               Close
             </button>
-            <Trends /> {/* Render the Trends component */}
+            <Trends
+              coinName={
+                currentTrendCoin.type === "Live"
+                  ? currentTrendCoin.name
+                  : `${currentTrendCoin.firstName} ${currentTrendCoin.lastName}`
+              }
+              currentTrend={currentTrendCoin.trend || "Random"}
+              onTrendUpdate={handleTrendUpdate}
+            />
           </div>
         </div>
       )}

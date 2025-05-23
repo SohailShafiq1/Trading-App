@@ -5,7 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import connectDB from "./config/db.js";
 import path from "path";
-import morgan from "morgan"; // Added for request logging
+import morgan from "morgan";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -13,9 +13,12 @@ import adminRoutes from "./routes/adminRoutes.js";
 import coinRoutes from "./routes/coinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import depositRoutes from "./routes/depositRoutes.js";
+import affiliateRoutes from "./routes/affiliateRoutes.js";
+
+// Services
 import candleService from "./services/candleGenerator.js";
 import { checkTrc20Deposits } from "./utils/tronWatcher.js";
-import affiliateRoutes from "./routes/affiliateRoutes.js";
+import AffiliateTimers from "./utils/affiliateTimers.js";
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +43,7 @@ app.use(
 );
 
 // Middlewares
-app.use(morgan("dev")); // HTTP request logger
+app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -97,9 +100,19 @@ const io = new Server(httpServer, {
   },
 });
 
+// Initialize Affiliate Timers Service
+const affiliateTimers = new AffiliateTimers(io);
+
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log(`🔌 New client connected: ${socket.id}`);
+
+  // Handle affiliate timer registration
+  socket.on("registerAffiliate", (email) => {
+    if (email) {
+      affiliateTimers.handleConnection(socket, email);
+    }
+  });
 
   socket.on("disconnect", (reason) => {
     console.log(`❌ Client disconnected (${reason}): ${socket.id}`);
@@ -116,8 +129,10 @@ const startServer = async () => {
     await connectDB();
     console.log("✅ MongoDB connected successfully");
 
+    // Initialize services
     candleService.initSocket(io);
-    console.log("📊 Candle service initialized");
+    affiliateTimers.initialize();
+    console.log("📊 Services initialized");
 
     const PORT = process.env.PORT || 5000;
     httpServer.listen(PORT, () => {
@@ -125,7 +140,7 @@ const startServer = async () => {
       console.log(`🌍 Allowed origins: ${allowedOrigins.join(", ")}`);
     });
 
-    // Start TRC20 deposit checker
+    // Start background services
     setInterval(checkTrc20Deposits, 30000);
     console.log("🔍 TRC20 deposit checker started");
   } catch (err) {

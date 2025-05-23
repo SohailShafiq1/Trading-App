@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./PrizePool.module.css";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
+import io from "socket.io-client";
 
 const PrizeArray = [
   {
@@ -46,7 +47,7 @@ const PrizeArray = [
     conditions: { deposit: 15000, profit: 14000 },
   },
 ];
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const PrizePool = () => {
   const { affiliate } = useAffiliateAuth();
   const [activePopup, setActivePopup] = useState(null);
@@ -55,41 +56,84 @@ const PrizePool = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [timeExpired, setTimeExpired] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [socket, setSocket] = useState(null);
+
+  // Initialize socket connection
+  useEffect(() => {
+    const newSocket = io(BACKEND_URL, {
+      withCredentials: true,
+    });
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  // Register affiliate with socket when email is available
+  useEffect(() => {
+    if (socket && affiliate?.email) {
+      socket.emit("registerAffiliate", affiliate.email);
+
+      socket.on("timerUpdate", (data) => {
+        setTimeLeft(data.timeLeft);
+        setTimeExpired(data.timeExpired || false);
+
+        // Update level if changed
+        if (data.level !== (affiliateData?.level || 1)) {
+          setAffiliateData((prev) => ({
+            ...prev,
+            level: data.level,
+          }));
+        }
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("Socket connection error:", err);
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("timerUpdate");
+        socket.off("connect_error");
+      }
+    };
+  }, [socket, affiliate?.email]);
 
   // Fetch and update affiliate data
   const fetchData = async () => {
     if (!affiliate?.email) return;
 
-    try {
-      setIsLoading(true);
+      try {
+        setIsLoading(true);
+        
+        // First update team totals
+        await fetch(
+          `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
+          { credentials: "include" }
+        );
 
-      // First update team totals
-      await fetch(
-        `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
-        { credentials: "include" }
-      );
-
-      // Then get updated affiliate data
-      const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch affiliate data");
-
-      const data = await res.json();
-      setAffiliateData(data.user || data);
-
-      // Check level status after loading data
-      await checkLevelStatus();
-    } catch (err) {
-      console.error("Error fetching affiliate data:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-      setIsInitialLoad(false);
-    }
-  };
+        // Then get updated affiliate data
+        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+          credentials: "include",
+        });
+        
+        if (!res.ok) throw new Error("Failed to fetch affiliate data");
+        
+        const data = await res.json();
+        setAffiliateData(data.user || data);
+        
+        // Check level status after loading data
+        await checkLevelStatus();
+      } catch (err) {
+        console.error("Error fetching affiliate data:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+        setIsInitialLoad(false);
+      }
+    };
 
   useEffect(() => {
     fetchData();
@@ -142,7 +186,7 @@ const PrizePool = () => {
     if (timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1000) {
           clearInterval(timer);
           return 0;
@@ -190,7 +234,7 @@ const PrizePool = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/affiliate/complete-level/${affiliate.email}`,
+        `${BACKEND_URL}/api/affiliate/complete-level/${affiliate.email}`,
         {
           method: "POST",
           credentials: "include",
@@ -203,9 +247,7 @@ const PrizePool = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || data.error || "Failed to complete level"
-        );
+        throw new Error(data.message || data.error || "Failed to complete level");
       }
 
       if (data.timeExpired) {
@@ -214,12 +256,12 @@ const PrizePool = () => {
 
       if (data.success) {
         // Refresh data after level completion
-        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+        const res = await fetch(`${BACKEND_URL}/api/affiliate/me`, {
           credentials: "include",
         });
         const updated = await res.json();
         setAffiliateData(updated.user || updated);
-
+        
         // Check the new level status
         await checkLevelStatus();
       } else {
@@ -258,7 +300,7 @@ const PrizePool = () => {
     }
   };
 
-  if (isInitialLoad) {
+  if (isLoading && !affiliateData) {
     return <div className={styles.loading}>Loading prize pool data...</div>;
   }
 
