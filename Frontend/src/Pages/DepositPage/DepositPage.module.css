@@ -69,6 +69,53 @@
   width: 100%;
   height: 100%;
 }
+.submitButton {
+  width: 100%;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 18px;
+  transition: background 0.2s;
+}
+.submitButton:hover {
+  background: #16a34a;
+}
+.walletRow {
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.walletCode {
+  font-size: 1.1rem;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 6px;
+  word-break: break-all;
+  display: block;
+}
+
+.copyButton {
+  margin-left: 10px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #22c55e;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.copyButton:hover {
+  background: #16a34a;
+}
 
 @media (max-width: 768px) {
   .rightSide {

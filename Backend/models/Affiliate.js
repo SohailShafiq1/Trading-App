@@ -63,6 +63,14 @@ const AffiliateSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    prize: {
+      type: [String],
+      default: [],
+    },
+    totalPrize: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

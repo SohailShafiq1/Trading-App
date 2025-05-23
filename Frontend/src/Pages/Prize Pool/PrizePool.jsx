@@ -3,13 +3,48 @@ import styles from "./PrizePool.module.css";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 
 const PrizeArray = [
-  { id: 1, prize: "100$", timeLimit: 5, conditions: { deposit: 2500, profit: 2000 } },
-  { id: 2, prize: "300$", timeLimit: 5, conditions: { deposit: 3000, profit: 2500 } },
-  { id: 3, prize: "500$", timeLimit: 5, conditions: { deposit: 4000, profit: 3000 } },
-  { id: 4, prize: "1000$", timeLimit: 5, conditions: { deposit: 5000, profit: 4000 } },
-  { id: 5, prize: "5000$", timeLimit: 5, conditions: { deposit: 7000, profit: 6000 } },
-  { id: 6, prize: "15,000$", timeLimit: 3, conditions: { deposit: 10000, profit: 9000 } },
-  { id: 7, prize: "30,000$", timeLimit: 3, conditions: { deposit: 15000, profit: 14000 } },
+  {
+    id: 1,
+    prize: "100$",
+    timeLimit: 5,
+    conditions: { deposit: 2500, profit: 2000 },
+  },
+  {
+    id: 2,
+    prize: "300$",
+    timeLimit: 5,
+    conditions: { deposit: 3000, profit: 2500 },
+  },
+  {
+    id: 3,
+    prize: "500$",
+    timeLimit: 5,
+    conditions: { deposit: 4000, profit: 3000 },
+  },
+  {
+    id: 4,
+    prize: "1000$",
+    timeLimit: 5,
+    conditions: { deposit: 5000, profit: 4000 },
+  },
+  {
+    id: 5,
+    prize: "5000$",
+    timeLimit: 5,
+    conditions: { deposit: 7000, profit: 6000 },
+  },
+  {
+    id: 6,
+    prize: "15,000$",
+    timeLimit: 3,
+    conditions: { deposit: 10000, profit: 9000 },
+  },
+  {
+    id: 7,
+    prize: "30,000$",
+    timeLimit: 3,
+    conditions: { deposit: 15000, profit: 14000 },
+  },
 ];
 
 const PrizePool = () => {
@@ -23,40 +58,40 @@ const PrizePool = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Fetch and update affiliate data
+  const fetchData = async () => {
+    if (!affiliate?.email) return;
+
+    try {
+      setIsLoading(true);
+
+      // First update team totals
+      await fetch(
+        `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
+        { credentials: "include" }
+      );
+
+      // Then get updated affiliate data
+      const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch affiliate data");
+
+      const data = await res.json();
+      setAffiliateData(data.user || data);
+
+      // Check level status after loading data
+      await checkLevelStatus();
+    } catch (err) {
+      console.error("Error fetching affiliate data:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+      setIsInitialLoad(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!affiliate?.email) return;
-
-      try {
-        setIsLoading(true);
-        
-        // First update team totals
-        await fetch(
-          `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
-          { credentials: "include" }
-        );
-
-        // Then get updated affiliate data
-        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
-          credentials: "include",
-        });
-        
-        if (!res.ok) throw new Error("Failed to fetch affiliate data");
-        
-        const data = await res.json();
-        setAffiliateData(data.user || data);
-        
-        // Check level status after loading data
-        await checkLevelStatus();
-      } catch (err) {
-        console.error("Error fetching affiliate data:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-        setIsInitialLoad(false);
-      }
-    };
-
     fetchData();
   }, [affiliate?.email]);
 
@@ -107,7 +142,7 @@ const PrizePool = () => {
     if (timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1000) {
           clearInterval(timer);
           return 0;
@@ -132,10 +167,10 @@ const PrizePool = () => {
 
   const checkLevelConditions = (level) => {
     if (!affiliateData) return false;
-    
+
     const depositMet = affiliateData.totalDeposit >= level.conditions.deposit;
     const profitMet = affiliateData.totalProfit >= level.conditions.profit;
-    
+
     return {
       allMet: depositMet && profitMet,
       depositMet,
@@ -168,7 +203,9 @@ const PrizePool = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to complete level");
+        throw new Error(
+          data.message || data.error || "Failed to complete level"
+        );
       }
 
       if (data.timeExpired) {
@@ -182,22 +219,24 @@ const PrizePool = () => {
         });
         const updated = await res.json();
         setAffiliateData(updated.user || updated);
-        
+
         // Check the new level status
         await checkLevelStatus();
       } else {
         const currentLevel = PrizeArray.find(
           (l) => l.id === (affiliateData?.level || 1)
         );
-        
+
         if (currentLevel) {
           const conditions = checkLevelConditions(currentLevel);
           setActivePopup({
             ...currentLevel,
-            ...conditions
+            ...conditions,
           });
         }
       }
+
+      await fetchData();
     } catch (err) {
       setError(err.message);
       console.error("Error completing level:", err);
@@ -211,7 +250,7 @@ const PrizePool = () => {
     if (levelId < currentLevel) {
       return "completed";
     } else if (levelId === currentLevel) {
-      const level = PrizeArray.find(l => l.id === levelId);
+      const level = PrizeArray.find((l) => l.id === levelId);
       const conditions = checkLevelConditions(level);
       return conditions.allMet ? "current-completed" : "current";
     } else {
@@ -230,17 +269,15 @@ const PrizePool = () => {
           Time expired! You've been reset to Level 1
         </div>
       )}
-      
+
       <div className={styles.prizePool}>
         <div className={styles.box}>
           <h1 className={styles.Header}>Prize Pool</h1>
           <p className={styles.description}>
-            Hit all targets within the time limit to claim your reward. 
-            First 5 levels have 5 days each, last 2 levels have 3 days each.
-            If you don't complete a level in time, you'll be reset to Level 1.
+            Hit all targets within the time limit to claim your reward. First 5
+            levels have 5 days each, last 2 levels have 3 days each. If you
+            don't complete a level in time, you'll be reset to Level 1.
           </p>
-
-      
 
           <div className={styles.timerContainer}>
             <b>Time left for Level {affiliateData?.level || 1}: </b>
@@ -256,12 +293,14 @@ const PrizePool = () => {
                   className={`${styles.prize} ${
                     status === "completed" ? styles.completed : ""
                   } ${status === "current" ? styles.current : ""} ${
-                    status === "current-completed" ? styles.currentCompleted : ""
+                    status === "current-completed"
+                      ? styles.currentCompleted
+                      : ""
                   }`}
                 >
                   <h2 className={styles.id}>Level {item.id}</h2>
                   <h2 className={styles.name}>{item.prize}</h2>
-                
+
                   {status === "completed" ? (
                     <button
                       className={`${styles.button} ${styles.completedButton}`}
@@ -284,7 +323,7 @@ const PrizePool = () => {
                         const conditions = checkLevelConditions(item);
                         setActivePopup({
                           ...item,
-                          ...conditions
+                          ...conditions,
                         });
                       }}
                     >
