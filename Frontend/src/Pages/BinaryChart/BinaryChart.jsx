@@ -758,8 +758,7 @@ const BinaryChart = () => {
               </div>
               <div className={styles.timestampPopupContainer}>
                 {showTimestampPopup && (
-                  <div className={styles.timestampPopup}
-                  >
+                  <div className={styles.timestampPopup}>
                     {[30, 60, 120, 180, 300].map((time) => (
                       <div
                         key={time}
