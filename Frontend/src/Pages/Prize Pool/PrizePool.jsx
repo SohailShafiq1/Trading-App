@@ -57,6 +57,7 @@ const PrizePool = () => {
   const [error, setError] = useState(null);
   const [timeExpired, setTimeExpired] = useState(false);
   const [socket, setSocket] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Initialize socket connection
   useEffect(() => {
