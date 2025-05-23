@@ -2,47 +2,128 @@ import React, { useEffect, useRef, useState } from "react";
 import { AiOutlinePlus, AiOutlineBgColors } from "react-icons/ai";
 import { BsBarChartFill } from "react-icons/bs";
 import { BiPencil } from "react-icons/bi";
+import axios from "axios";
+import { createChart, CrosshairMode } from "lightweight-charts";
+
+// Time interval mapping
+const intervalToSeconds = {
+  "1": 60,
+  "3": 180,
+  "5": 300,
+  "15": 900,
+  "30": 1800,
+  "60": 3600,
+  "120": 7200,
+  "240": 14400,
+  "D": 86400,
+};
 
 const TradingViewChart = ({ coinName }) => {
   const containerRef = useRef();
+  const chartRef = useRef(null);
+  const seriesRef = useRef(null);
   const [interval, setInterval] = useState("30");
+  const [candles, setCandles] = useState([]);
+  const [currentPrice, setCurrentPrice] = useState(null);
+  const [theme, setTheme] = useState("light");
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-
-    script.onload = () => {
-      if (window.TradingView) {
-        new window.TradingView.widget({
-          container_id: containerRef.current.id,
-          autosize: true,
-          symbol: `BINANCE:${coinName}USDT`,
-          interval: interval,
-          timezone: "Etc/UTC",
-          theme: "light",
-          style: "1",
-          locale: "en",
-          toolbar_bg: "#f1f3f6",
-          enable_publishing: false,
-          allow_symbol_change: false,
-          hide_top_toolbar: true,
-          overrides: {
-            "paneProperties.background": "#ffffff",
-            "paneProperties.vertGridProperties.color": "#e0e0e0",
-            "paneProperties.horzGridProperties.color": "#e0e0e0",
-            "scalesProperties.textColor": "#333",
-          },
-        });
+  // Fetch candle data
+  const fetchCandles = async () => {
+    try {
+      // Replace with your actual API endpoint
+      const response = await axios.get(
+        `https://api.binance.com/api/v3/klines?symbol=${coinName}USDT&interval=${getBinanceInterval(interval)}&limit=1000`
+      );
+      
+      const formattedCandles = response.data.map(candle => ({
+        time: candle[0] / 1000, // Convert to seconds
+        open: parseFloat(candle[1]),
+        high: parseFloat(candle[2]),
+        low: parseFloat(candle[3]),
+        close: parseFloat(candle[4]),
+        volume: parseFloat(candle[5]),
+      }));
+      
+      setCandles(formattedCandles);
+      
+      // Set current price to the latest close price
+      if (formattedCandles.length > 0) {
+        setCurrentPrice(formattedCandles[formattedCandles.length - 1].close);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching candle data:", error);
+    }
+  };
 
-    document.body.appendChild(script);
+  // Convert our interval format to Binance's format
+  const getBinanceInterval = (interval) => {
+    switch (interval) {
+      case "1": return "1m";
+      case "3": return "3m";
+      case "5": return "5m";
+      case "15": return "15m";
+      case "30": return "30m";
+      case "60": return "1h";
+      case "120": return "2h";
+      case "240": return "4h";
+      case "D": return "1d";
+      default: return "30m";
+    }
+  };
+
+  // Initialize chart
+  useEffect(() => {
+    const chart = createChart(containerRef.current, {
+      layout: {
+        background: { color: theme === "light" ? "#ffffff" : "#121212" },
+        textColor: theme === "light" ? "#333333" : "#d1d4dc",
+      },
+      grid: {
+        vertLines: { color: theme === "light" ? "#eeeeee" : "#444444" },
+        horzLines: { color: theme === "light" ? "#eeeeee" : "#444444" },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
+      width: containerRef.current.clientWidth,
+      height: 600,
+      timeScale: {
+        borderColor: theme === "light" ? "#eeeeee" : "#444444",
+        timeVisible: true,
+      },
+    });
+
+    chartRef.current = chart;
+    seriesRef.current = chart.addCandlestickSeries({
+      upColor: theme === "light" ? "#26a69a" : "#00e676",
+      downColor: theme === "light" ? "#ef5350" : "#ff1744",
+      borderUpColor: theme === "light" ? "#26a69a" : "#00e676",
+      borderDownColor: theme === "light" ? "#ef5350" : "#ff1744",
+      wickUpColor: theme === "light" ? "#26a69a" : "#00e676",
+      wickDownColor: theme === "light" ? "#ef5350" : "#ff1744",
+    });
 
     return () => {
-      script.remove();
+      chart.remove();
     };
+  }, [theme]);
+
+  // Fetch data when coinName or interval changes
+  useEffect(() => {
+    fetchCandles();
   }, [coinName, interval]);
+
+  // Update chart when candles data changes
+  useEffect(() => {
+    if (seriesRef.current && candles.length > 0) {
+      seriesRef.current.setData(candles);
+      chartRef.current.timeScale().fitContent();
+    }
+  }, [candles]);
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
   return (
     <div
@@ -52,7 +133,7 @@ const TradingViewChart = ({ coinName }) => {
         width: "100%",
         borderRadius: 10,
         overflow: "hidden",
-        background: "#ffffff",
+        background: theme === "light" ? "#ffffff" : "#121212",
       }}
     >
       {/* Toolbar */}
@@ -67,41 +148,19 @@ const TradingViewChart = ({ coinName }) => {
           flexWrap: "wrap",
         }}
       >
-        {/* + Button */}
-        <button
+        {/* Current Price Display */}
+        <div
           style={{
-            width: 40,
-            height: 40,
+            padding: "8px 12px",
             borderRadius: 4,
-            border: "1px solid #cccccc",
-            background: "linear-gradient(90deg, #66b544, #1a391d)",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
+            background: theme === "light" ? "#f5f5f5" : "#222",
+            color: theme === "light" ? "#26a69a" : "#00e676",
+            fontWeight: "bold",
+            fontSize: "0.9rem",
           }}
         >
-          <AiOutlinePlus style={{ fontSize: "1.5rem", color: "white" }} />
-        </button>
-
-        {/* Drawing Tool */}
-        <button
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 4,
-            border: "1px solid #cccccc",
-            background: "#ffffff",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          <BiPencil style={{ fontSize: "1.5rem", color: "#333" }} />
-        </button>
+          {currentPrice ? `$${currentPrice.toFixed(4)}` : "Loading..."}
+        </div>
 
         {/* Interval Selector */}
         <select
@@ -110,13 +169,13 @@ const TradingViewChart = ({ coinName }) => {
           style={{
             height: 40,
             borderRadius: 4,
-            border: "1px solid #ccc",
-            background: "#ffffff",
+            border: `1px solid ${theme === "light" ? "#cccccc" : "#444"}`,
+            background: theme === "light" ? "#ffffff" : "#222",
             boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
             padding: "0 10px",
             fontSize: "1rem",
             cursor: "pointer",
-            color: "#333",
+            color: theme === "light" ? "#333" : "#ddd",
           }}
         >
           {["1", "3", "5", "15", "30", "60", "120", "240", "D"].map((val) => (
@@ -128,12 +187,13 @@ const TradingViewChart = ({ coinName }) => {
 
         {/* Theme Button */}
         <button
+          onClick={toggleTheme}
           style={{
             width: 40,
             height: 40,
             borderRadius: 4,
-            border: "1px solid #cccccc",
-            background: "#ffffff",
+            border: `1px solid ${theme === "light" ? "#cccccc" : "#444"}`,
+            background: theme === "light" ? "#ffffff" : "#222",
             boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
             display: "flex",
             alignItems: "center",
@@ -141,7 +201,10 @@ const TradingViewChart = ({ coinName }) => {
             cursor: "pointer",
           }}
         >
-          <AiOutlineBgColors style={{ fontSize: "1.5rem", color: "#333" }} />
+          <AiOutlineBgColors style={{ 
+            fontSize: "1.5rem", 
+            color: theme === "light" ? "#333" : "#ddd" 
+          }} />
         </button>
 
         {/* Chart Style */}
@@ -150,8 +213,8 @@ const TradingViewChart = ({ coinName }) => {
             width: 40,
             height: 40,
             borderRadius: 4,
-            border: "1px solid #cccccc",
-            background: "#ffffff",
+            border: `1px solid ${theme === "light" ? "#cccccc" : "#444"}`,
+            background: theme === "light" ? "#ffffff" : "#222",
             boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
             display: "flex",
             alignItems: "center",
@@ -159,13 +222,15 @@ const TradingViewChart = ({ coinName }) => {
             cursor: "pointer",
           }}
         >
-          <BsBarChartFill style={{ fontSize: "1.5rem", color: "#333" }} />
+          <BsBarChartFill style={{ 
+            fontSize: "1.5rem", 
+            color: theme === "light" ? "#333" : "#ddd" 
+          }} />
         </button>
       </div>
 
       {/* Chart Container */}
       <div
-        id={`tv-chart-${coinName}`}
         ref={containerRef}
         style={{ width: "100%", height: "100%" }}
       />

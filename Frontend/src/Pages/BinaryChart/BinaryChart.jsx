@@ -749,7 +749,12 @@ const BinaryChart = () => {
                 >
                   −
                 </button>
-                <div className={styles.value}>{formatTime(timer)}</div>
+                <div className={styles.value}>
+                  {formatTime(timer)}{" "}
+                  <span style={{ fontSize: "0.9em", color: "#888" }}>
+                    {timer >= 60 ? "min" : "sec"}
+                  </span>
+                </div>
                 <button
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
