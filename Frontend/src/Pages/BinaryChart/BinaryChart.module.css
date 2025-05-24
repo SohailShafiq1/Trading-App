@@ -263,15 +263,33 @@ body {
 
 .popup {
   position: fixed;
-  bottom: 2rem;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
   z-index: 1000;
-  animation: slideUp 0.3s ease-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  10%,
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
 }
 
 @keyframes slideUp {
@@ -306,21 +324,31 @@ body {
     max-height: 200px;
   }
 }
-
-::-webkit-scrollbar {
-  width: 6px;
+.timestampPopup {
+  position: absolute;
+  background-color: #1f1f1f;
+  color: #ffffff;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 3fr));
+  gap: 1rem;
+}
+.timestampOption {
+  background-color: #e0e0e0;
+  color: #000000;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-::-webkit-scrollbar-track {
-  background: #1e1f25;
-  border-radius: 3px;
+.timestampOption:hover {
+  background-color: #c0c0c0;
+  transform: scale(1.05);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #3d3f4e;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #57596a;
+.timestampOption:active {
+  background-color: #a0a0a0;
+  transform: scale(0.95);
 }

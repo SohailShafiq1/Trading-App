@@ -16,7 +16,14 @@ import { io } from "socket.io-client";
 
 const BinaryChart = () => {
   // State declarations
-  const socket = io("http://localhost:5000");
+  const socket = useRef(null);
+
+  useEffect(() => {
+    socket.current = io("http://localhost:5000");
+    return () => {
+      socket.current.disconnect();
+    };
+  }, []);
 
   const { isDemo, demo_assets, setDemo_assets } = useAccountType();
   const [coins, setCoins] = useState([]);
@@ -40,6 +47,7 @@ const BinaryChart = () => {
   const coinSelectorRef = useRef(null);
   const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
   const [demoAssets, setDemoAssets] = useState(demo_assets);
+  const [showTimestampPopup, setShowTimestampPopup] = useState(false);
 
   // Check verification status (only for real account)
   useEffect(() => {
@@ -78,6 +86,7 @@ const BinaryChart = () => {
         !coinSelectorRef.current.contains(event.target)
       ) {
         setIsCoinSelectorOpen(false);
+        showTimestampPopup(false);
       }
     };
 
@@ -135,7 +144,6 @@ const BinaryChart = () => {
   useEffect(() => {
     if (!selectedCoin || selectedCoinType !== "Live") return;
 
-    let interval;
     let isMounted = true;
 
     const fetchLivePrice = async () => {
@@ -158,7 +166,7 @@ const BinaryChart = () => {
     };
 
     fetchLivePrice();
-    interval = setInterval(fetchLivePrice, 5000);
+    const interval = setInterval(fetchLivePrice, 5000);
 
     return () => {
       isMounted = false;
@@ -166,38 +174,21 @@ const BinaryChart = () => {
     };
   }, [selectedCoin, selectedCoinType]);
 
-  // Fetch and update OTC price
   useEffect(() => {
     if (!selectedCoin || selectedCoinType !== "OTC") return;
 
-    let interval;
-    let isMounted = true;
-
-    const fetchOtcPrice = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:5000/api/coins/price/${selectedCoin}`
-        );
-        if (isMounted) {
-          const priceValue = response.data.price || response.data;
-          setOtcPrice(parseFloat(priceValue));
-          setIsLoading(false);
-          setPriceLoaded(true);
-        }
-      } catch (err) {
-        console.error("Failed to fetch OTC price:", err);
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    const handlePriceUpdate = (priceData) => {
+      const priceValue = priceData.price || priceData;
+      setOtcPrice(parseFloat(priceValue));
+      setIsLoading(false);
+      setPriceLoaded(true);
     };
 
-    fetchOtcPrice();
-    interval = setInterval(fetchOtcPrice, 5000);
+    const currentSocket = socket.current;
+    currentSocket.on(`price:${selectedCoin}`, handlePriceUpdate);
 
     return () => {
-      isMounted = false;
-      clearInterval(interval);
+      currentSocket.off(`price:${selectedCoin}`, handlePriceUpdate);
     };
   }, [selectedCoin, selectedCoinType]);
 
@@ -749,11 +740,11 @@ const BinaryChart = () => {
                 >
                   −
                 </button>
-                <div className={styles.value}>
-                  {formatTime(timer)}{" "}
-                  <span style={{ fontSize: "0.9em", color: "#888" }}>
-                    {timer >= 60 ? "min" : "sec"}
-                  </span>
+                <div
+                  className={styles.value}
+                  onClick={() => setShowTimestampPopup((prev) => !prev)}
+                >
+                  {formatTime(timer)}
                 </div>
                 <button
                   className={styles.iconBtn}
@@ -764,6 +755,24 @@ const BinaryChart = () => {
                 >
                   +
                 </button>
+              </div>
+              <div className={styles.timestampPopupContainer}>
+                {showTimestampPopup && (
+                  <div className={styles.timestampPopup}>
+                    {[30, 60, 120, 180, 300].map((time) => (
+                      <div
+                        key={time}
+                        className={styles.timestampOption}
+                        onClick={() => {
+                          setTimer(time);
+                          setShowTimestampPopup(false);
+                        }}
+                      >
+                        {formatTime(time)}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className={styles.moneyBox}>
