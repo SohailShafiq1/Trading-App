@@ -44,14 +44,22 @@ router.get("/health", async (_req, res) => {
 
 // User Deposit Route
 router.post("/deposit", async (req, res) => {
-  const { email, amount, txId } = req.body;
+  const { email, amount, txId, bonusPercent = 0 } = req.body;
 
   try {
+    // Calculate bonus amount
+    let bonusAmount = 0;
+    if (bonusPercent) {
+      bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
+    }
+
     const deposit = new Deposit({
       userEmail: email,
       amount,
       txId,
       wallet: process.env.ADMIN_TRON_WALLET,
+      bonusPercent,
+      bonusAmount,
     });
 
     await deposit.save();

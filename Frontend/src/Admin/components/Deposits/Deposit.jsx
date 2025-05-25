@@ -49,10 +49,7 @@ const Deposit = () => {
   return (
     <div className={s.container}>
       <div className={s.headerRow}>
-        <button
-          className={s.backButton}
-          onClick={() => navigate(-1)}
-        >
+        <button className={s.backButton} onClick={() => navigate(-1)}>
           ← Back
         </button>
         <h2 className={s.title}>User Deposits</h2>
@@ -73,6 +70,8 @@ const Deposit = () => {
           <tr>
             <th>Email</th>
             <th>Amount</th>
+            <th>Bonus</th>
+            <th>Total (With Bonus)</th>
             <th>Status</th>
             <th>Date</th>
             <th>Action</th>
@@ -81,7 +80,7 @@ const Deposit = () => {
         <tbody>
           {filteredDeposits.length === 0 ? (
             <tr>
-              <td colSpan={5} style={{ textAlign: "center", color: "#888" }}>
+              <td colSpan={7} style={{ textAlign: "center", color: "#888" }}>
                 No deposits found.
               </td>
             </tr>
@@ -90,6 +89,12 @@ const Deposit = () => {
               <tr key={dep._id}>
                 <td>{dep.userEmail}</td>
                 <td>${dep.amount}</td>
+                <td>
+                  {typeof dep.bonusAmount === "number" && dep.bonusPercent
+                    ? `$${dep.bonusAmount} (${dep.bonusPercent}%)`
+                    : "-"}
+                </td>
+                <td>${dep.amount + (dep.bonusAmount || 0)}</td>
                 <td>
                   <span
                     className={

@@ -216,3 +216,69 @@
 .instructions li {
   margin-bottom: 0.5rem;
 }
+.bonusPopupBtn {
+  margin: 12px 0;
+  padding: 8px 18px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.bonusPopupBtn:hover {
+  background: #0056b3;
+}
+.bonusModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+.bonusModal {
+  background: #fff;
+  padding: 32px 28px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+}
+.bonusList {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 18px 0;
+}
+.bonusListItem {
+  margin-bottom: 12px;
+  font-size: 1.08rem;
+}
+.bonusListItem label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bonusListItem input[type="radio"] {
+  accent-color: #22c55e;
+  margin-right: 8px;
+}
+.closeBonusBtn {
+  margin-top: 10px;
+  padding: 6px 18px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.closeBonusBtn:hover {
+  background: #cbd5e1;
+}
