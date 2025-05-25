@@ -57,6 +57,7 @@ const PrizePool = () => {
   const [error, setError] = useState(null);
   const [timeExpired, setTimeExpired] = useState(false);
   const [socket, setSocket] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Initialize socket connection
   useEffect(() => {
@@ -102,38 +103,101 @@ const PrizePool = () => {
   }, [socket, affiliate?.email]);
 
   // Fetch and update affiliate data
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!affiliate?.email) return;
+  const fetchData = async () => {
+    if (!affiliate?.email) return;
 
       try {
         setIsLoading(true);
-
+        
         // First update team totals
         await fetch(
-          `${BACKEND_URL}/api/affiliate/update-team-totals/${affiliate.email}`,
+          `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
           { credentials: "include" }
         );
 
         // Then get updated affiliate data
-        const res = await fetch(`${BACKEND_URL}/api/affiliate/me`, {
+        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
           credentials: "include",
         });
-
+        
         if (!res.ok) throw new Error("Failed to fetch affiliate data");
-
+        
         const data = await res.json();
         setAffiliateData(data.user || data);
+        
+        // Check level status after loading data
+        await checkLevelStatus();
       } catch (err) {
         console.error("Error fetching affiliate data:", err);
         setError(err.message);
       } finally {
         setIsLoading(false);
+        setIsInitialLoad(false);
       }
     };
 
+  useEffect(() => {
     fetchData();
-  }, [affiliate?.email, timeExpired]);
+  }, [affiliate?.email]);
+
+  // Check level status and timer
+  const checkLevelStatus = async () => {
+    if (!affiliate?.email) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/affiliate/check-level-status/${affiliate.email}`,
+        { credentials: "include" }
+      );
+      const data = await response.json();
+
+      if (data.timeExpired) {
+        setTimeExpired(true);
+        // Refresh affiliate data if level was reset
+        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+          credentials: "include",
+        });
+        const updated = await res.json();
+        setAffiliateData(updated.user || updated);
+      } else {
+        setTimeExpired(false);
+      }
+
+      if (data.timeLeft !== undefined) {
+        setTimeLeft(data.timeLeft);
+      }
+    } catch (err) {
+      console.error("Error checking level status:", err);
+    }
+  };
+
+  // Set up interval for checking level status
+  useEffect(() => {
+    if (isInitialLoad) return;
+
+    const interval = setInterval(() => {
+      checkLevelStatus();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [isInitialLoad, affiliate?.email]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1000) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
 
   const formatTime = (ms) => {
     if (ms <= 0) return "Time expired";
@@ -184,9 +248,11 @@ const PrizePool = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || data.error || "Failed to complete level"
-        );
+        throw new Error(data.message || data.error || "Failed to complete level");
+      }
+
+      if (data.timeExpired) {
+        setTimeExpired(true);
       }
 
       if (data.success) {
@@ -196,6 +262,9 @@ const PrizePool = () => {
         });
         const updated = await res.json();
         setAffiliateData(updated.user || updated);
+        
+        // Check the new level status
+        await checkLevelStatus();
       } else {
         const currentLevel = PrizeArray.find(
           (l) => l.id === (affiliateData?.level || 1)
@@ -209,6 +278,8 @@ const PrizePool = () => {
           });
         }
       }
+
+      await fetchData();
     } catch (err) {
       setError(err.message);
       console.error("Error completing level:", err);
@@ -251,8 +322,6 @@ const PrizePool = () => {
             don't complete a level in time, you'll be reset to Level 1.
           </p>
 
-          {error && <div className={styles.error}>{error}</div>}
-
           <div className={styles.timerContainer}>
             <b>Time left for Level {affiliateData?.level || 1}: </b>
             <span className={styles.timer}>{formatTime(timeLeft)}</span>
@@ -274,9 +343,6 @@ const PrizePool = () => {
                 >
                   <h2 className={styles.id}>Level {item.id}</h2>
                   <h2 className={styles.name}>{item.prize}</h2>
-                  <p className={styles.timeLimit}>
-                    Time Limit: {item.timeLimit} days
-                  </p>
 
                   {status === "completed" ? (
                     <button

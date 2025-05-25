@@ -53,6 +53,7 @@ const DepositPage = () => {
   const [message, setMessage] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(true);
+  const [showContinue, setShowContinue] = useState(false);
 
   // Check verification status
   useEffect(() => {
@@ -112,8 +113,8 @@ const DepositPage = () => {
       return;
     }
 
-    if (!email || !amount || !fromAddress) {
-      setMessage("Email, amount, and TRC20 wallet address are required.");
+    if (!amount) {
+      setMessage("Amount is required.");
       return;
     }
 
@@ -179,84 +180,123 @@ const DepositPage = () => {
           <div className={s.modal}>
             <button
               className={s.closeButton}
-              onClick={() => setShowModal(false)}
+              onClick={() => {
+                setShowModal(false);
+                setShowContinue(false);
+                setAmount("");
+                setMessage("");
+              }}
             >
               ✕
             </button>
             <h2>{selected} Deposit</h2>
 
-            <div className={s.instructions}>
-              <p>
-                <strong>📌 Instructions:</strong>
-              </p>
-              <ol>
-                <li>Go to your crypto wallet (Trust Wallet, Binance, etc.)</li>
-                <li>
-                  Select <strong>USDT (TRC-20)</strong>
-                </li>
-                <li>Send the amount to the wallet address below</li>
-                <li>After sending, fill and submit this form</li>
-              </ol>
-            </div>
-
-            <p>
-              <strong>Send to Wallet:</strong>
-            </p>
-            <code>{ADMIN_WALLET}</code>
-
-            <form onSubmit={handleSubmit} className={s.form}>
-              <input
-                type="email"
-                placeholder="Your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isDemo || !isVerified}
-              />
-              <input
-                type="text"
-                placeholder="Your TRC20 Wallet Address"
-                value={fromAddress}
-                onChange={(e) => setFromAddress(e.target.value)}
-                required
-                disabled={isDemo || !isVerified}
-              />
-              <input
-                type="number"
-                placeholder="Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                min="10"
-                required
-                disabled={isDemo || !isVerified}
-              />
-              <input
-                type="text"
-                placeholder="Transaction ID (optional)"
-                value={txId}
-                onChange={(e) => setTxId(e.target.value)}
-                disabled={isDemo || !isVerified}
-              />
-              <button type="submit" disabled={isDemo || !isVerified}>
-                {isDemo
-                  ? "Switch to Live Account"
-                  : !isVerified
-                  ? "Verify Your Account"
-                  : "Submit Deposit"}
-              </button>
-              {message && <p className={s.message}>{message}</p>}
-              {isDemo && (
-                <p className={s.errorMessage}>
-                  You cannot deposit with a demo account. Please switch to a
-                  Live account.
-                </p>
-              )}
-              {!isVerified && (
-                <p className={s.errorMessage}>
-                  Please verify your account to make deposits.
-                </p>
-              )}
-            </form>
+            {!showContinue ? (
+              <>
+                <div className={s.instructions}>
+                  <p>
+                    <strong>📌 Instructions:</strong>
+                  </p>
+                  <ol>
+                    <li>Go to your crypto wallet (Trust Wallet, Binance, etc.)</li>
+                    <li>
+                      Select <strong>USDT (TRC-20)</strong>
+                    </li>
+                    <li>Enter the amount you want to deposit below</li>
+                  </ol>
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!amount || Number(amount) < 10) {
+                      setMessage("Please enter an amount of at least $10");
+                      return;
+                    }
+                    setShowContinue(true);
+                  }}
+                  className={s.form}
+                >
+                  <input
+                    type="number"
+                    placeholder="Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    min="10"
+                    required
+                    disabled={isDemo || !isVerified}
+                  />
+                  <button type="submit" disabled={isDemo || !isVerified}>
+                    Continue
+                  </button>
+                  {message && <p className={s.message}>{message}</p>}
+                  {isDemo && (
+                    <p className={s.errorMessage}>
+                      You cannot deposit with a demo account. Please switch to a
+                      Live account.
+                    </p>
+                  )}
+                  {!isVerified && (
+                    <p className={s.errorMessage}>
+                      Please verify your account to make deposits.
+                    </p>
+                  )}
+                </form>
+              </>
+            ) : (
+              <>
+                <div className={s.instructions}>
+                  <p>
+                    <strong>Send to Wallet:</strong>
+                  </p>
+                  <div className={s.walletRow}>
+                    <code className={s.walletCode}>
+                      {ADMIN_WALLET}
+                    </code>
+                    <button
+                      type="button"
+                      className={s.copyButton}
+                      onClick={() => {
+                        navigator.clipboard.writeText(ADMIN_WALLET);
+                        toast.success("Wallet address copied!");
+                      }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <p>
+                    After sending, click <b>Submit</b> to finish your deposit
+                    request.
+                  </p>
+                </div>
+                <button
+                  className={s.submitButton}
+                  onClick={async () => {
+                    try {
+                      const res = await axios.post(
+                        "http://localhost:5000/api/users/deposit",
+                        {
+                          email,
+                          amount,
+                          txId: "", // not used
+                          fromAddress: "", // not used
+                        }
+                      );
+                      setMessage(res.data.message);
+                      setAmount("");
+                      setShowModal(false);
+                      setShowContinue(false);
+                      toast.success("Deposit request submitted successfully!");
+                    } catch (err) {
+                      setMessage("Deposit failed. Try again.");
+                      toast.error("Deposit failed. Please try again.");
+                    }
+                  }}
+                  disabled={isDemo || !isVerified}
+                >
+                  Submit
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

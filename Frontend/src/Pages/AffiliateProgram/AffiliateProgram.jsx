@@ -80,7 +80,11 @@ const AffiliateProgram = () => {
           </NavLink>
           <div className={s.earning}>
             <p>Earnings for all time</p>
-            <span>$0.00</span>
+            <span>
+              {affiliate?.totalPrize
+                ? `$${Number(affiliate.totalPrize).toLocaleString()}`
+                : "$0.00"}
+            </span>
           </div>
         </div>
         <div className={s.partnerLink}>

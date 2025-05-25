@@ -312,12 +312,31 @@ export const completeLevel = async (req, res) => {
       });
     }
 
-    // Update level
-    affiliate.level = currentLevel + 1;
-    affiliate.levelStartTime = Date.now();
+    // Update level logic
+    if (currentLevel === PrizeArray.length) {
+      // User completed the last level, reset to level 1
+      affiliate.level = 1;
+      affiliate.levelStartTime = Date.now();
+    } else {
+      // Move to next level
+      affiliate.level = currentLevel + 1;
+      affiliate.levelStartTime = Date.now();
+    }
+    if (!affiliate.prize) affiliate.prize = [];
+    affiliate.prize.push(prize.prize);
+
+    // Calculate the sum of all prizes
+    affiliate.totalPrize = affiliate.prize
+      .map(p => Number(String(p).replace(/[^0-9.]/g, "")))
+      .reduce((a, b) => a + b, 0);
+
     await affiliate.save();
 
-    res.json({ success: true, newLevel: affiliate.level });
+    res.json({ 
+      success: true, 
+      newLevel: affiliate.level,
+      reset: currentLevel === PrizeArray.length // Optionally tell frontend if reset happened
+    });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
