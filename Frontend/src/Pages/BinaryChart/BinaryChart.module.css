@@ -81,6 +81,12 @@ body {
   margin-bottom: 1rem;
   position: relative;
 }
+@media (max-width: 450px) {
+  .coinList {
+    flex-direction: column;
+    align-items: center;
+  }
+}
 
 .coinSelect {
   color: black;
@@ -358,4 +364,9 @@ body {
 .timestampOption:active {
   background-color: #a0a0a0;
   transform: scale(0.95);
+}
+@media (max-width: 430px) {
+  .chart {
+    margin-bottom: 25rem;
+  }
 }
