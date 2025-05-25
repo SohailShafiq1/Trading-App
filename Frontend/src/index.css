@@ -5,3 +5,8 @@ body {
 #tv-attr-logo {
   display: none;
 }
+@media (max-width: 768px) {
+  canvas {
+    position: static;
+  }
+}

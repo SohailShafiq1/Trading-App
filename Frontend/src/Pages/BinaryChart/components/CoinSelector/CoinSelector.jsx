@@ -18,6 +18,22 @@ const CoinSelector = forwardRef(
         .catch(() => setCoins([]));
     }, []);
 
+    // On mount, initialize selectedCoin from localStorage if available
+    useEffect(() => {
+      const storedCoin = localStorage.getItem("selectedCoin");
+      if (storedCoin && !selectedCoin) {
+        setSelectedCoin(storedCoin);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Whenever selectedCoin changes, update localStorage
+    useEffect(() => {
+      if (selectedCoin) {
+        localStorage.setItem("selectedCoin", selectedCoin);
+      }
+    }, [selectedCoin]);
+
     const filteredCoins = coins.filter(
       (coin) =>
         coin.type === activeTab &&
@@ -30,6 +46,7 @@ const CoinSelector = forwardRef(
     const handleSelect = (coin) => {
       setSelectedCoin(coin.name);
       setIsOpen(false);
+      localStorage.setItem("selectedCoin", coin.name);
     };
 
     return (

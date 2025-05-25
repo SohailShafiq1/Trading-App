@@ -27,7 +27,7 @@ const BinaryChart = () => {
 
   const { isDemo, demo_assets, setDemo_assets } = useAccountType();
   const [coins, setCoins] = useState([]);
-  const [selectedCoin, setSelectedCoin] = useState("BTC");
+  const [selectedCoin, setSelectedCoin] = useState("");
   const [selectedCoinType, setSelectedCoinType] = useState("");
   const [livePrice, setLivePrice] = useState(0);
   const [otcPrice, setOtcPrice] = useState(0);
@@ -669,7 +669,7 @@ const BinaryChart = () => {
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.box}>
+        <div className={styles.Cbox}>
           <div className={styles.chart}>
             <div className={styles.coinList}>
               <CoinSelector
@@ -706,7 +706,12 @@ const BinaryChart = () => {
                     />
                   )}
                   {selectedCoinType === "OTC" && (
-                    <LiveCandleChart coinName={selectedCoin} price={otcPrice} />
+                    <div className={styles.chartBoxOTC}>
+                      <LiveCandleChart
+                        coinName={selectedCoin}
+                        price={otcPrice}
+                      />
+                    </div>
                   )}
                 </>
               )

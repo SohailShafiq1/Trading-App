@@ -53,13 +53,13 @@ const TransactionPage = () => {
           <tbody>
             {transactions.map((tx) => (
               <tr key={tx.orderId}>
-                <td>{tx.orderId || "N/A"}</td>
+                <td className={s.tableData}>{tx.orderId || "N/A"}</td>
                 <td className={s.amount}>
                   {tx.type === "deposit" ? "+" : "-"}${tx.amount.toFixed(2)}
                 </td>
-                <td>{new Date(tx.date).toLocaleString()}</td>
-                <td>{tx.paymentMethod}</td>
-                <td>
+                <td className={s.tableData} >{new Date(tx.date).toLocaleString()}</td>
+                <td className={s.tableData}>{tx.paymentMethod}</td>
+                <td className={s.tableData}>
                   <AiOutlineCheckCircle className={s.circle} />
                   {tx.status === "success"
                     ? "Success"
@@ -67,7 +67,7 @@ const TransactionPage = () => {
                     ? "Processing"
                     : "Failed"}
                 </td>
-                <td>{tx.type === "deposit" ? "Deposit" : "Withdrawal"}</td>
+                <td className={s.tableData}>{tx.type === "deposit" ? "Deposit" : "Withdrawal"}</td>
               </tr>
             ))}
           </tbody>

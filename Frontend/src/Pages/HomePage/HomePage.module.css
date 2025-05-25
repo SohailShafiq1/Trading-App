@@ -19,9 +19,10 @@
 
 .homeParagraph {
   font-size: 21px;
+  font-weight: 800;
   text-align: center;
-  color: #313030;
-  margin-bottom: 1.5rem;
+  color: #a6a6a6;
+  margin-bottom: 3rem;
   width: 80%;
 }
 
@@ -30,10 +31,12 @@
 }
 
 .homeButton a {
-  padding: 1.2rem 4rem;
-  font-size: 1rem;
+  border: 4px #10a055;
+  box-shadow: 0 0 15px 4px #10a055, 0 0 20px 8px rgba(10, 192, 4, 0.3);
+  padding: 1rem 4rem;
+  font-size: 1.3rem;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 1000;
   border-radius: 2rem;
   transition: all 0.3s ease;
   background: linear-gradient(90deg, #66b544, #1a391d);
@@ -49,8 +52,8 @@
 }
 
 .Image {
-  width: 90%;
-  max-width: 600px;
+  width: 100%;
+  max-width: 1000px;
   margin-top: 2rem;
   margin-bottom: 5rem;
 }
