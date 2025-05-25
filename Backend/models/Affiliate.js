@@ -71,6 +71,22 @@ const AffiliateSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    trafficQuestions: {
+      type: new mongoose.Schema(
+        {
+          primarySources: { type: String, default: "" }, // Q1
+          tiktokProfile: { type: String, default: "" }, // Q2
+          mainIncomeSource: { type: String, default: "" }, // Q3
+          monthlyEarningGoal: { type: String, default: "" }, // Q4
+        },
+        { _id: false }
+      ),
+      default: {},
+    },
+    trafficQuestionsAnswered: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
@@ -84,5 +100,12 @@ AffiliateSchema.pre("save", async function (next) {
 AffiliateSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
+AffiliateSchema.statics.trafficQuestionsList = [
+  "What are your primary traffic sources (e.g., TikTok, YouTube, etc.)?",
+  "Please provide your TikTok profile link.",
+  "What is your main source of income (e.g., influencer earnings, digital marketing)?",
+  "What is your monthly earning goal through this platform?",
+];
 
 export default mongoose.model("Affiliate", AffiliateSchema);

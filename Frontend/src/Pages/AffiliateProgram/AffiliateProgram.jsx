@@ -10,8 +10,8 @@ import { NavLink, Navigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 import TeamData from "./components/TeamData/TeamData";
-
-const s = styles;
+import axios from "axios";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const AffiliateProgram = () => {
   const { user } = useAuth();
@@ -22,12 +22,85 @@ const AffiliateProgram = () => {
   const { affiliate } = useAffiliateAuth();
   const [activeTable, setActiveTable] = useState("traders");
 
+  // Questions state
+  const [questionsForm, setQuestionsForm] = useState({
+    primarySources: "",
+    tiktokProfile: "",
+    mainIncomeSource: "",
+    monthlyEarningGoal: "",
+  });
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showQuestions, setShowQuestions] = useState(false);
+
   useEffect(() => {
     if (affiliate) {
       setReferralLink(affiliate.referralLink);
       setReferralCode(affiliate.affiliateCode);
+
+      if (affiliate.trafficQuestions) {
+        setQuestionsForm({ ...affiliate.trafficQuestions });
+      }
+
+      if (!affiliate.trafficQuestionsAnswered) {
+        setShowQuestions(true);
+      }
     }
   }, [affiliate]);
+
+  useEffect(() => {
+    const getQuestions = async () => {
+      try {
+        const { data } = await axios.get(
+          `${BACKEND_URL}/api/affiliate/traffic-questions-list`
+        );
+        if (data.success) setQuestions(data.questions);
+      } catch (err) {
+        console.error("Failed to fetch traffic questions list:", err);
+      }
+    };
+    getQuestions();
+  }, []);
+
+  const handleQuestionsChange = (e) => {
+    setQuestionsForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleQuestionsSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const token = localStorage.getItem("affiliate_token");
+    try {
+      await axios.put(
+        `${BACKEND_URL}/api/affiliate/traffic-questions`,
+        {
+          primarySources: questionsForm.primarySources,
+          tiktokProfile: questionsForm.tiktokProfile,
+          mainIncomeSource: questionsForm.mainIncomeSource,
+          monthlyEarningGoal: questionsForm.monthlyEarningGoal,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setShowSuccess(true);
+      setShowQuestions(false);
+    } catch (err) {
+      console.error("Failed to submit traffic questions:", err);
+      alert("Submission failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeSuccessPopup = () => {
+    setShowSuccess(false);
+    window.location.reload();
+  };
 
   if (!user && !affiliate) {
     return <Navigate to="/affiliate/login" />;
@@ -67,114 +140,186 @@ const AffiliateProgram = () => {
   ];
 
   return (
-    <div className={s.container}>
-      <div className={s.top}>
-        <div className={s.balance}>
-          <p>Your balance</p>
-          <h1>{user?.assets || "$0.00"}</h1>
-          <NavLink
-            to="/binarychart/bankinglayout/withdraw"
-            className={s.withdrawalLink}
-          >
-            Go to withdrawal →
+    <div className={styles.container}>
+      {/* Main Content with blur effect */}
+      <div
+        className={`${styles.mainContent} ${
+          showQuestions ? styles.blurBackground : ""
+        }`}
+      >
+        <div className={styles.top}>
+          <div className={styles.balance}>
+            <p>Your balance</p>
+            <h1>{user?.assets || "$0.00"}</h1>
+            <NavLink
+              to="/binarychart/bankinglayout/withdraw"
+              className={styles.withdrawalLink}
+            >
+              Go to withdrawal →
+            </NavLink>
+            <div className={styles.earning}>
+              <p>Earnings for all time</p>
+              <span>
+                {affiliate?.totalPrize
+                  ? `$${Number(affiliate.totalPrize).toLocaleString()}`
+                  : "$0.00"}
+              </span>
+            </div>
+          </div>
+          <div className={styles.partnerLink}>
+            <div className={styles.topBar}>
+              <div className={styles.header}>
+                <AiOutlineLink className={styles.headerIcon} /> Your Partner
+                Link
+              </div>
+              <div className={styles.option}>
+                <button
+                  className={`${styles.pLink} ${
+                    displayType === "link" ? styles.active : ""
+                  }`}
+                  onClick={() => setDisplayType("link")}
+                >
+                  Partner Link
+                </button>
+                <button
+                  className={`${styles.pCode} ${
+                    displayType === "code" ? styles.active : ""
+                  }`}
+                  onClick={() => setDisplayType("code")}
+                >
+                  Partner Code
+                </button>
+              </div>
+            </div>
+            <div className={styles.linkContainer}>
+              <span>
+                {displayType === "link" ? referralLink : referralCode}
+              </span>
+              <div className={styles.copyButton} onClick={handleCopyClick}>
+                <FiCopy /> {isCopied ? "Copied!" : "Copy"}
+              </div>
+              <button className={styles.generate}>Generate New</button>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.line}>
+          <div className={styles.statsBox}>
+            <BiLineChartDown />
+            <span>0</span>
+            <p>Trader Ids</p>
+          </div>
+          <div className={styles.statsBox}>
+            <HiCursorClick />
+            <span>0</span>
+            <p>Clicks</p>
+          </div>
+          <div className={styles.statsBox}>
+            <BsFillPersonFill />
+            <span>{affiliate?.team ? affiliate.team.length : 0}</span>
+            <p>Registrations</p>
+          </div>
+          <NavLink to={"/affiliate/prizepool"} className={styles.statsBox}>
+            <GiMedal />
+            <div className={styles.prizePoolContent}>
+              <p>Prize Pool</p>
+            </div>
           </NavLink>
-          <div className={s.earning}>
-            <p>Earnings for all time</p>
-            <span>
-              {affiliate?.totalPrize
-                ? `$${Number(affiliate.totalPrize).toLocaleString()}`
-                : "$0.00"}
-            </span>
-          </div>
         </div>
-        <div className={s.partnerLink}>
-          <div className={s.topBar}>
-            <div className={s.header}>
-              <AiOutlineLink className={s.headerIcon} /> Your Partner Link
-            </div>
-            <div className={s.option}>
-              <button
-                className={`${s.pLink} ${
-                  displayType === "link" ? s.active : ""
-                }`}
-                onClick={() => setDisplayType("link")}
-              >
-                Partner Link
-              </button>
-              <button
-                className={`${s.pCode} ${
-                  displayType === "code" ? s.active : ""
-                }`}
-                onClick={() => setDisplayType("code")}
-              >
-                Partner Code
-              </button>
-            </div>
-          </div>
-          <div className={s.linkContainer}>
-            <span>{displayType === "link" ? referralLink : referralCode}</span>
-            <div className={s.copyButton} onClick={handleCopyClick}>
-              <FiCopy /> {isCopied ? "Copied!" : "Copy"}
-            </div>
-            <button className={s.generate}>Generate New</button>
-          </div>
-        </div>
-      </div>
 
-      <div className={s.line}>
-        <div className={s.statsBox}>
-          <BiLineChartDown />
-          <span>0</span>
-          <p>Trader Ids</p>
-        </div>
-        <div className={s.statsBox}>
-          <HiCursorClick />
-          <span>0</span>
-          <p>Clicks</p>
-        </div>
-        <div className={s.statsBox}>
-          <BsFillPersonFill />
-          <span>{affiliate?.team ? affiliate.team.length : 0}</span>
-          <p>Registrations</p>
-        </div>
-        <NavLink to={"/affiliate/prizepool"} className={s.statsBox}>
-          <GiMedal />
-          <div
-            style={{
-              background: "white",
-              borderRadius: "30px",
-              padding: "0rem 2rem",
-            }}
+        <div className={styles.toggleButtons}>
+          <button
+            className={activeTable === "traders" ? styles.activeToggle : ""}
+            onClick={() => setActiveTable("traders")}
           >
-            <p>Prize Pool</p>
+            TRADER
+          </button>
+          <button
+            className={activeTable === "profits" ? styles.activeToggle : ""}
+            onClick={() => setActiveTable("profits")}
+          >
+            Overall Stats
+          </button>
+        </div>
+
+        <div className={styles.tableContainer}>
+          <TeamData
+            activeTable={activeTable}
+            traders={traders}
+            profits={profits}
+          />
+        </div>
+      </div>
+
+      {/* Questions Modal (outside blurred content) */}
+      {showQuestions && (
+        <div className={styles.questionsModal}>
+          <div className={styles.questionsContent}>
+            <h2>Traffic Strategy Questions</h2>
+            <form onSubmit={handleQuestionsSubmit}>
+              <div className={styles.formGroup}>
+                <label>{questions[0] || "Primary traffic sources"}</label>
+                <input
+                  type="text"
+                  name="primarySources"
+                  value={questionsForm.primarySources}
+                  onChange={handleQuestionsChange}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>{questions[1] || "TikTok profile link"}</label>
+                <input
+                  type="text"
+                  name="tiktokProfile"
+                  value={questionsForm.tiktokProfile}
+                  onChange={handleQuestionsChange}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>{questions[2] || "Main income source"}</label>
+                <input
+                  type="text"
+                  name="mainIncomeSource"
+                  value={questionsForm.mainIncomeSource}
+                  onChange={handleQuestionsChange}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>{questions[3] || "Monthly earning goal"}</label>
+                <input
+                  type="text"
+                  name="monthlyEarningGoal"
+                  value={questionsForm.monthlyEarningGoal}
+                  onChange={handleQuestionsChange}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className={styles.submitButton}
+              >
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+            </form>
           </div>
-        </NavLink>
-      </div>
+        </div>
+      )}
 
-      {/* Toggle Tabs */}
-      <div className={s.toggleButtons}>
-        <button
-          className={activeTable === "traders" ? s.activeToggle : ""}
-          onClick={() => setActiveTable("traders")}
-        >
-          TRADER
-        </button>
-        <button
-          className={activeTable === "profits" ? s.activeToggle : ""}
-          onClick={() => setActiveTable("profits")}
-        >
-          Overall Stats
-        </button>
-      </div>
-
-      {/* Table Display */}
-      <div className={s.tableContainer}>
-        <TeamData
-          activeTable={activeTable}
-          traders={traders}
-          profits={profits}
-        />
-      </div>
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className={styles.popupOverlay}>
+          <div className={styles.popupContent}>
+            <h3>Form Submitted!</h3>
+            <p>Your answers have been saved.</p>
+            <button className={styles.closeButton} onClick={closeSuccessPopup}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

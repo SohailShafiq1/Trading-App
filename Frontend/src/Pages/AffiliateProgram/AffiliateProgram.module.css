@@ -1,12 +1,134 @@
 .container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.mainContent {
+  transition: filter 0.3s ease;
+}
+
+.blurBackground {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Questions Modal Styles */
+.questionsModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 20px;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.questionsContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 80vh;
+  overflow-y: auto;
+  filter: none !important;
+}
+
+.questionsContent h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #444;
+}
+
+.formGroup input {
   width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
   box-sizing: border-box;
 }
 
+.submitButton {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Popup Styles */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.popupContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.popupContent h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.popupContent p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.closeButton {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Rest of your existing styles */
 .top {
   display: flex;
   flex-direction: column;
@@ -168,16 +290,20 @@
   color: white;
 }
 
+.prizePoolContent {
+  background: white;
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+}
+
 .statsBox:last-child p {
-  font-size: 30px;
+  font-size: 1.2rem;
   font-weight: bold;
   background: linear-gradient(90deg, #66b544, #1a391d);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  background-color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 30px;
+  margin: 0;
 }
 
 .statsBox svg {
@@ -194,76 +320,6 @@
 .statsBox span {
   font-size: 1rem;
   font-weight: bold;
-}
-
-@media (min-width: 768px) {
-  .top {
-    flex-direction: row;
-  }
-
-  .balance {
-    width: 50%;
-  }
-
-  .partnerLink {
-    width: 50%;
-    margin-top: 0;
-  }
-
-  .statsBox {
-    flex: 1 1 calc(25% - 1rem);
-    padding: 1.5rem;
-  }
-
-  .balance p,
-  .earning p,
-  .earning span {
-    font-size: 1.1rem;
-  }
-
-  .balance h1 {
-    font-size: 2.2rem;
-  }
-
-  .withdrawalLink {
-    font-size: 1.3rem;
-  }
-}
-
-@media (min-width: 992px) {
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  .balance {
-    padding: 2rem;
-  }
-
-  .statsBox {
-    padding: 2rem;
-  }
-
-  .statsBox p {
-    font-size: 0.9rem;
-  }
-
-  .statsBox span {
-    font-size: 1.2rem;
-  }
-
-  .header {
-    font-size: 1.3rem;
-  }
-
-  .option button {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-  }
-
-  .linkContainer span {
-    font-size: 1.2rem;
-  }
 }
 
 .pLink,
@@ -347,4 +403,78 @@
   color: #00b894;
   font-weight: 500;
   cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .top {
+    flex-direction: row;
+  }
+
+  .balance {
+    width: 50%;
+  }
+
+  .partnerLink {
+    width: 50%;
+    margin-top: 0;
+  }
+
+  .statsBox {
+    flex: 1 1 calc(25% - 1rem);
+    padding: 1.5rem;
+  }
+
+  .balance p,
+  .earning p,
+  .earning span {
+    font-size: 1.1rem;
+  }
+
+  .balance h1 {
+    font-size: 2.2rem;
+  }
+
+  .withdrawalLink {
+    font-size: 1.3rem;
+  }
+
+  .questionsContent {
+    padding: 3rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .balance {
+    padding: 2rem;
+  }
+
+  .statsBox {
+    padding: 2rem;
+  }
+
+  .statsBox p {
+    font-size: 0.9rem;
+  }
+
+  .statsBox span {
+    font-size: 1.2rem;
+  }
+
+  .header {
+    font-size: 1.3rem;
+  }
+
+  .option button {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .linkContainer span {
+    font-size: 1.2rem;
+  }
 }
