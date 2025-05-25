@@ -158,6 +158,9 @@ const WithdrawPage = () => {
     }
   };
 
+  const bonus = typeof user?.totalBonus === "number" ? user.totalBonus : 0;
+  const totalBalance = (userAssets || 0) + bonus;
+
   return (
     <div className={s.container}>
       <div className={s.Box}>
@@ -165,13 +168,20 @@ const WithdrawPage = () => {
           <h3 className={s.sectionTitle}>Account:</h3>
           <div className={s.accountInfo}>
             <p>In the account:</p>
-            <p className={s.amount}>{userAssets} $</p>
+            <p className={s.amount}>{totalBalance} $</p>
           </div>
           <hr className={s.divider} />
           <div className={s.accountInfo}>
             <p>Available for withdrawal:</p>
             <p className={s.amount}>{userAssets} $</p>
           </div>
+          <h1
+            className={s.note}
+            style={{ color: "#ff9800", marginTop: "0.5rem" }}
+          >
+            Note: You can't withdraw your bonus amount. Only your deposited
+            balance is available for withdrawal.
+          </h1>
         </div>
 
         <div className={s.form}>

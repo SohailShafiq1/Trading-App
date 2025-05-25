@@ -25,8 +25,9 @@ const BinaryLayout = () => {
   const { logoutAffiliate } = useAffiliateAuth();
   const { userAssets } = useUserAssets();
   const { isDemo, setIsDemo, demo_assets, setDemo_assets } = useAccountType();
-  const assets =
-    typeof userAssets === "number" ? userAssets.toFixed(2) : "0.00";
+  const assets = typeof userAssets === "number" ? userAssets : 0;
+  const bonus = typeof user?.totalBonus === "number" ? user.totalBonus : 0;
+  const totalBalance = (assets + bonus).toFixed(2);
 
   const navigate = useNavigate();
 
@@ -141,7 +142,7 @@ const BinaryLayout = () => {
             >
               <p>
                 {isDemo ? "Demo Account" : "Live Account"}
-                <br /> ${isDemo ? demo_assets.toLocaleString() : assets}
+                <br /> ${isDemo ? demo_assets.toLocaleString() : totalBalance}
               </p>
               <div className={s.arrow}>
                 <RiArrowDropDownLine style={{ fontSize: "2rem" }} />
@@ -163,7 +164,7 @@ const BinaryLayout = () => {
                     </div>
                     <div className={s.accountText}>
                       <p className={s.label}>LIVE ACCOUNT</p>
-                      <p className={s.amount}>${assets}</p>
+                      <p className={s.amount}>${totalBalance}</p>
                     </div>
                   </div>
 

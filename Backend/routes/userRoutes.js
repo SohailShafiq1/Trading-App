@@ -107,7 +107,18 @@ router.put("/update-assets", async (req, res) => {
       { new: true }
     );
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json({ message: "Assets updated successfully", user });
+
+    // Calculate total balance (assets + totalBonus)
+    const totalBalance =
+      typeof user.assets === "number" && typeof user.totalBonus === "number"
+        ? (user.assets + user.totalBonus).toFixed(2)
+        : "0.00";
+
+    res.status(200).json({
+      message: "Assets updated successfully",
+      user,
+      totalBalance, // <-- This is the sum of assets and bonus
+    });
   } catch (err) {
     console.error("Error updating assets:", err);
     res.status(500).json({ error: "Failed to update assets" });

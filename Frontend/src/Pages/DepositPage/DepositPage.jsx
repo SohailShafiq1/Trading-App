@@ -102,6 +102,7 @@ const DepositPage = () => {
     setSelected(coin.name);
     if (coin.name === "USD Tether(TRC-20)") {
       setShowModal(true);
+      setSelectedBonus(null); // Reset bonus selection each time modal opens
     } else {
       toast.info(
         "We are working on this deposit method. Please use TRC-20 USDT for now."
@@ -237,16 +238,41 @@ const DepositPage = () => {
                     required
                     disabled={isDemo || !isVerified}
                   />
+
+                  {/* Bonus options listed below Amount input */}
+                  <div className={s.bonusOptions}>
+                    <label
+                      style={{
+                        fontWeight: 500,
+                        marginBottom: 4,
+                        display: "block",
+                      }}
+                    >
+                      Select Deposit Bonus:
+                    </label>
+                    {bonusOptions.map((opt, idx) => (
+                      <label key={idx} className={s.bonusRadioLabel}>
+                        <input
+                          type="radio"
+                          name="bonus"
+                          value={opt.percent}
+                          checked={selectedBonus === opt.percent}
+                          onChange={() => {
+                            setSelectedBonus(opt.percent);
+                            setAmount(String(opt.min));
+                          }}
+                          disabled={isDemo || !isVerified}
+                        />
+                        Deposit: <b>${opt.min}</b> – Bonus:{" "}
+                        <b>{opt.percent}%</b>
+                      </label>
+                    ))}
+                  </div>
+
                   <button type="submit" disabled={isDemo || !isVerified}>
                     Continue
                   </button>
-                  <button
-                    type="button"
-                    className={s.bonusPopupBtn}
-                    onClick={() => setShowBonusPopup(true)}
-                  >
-                    View Deposit Bonuses
-                  </button>
+
                   {message && <p className={s.message}>{message}</p>}
                   {isDemo && (
                     <p className={s.errorMessage}>

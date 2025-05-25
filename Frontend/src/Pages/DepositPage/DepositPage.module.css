@@ -282,3 +282,19 @@
 .closeBonusBtn:hover {
   background: #cbd5e1;
 }
+  .bonusOptions {
+  margin: 1rem 0 0.5rem 0;
+  padding: 0.7rem 1rem;
+  background: #f7fafd;
+  border-radius: 6px;
+  border: 1px solid #e0e7ef;
+}
+.bonusRadioLabel {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.bonusRadioLabel input[type="radio"] {
+  margin-right: 0.5em;
+}
