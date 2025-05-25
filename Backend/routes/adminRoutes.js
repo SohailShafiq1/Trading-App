@@ -32,22 +32,23 @@ router.get("/withdraw-requests", async (req, res) => {
       { email: 1, withdrawals: 1 }
     );
 
-    const allRequests = users.flatMap(user => 
-      user.withdrawals
-        .filter(w => !status || w.status === status)
-        .map(w => ({
-          email: user.email,
-          withdrawalId: w._id.toString(),
-          amount: w.amount,
-          purse: w.purse,
-          network: w.network,
-          paymentMethod: w.paymentMethod,
-          status: w.status,
-          createdAt: w.createdAt,
-          processedAt: w.processedAt
-        }))
-    )
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
+    const allRequests = users
+      .flatMap((user) =>
+        user.withdrawals
+          .filter((w) => !status || w.status === status)
+          .map((w) => ({
+            email: user.email,
+            withdrawalId: w._id.toString(),
+            amount: w.amount,
+            purse: w.purse,
+            network: w.network,
+            paymentMethod: w.paymentMethod,
+            status: w.status,
+            createdAt: w.createdAt,
+            processedAt: w.processedAt,
+          }))
+      )
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
 
     res.status(200).json(allRequests);
   } catch (err) {
@@ -74,9 +75,9 @@ router.put("/withdraw-accept/:withdrawalId", async (req, res) => {
 
     // 2. Find and update corresponding transaction
     const transaction = user.transactions.find(
-      t => t.orderId === withdrawal.orderId && t.type === "withdrawal"
+      (t) => t.orderId === withdrawal.orderId && t.type === "withdrawal"
     );
-    
+
     if (transaction) {
       transaction.status = "success";
     }
@@ -111,9 +112,9 @@ router.put("/withdraw-decline/:withdrawalId", async (req, res) => {
 
     // 3. Find and update corresponding transaction
     const transaction = user.transactions.find(
-      t => t.orderId === withdrawal.orderId && t.type === "withdrawal"
+      (t) => t.orderId === withdrawal.orderId && t.type === "withdrawal"
     );
-    
+
     if (transaction) {
       transaction.status = "failed";
     }
@@ -159,6 +160,10 @@ router.put("/deposit-status/:id", async (req, res) => {
           status: "success",
           date: new Date(),
         });
+        // Always update totalBonus if bonus exists
+        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
+          user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
+        }
         await user.save();
       }
     }

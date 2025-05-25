@@ -749,12 +749,7 @@ const BinaryChart = () => {
                   className={styles.value}
                   onClick={() => setShowTimestampPopup((prev) => !prev)}
                 >
-                  
-                  {formatTime(timer)}{" "}
-                  <span style={{ fontSize: "0.9em", color: "#888" }}>
-                    {timer >= 60 ? "min" : "sec"}
-                  </span>
-                
+                  {formatTime(timer)}
                 </div>
                 <button
                   className={styles.iconBtn}

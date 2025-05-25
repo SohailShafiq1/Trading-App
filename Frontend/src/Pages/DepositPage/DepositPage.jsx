@@ -54,6 +54,15 @@ const DepositPage = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(true);
   const [showContinue, setShowContinue] = useState(false);
+  const [showBonusPopup, setShowBonusPopup] = useState(false);
+  const [selectedBonus, setSelectedBonus] = useState(null);
+
+  const bonusOptions = [
+    { min: 50, percent: 10 },
+    { min: 90, percent: 18 },
+    { min: 140, percent: 25 },
+    { min: 250, percent: 30 },
+  ];
 
   // Check verification status
   useEffect(() => {
@@ -124,6 +133,7 @@ const DepositPage = () => {
         amount,
         txId,
         fromAddress,
+        bonusPercent: selectedBonus,
       });
       setMessage(res.data.message);
       setAmount("");
@@ -198,7 +208,9 @@ const DepositPage = () => {
                     <strong>📌 Instructions:</strong>
                   </p>
                   <ol>
-                    <li>Go to your crypto wallet (Trust Wallet, Binance, etc.)</li>
+                    <li>
+                      Go to your crypto wallet (Trust Wallet, Binance, etc.)
+                    </li>
                     <li>
                       Select <strong>USDT (TRC-20)</strong>
                     </li>
@@ -228,6 +240,13 @@ const DepositPage = () => {
                   <button type="submit" disabled={isDemo || !isVerified}>
                     Continue
                   </button>
+                  <button
+                    type="button"
+                    className={s.bonusPopupBtn}
+                    onClick={() => setShowBonusPopup(true)}
+                  >
+                    View Deposit Bonuses
+                  </button>
                   {message && <p className={s.message}>{message}</p>}
                   {isDemo && (
                     <p className={s.errorMessage}>
@@ -249,9 +268,7 @@ const DepositPage = () => {
                     <strong>Send to Wallet:</strong>
                   </p>
                   <div className={s.walletRow}>
-                    <code className={s.walletCode}>
-                      {ADMIN_WALLET}
-                    </code>
+                    <code className={s.walletCode}>{ADMIN_WALLET}</code>
                     <button
                       type="button"
                       className={s.copyButton}
@@ -277,8 +294,9 @@ const DepositPage = () => {
                         {
                           email,
                           amount,
-                          txId: "", // not used
-                          fromAddress: "", // not used
+                          txId: "",
+                          fromAddress: "",
+                          bonusPercent: selectedBonus, // <-- ADD THIS LINE
                         }
                       );
                       setMessage(res.data.message);
@@ -297,6 +315,40 @@ const DepositPage = () => {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showBonusPopup && (
+        <div className={s.bonusModalOverlay}>
+          <div className={s.bonusModal}>
+            <h3>Deposit Bonus Structure</h3>
+            <ul className={s.bonusList}>
+              {bonusOptions.map((opt, idx) => (
+                <li key={idx} className={s.bonusListItem}>
+                  <label>
+                    <input
+                      type="radio"
+                      name="bonus"
+                      value={opt.percent}
+                      checked={selectedBonus === opt.percent}
+                      onChange={() => {
+                        setSelectedBonus(opt.percent);
+                        setAmount(String(opt.min));
+                        setShowBonusPopup(false);
+                      }}
+                    />
+                    Deposit: <b>${opt.min}</b> – Bonus: <b>{opt.percent}%</b>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <button
+              className={s.closeBonusBtn}
+              onClick={() => setShowBonusPopup(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

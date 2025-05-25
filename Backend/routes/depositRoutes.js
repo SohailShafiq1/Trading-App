@@ -10,7 +10,7 @@ const ADMIN_WALLET = process.env.ADMIN_TRON_WALLET; // or hardcode if needed
 
 // POST /api/users/deposit
 router.post("/deposit", async (req, res) => {
-  const { email, amount, txId, fromAddress } = req.body;
+  const { email, amount, txId, fromAddress, bonusPercent } = req.body;
 
   if (!email || !amount || !fromAddress) {
     return res
@@ -19,6 +19,12 @@ router.post("/deposit", async (req, res) => {
   }
 
   try {
+    // Calculate bonus amount (do NOT add to user balance)
+    let bonusAmount = 0;
+    if (bonusPercent) {
+      bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
+    }
+
     // Step 1: Save deposit as pending first
     const deposit = new Deposit({
       userEmail: email,
@@ -27,6 +33,8 @@ router.post("/deposit", async (req, res) => {
       fromAddress,
       wallet: ADMIN_WALLET,
       status: "pending",
+      bonusPercent: bonusPercent || 0,
+      bonusAmount,
     });
     await deposit.save();
 
@@ -53,7 +61,7 @@ router.post("/deposit", async (req, res) => {
       const user = await User.findOne({ email });
       if (user) {
         user.assets += Number(amount);
-        user.depositCount = (user.depositCount || 0) + 1; // Increment depositCount
+        user.depositCount = (user.depositCount || 0) + 1;
         user.transactions.push({
           orderId: Math.floor(100000 + Math.random() * 900000).toString(),
           type: "deposit",
@@ -62,6 +70,12 @@ router.post("/deposit", async (req, res) => {
           status: "success",
           date: new Date(),
         });
+
+        // Add this block to update totalBonus
+        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
+          user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
+        }
+
         await user.save();
       }
 
@@ -69,12 +83,10 @@ router.post("/deposit", async (req, res) => {
         .status(200)
         .json({ message: "Deposit verified and credited." });
     } else {
-      return res
-        .status(202)
-        .json({
-          message:
-            "Deposit recorded but not verified yet. Will recheck manually.",
-        });
+      return res.status(202).json({
+        message:
+          "Deposit recorded but not verified yet. Will recheck manually.",
+      });
     }
   } catch (err) {
     console.error("Deposit verification error:", err);

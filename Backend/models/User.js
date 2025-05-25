@@ -82,6 +82,10 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    totalBonus: {
+      type: Number,
+      default: 0,
+    },
 
     transactions: [
       {
