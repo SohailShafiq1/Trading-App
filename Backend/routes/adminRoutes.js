@@ -163,6 +163,10 @@ router.put("/deposit-status/:id", async (req, res) => {
         // Always update totalBonus if bonus exists
         if (deposit.bonusAmount && deposit.bonusAmount > 0) {
           user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
+          // Add this:
+          if (!user.usedBonuses.includes(deposit.bonusPercent)) {
+            user.usedBonuses.push(deposit.bonusPercent);
+          }
         }
         await user.save();
       }

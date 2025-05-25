@@ -86,6 +86,10 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    usedBonuses: {
+      type: [Number], // array of bonus percentages availed
+      default: [],
+    },
 
     transactions: [
       {

@@ -189,89 +189,52 @@ router.post("/trade", async (req, res) => {
   }
 
   try {
-    console.log("Incoming trade request:", req.body);
-
     const { email, trade } = req.body;
-
     if (!email || !trade) {
-      return res.status(400).json({
-        error: "Missing email or trade data",
-        received: req.body,
-      });
+      return res.status(400).json({ error: "Missing email or trade data" });
     }
 
-    const { type, coin, investment, entryPrice, startedAt, duration } = trade;
-
-    const requiredFields = [
-      "type",
-      "coin",
-      "investment",
-      "entryPrice",
-      "startedAt",
-      "duration",
-    ];
-    const missingFields = requiredFields.filter((field) => !trade[field]);
-
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        error: "Missing required trade fields",
-        missingFields,
-      });
-    }
-
-    if (isNaN(investment) || investment <= 0) {
-      return res
-        .status(400)
-        .json({ error: "Investment must be a positive number" });
-    }
-
+    const { investment } = trade;
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (user.assets < investment) {
+    const totalAvailable = user.assets + user.totalBonus;
+    if (investment > totalAvailable) {
       return res.status(400).json({
         error: "Insufficient funds",
-        currentBalance: user.assets,
+        currentBalance: totalAvailable,
         required: investment,
       });
     }
 
+    // Deduct from assets first, then bonus if needed
+    let assetsToDeduct = Math.min(user.assets, investment);
+    let bonusToDeduct = investment - assetsToDeduct;
+
+    user.assets -= assetsToDeduct;
+    if (bonusToDeduct > 0) {
+      user.totalBonus -= bonusToDeduct;
+    }
+
     const newTrade = {
-      type,
-      coin,
-      investment,
-      entryPrice,
-      startedAt: new Date(startedAt),
-      duration,
+      ...trade,
       result: "pending",
       reward: 0,
       createdAt: new Date(),
     };
 
-    user.assets -= investment;
     user.trades.push(newTrade);
-
     await user.save();
-
-    console.log("Trade saved successfully:", newTrade);
 
     return res.status(201).json({
       message: "Trade saved successfully",
       trade: newTrade,
-      newBalance: user.assets,
+      newBalance: user.assets + user.totalBonus,
     });
   } catch (err) {
-    console.error("Error saving trade:", {
-      error: err.message,
-      stack: err.stack,
-      body: req.body,
-    });
-    return res.status(500).json({
-      error: "Failed to save trade",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
+    return res.status(500).json({ error: "Failed to save trade" });
   }
 });
 

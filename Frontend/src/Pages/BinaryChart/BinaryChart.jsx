@@ -294,7 +294,10 @@ const BinaryChart = () => {
     }
 
     const currentAssets = isDemo ? demoAssets : userAssets;
-    if (investment > currentAssets) {
+    const totalAvailable = isDemo
+      ? demoAssets
+      : userAssets + (user?.totalBonus || 0);
+    if (investment > totalAvailable) {
       toast.error("Insufficient funds!");
       return;
     }
@@ -716,7 +719,7 @@ const BinaryChart = () => {
           <div className={styles.control}>
             <h1>{selectedCoin || "Select Coin"} Trading</h1>
             <p>
-              {isDemo ? "Demo Balance" : "Your Balance"}: ${currentAssets}
+              {isDemo ? "Demo Balance" : "Available for Trading"}: ${userAssets + (user?.totalBonus || 0)}
             </p>
             <p>
               Current Price:{" "}

@@ -56,6 +56,7 @@ const DepositPage = () => {
   const [showContinue, setShowContinue] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [selectedBonus, setSelectedBonus] = useState(null);
+  const [amountLocked, setAmountLocked] = useState(false); // <-- Added state for amount locked
 
   const bonusOptions = [
     { min: 50, percent: 10 },
@@ -152,6 +153,8 @@ const DepositPage = () => {
     if (user?.email) setEmail(user.email);
   }, [user?.email]);
 
+  const usedBonuses = user?.usedBonuses || [];
+
   return (
     <div className={s.container}>
       <div className={s.rightSide}>
@@ -233,10 +236,25 @@ const DepositPage = () => {
                     type="number"
                     placeholder="Amount"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      // If user edits, unlock and unselect bonus
+                      if (amountLocked) {
+                        setSelectedBonus(null);
+                        setAmountLocked(false);
+                      }
+                    }}
+                    onClick={() => {
+                      if (amountLocked) {
+                        setSelectedBonus(null);
+                        setAmountLocked(false);
+                        setAmount(""); // Reset amount to zero/empty
+                      }
+                    }}
                     min="10"
                     required
                     disabled={isDemo || !isVerified}
+                    readOnly={amountLocked}
                   />
 
                   {/* Bonus options listed below Amount input */}
@@ -250,23 +268,39 @@ const DepositPage = () => {
                     >
                       Select Deposit Bonus:
                     </label>
-                    {bonusOptions.map((opt, idx) => (
-                      <label key={idx} className={s.bonusRadioLabel}>
-                        <input
-                          type="radio"
-                          name="bonus"
-                          value={opt.percent}
-                          checked={selectedBonus === opt.percent}
-                          onChange={() => {
-                            setSelectedBonus(opt.percent);
-                            setAmount(String(opt.min));
-                          }}
-                          disabled={isDemo || !isVerified}
-                        />
-                        Deposit: <b>${opt.min}</b> – Bonus:{" "}
-                        <b>{opt.percent}%</b>
-                      </label>
-                    ))}
+                    {bonusOptions
+                      .filter((opt) => !usedBonuses.includes(opt.percent))
+                      .map((opt, idx) => (
+                        <label key={idx} className={s.bonusRadioLabel}>
+                          <input
+                            type="radio"
+                            name="bonus"
+                            value={opt.percent}
+                            checked={selectedBonus === opt.percent}
+                            onChange={() => {
+                              setSelectedBonus(opt.percent);
+                              setAmount(String(opt.min));
+                              setAmountLocked(true);
+                            }}
+                            disabled={isDemo || !isVerified}
+                          />
+                          Deposit: <b>${opt.min}</b> – Bonus:{" "}
+                          <b>{opt.percent}%</b>
+                        </label>
+                      ))}
+                    {/* Optionally show a message if all bonuses are used */}
+                    {bonusOptions.filter(
+                      (opt) => !usedBonuses.includes(opt.percent)
+                    ).length === 0 && (
+                      <div
+                        style={{
+                          color: "#888",
+                          fontSize: "0.95em",
+                        }}
+                      >
+                        You have already used all available deposit bonuses.
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" disabled={isDemo || !isVerified}>
@@ -286,6 +320,15 @@ const DepositPage = () => {
                     </p>
                   )}
                 </form>
+                {amountLocked && (
+                  <p
+                    className={s.note}
+                    style={{ color: "#888", fontSize: "0.95em" }}
+                  >
+                    Amount is set by your bonus selection. Edit amount to remove
+                    bonus.
+                  </p>
+                )}
               </>
             ) : (
               <>
