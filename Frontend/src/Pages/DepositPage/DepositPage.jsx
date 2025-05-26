@@ -279,7 +279,7 @@ const DepositPage = () => {
                       Select Deposit Bonus:
                     </label>
                     {bonusOptions
-                      .filter((opt) => !usedBonuses.includes(opt.percent))
+                      .filter((opt) => !usedBonuses.includes(opt._id))
                       .map((opt, idx) => (
                         <label key={idx} className={s.bonusRadioLabel}>
                           <input
