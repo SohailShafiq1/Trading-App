@@ -106,6 +106,7 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    
     // Age validation
     if (dateOfBirth) {
       const dob = new Date(dateOfBirth);
