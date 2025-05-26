@@ -224,6 +224,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    imgCNIC: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

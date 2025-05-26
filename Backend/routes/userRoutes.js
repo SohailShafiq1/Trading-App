@@ -4,6 +4,8 @@ import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
+import Tesseract from "tesseract.js";
+import fs from "fs";
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -99,6 +101,17 @@ router.get("/email/:email", async (req, res) => {
     res.status(200).json(user);
   } catch (err) {
     console.error("Error fetching user by email:", err);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
+// Get user by ID (for admin view)
+router.get("/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id, { password: 0 });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json(user);
+  } catch (err) {
     res.status(500).json({ error: "Failed to fetch user" });
   }
 });
@@ -336,13 +349,48 @@ router.put(
       update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
     }
     if (req.files?.cnicPicture) {
-      update.cnicPicture = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
+      const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
+      update.cnicPicture = cnicImagePath;
+
+      // OCR extraction
+      try {
+        const {
+          data: { text },
+        } = await Tesseract.recognize(cnicImagePath, "eng", {
+          logger: (m) => console.log(m),
+        });
+        // Regex for Pakistani CNIC (13 digits, with or without dashes)
+        const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
+        if (match) {
+          update.imgCNIC = match[0];
+        } else {
+          update.imgCNIC = "";
+        }
+      } catch (ocrErr) {
+        update.imgCNIC = "";
+      }
+
+      // === Place this check here ===
+      if (
+        update.imgCNIC &&
+        req.body.cnicNumber &&
+        update.imgCNIC !== req.body.cnicNumber
+      ) {
+        return res.status(400).json({ error: "Image not matched" });
+      }
     }
-    if (typeof req.body.profilePicture === "string" && req.body.profilePicture === "") {
+    if (
+      typeof req.body.profilePicture === "string" &&
+      req.body.profilePicture === ""
+    ) {
       update.profilePicture = "";
     }
-    if (typeof req.body.cnicPicture === "string" && req.body.cnicPicture === "") {
+    if (
+      typeof req.body.cnicPicture === "string" &&
+      req.body.cnicPicture === ""
+    ) {
       update.cnicPicture = "";
+      update.imgCNIC = ""; // <-- This line ensures the CNIC image number is also removed
     }
 
     try {
