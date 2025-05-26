@@ -454,4 +454,32 @@ router.get("/is-verified/:id", async (req, res) => {
   }
 });
 
+// Validate CNIC format
+router.post("/validate-cnic", async (req, res) => {
+  const { cnicNumber } = req.body;
+
+  // Check if CNIC number is provided
+  if (!cnicNumber) {
+    return res.status(400).json({ error: "CNIC number is required" });
+  }
+
+  // Check if CNIC number matches the valid format
+  if (cnicNumber && !/^\d{5}-\d{7}-\d{1}$/.test(cnicNumber)) {
+    return res.status(400).json({ error: "Invalid CNIC format" });
+  }
+
+  try {
+    // Check if the CNIC number already exists in the database
+    const existingUser = await User.findOne({ cnicNumber });
+    if (existingUser) {
+      return res.status(409).json({ error: "CNIC number already exists" });
+    }
+
+    res.status(200).json({ message: "CNIC number is valid" });
+  } catch (err) {
+    console.error("Error validating CNIC:", err);
+    res.status(500).json({ error: "Failed to validate CNIC" });
+  }
+});
+
 export default router;

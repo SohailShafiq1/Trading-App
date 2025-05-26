@@ -105,6 +105,28 @@ const Profile = () => {
     }
   };
 
+  // Format CNIC input as 5 digits - 7 digits - 1 digit
+  const formatCnic = (value) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, "");
+    let formatted = digits;
+    if (digits.length > 5 && digits.length <= 12) {
+      formatted = `${digits.slice(0, 5)}-${digits.slice(5, 12)}`;
+    }
+    if (digits.length > 12) {
+      formatted = `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(
+        12,
+        13
+      )}`;
+    }
+    return formatted;
+  };
+
+  const handleCnicChange = (e) => {
+    const formatted = formatCnic(e.target.value);
+    setCnicNumber(formatted);
+  };
+
   const handleSave = async () => {
     // Age validation
     if (dateOfBirth) {
@@ -119,6 +141,12 @@ const Profile = () => {
         alert("You must be at least 18 years old.");
         return;
       }
+    }
+
+    // CNIC validation
+    if (cnicNumber && !/^\d{5}-\d{7}-\d{1}$/.test(cnicNumber)) {
+      alert("Please enter a valid CNIC in the format 81101-0747282-1");
+      return;
     }
 
     try {
@@ -351,8 +379,9 @@ const Profile = () => {
               <input
                 type="text"
                 value={cnicNumber}
-                onChange={(e) => setCnicNumber(e.target.value)}
-                placeholder="Enter your CNIC number"
+                onChange={handleCnicChange}
+                placeholder="xxxxx-xxxxxxx-x"
+                maxLength={15}
               />
             </div>
             <div className={s.inputBox}>
@@ -381,7 +410,7 @@ const Profile = () => {
                     alt="CNIC"
                     className={s.cnicImg}
                   />
-                 
+
                   <button
                     type="button"
                     className={s.deleteCnicBtn}
