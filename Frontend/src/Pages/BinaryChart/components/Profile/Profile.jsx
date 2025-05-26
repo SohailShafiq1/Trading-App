@@ -381,13 +381,14 @@ const Profile = () => {
                     alt="CNIC"
                     className={s.cnicImg}
                   />
+                 
                   <button
                     type="button"
-                    className={s.deleteImgBtn}
+                    className={s.deleteCnicBtn}
                     onClick={handleDeleteCnicImage}
-                    title="Delete CNIC Image"
+                    style={{ marginTop: 8, width: "100%" }}
                   >
-                    ×
+                    Delete CNIC
                   </button>
                 </div>
               ) : (

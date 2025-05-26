@@ -274,6 +274,22 @@
   background: #b71c1c;
   opacity: 1;
 }
+.deleteCnicBtn {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 7px 0;
+  font-size: 0.98em;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.18s;
+  display: block;
+}
+.deleteCnicBtn:hover {
+  background: #b71c1c;
+}
 @media (max-width: 768px) {
   .row {
     flex-direction: column;
