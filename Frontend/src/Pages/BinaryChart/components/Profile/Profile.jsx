@@ -106,7 +106,6 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-    
     // Age validation
     if (dateOfBirth) {
       const dob = new Date(dateOfBirth);
@@ -199,6 +198,27 @@ const Profile = () => {
       );
     }
   };
+
+  const handleDeleteProfileImage = async () => {
+    if (!window.confirm("Delete your profile image?")) return;
+    await axios.put("http://localhost:5000/api/users/update-profile", {
+      email,
+      profilePicture: "",
+    });
+    setProfilePicture("");
+    setPreview("");
+  };
+
+  const handleDeleteCnicImage = async () => {
+    if (!window.confirm("Delete your CNIC image?")) return;
+    await axios.put("http://localhost:5000/api/users/update-profile", {
+      email,
+      cnicPicture: "",
+    });
+    setCnicPicture("");
+    setCnicPreview("");
+  };
+
   return (
     <div className={s.container}>
       <div className={s.profileBox}>
@@ -349,17 +369,27 @@ const Profile = () => {
                   className={s.cnicImg}
                 />
               ) : cnicPicture && typeof cnicPicture === "string" ? (
-                <img
-                  src={
-                    cnicPicture.startsWith("http")
-                      ? cnicPicture
-                      : `http://localhost:5000${
-                          cnicPicture.startsWith("/") ? "" : "/"
-                        }${cnicPicture}`
-                  }
-                  alt="CNIC"
-                  className={s.cnicImg}
-                />
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <img
+                    src={
+                      cnicPicture.startsWith("http")
+                        ? cnicPicture
+                        : `http://localhost:5000${
+                            cnicPicture.startsWith("/") ? "" : "/"
+                          }${cnicPicture}`
+                    }
+                    alt="CNIC"
+                    className={s.cnicImg}
+                  />
+                  <button
+                    type="button"
+                    className={s.deleteImgBtn}
+                    onClick={handleDeleteCnicImage}
+                    title="Delete CNIC Image"
+                  >
+                    ×
+                  </button>
+                </div>
               ) : (
                 <span className={s.cameraIcon}>📷</span>
               )}

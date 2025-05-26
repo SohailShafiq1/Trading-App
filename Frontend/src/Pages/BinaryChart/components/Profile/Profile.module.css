@@ -251,6 +251,29 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: block;
 }
+  .deleteImgBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 1.1em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  transition: background 0.2s, opacity 0.2s;
+  z-index: 2;
+}
+.deleteImgBtn:hover {
+  background: #b71c1c;
+  opacity: 1;
+}
 @media (max-width: 768px) {
   .row {
     flex-direction: column;

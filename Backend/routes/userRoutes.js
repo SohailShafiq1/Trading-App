@@ -338,6 +338,12 @@ router.put(
     if (req.files?.cnicPicture) {
       update.cnicPicture = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
     }
+    if (typeof req.body.profilePicture === "string" && req.body.profilePicture === "") {
+      update.profilePicture = "";
+    }
+    if (typeof req.body.cnicPicture === "string" && req.body.cnicPicture === "") {
+      update.cnicPicture = "";
+    }
 
     try {
       const user = await User.findOneAndUpdate({ email }, update, {
