@@ -28,6 +28,7 @@ import AffiliateRegister from "./Pages/AffiliateRegister/AffiliateRegister";
 import AffiliateProtectedRoute from "./Route/ProtectedRoute/AffiliateProtectedRoute";
 import { AffiliateAuthProvider } from "./Context/AffiliateAuthContext";
 import { AccountTypeProvider } from "./Context/AccountTypeContext";
+import Bonuses from "./Admin/components/Bonuses/Bonuses";
 
 const s = styles;
 
@@ -86,6 +87,9 @@ const App = () => {
                   <Route path="/user" element={<User />} />
                   <Route path="/deposits" element={<Deposit />} />
                   <Route path="/withdraw" element={<Withdraw />} />
+                  <Route path="/withdraw" element={<Withdraw />} />
+                  <Route path="/bonuses" element={<Bonuses/>} />
+
                   <Route
                     path="/affiliate"
                     element={

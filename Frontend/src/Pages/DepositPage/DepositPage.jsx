@@ -58,12 +58,13 @@ const DepositPage = () => {
   const [selectedBonus, setSelectedBonus] = useState(null);
   const [amountLocked, setAmountLocked] = useState(false); // <-- Added state for amount locked
 
-  const bonusOptions = [
-    { min: 50, percent: 10 },
-    { min: 90, percent: 18 },
-    { min: 140, percent: 25 },
-    { min: 250, percent: 30 },
-  ];
+  const [bonusOptions, setBonusOptions] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/bonuses")
+      .then((res) => setBonusOptions(res.data));
+  }, []);
 
   // Check verification status
   useEffect(() => {
@@ -89,6 +90,11 @@ const DepositPage = () => {
     checkVerification();
   }, [user?._id]);
 
+  const fetchBonuses = async () => {
+    const res = await axios.get("http://localhost:5000/api/bonuses");
+    setBonusOptions(res.data);
+  };
+
   const handleCoinClick = (coin) => {
     if (isDemo) {
       toast.error("Please switch to a Live account to make deposits");
@@ -102,6 +108,7 @@ const DepositPage = () => {
 
     setSelected(coin.name);
     if (coin.name === "USD Tether(TRC-20)") {
+      fetchBonuses(); // <-- Fetch latest bonuses
       setShowModal(true);
       setSelectedBonus(null); // Reset bonus selection each time modal opens
     } else {
@@ -111,6 +118,9 @@ const DepositPage = () => {
     }
   };
 
+  useEffect(() => {
+  fetchBonuses();
+}, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
 

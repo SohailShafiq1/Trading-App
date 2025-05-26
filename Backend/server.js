@@ -14,6 +14,7 @@ import coinRoutes from "./routes/coinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import depositRoutes from "./routes/depositRoutes.js";
 import affiliateRoutes from "./routes/affiliateRoutes.js";
+import bonusRoutes from "./routes/bonusRoutes.js";
 
 // Services
 import candleService from "./services/candleGenerator.js";
@@ -63,6 +64,7 @@ app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/deposits", depositRoutes);
 app.use("/api/affiliate", affiliateRoutes);
+app.use("/api/bonuses", bonusRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

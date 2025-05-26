@@ -25,6 +25,9 @@ const AdminLayout = () => {
         <NavLink to="/deposits" className={s.link}>
           Deposits
         </NavLink>
+        <NavLink to="/bonuses" className={s.link}>
+          Bonuses
+        </NavLink>
       </div>
     </div>
   );
