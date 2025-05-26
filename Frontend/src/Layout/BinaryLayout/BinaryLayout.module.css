@@ -20,7 +20,7 @@
   display: flex;
   position: absolute;
   top: 105px;
-  right: 370px; /* Adjust this value to position the popup */
+  right: 370px;
   background-color: white;
   border: 1px solid #64b243;
   z-index: 1000;
@@ -171,11 +171,11 @@
 
 .btn {
   position: relative;
-  width: 100px;
+  width: 150px;
   height: 60px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   color: black;
   text-decoration: none;
@@ -183,6 +183,7 @@
   transition: all 0.3s ease;
   background-color: #e0e0e0;
   flex-shrink: 0;
+  font-size: 1.4rem;
 }
 
 .btn:hover {
@@ -195,7 +196,7 @@
 }
 
 .icons {
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   margin-bottom: 0.3rem;
 }
 
@@ -208,7 +209,7 @@
 }
 
 .liveAcc {
-  min-width: 120px;
+  min-width: 150px;
   height: 60px;
   background: #e0e0e0;
   display: flex;
@@ -218,11 +219,13 @@
   font-size: 0.85rem;
   color: black;
   padding: 0.8rem 1rem;
+  margin-right: 1.4rem;
   text-decoration: none;
 }
 
 .liveAcc p {
   margin: 0;
+  font-size: 1.2rem;
   line-height: 1.4;
 }
 
@@ -250,15 +253,12 @@
 .withdraw {
   background-color: #e0e0e0;
   color: black;
+  text-decoration: none;
 }
 
 .deposit {
   background: linear-gradient(90deg, #66b544, #1a391d);
   gap: 0.5rem;
-}
-.link {
-  text-decoration: none;
-  color: black;
 }
 .footer {
   display: none;
@@ -296,9 +296,9 @@
   margin-bottom: 0.2rem;
 }
 .lbSidebar {
-  position: fixed; /* CHANGE THIS from relative to fixed */
+  position: fixed;
   top: 120px;
-  right: 400px; /* keep it near right */
+  right: 400px;
   width: 300px;
   background: white;
   border-radius: 10px;
@@ -385,7 +385,7 @@
 .userPopup {
   position: fixed;
   top: 120px;
-  right: 740px; /* popup appears to the left of sidebar */
+  right: 740px;
   width: 320px;
   background: #f2f2f2;
   border-radius: 10px;
@@ -425,6 +425,149 @@
   font-weight: bold;
   font-size: 0.95rem;
   color: #000;
+}
+
+/* Mobile Popups */
+.mobilePopup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobilePopupContent {
+  background-color: white;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mobilePopupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.mobilePopupHeader h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.mobilePopupClose {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.mobilePopupItems {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobilePopupItem {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mobilePopupItem:last-child {
+  border-bottom: none;
+}
+
+.mobilePopupItem:hover {
+  background-color: #f9f9f9;
+}
+
+/* Mobile Account Popup Styles */
+.mobileAccountSection {
+  padding: 15px;
+  background: #f5f5f5;
+}
+
+.mobileAccountItem {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mobileActive {
+  background: #e0f0e0;
+  border-left: 4px solid #64b243;
+}
+
+.mobileRadioCircle {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #888;
+  border-radius: 50%;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileRadioCheck {
+  color: #64b243;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.mobileAccountText {
+  flex: 1;
+}
+
+.mobileLabel {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.mobileAmount {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 4px 0 0;
+  color: #111;
+}
+
+.mobileMenuSection {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+}
+
+.mobileMenuItem {
+  padding: 14px 20px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mobileMenuItem:hover {
+  background: #f5f5f5;
+}
+
+.mobileLogout {
+  color: #e74c3c;
+  font-weight: bold;
 }
 
 @media (max-width: 1200px) {
@@ -479,5 +622,77 @@
   }
   .footBtn .icons {
     font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .lbSidebar {
+    right: 30px;
+    width: 60%;
+    max-width: 400px;
+    top: 100px;
+  }
+  .userPopup {
+    right: 30px;
+    width: 60%;
+    max-width: 400px;
+    top: 100px;
+  }
+}
+
+@media (max-width: 1400px) {
+  .btn {
+    width: 130px;
+  }
+  .liveAcc {
+    width: 120px;
+  }
+}
+@media (max-width: 1300px) {
+  .btn {
+    width: 110px;
+  }
+  .liveAcc {
+    width: 100px;
+  }
+}
+@media (max-width: 1200px) {
+  .btn {
+    width: 100px;
+    font-size: 1.4rem;
+  }
+  .liveAcc {
+    width: 90px;
+  }
+  .liveAcc p {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+@media (max-width: 1100px) {
+  .btn {
+    width: 90px;
+  }
+  .liveAcc {
+    width: 80px;
+  }
+  .liveAcc p {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+@media (max-width: 1000px) {
+  .btn {
+    padding: 1rem 0;
+  }
+  .liveAcc {
+    padding: 1rem 0;
+    padding-left: 0.6rem;
+    justify-content: center;
+    align-items: center;
+  }
+  .liveAcc p {
+    font-size: 1rem;
+    font-weight: 600;
   }
 }

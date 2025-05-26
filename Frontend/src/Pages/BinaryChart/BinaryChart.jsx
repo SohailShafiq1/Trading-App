@@ -720,9 +720,7 @@ const BinaryChart = () => {
 
           <div className={styles.control}>
             <h1>{selectedCoin || "Select Coin"} Trading</h1>
-            <p>
-              {isDemo ? "Demo Balance" : "Your Balance"}: ${currentAssets}
-            </p>
+
             <p>
               Current Price:{" "}
               {selectedCoinType === "OTC"

@@ -36,6 +36,9 @@ const BinaryLayout = () => {
   const [accountPopupVisible, setAccountPopupVisible] = useState(false);
   const accountRef = useRef();
 
+  const [mobileMorePopup, setMobileMorePopup] = useState(false);
+  const [mobileAccountPopup, setMobileAccountPopup] = useState(false);
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
@@ -87,7 +90,7 @@ const BinaryLayout = () => {
 
           {/* More Button Popup */}
           <div className={s.moreWrapper} ref={popupRef}>
-            <div className={s.btn}>
+            <div>
               <NavLink
                 className={s.btn}
                 onClick={() => setPopupVisible((v) => !v)}
@@ -234,22 +237,23 @@ const BinaryLayout = () => {
 
         <div className={s.asset}>
           <div className={s.bankbtns}>
-            <div className={s.withdraw}>
+            <div>
               <NavLink
+                className={s.withdraw}
                 to={"/binarychart/bankinglayout/withdraw"}
-                className={s.link}
               >
                 Withdraw
               </NavLink>
             </div>
-            <div className={s.deposit}>
+            <div>
               <NavLink
+                className={s.deposit}
+                style={{ color: "white" }}
                 to={"/binarychart/bankinglayout/deposit"}
-                className={s.link}
               >
                 Deposit
+                <AiOutlinePlus />
               </NavLink>
-              <AiOutlinePlus />
             </div>
           </div>
         </div>
@@ -259,6 +263,7 @@ const BinaryLayout = () => {
         <Outlet />
       </div>
 
+      {/* Mobile Footer */}
       <div className={s.footer}>
         <div className={s.footBar}>
           <NavLink className={s.footBtn} onClick={() => navigate(-1)}>
@@ -270,14 +275,185 @@ const BinaryLayout = () => {
           <NavLink className={s.footBtn} to="/binarychart/profile">
             <CgProfile className={s.icons} />
           </NavLink>
-          <NavLink className={s.footBtn} to="/binarychart">
-            <AiFillTrophy className={s.icons} />
-          </NavLink>
-          <NavLink className={s.footBtn} to="/affiliate">
+          <div
+            className={s.footBtn}
+            onClick={() => setMobileAccountPopup(true)}
+          >
+            {isDemo ? (
+              <div className={s.demoAccount}>
+                <p>
+                  Demo{" "}
+                  <AiOutlineArrowDown
+                    style={{ position: "relative", top: "4px" }}
+                  />{" "}
+                </p>
+              </div>
+            ) : (
+              <div className={s.liveAccount}>
+                <p>
+                  Live{" "}
+                  <AiOutlineArrowDown
+                    style={{ position: "relative", top: "4px" }}
+                  />{" "}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className={s.footBtn} onClick={() => setMobileMorePopup(true)}>
             <CgMoreAlt className={s.icons} />
-          </NavLink>
+          </div>
         </div>
       </div>
+
+      {/* Mobile More Popup */}
+      {mobileMorePopup && (
+        <div className={s.mobilePopup}>
+          <div className={s.mobilePopupContent}>
+            <div className={s.mobilePopupHeader}>
+              <h3>More Options</h3>
+              <button
+                className={s.mobilePopupClose}
+                onClick={() => setMobileMorePopup(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className={s.mobilePopupItems}>
+              <div
+                className={s.mobilePopupItem}
+                onClick={() => {
+                  navigate("/support");
+                  setMobileMorePopup(false);
+                }}
+              >
+                Support
+              </div>
+              <div
+                className={s.mobilePopupItem}
+                onClick={() => {
+                  setShowLeaderboard(true);
+                  setMobileMorePopup(false);
+                }}
+              >
+                Leaderboard
+              </div>
+              <div
+                className={s.mobilePopupItem}
+                onClick={() => {
+                  navigate("/affiliate");
+                  setMobileMorePopup(false);
+                }}
+              >
+                Affiliate Program
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Account Popup */}
+      {mobileAccountPopup && (
+        <div className={s.mobilePopup}>
+          <div className={s.mobilePopupContent}>
+            <div className={s.mobilePopupHeader}>
+              <h3>Account</h3>
+              <button
+                className={s.mobilePopupClose}
+                onClick={() => setMobileAccountPopup(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className={s.mobileAccountSection}>
+              <div
+                className={`${s.mobileAccountItem} ${
+                  !isDemo ? s.mobileActive : ""
+                }`}
+                onClick={() => {
+                  setIsDemo(false);
+                  setMobileAccountPopup(false);
+                }}
+              >
+                <div className={s.mobileRadioCircle}>
+                  {!isDemo && <span className={s.mobileRadioCheck}>✔</span>}
+                </div>
+                <div className={s.mobileAccountText}>
+                  <p className={s.mobileLabel}>LIVE ACCOUNT</p>
+                  <p className={s.mobileAmount}>${assets}</p>
+                </div>
+              </div>
+
+              <div
+                className={`${s.mobileAccountItem} ${
+                  isDemo ? s.mobileActive : ""
+                }`}
+                onClick={() => {
+                  setIsDemo(true);
+                  setMobileAccountPopup(false);
+                }}
+              >
+                <div className={s.mobileRadioCircle}>
+                  {isDemo && <span className={s.mobileRadioCheck}>✔</span>}
+                </div>
+                <div className={s.mobileAccountText}>
+                  <p className={s.mobileLabel}>DEMO ACCOUNT</p>
+                  <p className={s.mobileAmount}>
+                    ${demo_assets.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className={s.mobileMenuSection}>
+              <div
+                onClick={() => {
+                  navigate("/binarychart/bankinglayout/deposit");
+                  setMobileAccountPopup(false);
+                }}
+                className={s.mobileMenuItem}
+              >
+                Deposit
+              </div>
+              <div
+                onClick={() => {
+                  navigate("/binarychart/bankinglayout/withdraw");
+                  setMobileAccountPopup(false);
+                }}
+                className={s.mobileMenuItem}
+              >
+                Withdrawal
+              </div>
+              <div
+                onClick={() => {
+                  navigate("/binarychart/bankinglayout/transactions");
+                  setMobileAccountPopup(false);
+                }}
+                className={s.mobileMenuItem}
+              >
+                Transactions
+              </div>
+              <div
+                onClick={() => {
+                  navigate("/binarychart/profile");
+                  setMobileAccountPopup(false);
+                }}
+                className={s.mobileMenuItem}
+              >
+                Account
+              </div>
+              <div
+                onClick={() => {
+                  logout();
+                  logoutAffiliate();
+                  setMobileAccountPopup(false);
+                }}
+                className={`${s.mobileMenuItem} ${s.mobileLogout}`}
+              >
+                Logout
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showLeaderboard && (
         <LeaderboardPopup onClose={() => setShowLeaderboard(false)} />

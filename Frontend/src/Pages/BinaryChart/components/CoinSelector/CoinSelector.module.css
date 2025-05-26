@@ -94,3 +94,12 @@
 .coinRow:hover {
   background-color: #e8f5e9;
 }
+
+@media (max-width: 768px) {
+
+  .coinPopup {
+    width: 100%;
+    left: 0;
+    top: 3.2rem;
+  }
+}
