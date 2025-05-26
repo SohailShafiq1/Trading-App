@@ -4,24 +4,30 @@ import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    if (file.fieldname === "profilePicture") {
+      cb(null, "uploads/profile/");
+    } else if (file.fieldname === "cnicPicture") {
+      cb(null, "uploads/cnic/");
+    } else {
+      cb(null, "uploads/others/");
+    }
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueName + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
 const router = express.Router();
 
 // Middleware
 router.use(express.json());
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
-    // Renamed unused parameters to avoid warnings
-    cb(null, "bucket/"); // Save to 'bucket' folder in backend root
-  },
-  filename: function (_req, file, cb) {
-    // Renamed unused parameter to avoid warnings
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
 
 // Health check endpoint
 router.get("/health", async (_req, res) => {
@@ -315,16 +321,24 @@ router.get("/trades/:email", async (req, res) => {
 // Update user profile (firstName, lastName)
 router.put(
   "/update-profile",
-  upload.single("profilePicture"),
+  upload.fields([
+    { name: "profilePicture", maxCount: 1 },
+    { name: "cnicPicture", maxCount: 1 },
+  ]),
   async (req, res) => {
-    const { email, firstName, lastName, dateOfBirth } = req.body;
-    const update = { firstName, lastName };
+    const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
+    const update = { firstName, lastName, cnicNumber };
+
     if (dateOfBirth && dateOfBirth !== "") {
       update.dateOfBirth = new Date(dateOfBirth);
     }
-    if (req.file) {
-      update.profilePicture = `bucket/${req.file.filename}`; // Fixed template literal syntax
+    if (req.files?.profilePicture) {
+      update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
     }
+    if (req.files?.cnicPicture) {
+      update.cnicPicture = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
+    }
+
     try {
       const user = await User.findOneAndUpdate({ email }, update, {
         new: true,

@@ -44,6 +44,9 @@ const Profile = () => {
   const [verified, setVerified] = useState(false);
   const [profilePicture, setProfilePicture] = useState("");
   const [preview, setPreview] = useState("");
+  const [cnicNumber, setCnicNumber] = useState(user?.cnicNumber || "");
+  const [cnicPicture, setCnicPicture] = useState("");
+  const [cnicPreview, setCnicPreview] = useState("");
   const fileInputRef = useRef(null);
 
   // Delete account modal state
@@ -71,6 +74,8 @@ const Profile = () => {
         setUserId(res.data.userId || "");
         setVerified(res.data.verified || false);
         setProfilePicture(res.data.profilePicture || "");
+        setCnicNumber(res.data.cnicNumber || "");
+        setCnicPicture(res.data.cnicPicture || "");
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -89,6 +94,14 @@ const Profile = () => {
     if (file) {
       setPreview(URL.createObjectURL(file));
       setProfilePicture(file);
+    }
+  };
+
+  const handleCnicImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCnicPreview(URL.createObjectURL(file));
+      setCnicPicture(file);
     }
   };
 
@@ -114,8 +127,12 @@ const Profile = () => {
       formData.append("firstName", firstName);
       formData.append("lastName", lastName);
       formData.append("dateOfBirth", dateOfBirth);
+      formData.append("cnicNumber", cnicNumber);
       if (profilePicture && profilePicture instanceof File) {
         formData.append("profilePicture", profilePicture);
+      }
+      if (cnicPicture && cnicPicture instanceof File) {
+        formData.append("cnicPicture", cnicPicture);
       }
 
       await axios.put(
@@ -304,6 +321,47 @@ const Profile = () => {
                 <option value="India">India</option>
                 <option value="Australia">Australia</option>
               </select>
+            </div>
+          </div>
+
+          <div className={s.row}>
+            <div className={s.inputBox}>
+              <label>CNIC Number</label>
+              <input
+                type="text"
+                value={cnicNumber}
+                onChange={(e) => setCnicNumber(e.target.value)}
+                placeholder="Enter your CNIC number"
+              />
+            </div>
+            <div className={s.inputBox}>
+              <label>CNIC Picture</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCnicImageChange}
+              />
+              {cnicPreview ? (
+                <img
+                  src={cnicPreview}
+                  alt="CNIC Preview"
+                  className={s.cnicImg}
+                />
+              ) : cnicPicture && typeof cnicPicture === "string" ? (
+                <img
+                  src={
+                    cnicPicture.startsWith("http")
+                      ? cnicPicture
+                      : `http://localhost:5000${
+                          cnicPicture.startsWith("/") ? "" : "/"
+                        }${cnicPicture}`
+                  }
+                  alt="CNIC"
+                  className={s.cnicImg}
+                />
+              ) : (
+                <span className={s.cameraIcon}>📷</span>
+              )}
             </div>
           </div>
 

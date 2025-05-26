@@ -216,6 +216,14 @@ const UserSchema = new mongoose.Schema(
         },
       },
     ],
+    cnicNumber: {
+      type: String,
+      default: "",
+    },
+    cnicPicture: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
@@ -247,3 +255,16 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 export default mongoose.model("User", UserSchema);
+
+// Additional methods for updating profile pictures
+UserSchema.methods.updateProfilePictures = function (req) {
+  const update = {};
+  if (req.files && req.files.profilePicture) {
+    update.profilePicture =
+      "/uploads/profile/" + req.files.profilePicture[0].filename;
+  }
+  if (req.files && req.files.cnicPicture) {
+    update.cnicPicture = "/uploads/cnic/" + req.files.cnicPicture[0].filename;
+  }
+  return this.updateOne(update);
+};
