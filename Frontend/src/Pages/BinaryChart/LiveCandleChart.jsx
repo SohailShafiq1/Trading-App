@@ -53,7 +53,7 @@ const THEMES = {
     name: "Light",
     background: "#ffffff",
     textColor: "#333333",
-    gridColor: "#eeeeee",
+    gridColor: "#3A3A3A+",
     upColor: "#26a69a",
     downColor: "#ef5350",
     borderVisible: true,
@@ -1063,6 +1063,7 @@ const LiveCandleChart = ({ coinName }) => {
     <div
       style={{
         padding: 20,
+        paddingTop: 0,
         background: theme.background,
         color: theme.textColor,
         borderRadius: 10,
@@ -1071,30 +1072,6 @@ const LiveCandleChart = ({ coinName }) => {
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 10,
-        }}
-      >
-        <h2 style={{ margin: 0 }}>{coinName} Chart</h2>
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            color: currentPrice ? theme.upColor : "#aaa",
-            background: theme.background === "#ffffff" ? "#f5f5f5" : "#222",
-            padding: "6px 12px",
-            borderRadius: 6,
-          }}
-        >
-          {currentPrice ? `$${currentPrice.toFixed(4)}` : "Loading..."}
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
           marginBottom: 10,
           flexWrap: "wrap",
         }}
@@ -1102,18 +1079,22 @@ const LiveCandleChart = ({ coinName }) => {
         {/* Indicator button */}
         <div style={{ position: "relative" }}>
           <button
-            onClick={() => setShowIndicatorPopup(!showIndicatorPopup)}
+            className="chartBtns"
+            onClick={() => {
+              setShowIndicatorPopup(!showIndicatorPopup);
+              setShowStylePopup(false);
+              setShowThemePopup(false);
+              setShowDrawingPopup(false);
+            }}
             style={{
               fontSize: "1rem",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              borderRadius: 4,
-              border: `1px solid ${theme.gridColor}`,
               color: theme.textColor,
               cursor: "pointer",
               background: "linear-gradient(90deg, #66b544, #1a391d)",
-              height: 40,
+              height: 50,
             }}
           >
             <AiOutlinePlus
@@ -1131,7 +1112,7 @@ const LiveCandleChart = ({ coinName }) => {
                 top: "100%",
                 left: 0,
                 zIndex: 100,
-                background: theme.background,
+                background: "#E0E0E0",
                 border: `1px solid ${theme.gridColor}`,
                 borderRadius: 4,
                 padding: 10,
@@ -1149,10 +1130,6 @@ const LiveCandleChart = ({ coinName }) => {
                   }}
                   style={{
                     padding: "5px 10px",
-                    borderRadius: 4,
-                    background:
-                      indicator === ind ? theme.gridColor : theme.background,
-                    color: theme.textColor,
                     cursor: "pointer",
                   }}
                 >
@@ -1165,16 +1142,20 @@ const LiveCandleChart = ({ coinName }) => {
 
         <div style={{ position: "relative" }}>
           <button
-            onClick={() => setShowDrawingPopup(!showDrawingPopup)}
+            className="chartBtns"
+            onClick={() => {
+              setShowIndicatorPopup(false);
+              setShowStylePopup(false);
+              setShowThemePopup(false);
+              setShowDrawingPopup(!showDrawingPopup);
+            }}
             style={{
               padding: "6px 12px",
-              borderRadius: 4,
-              border: `1px solid ${theme.gridColor}`,
-              background: theme.background,
-              color: theme.textColor,
+              color: "black",
               cursor: "pointer",
-              height: 40,
+              height: 50,
               fontSize: "1.5rem",
+              background: "#E0E0E0",
             }}
           >
             <BiPencil />
@@ -1186,7 +1167,7 @@ const LiveCandleChart = ({ coinName }) => {
                 top: "100%",
                 left: 0,
                 zIndex: 100,
-                background: theme.background,
+                background: "#E0E0E0",
                 border: `1px solid ${theme.gridColor}`,
                 borderRadius: 4,
                 padding: 10,
@@ -1201,9 +1182,6 @@ const LiveCandleChart = ({ coinName }) => {
                   onClick={() => handleDrawingToolClick(tool)}
                   style={{
                     padding: "5px 10px",
-                    borderRadius: 4,
-                    background:
-                      drawingTool === tool ? theme.gridColor : theme.background,
                     color: theme.textColor,
                     cursor: "pointer",
                   }}
@@ -1216,8 +1194,6 @@ const LiveCandleChart = ({ coinName }) => {
                 style={{
                   padding: "5px 10px",
                   borderRadius: 4,
-                  background: theme.background,
-                  color: theme.textColor,
                   cursor: "pointer",
                   borderTop: `1px solid ${theme.gridColor}`,
                   marginTop: 5,
@@ -1230,16 +1206,22 @@ const LiveCandleChart = ({ coinName }) => {
         </div>
         <select
           value={interval}
+          onClick={() => {
+            setShowThemePopup(false);
+            setShowIndicatorPopup(false);
+            setShowStylePopup(false);
+            setShowDrawingPopup(false);
+          }}
+          className="chartBtns"
           onChange={(e) => setInterval(e.target.value)}
           style={{
+            appearance: "none",
             padding: "6px 12px",
-            borderRadius: 4,
-            border: `1px solid ${theme.gridColor}`,
-            background: theme.background,
-            color: theme.textColor,
+            color: "black",
             cursor: "pointer",
-            height: 40,
+            height: 50,
             fontSize: "1rem",
+            background: "#E0E0E0",
           }}
         >
           {Object.keys(intervalToSeconds).map((i) => (
@@ -1250,16 +1232,20 @@ const LiveCandleChart = ({ coinName }) => {
         </select>
         <div style={{ position: "relative" }}>
           <button
-            onClick={() => setShowThemePopup(!showThemePopup)}
+            className="chartBtns"
+            onClick={() => {
+              setShowThemePopup(!showThemePopup);
+              setShowIndicatorPopup(false);
+              setShowStylePopup(false);
+              setShowDrawingPopup(false);
+            }}
             style={{
               padding: "6px 12px",
-              borderRadius: 4,
-              border: `1px solid ${theme.gridColor}`,
-              background: theme.background,
-              color: theme.textColor,
+              color: "black",
               cursor: "pointer",
-              height: 40,
+              height: 50,
               fontSize: "1.5rem",
+              background: "#E0E0E0",
             }}
           >
             <AiOutlineBgColors />
@@ -1271,7 +1257,7 @@ const LiveCandleChart = ({ coinName }) => {
                 top: "100%",
                 left: 0,
                 zIndex: 100,
-                background: theme.background,
+                background: "#E0E0E0",
                 border: `1px solid ${theme.gridColor}`,
                 borderRadius: 4,
                 padding: 10,
@@ -1290,33 +1276,26 @@ const LiveCandleChart = ({ coinName }) => {
                   style={{
                     padding: "5px 10px",
                     borderRadius: 4,
-                    background: t.background,
                     color: t.textColor,
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
-                    gap: 10,
                   }}
                 >
                   <div
                     style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: "50%",
+                      width: 30,
+                      height: 30,
                       background: t.upColor,
-                      border: `1px solid ${t.textColor}`,
                     }}
                   />
                   <div
                     style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: "50%",
+                      width: 30,
+                      height: 30,
                       background: t.downColor,
-                      border: `1px solid ${t.textColor}`,
                     }}
                   />
-                  <span>{t.name}</span>
                 </div>
               ))}
             </div>
@@ -1324,16 +1303,20 @@ const LiveCandleChart = ({ coinName }) => {
         </div>
         <div style={{ position: "relative" }}>
           <button
-            onClick={() => setShowStylePopup(!showStylePopup)}
+            className="chartBtns"
+            onClick={() => {
+              setShowStylePopup(!showStylePopup);
+              setShowIndicatorPopup(false);
+              setShowThemePopup(false);
+              setShowDrawingPopup(false);
+            }}
             style={{
               padding: "6px 12px",
-              borderRadius: 4,
-              border: `1px solid ${theme.gridColor}`,
-              background: theme.background,
-              color: theme.textColor,
+              color: "black",
               cursor: "pointer",
-              height: 40,
+              height: 50,
               fontSize: "1.5rem",
+              background: "#E0E0E0",
             }}
           >
             <BsBarChartFill />
@@ -1345,7 +1328,7 @@ const LiveCandleChart = ({ coinName }) => {
                 top: "100%",
                 left: 0,
                 zIndex: 100,
-                background: theme.background,
+                background: "#E0E0E0",
                 border: `1px solid ${theme.gridColor}`,
                 borderRadius: 4,
                 padding: 10,
@@ -1363,12 +1346,6 @@ const LiveCandleChart = ({ coinName }) => {
                   }}
                   style={{
                     padding: "5px 10px",
-                    borderRadius: 4,
-                    background:
-                      candleStyle === style
-                        ? theme.gridColor
-                        : theme.background,
-                    color: theme.textColor,
                     cursor: "pointer",
                   }}
                 >

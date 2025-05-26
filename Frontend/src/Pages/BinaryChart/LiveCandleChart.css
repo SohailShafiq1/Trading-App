@@ -21,3 +21,9 @@
     padding: 8px 0;
   }
 }
+
+.chartBtns {
+  border-radius: 0%;
+  border: 0.00001rem solid black;
+}
+  
