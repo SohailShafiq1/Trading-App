@@ -6,6 +6,7 @@ import { AiOutlinePlusSquare } from "react-icons/ai";
 import { BiPencil } from "react-icons/bi";
 import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
 import React, { useEffect, useRef, useState } from "react";
+import "./LiveCandleChart.css";
 import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import { io } from "socket.io-client";

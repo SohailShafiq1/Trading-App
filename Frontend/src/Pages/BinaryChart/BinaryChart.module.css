@@ -3,12 +3,19 @@ body {
 }
 .container {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 1rem;
   box-sizing: border-box;
-  background-color: #ffffff;
 }
+.chartBoxOtc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -37,17 +44,16 @@ body {
   }
 }
 
-.box {
+.Cbox {
   display: flex;
+  background-color: #ffffff;
   flex-direction: column;
   gap: 0.5rem;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  padding: 0 1.5rem;
 }
 
 @media (min-width: 768px) {
-  .box {
+  .Cbox {
     flex-direction: row;
   }
   .chart {
@@ -60,10 +66,11 @@ body {
 }
 
 .chart {
+  width: 60%;
   border-radius: 8px;
-  padding: 5rem 1rem;
+  padding: 5rem 0rem;
   padding-top: 1rem;
-  height: 600px;
+  height: 100%;
   position: relative;
 }
 
@@ -73,6 +80,12 @@ body {
   align-items: center;
   margin-bottom: 1rem;
   position: relative;
+}
+@media (max-width: 450px) {
+  .coinList {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .coinSelect {
@@ -268,11 +281,9 @@ body {
   transform: translateX(-50%);
   padding: 10px 20px;
   border-radius: 5px;
-  color: #fff;
   font-size: 16px;
   font-weight: bold;
   z-index: 1000;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   animation: fadeInOut 3s ease-in-out;
 }
 
@@ -304,11 +315,13 @@ body {
 }
 
 @media (max-width: 767px) {
-  .box {
+  .Cbox {
     padding: 1rem;
   }
 
   .chart {
+    margin-bottom: 20rem;
+    width: 100%;
     height: 300px;
   }
 
@@ -351,4 +364,9 @@ body {
 .timestampOption:active {
   background-color: #a0a0a0;
   transform: scale(0.95);
+}
+@media (max-width: 430px) {
+  .chart {
+    margin-bottom: 25rem;
+  }
 }

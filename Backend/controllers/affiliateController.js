@@ -163,7 +163,7 @@ export const getAffiliateDetails = async (req, res) => {
       ? authHeader.split(" ")[1]
       : null;
 
-    if (!token) { 
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: "No authentication token provided",
@@ -327,15 +327,15 @@ export const completeLevel = async (req, res) => {
 
     // Calculate the sum of all prizes
     affiliate.totalPrize = affiliate.prize
-      .map(p => Number(String(p).replace(/[^0-9.]/g, "")))
+      .map((p) => Number(String(p).replace(/[^0-9.]/g, "")))
       .reduce((a, b) => a + b, 0);
 
     await affiliate.save();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       newLevel: affiliate.level,
-      reset: currentLevel === PrizeArray.length // Optionally tell frontend if reset happened
+      reset: currentLevel === PrizeArray.length, // Optionally tell frontend if reset happened
     });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
@@ -382,5 +382,84 @@ export const checkLevelStatus = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
+  }
+};
+// controllers/affiliate.controller.js
+
+export const updateTrafficQuestions = async (req, res) => {
+  try {
+    const authHeader = req.header("Authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
+
+    if (!token) {
+      console.log("No token found in header.");
+      return res.status(401).json({
+        success: false,
+        message: "No authentication token provided",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded token:", decoded);
+
+    const affiliate = await Affiliate.findById(decoded.id);
+    if (!affiliate) {
+      console.log("Affiliate not found for ID:", decoded.id);
+      return res.status(404).json({
+        success: false,
+        message: "Affiliate not found",
+      });
+    }
+
+    console.log("Affiliate found:", affiliate.email);
+    console.log("Request body:", req.body);
+
+    const {
+      primarySources,
+      tiktokProfile,
+      mainIncomeSource,
+      monthlyEarningGoal,
+    } = req.body;
+
+    affiliate.trafficQuestions = {
+      primarySources: primarySources || "",
+      tiktokProfile: tiktokProfile || "",
+      mainIncomeSource: mainIncomeSource || "",
+      monthlyEarningGoal: monthlyEarningGoal || "",
+    };
+
+    affiliate.trafficQuestionsAnswered = true;
+    await affiliate.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Traffic questions submitted successfully",
+    });
+  } catch (err) {
+    console.error("🔥 Error in updateTrafficQuestions:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update traffic questions",
+      error: err.message,
+    });
+  }
+};
+
+// controllers/affiliate.controller.js
+
+export const getTrafficQuestionsList = (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      questions: Affiliate.trafficQuestionsList,
+    });
+  } catch (err) {
+    console.error("Error fetching traffic questions list:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch traffic questions list",
+    });
   }
 };
