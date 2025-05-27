@@ -13,28 +13,43 @@
   flex-direction: column;
 }
 .table {
-  width: 95%;
+  width: 100%;
   border-collapse: collapse;
   color: black;
   font-size: 14px;
   margin-top: 5rem;
   margin-bottom: 10rem;
+  overflow-x: auto;
+  background: #fff;
+}
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 tbody {
   padding: 1rem;
 }
 th,
-td {
+.tableData {
   text-align: left;
   padding: 12px 10px;
   border: none;
   font-size: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 th {
   color: #aaa;
   border-bottom: 3px solid #2b2c2f;
   font-weight: 500;
+  background: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .circle {
@@ -48,57 +63,85 @@ th {
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .box {
+    width: 100%;
+    padding: 0 1rem;
+  }
   .table {
-    margin-top: 0;
-    width: 98%;
+    font-size: 13px;
+    min-width: 500px;
   }
-
-  th {
-    display: none;
-  }
-
-  tr {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #2b2c2f;
-    padding-bottom: 1rem;
-  }
-
+  th,
   .tableData {
-    display: inline-block;
-    width: 0%;
-    font-size: 16px;
-    padding: 8px 0;
+    font-size: 17px;
+    padding: 10px 6px;
+    max-width: 120px;
   }
+}
 
-  .amount {
-    font-size: 18px;
-    font-weight: bold;
+@media (max-width: 768px) {
+  .box {
+    width: 100%;
+    padding: 0 0.5rem;
   }
-
-  .circle {
-    margin-right: 0;
+  .tableWrapper {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .table {
+    width: 100%;
+    min-width: 400px;
+    font-size: 12px;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+  }
+  th,
+  .tableData {
+    font-size: 15px;
+    padding: 8px 4px;
+    max-width: 90px;
   }
 }
 
 @media (max-width: 600px) {
-  td {
-    font-size: 14px;
+  .container {
+    padding: 0;
   }
-
-  .amount {
-    font-size: 16px;
+  .box {
+    padding: 0 0.2rem;
+  }
+  .table {
+    min-width: 350px;
+    font-size: 11px;
+  }
+  .tableData,
+  th {
+    font-size: 12px;
+    padding: 6px 2px;
+    max-width: 60px;
   }
 }
 
 @media (max-width: 450px) {
-  td {
-    font-size: 12px;
+  .table {
+    min-width: 300px;
+    font-size: 10px;
   }
+  .tableData,
+  th {
+    font-size: 10px;
+    padding: 4px 1px;
+    max-width: 40px;
+  }
+  .box {
+    padding: 0 0.1rem;
+  }
+}
 
-  .amount {
-    font-size: 14px;
+@media (max-width: 400px) {
+  .table {
+    font-size: 11px;
+    padding: 0;
   }
 }

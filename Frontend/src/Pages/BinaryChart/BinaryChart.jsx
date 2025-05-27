@@ -726,6 +726,7 @@ const BinaryChart = () => {
             <p>
               {isDemo ? "Demo Balance" : "Available for Trading"}: ${userAssets + (user?.totalBonus || 0)}
             </p>
+
             <p>
               Current Price:{" "}
               {selectedCoinType === "OTC"
