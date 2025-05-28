@@ -282,9 +282,74 @@
 .closeBonusBtn:hover {
   background: #cbd5e1;
 }
+
+/* Bonus Options Container */
+.bonusOptions {
+  margin: 18px 0 10px 0;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(60, 60, 60, 0.04);
+}
+
+/* Bonus Radio Label */
+.bonusRadioLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border 0.2s, box-shadow 0.2s;
+  font-size: 1.05em;
+  font-weight: 500;
+}
+
+.bonusRadioLabel:hover,
+.bonusRadioLabel input:checked + span {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px #3b82f620;
+}
+
+/* Hide default radio */
+.bonusRadioLabel input[type="radio"] {
+  accent-color: #3b82f6;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+/* Bonus percent and min styling */
+.bonusRadioLabel b {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.bonusRadioLabel b:last-child {
+  color: #2563eb;
+}
+
+/* Disabled state */
+.bonusRadioLabel input:disabled + span,
+.bonusRadioLabel input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Message when all bonuses are used */
+.bonusOptions > div {
+  margin-top: 8px;
+  color: #a0aec0;
+  font-size: 0.98em;
+  text-align: left;
+}
+
 @media (max-width: 768px) {
   .modal {
     width: 90%;
   }
-  
 }
