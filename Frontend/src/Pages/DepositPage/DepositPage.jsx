@@ -119,8 +119,8 @@ const DepositPage = () => {
   };
 
   useEffect(() => {
-  fetchBonuses();
-}, []);
+    fetchBonuses();
+  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -279,7 +279,8 @@ const DepositPage = () => {
                       Select Deposit Bonus:
                     </label>
                     {bonusOptions
-                      .filter((opt) => !usedBonuses.includes(opt._id))
+                      .filter((opt) => !usedBonuses.includes(opt.percent))
+                      .sort((a, b) => a.min - b.min) // Sort by minimum deposit
                       .map((opt, idx) => (
                         <label key={idx} className={s.bonusRadioLabel}>
                           <input
