@@ -52,13 +52,25 @@ router.get("/health", async (_req, res) => {
 
 // User Deposit Route
 router.post("/deposit", async (req, res) => {
-  const { email, amount, txId, bonusPercent = 0 } = req.body;
+  const { email, amount, txId, bonusId, bonusPercent = 0 } = req.body;
 
   try {
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     // Calculate bonus amount
     let bonusAmount = 0;
     if (bonusPercent) {
       bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
+
+      // Add bonus ID to user's usedBonuses if provided
+      if (bonusId) {
+        user.usedBonuses.push(bonusId);
+        await user.save();
+      }
     }
 
     const deposit = new Deposit({
@@ -68,12 +80,16 @@ router.post("/deposit", async (req, res) => {
       wallet: process.env.ADMIN_TRON_WALLET,
       bonusPercent,
       bonusAmount,
+      bonusId: bonusId || null, // Store bonus ID with deposit
     });
 
     await deposit.save();
-    res
-      .status(201)
-      .json({ message: "Deposit submitted, awaiting confirmation." });
+    res.status(201).json({
+      message: "Deposit submitted, awaiting confirmation.",
+      user: {
+        usedBonuses: user.usedBonuses, // Return updated usedBonuses
+      },
+    });
   } catch (err) {
     console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });

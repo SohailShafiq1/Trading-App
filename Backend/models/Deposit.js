@@ -15,6 +15,7 @@ const depositSchema = new mongoose.Schema({
   fromAddress: { type: String },
   bonusPercent: { type: Number, default: 0 },
   bonusAmount: { type: Number, default: 0 },
+  bonusiD: { type: String, default: null },
 });
 
 export default mongoose.model("Deposit", depositSchema);

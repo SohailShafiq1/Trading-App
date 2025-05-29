@@ -282,6 +282,11 @@
 .closeBonusBtn:hover {
   background: #cbd5e1;
 }
+.bonusOptions{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 @media (max-width: 768px) {
   .modal {
     width: 90%;
