@@ -1,4 +1,3 @@
-import express from "express";
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
@@ -26,14 +25,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-const router = express.Router();
-
-// Middleware
-router.use(express.json());
-
-// Health check endpoint
-router.get("/health", async (_req, res) => {
-  // Renamed unused parameter to avoid warnings
+// Health check controller
+export const healthCheck = async (_req, res) => {
   try {
     await mongoose.connection.db.admin().ping();
     res.status(200).json({
@@ -48,29 +41,17 @@ router.get("/health", async (_req, res) => {
       error: err.message,
     });
   }
-});
+};
 
-// User Deposit Route
-router.post("/deposit", async (req, res) => {
-  const { email, amount, txId, bonusId, bonusPercent = 0 } = req.body;
+// User Deposit controller
+export const createDeposit = async (req, res) => {
+  const { email, amount, txId, bonusPercent = 0 } = req.body;
 
   try {
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
     // Calculate bonus amount
     let bonusAmount = 0;
     if (bonusPercent) {
       bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
-
-      // Add bonus ID to user's usedBonuses if provided
-      if (bonusId) {
-        user.usedBonuses.push(bonusId);
-        await user.save();
-      }
     }
 
     const deposit = new Deposit({
@@ -80,25 +61,20 @@ router.post("/deposit", async (req, res) => {
       wallet: process.env.ADMIN_TRON_WALLET,
       bonusPercent,
       bonusAmount,
-      bonusId: bonusId || null, // Store bonus ID with deposit
     });
 
     await deposit.save();
-    res.status(201).json({
-      message: "Deposit submitted, awaiting confirmation.",
-      user: {
-        usedBonuses: user.usedBonuses, // Return updated usedBonuses
-      },
-    });
+    res
+      .status(201)
+      .json({ message: "Deposit submitted, awaiting confirmation." });
   } catch (err) {
     console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
   }
-});
+};
 
 // Get all registered users
-router.get("/", async (_req, res) => {
-  // Renamed unused parameter to avoid warnings
+export const getAllUsers = async (_req, res) => {
   try {
     const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
@@ -106,10 +82,10 @@ router.get("/", async (_req, res) => {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
-});
+};
 
 // Get user by email
-router.get("/email/:email", async (req, res) => {
+export const getUserByEmail = async (req, res) => {
   const { email } = req.params;
   try {
     const user = await User.findOne({ email }, { password: 0 });
@@ -119,10 +95,10 @@ router.get("/email/:email", async (req, res) => {
     console.error("Error fetching user by email:", err);
     res.status(500).json({ error: "Failed to fetch user" });
   }
-});
+};
 
 // Get user by ID (for admin view)
-router.get("/:id", async (req, res) => {
+export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id, { password: 0 });
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -130,10 +106,10 @@ router.get("/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user" });
   }
-});
+};
 
 // Update user assets
-router.put("/update-assets", async (req, res) => {
+export const updateUserAssets = async (req, res) => {
   const { email, assets } = req.body;
   try {
     const user = await User.findOneAndUpdate(
@@ -152,17 +128,17 @@ router.put("/update-assets", async (req, res) => {
     res.status(200).json({
       message: "Assets updated successfully",
       user,
-      totalBalance, // <-- This is the sum of assets and bonus
+      totalBalance,
     });
   } catch (err) {
     console.error("Error updating assets:", err);
     res.status(500).json({ error: "Failed to update assets" });
   }
-});
+};
 
-// User Withdrawal Route
-router.post("/withdraw", async (req, res) => {
-  const { email, amount, network, purse, paymentMethod } = req.body; // Removed unused 'purse'
+// User Withdrawal controller
+export const createWithdrawal = async (req, res) => {
+  const { email, amount, network, purse, paymentMethod } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -176,13 +152,12 @@ router.post("/withdraw", async (req, res) => {
       orderId,
       type: "withdrawal",
       amount,
-      paymentMethod: `${paymentMethod} (${network})`, // Fixed template literal syntax
-      status: "pending", // 'status' here is not related to the deprecated Window.status
+      paymentMethod: `${paymentMethod} (${network})`,
+      status: "pending",
       date: new Date(),
     });
 
     user.withdrawals.push({
-      // 'user' is correctly defined in the context
       orderId,
       amount,
       purse,
@@ -192,18 +167,18 @@ router.post("/withdraw", async (req, res) => {
       createdAt: new Date(),
     });
 
-    user.assets -= amount; // 'user' is correctly defined in the context
-    await user.save(); // 'user' is correctly defined in the context
+    user.assets -= amount;
+    await user.save();
 
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
     console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
-});
+};
 
 // Get all user transactions
-router.get("/transactions/:email", async (req, res) => {
+export const getUserTransactions = async (req, res) => {
   const { email } = req.params;
 
   try {
@@ -215,10 +190,10 @@ router.get("/transactions/:email", async (req, res) => {
     console.error("Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
-});
+};
 
 // Save user trade
-router.post("/trade", async (req, res) => {
+export const saveTrade = async (req, res) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ error: "Database not connected" });
   }
@@ -271,10 +246,10 @@ router.post("/trade", async (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: "Failed to save trade" });
   }
-});
+};
 
 // Update trade result
-router.put("/trade/result", async (req, res) => {
+export const updateTradeResult = async (req, res) => {
   try {
     const { email, startedAt, result, reward, exitPrice } = req.body;
 
@@ -297,7 +272,7 @@ router.put("/trade/result", async (req, res) => {
     user.trades[tradeIndex].reward = reward;
     user.trades[tradeIndex].exitPrice = exitPrice;
 
-    const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    const today = new Date().toISOString().slice(0, 10);
     let profitChange = 0;
     if (result === "win") {
       profitChange = reward;
@@ -324,10 +299,10 @@ router.put("/trade/result", async (req, res) => {
     console.error("Error updating trade result:", err);
     res.status(500).json({ error: "Failed to update trade result" });
   }
-});
+};
 
 // Get user trades
-router.get("/trades/:email", async (req, res) => {
+export const getUserTrades = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -345,84 +320,73 @@ router.get("/trades/:email", async (req, res) => {
     console.error("Error fetching trades:", err);
     res.status(500).json({ error: "Failed to fetch trades" });
   }
-});
+};
 
 // Update user profile (firstName, lastName)
-router.put(
-  "/update-profile",
-  upload.fields([
-    { name: "profilePicture", maxCount: 1 },
-    { name: "cnicPicture", maxCount: 1 },
-  ]),
-  async (req, res) => {
-    const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
-    const update = { firstName, lastName, cnicNumber };
+export const updateProfile = async (req, res) => {
+  const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
+  const update = { firstName, lastName, cnicNumber };
 
-    if (dateOfBirth && dateOfBirth !== "") {
-      update.dateOfBirth = new Date(dateOfBirth);
-    }
-    if (req.files?.profilePicture) {
-      update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
-    }
-    if (req.files?.cnicPicture) {
-      const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
-      update.cnicPicture = cnicImagePath;
+  if (dateOfBirth && dateOfBirth !== "") {
+    update.dateOfBirth = new Date(dateOfBirth);
+  }
+  if (req.files?.profilePicture) {
+    update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
+  }
+  if (req.files?.cnicPicture) {
+    const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
+    update.cnicPicture = cnicImagePath;
 
-      // OCR extraction
-      try {
-        const {
-          data: { text },
-        } = await Tesseract.recognize(cnicImagePath, "eng", {
-          logger: (m) => console.log(m),
-        });
-        // Regex for Pakistani CNIC (13 digits, with or without dashes)
-        const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
-        if (match) {
-          update.imgCNIC = match[0];
-        } else {
-          update.imgCNIC = "";
-        }
-      } catch (ocrErr) {
+    // OCR extraction
+    try {
+      const {
+        data: { text },
+      } = await Tesseract.recognize(cnicImagePath, "eng", {
+        logger: (m) => console.log(m),
+      });
+      // Regex for Pakistani CNIC (13 digits, with or without dashes)
+      const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
+      if (match) {
+        update.imgCNIC = match[0];
+      } else {
         update.imgCNIC = "";
       }
-
-      // === Place this check here ===
-      if (
-        update.imgCNIC &&
-        req.body.cnicNumber &&
-        update.imgCNIC !== req.body.cnicNumber
-      ) {
-        return res.status(400).json({ error: "Image not matched" });
-      }
-    }
-    if (
-      typeof req.body.profilePicture === "string" &&
-      req.body.profilePicture === ""
-    ) {
-      update.profilePicture = "";
-    }
-    if (
-      typeof req.body.cnicPicture === "string" &&
-      req.body.cnicPicture === ""
-    ) {
-      update.cnicPicture = "";
-      update.imgCNIC = ""; // <-- This line ensures the CNIC image number is also removed
+    } catch (ocrErr) {
+      update.imgCNIC = "";
     }
 
-    try {
-      const user = await User.findOneAndUpdate({ email }, update, {
-        new: true,
-      });
-      if (!user) return res.status(404).json({ error: "User not found" });
-      res.status(200).json({ message: "Profile updated successfully", user });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to update profile" });
+    if (
+      update.imgCNIC &&
+      req.body.cnicNumber &&
+      update.imgCNIC !== req.body.cnicNumber
+    ) {
+      return res.status(400).json({ error: "Image not matched" });
     }
   }
-);
+  if (
+    typeof req.body.profilePicture === "string" &&
+    req.body.profilePicture === ""
+  ) {
+    update.profilePicture = "";
+  }
+  if (typeof req.body.cnicPicture === "string" && req.body.cnicPicture === "") {
+    update.cnicPicture = "";
+    update.imgCNIC = "";
+  }
+
+  try {
+    const user = await User.findOneAndUpdate({ email }, update, {
+      new: true,
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json({ message: "Profile updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+};
 
 // Verify user by admin
-router.put("/verify/:id", async (req, res) => {
+export const verifyUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -434,10 +398,10 @@ router.put("/verify/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to verify user" });
   }
-});
+};
 
 // Unverify user by admin
-router.put("/unverify/:id", async (req, res) => {
+export const unverifyUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -449,9 +413,10 @@ router.put("/unverify/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to unverify user" });
   }
-});
+};
 
-router.get("/is-verified/:id", async (req, res) => {
+// Check user verification status
+export const checkVerificationStatus = async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -468,10 +433,10 @@ router.get("/is-verified/:id", async (req, res) => {
     console.error("Error checking verification status:", err);
     res.status(500).json({ error: "Failed to check verification status" });
   }
-});
+};
 
 // Validate CNIC format
-router.post("/validate-cnic", async (req, res) => {
+export const validateCNIC = async (req, res) => {
   const { cnicNumber } = req.body;
 
   // Check if CNIC number is provided
@@ -496,6 +461,7 @@ router.post("/validate-cnic", async (req, res) => {
     console.error("Error validating CNIC:", err);
     res.status(500).json({ error: "Failed to validate CNIC" });
   }
-});
+};
 
-export default router;
+// Export multer upload middleware
+export { upload };

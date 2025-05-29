@@ -87,7 +87,7 @@ const UserSchema = new mongoose.Schema(
       default: 0,
     },
     usedBonuses: {
-      type: [Number], // array of bonus percentages availed
+      type: [mongoose.Schema.Types.ObjectId], // Now stores bonus IDs
       default: [],
     },
 

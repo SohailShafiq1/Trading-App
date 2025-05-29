@@ -119,8 +119,8 @@ const DepositPage = () => {
   };
 
   useEffect(() => {
-  fetchBonuses();
-}, []);
+    fetchBonuses();
+  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -145,12 +145,15 @@ const DepositPage = () => {
         amount,
         txId,
         fromAddress,
-        bonusPercent: selectedBonus,
+        bonusPercent: selectedBonus?.percent,
+        bonusId: selectedBonus?._id, // Send bonus ID
       });
+
       setMessage(res.data.message);
       setAmount("");
       setTxId("");
       setFromAddress("");
+      setSelectedBonus(null);
       toast.success("Deposit request submitted successfully!");
     } catch (err) {
       setMessage("Deposit failed. Try again.");
@@ -279,16 +282,22 @@ const DepositPage = () => {
                       Select Deposit Bonus:
                     </label>
                     {bonusOptions
-                      .filter((opt) => !usedBonuses.includes(opt._id))
+                      .filter(
+                        (opt) =>
+                          !usedBonuses.some((bonusId) => bonusId === opt._id)
+                      ) // Filter by ID
                       .map((opt, idx) => (
                         <label key={idx} className={s.bonusRadioLabel}>
                           <input
                             type="radio"
                             name="bonus"
-                            value={opt.percent}
-                            checked={selectedBonus === opt.percent}
+                            value={opt._id} // Now using _id instead of percent
+                            checked={selectedBonus?._id === opt._id}
                             onChange={() => {
-                              setSelectedBonus(opt.percent);
+                              setSelectedBonus({
+                                _id: opt._id,
+                                percent: opt.percent,
+                              });
                               setAmount(String(opt.min));
                               setAmountLocked(true);
                             }}
@@ -375,7 +384,8 @@ const DepositPage = () => {
                           amount,
                           txId: "",
                           fromAddress: "",
-                          bonusPercent: selectedBonus, // <-- ADD THIS LINE
+                          bonusPercent: selectedBonus?.percent,
+                          bonusId: selectedBonus?._id,
                         }
                       );
                       setMessage(res.data.message);
@@ -403,24 +413,30 @@ const DepositPage = () => {
           <div className={s.bonusModal}>
             <h3>Deposit Bonus Structure</h3>
             <ul className={s.bonusList}>
-              {bonusOptions.map((opt, idx) => (
-                <li key={idx} className={s.bonusListItem}>
-                  <label>
-                    <input
-                      type="radio"
-                      name="bonus"
-                      value={opt.percent}
-                      checked={selectedBonus === opt.percent}
-                      onChange={() => {
-                        setSelectedBonus(opt.percent);
-                        setAmount(String(opt.min));
-                        setShowBonusPopup(false);
-                      }}
-                    />
-                    Deposit: <b>${opt.min}</b> – Bonus: <b>{opt.percent}%</b>
-                  </label>
-                </li>
-              ))}
+              {bonusOptions
+                .filter(
+                  (opt) => !usedBonuses.some((bonusId) => bonusId === opt._id)
+                )
+                .map((opt, idx) => (
+                  <li key={idx} className={s.bonusListItem}>
+                    <label>
+                      <input
+                        type="radio"
+                        name="bonus"
+                        checked={selectedBonus?._id === opt._id}
+                        onChange={() => {
+                          setSelectedBonus({
+                            _id: opt._id,
+                            percent: opt.percent,
+                          });
+                          setAmount(String(opt.min));
+                          setShowBonusPopup(false);
+                        }}
+                      />
+                      Deposit: <b>${opt.min}</b> – Bonus: <b>{opt.percent}%</b>
+                    </label>
+                  </li>
+                ))}
             </ul>
             <button
               className={s.closeBonusBtn}
