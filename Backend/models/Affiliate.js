@@ -51,6 +51,10 @@ const AffiliateSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalTeamDeposit: {
+      type: Number,
+      default: 0,
+    },
     totalProfit: {
       type: Number,
       default: 0,
@@ -86,6 +90,10 @@ const AffiliateSchema = new mongoose.Schema(
     trafficQuestionsAnswered: {
       type: Boolean,
       default: false,
+    },
+    affiliateLevel: {
+      type: Number,
+      default: 1,
     },
   },
   { timestamps: true }

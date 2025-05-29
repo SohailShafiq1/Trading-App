@@ -10,6 +10,7 @@ import { NavLink, Navigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 import TeamData from "./components/TeamData/TeamData";
+import AffiliateLevel from "./components/AffiliateLevel/AffiliateLevel";
 import axios from "axios";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -204,11 +205,7 @@ const AffiliateProgram = () => {
         </div>
 
         <div className={styles.line}>
-          <div className={styles.statsBox}>
-            <BiLineChartDown />
-            <span>0</span>
-            <p>Trader Ids</p>
-          </div>
+          <AffiliateLevel />
           <div className={styles.statsBox}>
             <HiCursorClick />
             <span>0</span>

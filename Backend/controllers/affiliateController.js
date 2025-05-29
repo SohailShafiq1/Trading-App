@@ -463,3 +463,34 @@ export const getTrafficQuestionsList = (req, res) => {
     });
   }
 };
+
+export const getTeamDepositCount = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const affiliate = await Affiliate.findOne({ email });
+    if (!affiliate)
+      return res.status(404).json({ error: "Affiliate not found" });
+
+    // Find all team users by email
+    const teamUsers = await User.find({ email: { $in: affiliate.team } });
+
+    // Count all successful deposit transactions for all team members
+    let teamDepositCount = 0;
+    teamUsers.forEach((user) => {
+      if (Array.isArray(user.transactions)) {
+        teamDepositCount += user.transactions.filter(
+          (t) => t.type === "deposit" && t.status === "success"
+        ).length;
+      }
+    });
+
+    // Optionally, update the affiliate document
+    affiliate.teamDepositCount = teamDepositCount;
+    await affiliate.save();
+
+    res.json({ success: true, teamDepositCount });
+  } catch (err) {
+    console.error("Error calculating team deposit count:", err);
+    res.status(500).json({ error: "Failed to calculate team deposit count" });
+  }
+};
