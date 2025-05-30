@@ -104,13 +104,13 @@ const AffiliateLevel = () => {
   let progressMax = currentLevel.depositRequired;
   if (affiliateLevel === LEVELS.length) {
     // Level 7: no upper limit, show total deposits above 721
-    depositsForCurrentLevel = teamDepositCount - currentLevel.depositMin + 1;
+    depositsForCurrentLevel = teamDepositCount - currentLevel.depositMin;
     progressMax = null;
   } else {
     depositsForCurrentLevel = Math.max(
       0,
       Math.min(
-        teamDepositCount - currentLevel.depositMin + 1,
+        teamDepositCount - currentLevel.depositMin,
         currentLevel.depositRequired
       )
     );
