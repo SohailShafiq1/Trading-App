@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { BiLineChartDown } from "react-icons/bi";
+import styles1 from "./AffiliateLevel.module.css";
 import styles from "../../AffiliateProgram.module.css";
 import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
 import axios from "axios";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const LEVELS = Array.from({ length: 6 }, (_, i) => ({
   name: `Level ${i + 1}`,
@@ -24,9 +26,9 @@ const AffiliateLevel = () => {
         setDepositLoading(true);
         try {
           const res = await axios.get(
-            `/api/affiliate/team-deposit-count/${affiliate.email}`
+            `${BACKEND_URL}/api/affiliate/team-deposit-count/${affiliate.email}`
           );
-          setTeamDepositCount(res.data.teamDepositCount || 0);
+          setTeamDepositCount(res.data.totalDeposits);
         } catch (err) {
           setTeamDepositCount(0);
         }
@@ -40,13 +42,21 @@ const AffiliateLevel = () => {
   if (!affiliate)
     return <div>You must be logged in to view your affiliate level.</div>;
 
-  const affiliateLevel = affiliate.affiliateLevel || 1;
+  // Determine current level based on teamDepositCount
+  let affiliateLevel = 1;
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (teamDepositCount >= LEVELS[i].depositMin) {
+      affiliateLevel = i + 1;
+      break;
+    }
+  }
 
+  const currentLevel = LEVELS[affiliateLevel - 1];
   const depositsForCurrentLevel = Math.max(
     0,
     Math.min(
-      teamDepositCount - LEVELS[affiliateLevel - 1].depositMin,
-      LEVELS[affiliateLevel - 1].depositRequired
+      teamDepositCount - currentLevel.depositMin,
+      currentLevel.depositRequired
     )
   );
 
@@ -63,16 +73,16 @@ const AffiliateLevel = () => {
         <p>Trader Level</p>
       </div>
       {showPopup && (
-        <div className={styles.popupOverlay}>
-          <div className={styles.popupContent}>
+        <div className={styles1.popupOverlay}>
+          <div className={styles1.popupContent}>
             <button
-              className={styles.closeBtn}
+              className={styles1.closeBtn}
               onClick={() => setShowPopup(false)}
             >
               ×
             </button>
             <h3>Affiliate Levels</h3>
-            <table className={styles.levelTable}>
+            <table className={styles1.levelTable}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -86,7 +96,7 @@ const AffiliateLevel = () => {
                   return (
                     <React.Fragment key={idx}>
                       <tr
-                        className={isCurrentLevel ? styles.activeLevelRow : ""}
+                        className={isCurrentLevel ? styles1.activeLevelRow : ""}
                       >
                         <td>{level.name}</td>
                         <td>{level.turnover}</td>
@@ -97,14 +107,14 @@ const AffiliateLevel = () => {
                       {isCurrentLevel && (
                         <tr>
                           <td colSpan={3}>
-                            <div className={styles.progressContainer}>
-                              <div className={styles.progressLabel}>
+                            <div className={styles1.progressContainer}>
+                              <div className={styles1.progressLabel}>
                                 Team Deposits: {depositsForCurrentLevel} /{" "}
                                 {level.depositRequired}
                               </div>
-                              <div className={styles.progressBarBg}>
+                              <div className={styles1.progressBarBg}>
                                 <div
-                                  className={styles.progressBarFill}
+                                  className={styles1.progressBarFill}
                                   style={{
                                     width: `${Math.min(
                                       (depositsForCurrentLevel /

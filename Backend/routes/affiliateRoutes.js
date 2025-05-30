@@ -8,6 +8,7 @@ import {
   completeLevel,
   getTrafficQuestionsList,
   updateTrafficQuestions,
+  getTeamTotalDeposits,
 } from "../controllers/affiliateController.js";
 
 const router = express.Router();
@@ -20,4 +21,5 @@ router.get("/update-team-totals/:email", updateTeamTotals);
 router.post("/complete-level/:email", completeLevel);
 router.get("/traffic-questions-list", getTrafficQuestionsList);
 router.put("/traffic-questions", updateTrafficQuestions);
+router.get("/team-deposit-count/:email", getTeamTotalDeposits);
 export default router;
