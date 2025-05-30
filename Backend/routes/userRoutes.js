@@ -50,7 +50,6 @@ router.get("/health", async (_req, res) => {
   }
 });
 
-// User Deposit Route
 router.post("/deposit", async (req, res) => {
   const { email, amount, txId, bonusId, bonusPercent = 0 } = req.body;
 
@@ -61,33 +60,49 @@ router.post("/deposit", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Validate amount
+    if (Number(amount) < 10) {
+      return res.status(400).json({ error: "Minimum deposit amount is $10" });
+    }
+
     // Calculate bonus amount
     let bonusAmount = 0;
-    if (bonusPercent) {
-      bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
+    if (bonusPercent && bonusPercent > 0) {
+      bonusAmount = (Number(amount) * Number(bonusPercent)) / 100;
 
-      // Add bonus ID to user's usedBonuses if provided
-      if (bonusId) {
-        user.usedBonuses.push(bonusId);
-        await user.save();
+      // Verify bonus hasn't been used already
+      if (bonusId && user.usedBonuses.includes(bonusId)) {
+        return res
+          .status(400)
+          .json({ error: "This bonus has already been used" });
       }
     }
 
+    // Create deposit
     const deposit = new Deposit({
       userEmail: email,
       amount,
-      txId,
+      txId: txId || "Pending",
       wallet: process.env.ADMIN_TRON_WALLET,
-      bonusPercent,
+      bonusPercent: bonusPercent || 0,
       bonusAmount,
-      bonusId: bonusId || null, // Store bonus ID with deposit
+      bonusId: bonusId || null,
+      status: "pending",
     });
 
     await deposit.save();
+
+    // Add bonus ID to user's usedBonuses if provided
+    if (bonusId && bonusPercent > 0) {
+      user.usedBonuses.push(bonusId);
+      await user.save();
+    }
+
     res.status(201).json({
       message: "Deposit submitted, awaiting confirmation.",
+      deposit,
       user: {
-        usedBonuses: user.usedBonuses, // Return updated usedBonuses
+        usedBonuses: user.usedBonuses,
       },
     });
   } catch (err) {
