@@ -143,6 +143,11 @@ router.put("/deposit-status/:id", async (req, res) => {
     const deposit = await Deposit.findById(req.params.id);
     if (!deposit) return res.status(404).json({ error: "Deposit not found" });
 
+    // Prevent duplicate processing
+    if (deposit.status === status) {
+      return res.status(400).json({ error: `Deposit is already ${status}` });
+    }
+
     deposit.status = status;
     await deposit.save();
 
@@ -150,31 +155,51 @@ router.put("/deposit-status/:id", async (req, res) => {
     if (status === "verified") {
       const user = await User.findOne({ email: deposit.userEmail });
       if (user) {
-        user.assets += Number(deposit.amount);
-        user.depositCount = (user.depositCount || 0) + 1;
-        user.transactions.push({
-          orderId: Math.floor(100000 + Math.random() * 900000).toString(),
-          type: "deposit",
-          amount: deposit.amount,
-          paymentMethod: deposit.network + " Wallet",
-          status: "success",
-          date: new Date(),
-        });
-        // Always update totalBonus if bonus exists
-        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
-          user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
-          // Add this:
-          if (!user.usedBonuses.includes(deposit.bonusPercent)) {
-            user.usedBonuses.push(deposit.bonusPercent);
+        // Check if already credited
+        const existingTransaction = user.transactions.find(
+          (t) => t.orderId === deposit._id.toString() && t.type === "deposit"
+        );
+
+        if (!existingTransaction) {
+          user.assets += Number(deposit.amount);
+          user.depositCount = (user.depositCount || 0) + 1;
+
+          user.transactions.push({
+            orderId: deposit._id.toString(),
+            type: "deposit",
+            amount: deposit.amount,
+            paymentMethod: deposit.network || "USDT (TRC-20)",
+            status: "success",
+            date: new Date(),
+          });
+
+          // Apply bonus if exists
+          if (deposit.bonusAmount && deposit.bonusAmount > 0) {
+            user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
+            user.assets += deposit.bonusAmount; // Add bonus to assets
+
+            // Track bonus percent if not already tracked
+            if (
+              deposit.bonusPercent &&
+              !user.usedBonuses.includes(deposit.bonusId)
+            ) {
+              user.usedBonuses.push(deposit.bonusId);
+            }
           }
+
+          await user.save();
         }
-        await user.save();
       }
     }
 
-    res.json({ message: "Deposit status updated" });
+    res.json({
+      message: "Deposit status updated",
+      deposit,
+    });
   } catch (err) {
+    console.error("Error updating deposit status:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
+
 export default router;
