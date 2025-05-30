@@ -477,7 +477,7 @@ export const getTeamTotalDeposits = async (req, res) => {
     const teamUsers = await User.find({ email: { $in: affiliate.team } });
 
     // Count all successful deposit transactions for all team users
-    let totalDeposits = 0;
+    let totalDeposits = 100;
     teamUsers.forEach((user) => {
       if (Array.isArray(user.transactions)) {
         totalDeposits += user.transactions.filter(

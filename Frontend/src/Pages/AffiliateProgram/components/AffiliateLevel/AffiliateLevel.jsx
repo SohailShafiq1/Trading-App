@@ -6,13 +6,58 @@ import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
 import axios from "axios";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-const LEVELS = Array.from({ length: 6 }, (_, i) => ({
-  name: `Level ${i + 1}`,
-  turnover: (1.9 + i * 0.25).toFixed(2),
-  depositMin: i * 15,
-  depositMax: i * 15 + 14,
-  depositRequired: 15, // Each level requires 15 team deposits
-}));
+// Define levels and their deposit ranges
+const LEVELS = [
+  {
+    name: "Level 1",
+    turnover: "1.90",
+    depositMin: 0,
+    depositMax: 14,
+    depositRequired: 15,
+  },
+  {
+    name: "Level 2",
+    turnover: "2.15",
+    depositMin: 15,
+    depositMax: 60,
+    depositRequired: 46, // 60-15+1=46
+  },
+  {
+    name: "Level 3",
+    turnover: "2.40",
+    depositMin: 61,
+    depositMax: 120,
+    depositRequired: 60, // 120-61+1=60
+  },
+  {
+    name: "Level 4",
+    turnover: "2.65",
+    depositMin: 121,
+    depositMax: 210,
+    depositRequired: 90, // 210-121+1=90
+  },
+  {
+    name: "Level 5",
+    turnover: "2.90",
+    depositMin: 211,
+    depositMax: 420,
+    depositRequired: 210, // 420-211+1=210
+  },
+  {
+    name: "Level 6",
+    turnover: "3.15",
+    depositMin: 421,
+    depositMax: 720,
+    depositRequired: 300, // 720-421+1=300
+  },
+  {
+    name: "Level 7",
+    turnover: "3.40",
+    depositMin: 721,
+    depositMax: Infinity,
+    depositRequired: null, // No upper limit
+  },
+];
 
 const AffiliateLevel = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -42,7 +87,7 @@ const AffiliateLevel = () => {
   if (!affiliate)
     return <div>You must be logged in to view your affiliate level.</div>;
 
-  // Determine current level based on teamDepositCount
+  // Determine current level based on teamDepositCount and LEVELS
   let affiliateLevel = 1;
   for (let i = LEVELS.length - 1; i >= 0; i--) {
     if (teamDepositCount >= LEVELS[i].depositMin) {
@@ -50,15 +95,26 @@ const AffiliateLevel = () => {
       break;
     }
   }
+  if (affiliateLevel > LEVELS.length) affiliateLevel = LEVELS.length;
 
   const currentLevel = LEVELS[affiliateLevel - 1];
-  const depositsForCurrentLevel = Math.max(
-    0,
-    Math.min(
-      teamDepositCount - currentLevel.depositMin,
-      currentLevel.depositRequired
-    )
-  );
+
+  // Calculate progress for current level
+  let depositsForCurrentLevel = 0;
+  let progressMax = currentLevel.depositRequired;
+  if (affiliateLevel === LEVELS.length) {
+    // Level 7: no upper limit, show total deposits above 721
+    depositsForCurrentLevel = teamDepositCount - currentLevel.depositMin + 1;
+    progressMax = null;
+  } else {
+    depositsForCurrentLevel = Math.max(
+      0,
+      Math.min(
+        teamDepositCount - currentLevel.depositMin + 1,
+        currentLevel.depositRequired
+      )
+    );
+  }
 
   return (
     <>
@@ -101,7 +157,9 @@ const AffiliateLevel = () => {
                         <td>{level.name}</td>
                         <td>{level.turnover}</td>
                         <td>
-                          {level.depositMin}-{level.depositMax}
+                          {level.depositMax === Infinity
+                            ? `${level.depositMin}+`
+                            : `${level.depositMin}-${level.depositMax}`}
                         </td>
                       </tr>
                       {isCurrentLevel && (
@@ -109,19 +167,23 @@ const AffiliateLevel = () => {
                           <td colSpan={3}>
                             <div className={styles1.progressContainer}>
                               <div className={styles1.progressLabel}>
-                                Team Deposits: {depositsForCurrentLevel} /{" "}
-                                {level.depositRequired}
+                                Team Deposits:{" "}
+                                {progressMax
+                                  ? `${depositsForCurrentLevel} / ${progressMax}`
+                                  : `${depositsForCurrentLevel} (no limit)`}
                               </div>
                               <div className={styles1.progressBarBg}>
                                 <div
                                   className={styles1.progressBarFill}
                                   style={{
-                                    width: `${Math.min(
-                                      (depositsForCurrentLevel /
-                                        level.depositRequired) *
-                                        100,
-                                      100
-                                    )}%`,
+                                    width: progressMax
+                                      ? `${Math.min(
+                                          (depositsForCurrentLevel /
+                                            progressMax) *
+                                            100,
+                                          100
+                                        )}%`
+                                      : "100%",
                                   }}
                                 />
                               </div>
