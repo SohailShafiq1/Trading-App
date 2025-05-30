@@ -498,3 +498,12 @@ export const getTeamTotalDeposits = async (req, res) => {
     });
   }
 };
+
+export const getAllAffiliates = async (req, res) => {
+  try {
+    const affiliates = await Affiliate.find().select("-password");
+    res.json({ affiliates });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};

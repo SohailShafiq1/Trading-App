@@ -21,6 +21,9 @@ const AdminHome = () => {
         <NavLink to="/admin/bonuses" className={s.link}>
           Bonuses
         </NavLink>
+        <NavLink to="/admin/affiliate" className={s.link}>
+          Affiliate
+        </NavLink>
       </div>
     </div>
   );
