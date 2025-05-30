@@ -15,7 +15,6 @@ import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
 
 const BinaryChart = () => {
-  // State declarations
   const socket = useRef(null);
 
   useEffect(() => {
@@ -49,7 +48,7 @@ const BinaryChart = () => {
   const [demoAssets, setDemoAssets] = useState(demo_assets);
   const [showTimestampPopup, setShowTimestampPopup] = useState(false);
 
-  // Check verification status (only for real account)
+  // Check verification status
   useEffect(() => {
     if (isDemo) {
       setCheckingVerification(false);
@@ -96,7 +95,7 @@ const BinaryChart = () => {
     };
   }, []);
 
-  // Update user assets in database (only for real account)
+  // Update user assets in database
   const updateUserAssetsInDB = async (newAssets) => {
     if (isDemo) return;
 
@@ -230,17 +229,84 @@ const BinaryChart = () => {
     if (isDemo) return;
 
     try {
-      await axios.put(
+      console.log("Updating trade result in DB:", tradeData);
+
+      // Enhanced validation
+      if (
+        !tradeData.email ||
+        !tradeData.startedAt ||
+        tradeData.result === undefined
+      ) {
+        throw new Error("Missing required fields for trade update");
+      }
+
+      // Ensure startedAt is in proper format
+      let startedAtFormatted;
+      if (tradeData.startedAt instanceof Date) {
+        startedAtFormatted = tradeData.startedAt.toISOString();
+      } else if (typeof tradeData.startedAt === "string") {
+        // Validate if it's already in ISO format
+        const testDate = new Date(tradeData.startedAt);
+        if (isNaN(testDate.getTime())) {
+          throw new Error("Invalid startedAt format in trade data");
+        }
+        startedAtFormatted = tradeData.startedAt;
+      } else {
+        throw new Error("Invalid startedAt type in trade data");
+      }
+
+      // Prepare the request data with validation
+      const requestData = {
+        email: tradeData.email,
+        startedAt: startedAtFormatted,
+        result: tradeData.result,
+        calculatedReward: parseFloat(tradeData.calculatedReward) || 0,
+        exitPrice: parseFloat(tradeData.exitPrice) || tradeData.entryPrice,
+        entryPrice: parseFloat(tradeData.entryPrice), // Added for validation
+      };
+
+      if (isNaN(requestData.calculatedReward)) {
+        throw new Error("Invalid calculatedReward value");
+      }
+
+      const response = await axios.put(
         "http://localhost:5000/api/users/trade/result",
-        tradeData
+        requestData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
+          validateStatus: (status) => status < 500, // Don't throw for 4xx errors
+        }
       );
+
+      if (response.status >= 400) {
+        throw new Error(response.data.error || "Failed to update trade result");
+      }
+
+      console.log("Trade result updated successfully:", response.data);
+      return response.data;
     } catch (err) {
-      console.error("Failed to update trade result:", err);
-      toast.error("Failed to update trade result");
+      console.error("Failed to update trade result:", {
+        error: err.response?.data || err.message,
+        config: err.config,
+        stack: err.stack,
+        tradeData,
+      });
+
+      let errorMessage = `Failed to update trade: ${
+        err.response?.data?.error || err.message
+      }`;
+
+      if (err.response?.data?.details) {
+        errorMessage += ` (${err.response.data.details})`;
+      }
+
+      toast.error(errorMessage);
       throw err;
     }
   };
-
   // Save demo trades to localStorage
   const saveDemoTrades = (trades) => {
     const tradesToSave = trades.map((trade) => ({
@@ -321,6 +387,9 @@ const BinaryChart = () => {
         duration: timer,
         result: "pending",
         reward: 0,
+        status: "running",
+        canClose: false,
+        calculatedReward: 0,
       };
 
       // For demo, just use localStorage
@@ -346,6 +415,8 @@ const BinaryChart = () => {
           coinType: selectedCoinType,
           entryPrice: tradePrice,
           investment: investment,
+          canClose: false,
+          calculatedReward: 0,
         };
 
         const updatedTrades = [...trades, newTrade];
@@ -372,6 +443,8 @@ const BinaryChart = () => {
           reward: 0,
           startedAt,
           duration: timer,
+          canClose: false,
+          calculatedReward: 0,
         };
 
         setTrades((prev) => [...prev, newTrade]);
@@ -380,11 +453,14 @@ const BinaryChart = () => {
       // Set timeout for trade completion
       setTimeout(async () => {
         try {
+          console.log("Checking trade result for trade:", tradeId);
+
           let endPrice;
           if (selectedCoinType === "Live") {
             const response = await fetch(
               `https://api.binance.com/api/v3/ticker/price?symbol=${selectedCoin}USDT`
             );
+            if (!response.ok) throw new Error("Failed to fetch live price");
             const data = await response.json();
             endPrice = parseFloat(data.price);
           } else {
@@ -403,88 +479,75 @@ const BinaryChart = () => {
           const isWin =
             tradeType === "Buy" ? endPrice > tradePrice : endPrice < tradePrice;
 
+          // Calculate reward with random factor (0.8 to 1.2 of expected profit)
+          const randomFactor = 0.8 + Math.random() * 0.4;
           const reward = isWin
-            ? (investment * (1 + profitPercentage / 100)).toFixed(2)
-            : -investment;
+            ? (
+                investment *
+                (1 + (profitPercentage / 100) * randomFactor)
+              ).toFixed(2)
+            : -(investment * randomFactor).toFixed(2);
 
-          if (isDemo) {
-            // Update demo assets if win
-            if (isWin) {
-              const updatedDemoAssets = demoAssets + parseFloat(reward);
-              setDemoAssets(updatedDemoAssets);
-              saveDemoAssets(updatedDemoAssets);
-              setDemo_assets(updatedDemoAssets);
-            }
+          console.log("Trade result calculated:", {
+            isWin,
+            reward,
+            endPrice,
+            entryPrice: tradePrice,
+          });
 
-            // Update local state
-            setTrades((prev) =>
-              prev.map((trade) =>
-                trade.id === tradeId
-                  ? {
-                      ...trade,
-                      status: isWin ? "win" : "loss",
-                      reward: parseFloat(reward),
-                      remainingTime: 0,
-                    }
-                  : trade
-              )
-            );
+          // Update trade to "can_close" state
+          await updateTradeResultInDB({
+            email: user.email,
+            startedAt,
+            result: "can_close",
+            calculatedReward: parseFloat(reward),
+            exitPrice: endPrice,
+          });
 
-            // Save updated trades to localStorage
-            saveDemoTrades(
-              trades.map((trade) =>
-                trade.id === tradeId
-                  ? {
-                      ...trade,
-                      status: isWin ? "win" : "loss",
-                      reward: parseFloat(reward),
-                      remainingTime: 0,
-                    }
-                  : trade
-              )
-            );
-          } else {
-            // For real account, update in database
-            await updateTradeResultInDB({
-              email: user.email,
-              startedAt,
-              result: isWin ? "win" : "loss",
-              reward: parseFloat(reward),
-              exitPrice: endPrice,
-            });
-
-            // Update assets if win
-            if (isWin) {
-              const updatedAssets = userAssets + parseFloat(reward);
-              await updateUserAssetsInDB(updatedAssets);
-              setUserAssets(updatedAssets);
-            }
-
-            // Update local state
-            setTrades((prev) =>
-              prev.map((trade) =>
-                trade.id === tradeId
-                  ? {
-                      ...trade,
-                      status: isWin ? "win" : "loss",
-                      reward: parseFloat(reward),
-                      remainingTime: 0,
-                    }
-                  : trade
-              )
-            );
-          }
+          // Update local state
+          setTrades((prev) =>
+            prev.map((t) =>
+              t.id === tradeId
+                ? {
+                    ...t,
+                    status: "can_close",
+                    calculatedReward: parseFloat(reward),
+                    exitPrice: endPrice,
+                    canClose: true,
+                  }
+                : t
+            )
+          );
 
           setPopupMessage(
-            isWin
-              ? `Trade Win! You got $${reward}`
-              : `Trade Loss! You lost $${Math.abs(reward)}`
+            `Trade ready to close! Potential ${
+              isWin ? "profit" : "loss"
+            }: $${Math.abs(reward)}`
           );
           setPopupColor(isWin ? "#10A055" : "#FF1600");
           setShowPopup(true);
           setTimeout(() => setShowPopup(false), 3000);
         } catch (err) {
-          console.error("Failed to check trade result:", err);
+          console.error("Failed to check trade result:", {
+            error: err,
+            tradeId,
+            selectedCoin,
+            tradeType,
+          });
+
+          // Mark trade as failed if we can't determine result
+          setTrades((prev) =>
+            prev.map((t) =>
+              t.id === tradeId
+                ? {
+                    ...t,
+                    status: "error",
+                    canClose: false,
+                  }
+                : t
+            )
+          );
+
           toast.error("Failed to determine trade result");
         }
       }, timer * 1000);
@@ -495,6 +558,120 @@ const BinaryChart = () => {
     }
   };
 
+  // Function to handle closing a trade
+  const handleCloseTrade = async (tradeId) => {
+    if (isProcessingTrade) return;
+    setIsProcessingTrade(true);
+
+    try {
+      const trade = trades.find((t) => t.id === tradeId);
+      if (!trade || !trade.canClose) {
+        toast.error("Trade not found or cannot be closed");
+        return;
+      }
+
+      // Determine the final status based on calculated reward
+      const finalStatus = trade.calculatedReward > 0 ? "win" : "loss";
+
+      if (isDemo) {
+        // For demo, update demo assets
+        const updatedDemoAssets = demoAssets + trade.calculatedReward;
+        setDemoAssets(updatedDemoAssets);
+        saveDemoAssets(updatedDemoAssets);
+        setDemo_assets(updatedDemoAssets);
+
+        // Update trade status
+        setTrades((prev) =>
+          prev.map((t) =>
+            t.id === tradeId
+              ? {
+                  ...t,
+                  status: finalStatus,
+                  reward: trade.calculatedReward,
+                  canClose: false,
+                  result: finalStatus,
+                }
+              : t
+          )
+        );
+        saveDemoTrades(
+          trades.map((t) =>
+            t.id === tradeId
+              ? {
+                  ...t,
+                  status: finalStatus,
+                  reward: trade.calculatedReward,
+                  canClose: false,
+                  result: finalStatus,
+                }
+              : t
+          )
+        );
+      } else {
+        // For real account, update in database
+        let startedAtValue;
+        if (trade.startedAt instanceof Date) {
+          startedAtValue = trade.startedAt.toISOString();
+        } else if (typeof trade.startedAt === "string") {
+          const parsedDate = new Date(trade.startedAt);
+          startedAtValue = isNaN(parsedDate)
+            ? trade.startedAt
+            : parsedDate.toISOString();
+        } else {
+          throw new Error("Invalid startedAt format in trade data");
+        }
+
+        // Ensure we have all required data
+        if (!startedAtValue || !user?.email) {
+          throw new Error("Missing required data for trade update");
+        }
+
+        await updateTradeResultInDB({
+          email: user.email,
+          startedAt: startedAtValue,
+          result: finalStatus,
+          calculatedReward: trade.calculatedReward,
+          exitPrice: trade.exitPrice || trade.entryPrice,
+          entryPrice: trade.entryPrice,
+        });
+
+        // Update assets
+        const updatedAssets = userAssets + trade.calculatedReward;
+        await updateUserAssetsInDB(updatedAssets);
+        setUserAssets(updatedAssets);
+
+        // Update local state
+        setTrades((prev) =>
+          prev.map((t) =>
+            t.id === tradeId
+              ? {
+                  ...t,
+                  status: finalStatus,
+                  reward: trade.calculatedReward,
+                  canClose: false,
+                  result: finalStatus,
+                }
+              : t
+          )
+        );
+      }
+
+      toast.success(
+        `Trade closed! ${
+          trade.calculatedReward > 0 ? "Profit" : "Loss"
+        }: $${Math.abs(trade.calculatedReward)}`
+      );
+    } catch (err) {
+      console.error("Failed to close trade:", err);
+      toast.error(
+        err.response?.data?.error ||
+          err.message ||
+          "Failed to close trade. Please try again."
+      );
+    } finally {
+      setIsProcessingTrade(false);
+    }
+  };
   const formatTime = (seconds) => {
     if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0)
       return "00:00";
@@ -536,12 +713,12 @@ const BinaryChart = () => {
         const remaining = Math.max(trade.duration - elapsed, 0);
 
         if (remaining <= 0) {
-          // Trade should be completed but wasn't - mark as loss
+          // Trade should be completed but wasn't - mark as can_close
           return {
             ...trade,
             remainingTime: 0,
-            status: "loss",
-            reward: -trade.price,
+            status: "can_close",
+            canClose: true,
           };
         }
 
@@ -596,7 +773,10 @@ const BinaryChart = () => {
                   const priceRes = await axios.get(
                     `http://localhost:5000/api/coins/price/${trade.coin}`
                   );
-                  currentPrice = parseFloat(priceRes.data);
+                  currentPrice =
+                    typeof priceRes.data === "object"
+                      ? parseFloat(priceRes.data.price)
+                      : parseFloat(priceRes.data);
                 }
 
                 const isWin =
@@ -606,15 +786,19 @@ const BinaryChart = () => {
 
                 const coinData = coins.find((c) => c.name === trade.coin);
                 const profitPercentage = coinData?.profitPercentage || 0;
+                const randomFactor = 0.8 + Math.random() * 0.4;
                 const reward = isWin
-                  ? (trade.investment * (1 + profitPercentage / 100)).toFixed(2)
-                  : -trade.investment;
+                  ? (
+                      trade.investment *
+                      (1 + (profitPercentage / 100) * randomFactor)
+                    ).toFixed(2)
+                  : -(trade.investment * randomFactor).toFixed(2);
 
                 await updateTradeResultInDB({
                   email: user.email,
                   startedAt: trade.startedAt,
-                  result: isWin ? "win" : "loss",
-                  reward: parseFloat(reward),
+                  result: "can_close",
+                  calculatedReward: parseFloat(reward),
                   exitPrice: currentPrice,
                 });
 
@@ -623,8 +807,10 @@ const BinaryChart = () => {
                   price: trade.investment,
                   coinName: trade.coin,
                   remainingTime: 0,
-                  status: isWin ? "win" : "loss",
-                  reward: parseFloat(reward),
+                  status: "can_close",
+                  calculatedReward: parseFloat(reward),
+                  canClose: true,
+                  exitPrice: currentPrice,
                 };
               } catch (err) {
                 console.error("Failed to recover trade:", err);
@@ -633,8 +819,10 @@ const BinaryChart = () => {
                   price: trade.investment,
                   coinName: trade.coin,
                   remainingTime: 0,
-                  status: "loss",
-                  reward: -trade.investment,
+                  status: "can_close",
+                  calculatedReward: -trade.investment,
+                  canClose: true,
+                  exitPrice: trade.entryPrice,
                 };
               }
             }
@@ -724,7 +912,8 @@ const BinaryChart = () => {
           <div className={styles.control}>
             <h1>{selectedCoin || "Select Coin"} Trading</h1>
             <p>
-              {isDemo ? "Demo Balance" : "Available for Trading"}: ${userAssets + (user?.totalBonus || 0)}
+              {isDemo ? "Demo Balance" : "Available for Trading"}: $
+              {currentAssets}
             </p>
 
             <p>
@@ -859,7 +1048,11 @@ const BinaryChart = () => {
               </div>
             </div>
 
-            <Trades trades={[...trades].reverse()} formatTime={formatTime} />
+            <Trades
+              trades={[...trades].reverse()}
+              formatTime={formatTime}
+              onCloseTrade={handleCloseTrade}
+            />
           </div>
         </div>
       </div>
