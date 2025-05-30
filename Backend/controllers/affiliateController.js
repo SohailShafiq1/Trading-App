@@ -463,34 +463,47 @@ export const getTrafficQuestionsList = (req, res) => {
     });
   }
 };
-
-export const getTeamDepositCount = async (req, res) => {
+export const getTeamTotalDeposits = async (req, res) => {
   try {
     const { email } = req.params;
     const affiliate = await Affiliate.findOne({ email });
-    if (!affiliate)
-      return res.status(404).json({ error: "Affiliate not found" });
+    if (!affiliate) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Affiliate not found" });
+    }
 
-    // Find all team users by email
+    // Find all users in the affiliate's team
     const teamUsers = await User.find({ email: { $in: affiliate.team } });
 
-    // Count all successful deposit transactions for all team members
-    let teamDepositCount = 0;
+    // Count all successful deposit transactions for all team users
+    let totalDeposits = 0;
     teamUsers.forEach((user) => {
       if (Array.isArray(user.transactions)) {
-        teamDepositCount += user.transactions.filter(
+        totalDeposits += user.transactions.filter(
           (t) => t.type === "deposit" && t.status === "success"
         ).length;
       }
     });
 
-    // Optionally, update the affiliate document
-    affiliate.teamDepositCount = teamDepositCount;
-    await affiliate.save();
-
-    res.json({ success: true, teamDepositCount });
+    return res.status(200).json({
+      success: true,
+      totalDeposits,
+    });
   } catch (err) {
-    console.error("Error calculating team deposit count:", err);
-    res.status(500).json({ error: "Failed to calculate team deposit count" });
+    console.error("Error calculating team total deposits:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const getAllAffiliates = async (req, res) => {
+  try {
+    const affiliates = await Affiliate.find().select("-password");
+    res.json({ affiliates });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
   }
 };

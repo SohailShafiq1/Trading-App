@@ -29,7 +29,9 @@ import AffiliateProtectedRoute from "./Route/ProtectedRoute/AffiliateProtectedRo
 import { AffiliateAuthProvider } from "./Context/AffiliateAuthContext";
 import { AccountTypeProvider } from "./Context/AccountTypeContext";
 import Bonuses from "./Admin/components/Bonuses/Bonuses";
-
+import AdminProtectedRoute from "./Route/ProtectedRoute/AdminProtectedRoute";
+import AdminHome from "./Admin/components/Home/AdminHome";
+import Affiliate from "./Admin/components/Affiliate/Affiliate";
 const s = styles;
 
 const App = () => {
@@ -78,17 +80,20 @@ const App = () => {
                   <Route
                     path="/admin"
                     element={
-                      <ProtectedRoute>
+                      <AdminProtectedRoute>
                         <AdminLayout />
-                      </ProtectedRoute>
+                      </AdminProtectedRoute>
                     }
-                  />
-                  <Route path="/coins" element={<Coins />} />
-                  <Route path="/user" element={<User />} />
-                  <Route path="/deposits" element={<Deposit />} />
-                  <Route path="/withdraw" element={<Withdraw />} />
-                  <Route path="/withdraw" element={<Withdraw />} />
-                  <Route path="/bonuses" element={<Bonuses/>} />
+                  >
+                    <Route index element={<AdminHome />} />
+                    <Route path="/admin/coins" element={<Coins />} />
+                    <Route path="/admin/user" element={<User />} />
+                    <Route path="/admin/deposits" element={<Deposit />} />
+                    <Route path="/admin/withdraw" element={<Withdraw />} />
+                    <Route path="/admin/withdraw" element={<Withdraw />} />
+                    <Route path="/admin/bonuses" element={<Bonuses />} />
+                    <Route path="/admin/affiliate" element={<Affiliate/>} />
+                  </Route>
 
                   <Route
                     path="/affiliate"

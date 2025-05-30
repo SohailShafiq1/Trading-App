@@ -3,8 +3,6 @@ import styles from "./Deposit.module.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const s = styles;
-
 const statusOptions = [
   { label: "All", value: "all" },
   { label: "Approved", value: "verified" },
@@ -15,25 +13,43 @@ const statusOptions = [
 const Deposit = () => {
   const [deposits, setDeposits] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null); // Tracks which deposit is being processed
   const navigate = useNavigate();
 
   const fetchDeposits = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const res = await axios.get("http://localhost:5000/api/admin/deposits");
       setDeposits(res.data);
     } catch (err) {
       console.error("Error fetching deposits:", err);
+      setError("Failed to load deposits");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAction = async (id, action) => {
+    setActionLoading(id);
     try {
-      await axios.put(`http://localhost:5000/api/admin/deposit-status/${id}`, {
-        status: action,
-      });
-      fetchDeposits();
+      const response = await axios.put(
+        `http://localhost:5000/api/admin/deposit-status/${id}`,
+        { status: action }
+      );
+      
+      setDeposits(prevDeposits =>
+        prevDeposits.map(dep =>
+          dep._id === id ? response.data.deposit : dep
+        )
+      );
     } catch (err) {
       console.error("Error updating deposit status:", err);
+      setError(`Failed to ${action === "verified" ? "approve" : "reject"} deposit`);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -47,14 +63,14 @@ const Deposit = () => {
       : deposits.filter((dep) => dep.status === filter);
 
   return (
-    <div className={s.container}>
-      <div className={s.headerRow}>
-        <button className={s.backButton} onClick={() => navigate(-1)}>
+    <div className={styles.container}>
+      <div className={styles.headerRow}>
+        <button className={styles.backButton} onClick={() => navigate(-1)}>
           ← Back
         </button>
-        <h2 className={s.title}>User Deposits</h2>
+        <h2 className={styles.title}>User Deposits</h2>
         <select
-          className={s.statusSelect}
+          className={styles.statusSelect}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
@@ -65,7 +81,11 @@ const Deposit = () => {
           ))}
         </select>
       </div>
-      <table className={s.table}>
+
+      {error && <div className={styles.errorMessage}>{error}</div>}
+      {loading && <div className={styles.loadingMessage}>Loading deposits...</div>}
+
+      <table className={styles.table}>
         <thead>
           <tr>
             <th>Email</th>
@@ -80,8 +100,8 @@ const Deposit = () => {
         <tbody>
           {filteredDeposits.length === 0 ? (
             <tr>
-              <td colSpan={7} style={{ textAlign: "center", color: "#888" }}>
-                No deposits found.
+              <td colSpan={7} className={styles.noDeposits}>
+                {loading ? "Loading..." : "No deposits found"}
               </td>
             </tr>
           ) : (
@@ -99,10 +119,10 @@ const Deposit = () => {
                   <span
                     className={
                       dep.status === "verified"
-                        ? s.statusApproved
+                        ? styles.statusApproved
                         : dep.status === "pending"
-                        ? s.statusPending
-                        : s.statusCanceled
+                        ? styles.statusPending
+                        : styles.statusCanceled
                     }
                   >
                     {dep.status === "verified"
@@ -115,20 +135,22 @@ const Deposit = () => {
                 <td>{new Date(dep.createdAt).toLocaleString()}</td>
                 <td>
                   {dep.status === "pending" && (
-                    <>
+                    <div className={styles.actionButtons}>
                       <button
-                        className={s.acceptBtn}
+                        className={styles.acceptBtn}
                         onClick={() => handleAction(dep._id, "verified")}
+                        disabled={actionLoading === dep._id}
                       >
-                        ✅ Accept
+                        {actionLoading === dep._id ? "Processing..." : "✅ Accept"}
                       </button>
                       <button
-                        className={s.rejectBtn}
+                        className={styles.rejectBtn}
                         onClick={() => handleAction(dep._id, "failed")}
+                        disabled={actionLoading === dep._id}
                       >
-                        ❌ Reject
+                        {actionLoading === dep._id ? "Processing..." : "❌ Reject"}
                       </button>
-                    </>
+                    </div>
                   )}
                 </td>
               </tr>
