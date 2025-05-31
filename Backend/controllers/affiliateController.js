@@ -1,4 +1,4 @@
-// controllers/affiliate.controller.js
+
 import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
@@ -498,7 +498,6 @@ export const getTeamTotalDeposits = async (req, res) => {
     });
   }
 };
-
 export const getAllAffiliates = async (req, res) => {
   try {
     const affiliates = await Affiliate.find().select("-password");
