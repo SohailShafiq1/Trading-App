@@ -16,7 +16,6 @@ const Trades = ({ trades, formatTime, onCloseTrade }) => (
             borderRadius: "4px",
           }}
         >
-          {/* First Row: Coin Name and Trade Duration */}
           <div
             style={{
               marginBottom: "8px",
@@ -31,8 +30,6 @@ const Trades = ({ trades, formatTime, onCloseTrade }) => (
                 : formatTime(trade.duration || 0)}
             </span>
           </div>
-
-          {/* Second Row: Trade Amount and Profit/Loss */}
           <div
             style={{
               display: "flex",
@@ -65,8 +62,6 @@ const Trades = ({ trades, formatTime, onCloseTrade }) => (
                 : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}
             </span>
           </div>
-
-          {/* Close Trade Button (only shown when trade can be closed) */}
           {trade.canClose && (
             <div style={{ textAlign: "center" }}>
               <button

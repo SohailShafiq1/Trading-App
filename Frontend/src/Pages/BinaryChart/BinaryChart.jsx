@@ -48,7 +48,6 @@ const BinaryChart = () => {
   const [demoAssets, setDemoAssets] = useState(demo_assets);
   const [showTimestampPopup, setShowTimestampPopup] = useState(false);
 
-  // Check verification status
   useEffect(() => {
     if (isDemo) {
       setCheckingVerification(false);
@@ -77,7 +76,6 @@ const BinaryChart = () => {
     checkVerification();
   }, [user?._id, isDemo]);
 
-  // Close CoinSelector on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -95,7 +93,6 @@ const BinaryChart = () => {
     };
   }, []);
 
-  // Update user assets in database
   const updateUserAssetsInDB = async (newAssets) => {
     if (isDemo) return;
 
@@ -111,7 +108,6 @@ const BinaryChart = () => {
     }
   };
 
-  // Fetch coins from backend
   useEffect(() => {
     const fetchCoins = async () => {
       try {
@@ -125,7 +121,6 @@ const BinaryChart = () => {
     fetchCoins();
   }, []);
 
-  // Set coin type when selected coin changes
   useEffect(() => {
     if (selectedCoin) {
       setIsLoading(true);
@@ -139,7 +134,6 @@ const BinaryChart = () => {
     }
   }, [selectedCoin, coins]);
 
-  // Fetch and update live price
   useEffect(() => {
     if (!selectedCoin || selectedCoinType !== "Live") return;
 
@@ -191,7 +185,6 @@ const BinaryChart = () => {
     };
   }, [selectedCoin, selectedCoinType]);
 
-  // Update trade timers
   useEffect(() => {
     const interval = setInterval(() => {
       setTrades((prevTrades) =>
@@ -229,9 +222,6 @@ const BinaryChart = () => {
     if (isDemo) return;
 
     try {
-      console.log("Updating trade result in DB:", tradeData);
-
-      // Enhanced validation
       if (
         !tradeData.email ||
         !tradeData.startedAt ||
@@ -240,12 +230,10 @@ const BinaryChart = () => {
         throw new Error("Missing required fields for trade update");
       }
 
-      // Ensure startedAt is in proper format
       let startedAtFormatted;
       if (tradeData.startedAt instanceof Date) {
         startedAtFormatted = tradeData.startedAt.toISOString();
       } else if (typeof tradeData.startedAt === "string") {
-        // Validate if it's already in ISO format
         const testDate = new Date(tradeData.startedAt);
         if (isNaN(testDate.getTime())) {
           throw new Error("Invalid startedAt format in trade data");
@@ -255,14 +243,13 @@ const BinaryChart = () => {
         throw new Error("Invalid startedAt type in trade data");
       }
 
-      // Prepare the request data with validation
       const requestData = {
         email: tradeData.email,
         startedAt: startedAtFormatted,
         result: tradeData.result,
         calculatedReward: parseFloat(tradeData.calculatedReward) || 0,
         exitPrice: parseFloat(tradeData.exitPrice) || tradeData.entryPrice,
-        entryPrice: parseFloat(tradeData.entryPrice), // Added for validation
+        entryPrice: parseFloat(tradeData.entryPrice),
       };
 
       if (isNaN(requestData.calculatedReward)) {
@@ -277,7 +264,7 @@ const BinaryChart = () => {
             "Content-Type": "application/json",
           },
           timeout: 10000,
-          validateStatus: (status) => status < 500, // Don't throw for 4xx errors
+          validateStatus: (status) => status < 500,
         }
       );
 
@@ -285,7 +272,6 @@ const BinaryChart = () => {
         throw new Error(response.data.error || "Failed to update trade result");
       }
 
-      console.log("Trade result updated successfully:", response.data);
       return response.data;
     } catch (err) {
       console.error("Failed to update trade result:", {
@@ -307,7 +293,7 @@ const BinaryChart = () => {
       throw err;
     }
   };
-  // Save demo trades to localStorage
+
   const saveDemoTrades = (trades) => {
     const tradesToSave = trades.map((trade) => ({
       ...trade,
@@ -319,7 +305,6 @@ const BinaryChart = () => {
     localStorage.setItem("demoTrades", JSON.stringify(tradesToSave));
   };
 
-  // Load demo trades from localStorage
   const loadDemoTrades = () => {
     const savedTrades = localStorage.getItem("demoTrades");
     if (!savedTrades) return [];
@@ -336,7 +321,6 @@ const BinaryChart = () => {
     }
   };
 
-  // Save demo assets to localStorage
   const saveDemoAssets = (assets) => {
     localStorage.setItem("demoAssets", assets.toString());
   };
@@ -376,7 +360,6 @@ const BinaryChart = () => {
       const tradeId = Date.now();
       const startedAt = new Date();
 
-      // Create trade object
       const trade = {
         type: tradeType,
         coin: selectedCoin,
@@ -392,15 +375,12 @@ const BinaryChart = () => {
         calculatedReward: 0,
       };
 
-      // For demo, just use localStorage
       if (isDemo) {
-        // Deduct investment from demo assets
         const newDemoAssets = demoAssets - investment;
         setDemoAssets(newDemoAssets);
         saveDemoAssets(newDemoAssets);
         setDemo_assets(newDemoAssets);
 
-        // Add to local state
         const newTrade = {
           id: tradeId,
           type: tradeType,
@@ -423,15 +403,12 @@ const BinaryChart = () => {
         setTrades(updatedTrades);
         saveDemoTrades(updatedTrades);
       } else {
-        // For real account, save to database
         await saveTradeToDB(trade);
 
-        // Deduct investment
         const newAssets = userAssets - investment;
         await updateUserAssetsInDB(newAssets);
         setUserAssets(newAssets);
 
-        // Add to local state
         const newTrade = {
           id: tradeId,
           type: tradeType,
@@ -450,11 +427,8 @@ const BinaryChart = () => {
         setTrades((prev) => [...prev, newTrade]);
       }
 
-      // Set timeout for trade completion
       setTimeout(async () => {
         try {
-          console.log("Checking trade result for trade:", tradeId);
-
           let endPrice;
           if (selectedCoinType === "Live") {
             const response = await fetch(
@@ -479,7 +453,6 @@ const BinaryChart = () => {
           const isWin =
             tradeType === "Buy" ? endPrice > tradePrice : endPrice < tradePrice;
 
-          // Calculate reward with random factor (0.8 to 1.2 of expected profit)
           const randomFactor = 0.8 + Math.random() * 0.4;
           const reward = isWin
             ? (
@@ -488,14 +461,6 @@ const BinaryChart = () => {
               ).toFixed(2)
             : -(investment * randomFactor).toFixed(2);
 
-          console.log("Trade result calculated:", {
-            isWin,
-            reward,
-            endPrice,
-            entryPrice: tradePrice,
-          });
-
-          // Update trade to "can_close" state
           await updateTradeResultInDB({
             email: user.email,
             startedAt,
@@ -504,7 +469,6 @@ const BinaryChart = () => {
             exitPrice: endPrice,
           });
 
-          // Update local state
           setTrades((prev) =>
             prev.map((t) =>
               t.id === tradeId
@@ -528,14 +492,6 @@ const BinaryChart = () => {
           setShowPopup(true);
           setTimeout(() => setShowPopup(false), 3000);
         } catch (err) {
-          console.error("Failed to check trade result:", {
-            error: err,
-            tradeId,
-            selectedCoin,
-            tradeType,
-          });
-
-          // Mark trade as failed if we can't determine result
           setTrades((prev) =>
             prev.map((t) =>
               t.id === tradeId
@@ -558,7 +514,6 @@ const BinaryChart = () => {
     }
   };
 
-  // Function to handle closing a trade
   const handleCloseTrade = async (tradeId) => {
     if (isProcessingTrade) return;
     setIsProcessingTrade(true);
@@ -570,17 +525,14 @@ const BinaryChart = () => {
         return;
       }
 
-      // Determine the final status based on calculated reward
       const finalStatus = trade.calculatedReward > 0 ? "win" : "loss";
 
       if (isDemo) {
-        // For demo, update demo assets
         const updatedDemoAssets = demoAssets + trade.calculatedReward;
         setDemoAssets(updatedDemoAssets);
         saveDemoAssets(updatedDemoAssets);
         setDemo_assets(updatedDemoAssets);
 
-        // Update trade status
         setTrades((prev) =>
           prev.map((t) =>
             t.id === tradeId
@@ -608,7 +560,6 @@ const BinaryChart = () => {
           )
         );
       } else {
-        // For real account, update in database
         let startedAtValue;
         if (trade.startedAt instanceof Date) {
           startedAtValue = trade.startedAt.toISOString();
@@ -621,7 +572,6 @@ const BinaryChart = () => {
           throw new Error("Invalid startedAt format in trade data");
         }
 
-        // Ensure we have all required data
         if (!startedAtValue || !user?.email) {
           throw new Error("Missing required data for trade update");
         }
@@ -635,12 +585,10 @@ const BinaryChart = () => {
           entryPrice: trade.entryPrice,
         });
 
-        // Update assets
         const updatedAssets = userAssets + trade.calculatedReward;
         await updateUserAssetsInDB(updatedAssets);
         setUserAssets(updatedAssets);
 
-        // Update local state
         setTrades((prev) =>
           prev.map((t) =>
             t.id === tradeId
@@ -680,7 +628,6 @@ const BinaryChart = () => {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  // Persist selected coin
   useEffect(() => {
     const savedCoin = localStorage.getItem("selectedCoin");
     if (savedCoin) setSelectedCoin(savedCoin);
@@ -690,10 +637,8 @@ const BinaryChart = () => {
     if (selectedCoin) localStorage.setItem("selectedCoin", selectedCoin);
   }, [selectedCoin]);
 
-  // Initialize demo assets and trades
   useEffect(() => {
     if (isDemo) {
-      // Load demo assets
       const savedDemoAssets = localStorage.getItem("demoAssets");
       if (savedDemoAssets) {
         const assets = parseFloat(savedDemoAssets);
@@ -704,7 +649,6 @@ const BinaryChart = () => {
         saveDemoAssets(demo_assets);
       }
 
-      // Load and recover demo trades
       const now = new Date();
       const loadedTrades = loadDemoTrades().map((trade) => {
         if (trade.status !== "running") return trade;
@@ -713,7 +657,6 @@ const BinaryChart = () => {
         const remaining = Math.max(trade.duration - elapsed, 0);
 
         if (remaining <= 0) {
-          // Trade should be completed but wasn't - mark as can_close
           return {
             ...trade,
             remainingTime: 0,
@@ -732,7 +675,6 @@ const BinaryChart = () => {
     }
   }, [isDemo, demo_assets]);
 
-  // Fetch and recover trades (only for real account)
   useEffect(() => {
     if (isDemo) return;
     if (!user?.email) return;
@@ -813,7 +755,6 @@ const BinaryChart = () => {
                   exitPrice: currentPrice,
                 };
               } catch (err) {
-                console.error("Failed to recover trade:", err);
                 return {
                   ...trade,
                   price: trade.investment,

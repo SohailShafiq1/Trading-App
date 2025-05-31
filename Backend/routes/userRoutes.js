@@ -7,7 +7,6 @@ import path from "path";
 import Tesseract from "tesseract.js";
 import fs from "fs";
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === "profilePicture") {
@@ -28,12 +27,9 @@ const upload = multer({ storage });
 
 const router = express.Router();
 
-// Middleware
 router.use(express.json());
 
-// Health check endpoint
 router.get("/health", async (_req, res) => {
-  // Renamed unused parameter to avoid warnings
   try {
     await mongoose.connection.db.admin().ping();
     res.status(200).json({
@@ -54,23 +50,19 @@ router.post("/deposit", async (req, res) => {
   const { email, amount, txId, bonusId, bonusPercent = 0 } = req.body;
 
   try {
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Validate amount
     if (Number(amount) < 10) {
       return res.status(400).json({ error: "Minimum deposit amount is $10" });
     }
 
-    // Calculate bonus amount
     let bonusAmount = 0;
     if (bonusPercent && bonusPercent > 0) {
       bonusAmount = (Number(amount) * Number(bonusPercent)) / 100;
 
-      // Verify bonus hasn't been used already
       if (bonusId && user.usedBonuses.includes(bonusId)) {
         return res
           .status(400)
@@ -78,7 +70,6 @@ router.post("/deposit", async (req, res) => {
       }
     }
 
-    // Create deposit
     const deposit = new Deposit({
       userEmail: email,
       amount,
@@ -92,7 +83,6 @@ router.post("/deposit", async (req, res) => {
 
     await deposit.save();
 
-    // Add bonus ID to user's usedBonuses if provided
     if (bonusId && bonusPercent > 0) {
       user.usedBonuses.push(bonusId);
       await user.save();
@@ -106,24 +96,19 @@ router.post("/deposit", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
   }
 });
 
-// Get all registered users
 router.get("/", async (_req, res) => {
-  // Renamed unused parameter to avoid warnings
   try {
     const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
   } catch (err) {
-    console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
-// Get user by email
 router.get("/email/:email", async (req, res) => {
   const { email } = req.params;
   try {
@@ -131,12 +116,10 @@ router.get("/email/:email", async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json(user);
   } catch (err) {
-    console.error("Error fetching user by email:", err);
     res.status(500).json({ error: "Failed to fetch user" });
   }
 });
 
-// Get user by ID (for admin view)
 router.get("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id, { password: 0 });
@@ -147,7 +130,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update user assets
 router.put("/update-assets", async (req, res) => {
   const { email, assets } = req.body;
   try {
@@ -158,7 +140,6 @@ router.put("/update-assets", async (req, res) => {
     );
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Calculate total balance (assets + totalBonus)
     const totalBalance =
       typeof user.assets === "number" && typeof user.totalBonus === "number"
         ? (user.assets + user.totalBonus).toFixed(2)
@@ -167,17 +148,15 @@ router.put("/update-assets", async (req, res) => {
     res.status(200).json({
       message: "Assets updated successfully",
       user,
-      totalBalance, // <-- This is the sum of assets and bonus
+      totalBalance,
     });
   } catch (err) {
-    console.error("Error updating assets:", err);
     res.status(500).json({ error: "Failed to update assets" });
   }
 });
 
-// User Withdrawal Route
 router.post("/withdraw", async (req, res) => {
-  const { email, amount, network, purse, paymentMethod } = req.body; // Removed unused 'purse'
+  const { email, amount, network, purse, paymentMethod } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -191,13 +170,12 @@ router.post("/withdraw", async (req, res) => {
       orderId,
       type: "withdrawal",
       amount,
-      paymentMethod: `${paymentMethod} (${network})`, // Fixed template literal syntax
-      status: "pending", // 'status' here is not related to the deprecated Window.status
+      paymentMethod: `${paymentMethod} (${network})`,
+      status: "pending",
       date: new Date(),
     });
 
     user.withdrawals.push({
-      // 'user' is correctly defined in the context
       orderId,
       amount,
       purse,
@@ -207,17 +185,15 @@ router.post("/withdraw", async (req, res) => {
       createdAt: new Date(),
     });
 
-    user.assets -= amount; // 'user' is correctly defined in the context
-    await user.save(); // 'user' is correctly defined in the context
+    user.assets -= amount;
+    await user.save();
 
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
-    console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
 });
 
-// Get all user transactions
 router.get("/transactions/:email", async (req, res) => {
   const { email } = req.params;
 
@@ -227,7 +203,6 @@ router.get("/transactions/:email", async (req, res) => {
 
     res.status(200).json(user.transactions || []);
   } catch (err) {
-    console.error("Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
@@ -258,7 +233,6 @@ router.post("/trade", async (req, res) => {
       });
     }
 
-    // Deduct from assets first, then bonus if needed
     let assetsToDeduct = Math.min(user.assets, investment);
     let bonusToDeduct = investment - assetsToDeduct;
 
@@ -286,23 +260,13 @@ router.post("/trade", async (req, res) => {
       newBalance: user.assets + user.totalBonus,
     });
   } catch (err) {
-    console.error("Error saving trade:", err);
     return res.status(500).json({ error: "Failed to save trade" });
   }
 });
 
-// Update trade result
 router.put("/trade/result", async (req, res) => {
   try {
     const { email, startedAt, result, calculatedReward, exitPrice } = req.body;
-
-    console.log("Received trade update request:", {
-      email,
-      startedAt,
-      result,
-      calculatedReward,
-      exitPrice,
-    });
 
     if (!email || !startedAt || !result) {
       return res.status(400).json({
@@ -316,7 +280,6 @@ router.put("/trade/result", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Find the trade by startedAt time (this should be unique per user)
     const tradeIndex = user.trades.findIndex(
       (t) =>
         t.startedAt &&
@@ -332,7 +295,6 @@ router.put("/trade/result", async (req, res) => {
       });
     }
 
-    // Validate result
     if (!["can_close", "win", "loss"].includes(result)) {
       return res.status(400).json({
         error: "Invalid result value",
@@ -340,7 +302,6 @@ router.put("/trade/result", async (req, res) => {
       });
     }
 
-    // Update trade based on result type
     const trade = user.trades[tradeIndex];
 
     if (result === "can_close") {
@@ -356,12 +317,10 @@ router.put("/trade/result", async (req, res) => {
       trade.status = result;
       trade.canClose = false;
 
-      // Only credit account when trade is actually closed (win)
       if (result === "win") {
         user.assets += Number(calculatedReward) || 0;
       }
 
-      // Update daily profits
       const today = new Date().toISOString().slice(0, 10);
       const profitChange =
         result === "win" ? Number(calculatedReward) || 0 : -trade.investment;
@@ -376,13 +335,6 @@ router.put("/trade/result", async (req, res) => {
 
     await user.save();
 
-    console.log("Successfully updated trade:", {
-      tradeId: trade._id,
-      result: trade.result,
-      reward: trade.reward,
-      newBalance: user.assets + user.totalBonus,
-    });
-
     res.status(200).json({
       success: true,
       message: "Trade result updated successfully",
@@ -390,12 +342,6 @@ router.put("/trade/result", async (req, res) => {
       newBalance: user.assets + user.totalBonus,
     });
   } catch (err) {
-    console.error("Error updating trade result:", {
-      error: err.message,
-      stack: err.stack,
-      requestBody: req.body,
-    });
-
     res.status(500).json({
       error: "Failed to update trade result",
       details: err.message,
@@ -404,13 +350,11 @@ router.put("/trade/result", async (req, res) => {
   }
 });
 
-// Get user trades
 router.get("/trades/:email", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Process trades to include all necessary fields for frontend
     const processedTrades = user.trades.map((trade) => ({
       id: trade._id,
       type: trade.type,
@@ -418,7 +362,7 @@ router.get("/trades/:email", async (req, res) => {
       coinType: trade.coinType,
       investment: trade.investment,
       entryPrice: trade.entryPrice,
-      exitPrice: trade.exitPrice || trade.entryPrice, // Fallback to entryPrice if exitPrice is missing
+      exitPrice: trade.exitPrice || trade.entryPrice,
       result: trade.result,
       reward: trade.reward,
       calculatedReward: trade.calculatedReward,
@@ -440,11 +384,9 @@ router.get("/trades/:email", async (req, res) => {
 
     res.status(200).json(processedTrades.reverse());
   } catch (err) {
-    console.error("Error fetching trades:", err);
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
-// Update user profile (firstName, lastName)
 router.put(
   "/update-profile",
   upload.fields([
@@ -465,14 +407,12 @@ router.put(
       const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
       update.cnicPicture = cnicImagePath;
 
-      // OCR extraction
       try {
         const {
           data: { text },
         } = await Tesseract.recognize(cnicImagePath, "eng", {
-          logger: (m) => console.log(m),
+          logger: (m) => {},
         });
-        // Regex for Pakistani CNIC (13 digits, with or without dashes)
         const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
         if (match) {
           update.imgCNIC = match[0];
@@ -483,7 +423,6 @@ router.put(
         update.imgCNIC = "";
       }
 
-      // === Place this check here ===
       if (
         update.imgCNIC &&
         req.body.cnicNumber &&
@@ -503,7 +442,7 @@ router.put(
       req.body.cnicPicture === ""
     ) {
       update.cnicPicture = "";
-      update.imgCNIC = ""; // <-- This line ensures the CNIC image number is also removed
+      update.imgCNIC = "";
     }
 
     try {
@@ -518,7 +457,6 @@ router.put(
   }
 );
 
-// Verify user by admin
 router.put("/verify/:id", async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -533,7 +471,6 @@ router.put("/verify/:id", async (req, res) => {
   }
 });
 
-// Unverify user by admin
 router.put("/unverify/:id", async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -562,27 +499,22 @@ router.get("/is-verified/:id", async (req, res) => {
     }
     res.status(200).json({ verified: user.verified });
   } catch (err) {
-    console.error("Error checking verification status:", err);
     res.status(500).json({ error: "Failed to check verification status" });
   }
 });
 
-// Validate CNIC format
 router.post("/validate-cnic", async (req, res) => {
   const { cnicNumber } = req.body;
 
-  // Check if CNIC number is provided
   if (!cnicNumber) {
     return res.status(400).json({ error: "CNIC number is required" });
   }
 
-  // Check if CNIC number matches the valid format
   if (cnicNumber && !/^\d{5}-\d{7}-\d{1}$/.test(cnicNumber)) {
     return res.status(400).json({ error: "Invalid CNIC format" });
   }
 
   try {
-    // Check if the CNIC number already exists in the database
     const existingUser = await User.findOne({ cnicNumber });
     if (existingUser) {
       return res.status(409).json({ error: "CNIC number already exists" });
@@ -590,7 +522,6 @@ router.post("/validate-cnic", async (req, res) => {
 
     res.status(200).json({ message: "CNIC number is valid" });
   } catch (err) {
-    console.error("Error validating CNIC:", err);
     res.status(500).json({ error: "Failed to validate CNIC" });
   }
 });
