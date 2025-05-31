@@ -21,8 +21,6 @@ const TradeSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["running", "win", "loss"],
-      default: "running",
     },
     remainingTime: {
       type: Number,

@@ -184,8 +184,6 @@ const UserSchema = new mongoose.Schema(
         },
         result: {
           type: String,
-          enum: ["win", "loss", "pending"],
-          default: "pending",
         },
         reward: {
           type: Number,

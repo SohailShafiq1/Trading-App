@@ -6,6 +6,14 @@ import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
 import axios from "axios";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
+const LEVELS = Array.from({ length: 6 }, (_, i) => ({
+  name: `Level ${i + 1}`,
+  turnover: (1.9 + i * 0.25).toFixed(2),
+  depositMin: i * 15,
+  depositMax: i * 15 + 14,
+  depositRequired: 15, // Each level requires 15 team deposits
+}));
+
 // Define levels and their deposit ranges
 const LEVELS = [
   {
@@ -87,7 +95,16 @@ const AffiliateLevel = () => {
   if (!affiliate)
     return <div>You must be logged in to view your affiliate level.</div>;
 
-  // Determine current level based on teamDepositCount and LEVELS
+<<<<<<<<< Temporary merge branch 1
+  const affiliateLevel = affiliate.affiliateLevel || 1;
+
+  const depositsForCurrentLevel = Math.max(
+    0,
+    Math.min(
+      teamDepositCount - LEVELS[affiliateLevel - 1].depositMin,
+      LEVELS[affiliateLevel - 1].depositRequired
+=========
+  // Determine current level based on teamDepositCount
   let affiliateLevel = 1;
   for (let i = LEVELS.length - 1; i >= 0; i--) {
     if (teamDepositCount >= LEVELS[i].depositMin) {
@@ -98,23 +115,14 @@ const AffiliateLevel = () => {
   if (affiliateLevel > LEVELS.length) affiliateLevel = LEVELS.length;
 
   const currentLevel = LEVELS[affiliateLevel - 1];
-
-  // Calculate progress for current level
-  let depositsForCurrentLevel = 0;
-  let progressMax = currentLevel.depositRequired;
-  if (affiliateLevel === LEVELS.length) {
-    // Level 7: no upper limit, show total deposits above 721
-    depositsForCurrentLevel = teamDepositCount - currentLevel.depositMin;
-    progressMax = null;
-  } else {
-    depositsForCurrentLevel = Math.max(
-      0,
-      Math.min(
-        teamDepositCount - currentLevel.depositMin,
-        currentLevel.depositRequired
-      )
-    );
-  }
+  const depositsForCurrentLevel = Math.max(
+    0,
+    Math.min(
+      teamDepositCount - currentLevel.depositMin,
+      currentLevel.depositRequired
+>>>>>>>>> Temporary merge branch 2
+    )
+  );
 
   return (
     <>

@@ -1,10 +1,8 @@
 import React from "react";
 import styles from "../../BinaryChart.module.css";
 
-const s = styles;
-
-const Trades = ({ trades, formatTime }) => (
-  <div className={s.tradeHistory}>
+const Trades = ({ trades, formatTime, onCloseTrade }) => (
+  <div className={styles.tradeHistory}>
     <p>Trades</p>
     <ul>
       {trades.map((trade, index) => (
@@ -12,7 +10,10 @@ const Trades = ({ trades, formatTime }) => (
           key={index}
           style={{
             color: "black",
-            padding: "2px", // Add padding for better readability
+            padding: "8px",
+            marginBottom: "8px",
+            backgroundColor: "#f5f5f5",
+            borderRadius: "4px",
           }}
         >
           {/* First Row: Coin Name and Trade Duration */}
@@ -20,27 +21,26 @@ const Trades = ({ trades, formatTime }) => (
             style={{
               marginBottom: "8px",
               display: "flex",
-              justifyContent: "space-around",
+              justifyContent: "space-between",
             }}
           >
             <strong>{trade.coinName}</strong>
             <span>
               {trade.status === "running"
                 ? `Time Left: ${formatTime(trade.remainingTime)}`
-                : formatTime(
-                    typeof trade.duration === "number" ? trade.duration : 0
-                  )}
-            </span>{" "}
-            {/* Display trade duration */}
+                : formatTime(trade.duration || 0)}
+            </span>
           </div>
 
           {/* Second Row: Trade Amount and Profit/Loss */}
           <div
             style={{
               display: "flex",
-              justifyContent: "space-around",
+              justifyContent: "space-between",
+              marginBottom: "8px",
             }}
           >
+            <span style={{ color: "black" }}>Trade: ${trade.price}</span>
             <span
               style={{
                 color:
@@ -48,41 +48,48 @@ const Trades = ({ trades, formatTime }) => (
                     ? "#10A055"
                     : trade.status === "loss"
                     ? "#FF0000"
-                    : "black", // Change color of trade.price based on status
-              }}
-            >
-              Trade: ${trade.price}
-            </span>
-            <span
-              style={{
-                color:
-                  trade.status === "win"
-                    ? "#10A055"
-                    : trade.status === "loss"
-                    ? "#FF0000"
-                    : "black", // Change color of trade.reward based on status
+                    : trade.status === "can_close"
+                    ? trade.calculatedReward > 0
+                      ? "#10A055"
+                      : "#FF0000"
+                    : "black",
+                fontWeight: "bold",
               }}
             >
               {trade.status === "running"
                 ? `Time Left: ${trade.remainingTime}s`
+                : trade.status === "can_close"
+                ? `${trade.calculatedReward > 0 ? "+" : ""}$${Math.abs(
+                    trade.calculatedReward
+                  )}`
                 : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}
             </span>
           </div>
+
+          {/* Close Trade Button (only shown when trade can be closed) */}
+          {trade.canClose && (
+            <div style={{ textAlign: "center" }}>
+              <button
+                onClick={() => onCloseTrade(trade.id)}
+                style={{
+                  backgroundColor:
+                    trade.calculatedReward > 0 ? "#10A055" : "#FF1600",
+                  color: "white",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
+              >
+                Close Trade
+              </button>
+            </div>
+          )}
         </li>
       ))}
     </ul>
   </div>
 );
-
-const handleCoinClick = (coin) => {
-  setSelected(coin.name);
-  if (coin.name === "USD Tether(TRC-20)") {
-    setShowModal(true);
-  } else {
-    toast.info(
-      "We are working on this deposit method. Please use TRC-20 USDT for now."
-    );
-  }
-};
 
 export default Trades;
