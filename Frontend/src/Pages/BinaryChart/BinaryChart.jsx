@@ -13,7 +13,7 @@ import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
-
+import audio from "./assets/trade.mp3";
 const timeFrames = [
   { value: 30, label: "30s" },
   { value: 60, label: "1 min" },
@@ -576,6 +576,9 @@ const BinaryChart = () => {
     if (isProcessingTrade) return;
     setIsProcessingTrade(true);
 
+    // Play sound when closing trade
+    playTradeSound();
+
     try {
       const trade = trades.find((t) => t.id === tradeId);
       if (!trade || !trade.canClose) {
@@ -865,10 +868,16 @@ const BinaryChart = () => {
       toast.error("Please verify your account to start trading");
       return;
     }
+    playTradeSound(); // Play sound on buy/sell
     handleTrade(tradeType);
   };
 
   const currentAssets = isDemo ? demoAssets : userAssets;
+
+  const playTradeSound = () => {
+    const sound = new Audio(audio);
+    sound.play();
+  };
 
   return (
     <>
