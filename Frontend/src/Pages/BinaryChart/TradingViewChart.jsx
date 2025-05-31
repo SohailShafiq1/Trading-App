@@ -8,7 +8,7 @@ import "./LiveCandleChart.css";
 
 // Time interval mapping
 const intervalToSeconds = {
-  "30s": 30,
+  
   "1m": 60,
   "2m": 120,
   "3m": 180,

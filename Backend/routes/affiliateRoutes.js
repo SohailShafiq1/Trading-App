@@ -9,6 +9,7 @@ import {
   getTrafficQuestionsList,
   updateTrafficQuestions,
   getAllAffiliates,
+getTeamTotalDeposits,
 } from "../controllers/affiliateController.js";
 
 const router = express.Router();
@@ -21,11 +22,10 @@ router.get("/update-team-totals/:email", updateTeamTotals);
 router.post("/complete-level/:email", completeLevel);
 router.get("/traffic-questions-list", getTrafficQuestionsList);
 router.put("/traffic-questions", updateTrafficQuestions);
-<<<<<<<<< Temporary merge branch 1
-router.get("/team-deposit-count/:email", getTeamDepositCount);
-=========
+
+
 router.get("/team-deposit-count/:email", getTeamTotalDeposits);
 router.get("/affiliates", getAllAffiliates);
 
->>>>>>>>> Temporary merge branch 2
+
 export default router;

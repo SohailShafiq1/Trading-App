@@ -226,6 +226,8 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    blocked: { type: Boolean, default: false },
+    blockReason: { type: String, default: "" },
   },
   {
     timestamps: true,

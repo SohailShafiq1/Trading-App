@@ -19,9 +19,15 @@ const User = () => {
     country: "all",
     currency: "all",
     cnicMatch: "all",
+    blocked: "all",
   });
   const [duplicateCnicKeys, setDuplicateCnicKeys] = useState([]);
   const [duplicateCnicSummary, setDuplicateCnicSummary] = useState([]);
+  const [search, setSearch] = useState("");
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blockReason, setBlockReason] = useState("");
+  const [blockUserId, setBlockUserId] = useState(null);
+  const [showMailSent, setShowMailSent] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,8 +72,24 @@ const User = () => {
         });
       }
     }
+    if (search.trim()) {
+      const s = search.trim().toLowerCase();
+      filtered = filtered.filter(
+        (u) =>
+          (u.email && u.email.toLowerCase().includes(s)) ||
+          (u.firstName && u.firstName.toLowerCase().includes(s)) ||
+          (u.lastName && u.lastName.toLowerCase().includes(s)) ||
+          (u.userId && String(u.userId).toLowerCase().includes(s)) ||
+          (u._id && String(u._id).toLowerCase().includes(s))
+      );
+    }
+    if (filters.blocked && filters.blocked !== "all") {
+      filtered = filtered.filter((u) =>
+        filters.blocked === "blocked" ? u.blocked : !u.blocked
+      );
+    }
     setFilteredUsers(filtered);
-  }, [filters, users, duplicateCnicKeys]);
+  }, [filters, users, duplicateCnicKeys, search]);
 
   // After fetching users, find duplicates
   useEffect(() => {
@@ -172,7 +194,31 @@ const User = () => {
       country: "all",
       currency: "all",
       cnicMatch: "all",
+      blocked: "all",
     });
+    setSearch("");
+  };
+
+  const handleBlock = (userId) => {
+    setBlockUserId(userId);
+    setBlockReason("");
+    setShowBlockModal(true);
+  };
+
+  const confirmBlock = async () => {
+    try {
+      await axios.put(`${BACKEND_URL}/api/users/block/${blockUserId}`, {
+        reason: blockReason,
+      });
+      setShowBlockModal(false);
+      setBlockUserId(null);
+      setShowMailSent(true); // Show confirmation popup
+      // Refresh users
+      const response = await axios.get(`${BACKEND_URL}/api/users`);
+      setUsers(response.data);
+    } catch (err) {
+      alert("Failed to block user");
+    }
   };
 
   return (
@@ -180,7 +226,35 @@ const User = () => {
       <button className={s.backButton} onClick={() => navigate(-1)}>
         Back
       </button>
-      <h2>Registered Users</h2>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "1rem",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Registered Users</h2>
+        <div className={s.searchBarWrapper}>
+          <input
+            type="text"
+            className={s.searchBar}
+            placeholder="Search by email, name, or ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              padding: "0.6rem 1rem",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              width: "100%",
+              maxWidth: "350px",
+              fontSize: "1rem",
+            }}
+          />
+        </div>
+      </div>
       {/* --- Filter Box --- */}
       <div className={s.filterBox}>
         <select
@@ -227,7 +301,16 @@ const User = () => {
           <option value="duplicate">Duplicate CNIC/Image</option>{" "}
           {/* <-- Add this */}
         </select>
-          <button className={s.resetButton} onClick={handleResetFilters}>
+        <select
+          name="blocked"
+          value={filters.blocked || "all"}
+          onChange={handleFilterChange}
+        >
+          <option value="all">All Users</option>
+          <option value="blocked">Blocked Users</option>
+          <option value="unblocked">Unblocked Users</option>
+        </select>
+        <button className={s.resetButton} onClick={handleResetFilters}>
           Remove All Filters
         </button>
       </div>
@@ -253,11 +336,13 @@ const User = () => {
             return (
               <tr
                 key={user._id}
-                className={isDuplicate ? s.duplicateRow : s.userRow}
+                className={`${isDuplicate ? s.duplicateRow : s.userRow} ${
+                  user.blocked ? s.blockedRow : ""
+                }`}
                 onClick={() => handleView(user._id)}
                 style={{ cursor: "pointer" }}
               >
-                <td>{user._id}</td>
+                <td>{user.userId}</td>
                 <td>{user.email}</td>
                 <td>{user.country}</td>
                 <td>{user.currency}</td>
@@ -265,24 +350,66 @@ const User = () => {
                 <td>{user.assets}</td>
                 <td>{user.verified ? "Verified" : "Unverified"}</td>
                 <td>
-                  {!user.verified ? (
+                  {user.blocked ? (
                     <button
-                      onClick={(e) => {
+                      style={{
+                        background: "#388e1c",
+                        color: "#fff",
+                        marginRight: 8,
+                      }}
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        handleVerify(user._id);
+                        try {
+                          await axios.put(
+                            `${BACKEND_URL}/api/users/unblock/${user._id}`
+                          );
+                          // Refresh users
+                          const response = await axios.get(
+                            `${BACKEND_URL}/api/users`
+                          );
+                          setUsers(response.data);
+                        } catch (err) {
+                          alert("Failed to unblock user");
+                        }
                       }}
                     >
-                      Verify
+                      Unblock
                     </button>
                   ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUnverify(user._id);
-                      }}
-                    >
-                      Unverify
-                    </button>
+                    <>
+                      {!user.verified ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVerify(user._id);
+                          }}
+                        >
+                          Verify
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnverify(user._id);
+                          }}
+                        >
+                          Unverify
+                        </button>
+                      )}
+                      <button
+                        style={{
+                          marginLeft: 8,
+                          background: "#e53935",
+                          color: "#fff",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBlock(user._id);
+                        }}
+                      >
+                        Block
+                      </button>
+                    </>
                   )}
                 </td>
               </tr>
@@ -397,6 +524,53 @@ const User = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {/* --- Block User Modal --- */}
+      {showBlockModal && (
+        <div className={s.modalOverlay}>
+          <div className={s.modal}>
+            <h3>Block User</h3>
+            <p>Please provide a reason for blocking this user:</p>
+            <textarea
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              rows={3}
+              style={{
+                width: "100%",
+                borderRadius: 6,
+                padding: 8,
+                marginBottom: 12,
+              }}
+            />
+            <button
+              onClick={confirmBlock}
+              style={{
+                background: "#e53935",
+                color: "#fff",
+                marginRight: 8,
+              }}
+              disabled={!blockReason.trim()}
+            >
+              Confirm Block
+            </button>
+            <button onClick={() => setShowBlockModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {/* --- Mail Sent Confirmation --- */}
+      {showMailSent && (
+        <div className={s.modalOverlay}>
+          <div className={s.modal}>
+            <h3>Mail Sent</h3>
+            <p>The user has been blocked and a notification email was sent.</p>
+            <button
+              className={s.closeButton}
+              onClick={() => setShowMailSent(false)}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

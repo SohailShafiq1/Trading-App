@@ -11,6 +11,7 @@ import { useAuth } from "../../Context/AuthContext";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 import TeamData from "./components/TeamData/TeamData";
 import axios from "axios";
+import AffiliateLevel from "./components/AffiliateLevel/AffiliateLevel";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const AffiliateProgram = () => {
