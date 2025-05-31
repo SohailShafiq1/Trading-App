@@ -168,12 +168,33 @@ const WithdrawPage = () => {
           <h3 className={s.sectionTitle}>Account:</h3>
           <div className={s.accountInfo}>
             <p>In the account:</p>
-            <p className={s.amount}>{totalBalance} $</p>
+            <p className={s.amount}>
+                 {isDemo
+                  ? demo_assets.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : Number(totalBalance).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+               $</p>
           </div>
           <hr className={s.divider} />
           <div className={s.accountInfo}>
             <p>Available for withdrawal:</p>
-            <p className={s.amount}>{userAssets} $</p>
+            <p className={s.amount}>
+            
+             {isDemo
+                  ? demo_assets.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : Number(userAssets).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+             $</p>
           </div>
           <h1
             className={s.note}
@@ -267,6 +288,7 @@ const WithdrawPage = () => {
               : !isVerified
               ? "Verify Your Account"
               : "Confirm"}
+              
             <BiRightArrowCircle className={s.icon} />
           </button>
 

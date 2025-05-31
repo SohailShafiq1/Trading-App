@@ -64,7 +64,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/coins", coinRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/deposits", depositRoutes);
-app.use("/api", affiliateRoutes);
+app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/bonuses", bonusRoutes);
 
 // Health check endpoint

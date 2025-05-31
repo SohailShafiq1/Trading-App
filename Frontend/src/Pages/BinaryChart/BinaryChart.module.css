@@ -338,32 +338,56 @@ body {
 }
 .timestampPopup {
   position: absolute;
-  background-color: #1f1f1f;
-  color: #ffffff;
-  padding: 2rem;
+  background-color: #66b544;
+  color: #fff;
+  padding: 1.5rem 1rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 3fr));
+  grid-template-columns: repeat(3, minmax(80px, 1fr)); /* 3 per row */
   gap: 1rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(34, 60, 80, 0.2);
+  z-index: 10;
+  min-width: 260px;
+  max-width: 350px;
 }
+
 .timestampOption {
-  background-color: #e0e0e0;
-  color: #000000;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 0.7rem 0.5rem;
+  border-radius: 10px;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  border: 2px solid transparent;
 }
 
 .timestampOption:hover {
-  background-color: #c0c0c0;
+  background-color: #fff;
+  color: #66b544;
+  border: 2px solid #66b544;
   transform: scale(1.05);
 }
 
 .timestampOption:active {
-  background-color: #a0a0a0;
-  transform: scale(0.95);
+  background-color: #e6f9e6;
+  color: #388e1c;
+  border: 2px solid #388e1c;
+  transform: scale(0.98);
 }
+.timestampOverlay
+{
+  position: fixed;
+  z-index: 9;
+    width: 100vw;
+  height: 100vh;
+    top: 10;
+  left: 20;
+}
+
 @media (max-width: 430px) {
   .chart {
     margin-bottom: 25rem;

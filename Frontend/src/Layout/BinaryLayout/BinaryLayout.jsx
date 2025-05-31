@@ -145,7 +145,17 @@ const BinaryLayout = () => {
             >
               <p>
                 {isDemo ? "Demo Account" : "Live Account"}
-                <br /> ${isDemo ? demo_assets.toLocaleString() : totalBalance}
+                <br />
+                $
+                {isDemo
+                  ? demo_assets.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : Number(totalBalance).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
               </p>
               <div className={s.arrow}>
                 <RiArrowDropDownLine style={{ fontSize: "2rem" }} />

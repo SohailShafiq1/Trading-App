@@ -14,6 +14,19 @@ import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
 
+const timeFrames = [
+  { value: 30, label: "30s" },
+  { value: 60, label: "1 min" },
+  { value: 120, label: "2 min" },
+  { value: 180, label: "3 min" },
+  { value: 300, label: "5 min" },
+  { value: 600, label: "10 min" },
+  { value: 900, label: "15 min" },
+  { value: 1800, label: "30 min" },
+  { value: 3600, label: "1 hour" },
+  { value: 7200, label: "2 hour" },
+];
+
 const BinaryChart = () => {
   // State declarations
   const socket = useRef(null);
@@ -724,7 +737,8 @@ const BinaryChart = () => {
           <div className={styles.control}>
             <h1>{selectedCoin || "Select Coin"} Trading</h1>
             <p>
-              {isDemo ? "Demo Balance" : "Available for Trading"}: ${userAssets + (user?.totalBonus || 0)}
+              {isDemo ? "Demo Balance" : "Available for Trading"}: $
+              {userAssets + (user?.totalBonus || 0)}
             </p>
 
             <p>
@@ -767,19 +781,27 @@ const BinaryChart = () => {
               </div>
               <div className={styles.timestampPopupContainer}>
                 {showTimestampPopup && (
-                  <div className={styles.timestampPopup}>
-                    {[30, 60, 120, 180, 300].map((time) => (
-                      <div
-                        key={time}
-                        className={styles.timestampOption}
-                        onClick={() => {
-                          setTimer(time);
-                          setShowTimestampPopup(false);
-                        }}
-                      >
-                        {formatTime(time)}
-                      </div>
-                    ))}
+                  <div
+                    className={styles.timestampOverlay}
+                    onClick={() => setShowTimestampPopup(false)}
+                  >
+                    <div
+                      className={styles.timestampPopup}
+                      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the popup
+                    >
+                      {timeFrames.map((tf) => (
+                        <div
+                          key={tf.value}
+                          className={styles.timestampOption}
+                          onClick={() => {
+                            setTimer(tf.value);
+                            setShowTimestampPopup(false);
+                          }}
+                        >
+                          {tf.label}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
