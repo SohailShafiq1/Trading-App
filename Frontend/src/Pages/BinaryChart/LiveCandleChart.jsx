@@ -738,13 +738,9 @@ const LiveCandleChart = ({ coinName }) => {
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        tickMarkFormatter: (time) => {
-          const date = new Date(time * 1000);
-          return `${date.getHours()}:${date
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
-        },
+        rightOffset: 2, // Adjust to ensure space on the right
+        barSpacing: 15, // Adjust bar spacing for zoom level
+        minBarSpacing: 5, // Prevent excessive zoom out
       },
       rightPriceScale: {
         borderColor: theme.gridColor,
@@ -768,13 +764,16 @@ const LiveCandleChart = ({ coinName }) => {
 
     // Configure time scale behavior
     chart.timeScale().applyOptions({
-      rightOffset: autoZoom ? 0 : 10,
+      rightOffset: 2,
       fixLeftEdge: false,
-      fixRightEdge: autoZoom,
-      lockVisibleTimeRangeOnResize: autoZoom,
-      handleScroll: !autoZoom,
-      handleScale: !autoZoom,
+      fixRightEdge: false,
+      lockVisibleTimeRangeOnResize: false,
+      handleScroll: true,
+      handleScale: true,
     });
+
+    // Set initial visible range to show approximately 10 candles
+    chart.timeScale().setVisibleLogicalRange({ from: -10, to: 0 });
 
     chart.timeScale().subscribeVisibleTimeRangeChange(() => {
       updateCountdownPosition();
@@ -1045,16 +1044,20 @@ const LiveCandleChart = ({ coinName }) => {
   useEffect(() => {
     if (chartRef.current) {
       chartRef.current.timeScale().applyOptions({
-        rightOffset: autoZoom ? 0 : 10,
-        fixLeftEdge: false,
-        fixRightEdge: autoZoom,
-        lockVisibleTimeRangeOnResize: autoZoom,
-        handleScroll: !autoZoom,
-        handleScale: !autoZoom,
+        rightOffset: 50, // Reduce the right offset for closer zoom
+        fixLeftEdge: true,
+        fixRightEdge: false, // Allow the last candle to move freely
+        lockVisibleTimeRangeOnResize: false, // Allow resizing without locking the time range
+        handleScroll: true,
+        handleScale: true,
       });
 
       if (autoZoom) {
         chartRef.current.timeScale().fitContent();
+      } else {
+        chartRef.current
+          .timeScale()
+          .zoomToLogicalRange({ from: 0, to: 100 }); // Increase zoom level
       }
     }
   }, [autoZoom]);
