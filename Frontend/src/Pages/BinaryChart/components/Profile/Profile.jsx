@@ -96,9 +96,22 @@ const Profile = () => {
         setCnicNumber(res.data.cnicNumber || "");
         setCnicPicture(res.data.cnicPicture || "");
         setCnicBackPicture(res.data.cnicBackPicture || "");
-        setPassportNumber(res.data.passportNumber || ""); // <-- add this
-        setPassportImage(res.data.passportImage || ""); // <-- add this
-        console.log("CNIC BACK VALUE:", res.data.cnicBackPicture); // <--- ADD THIS
+        setPassportNumber(res.data.passportNumber || "");
+        setPassportImage(res.data.passportImage || "");
+
+        // --- Add this block ---
+        if (res.data.passportImage) {
+          setPassportPreview(
+            res.data.passportImage.startsWith("http")
+              ? res.data.passportImage
+              : `http://localhost:5000/${
+                  res.data.passportImage.startsWith("/") ? "" : "/"
+                }${res.data.passportImage}`
+          );
+        } else {
+          setPassportPreview("");
+        }
+        // --- End block ---
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -303,6 +316,7 @@ const Profile = () => {
       setVerified(res.data.verified || false);
       setCnicBackPicture(res.data.cnicBackPicture || "");
       setCnicBackPreview("");
+      setPassportNumber(res.data.passportNumber || ""); // <-- ADD THIS
     } catch (err) {
       console.error("Error updating profile:", err);
       alert("Failed to update profile");
@@ -722,8 +736,9 @@ const Profile = () => {
                     {passportPreview ? (
                       <img
                         src={passportPreview}
-                        alt="Passport Preview"
+                        alt="Passport"
                         className={s.cnicImgStyled}
+                        style={{ marginBottom: 8 }}
                       />
                     ) : (
                       <span className={s.cameraIcon}>📷</span>
