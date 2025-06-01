@@ -12,8 +12,13 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === "profilePicture") {
       cb(null, "uploads/profile/");
-    } else if (file.fieldname === "cnicPicture") {
+    } else if (
+      file.fieldname === "cnicPicture" ||
+      file.fieldname === "cnicBackPicture"
+    ) {
       cb(null, "uploads/cnic/");
+    } else if (file.fieldname === "passportImage") {
+      cb(null, "uploads/passport/"); // <-- Add this
     } else {
       cb(null, "uploads/others/");
     }
@@ -185,7 +190,7 @@ router.put("/update-assets", async (req, res) => {
     res.status(200).json({
       message: "Assets updated successfully",
       user,
-      totalBalance, // <-- This is the sum of assets and bonus
+      totalBalance: totalBalance, // <-- This is the sum of assets and bonus
     });
   } catch (err) {
     console.error("Error updating assets:", err);
@@ -468,10 +473,19 @@ router.put(
   upload.fields([
     { name: "profilePicture", maxCount: 1 },
     { name: "cnicPicture", maxCount: 1 },
+    { name: "cnicBackPicture", maxCount: 1 },
+    { name: "passportImage", maxCount: 1 }, // <-- Add this
   ]),
   async (req, res) => {
-    const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
-    const update = { firstName, lastName, cnicNumber };
+    const {
+      email,
+      firstName,
+      lastName,
+      dateOfBirth,
+      cnicNumber,
+      passportNumber,
+    } = req.body;
+    const update = { firstName, lastName, cnicNumber, passportNumber };
 
     if (dateOfBirth && dateOfBirth !== "") {
       update.dateOfBirth = new Date(dateOfBirth);
@@ -510,6 +524,17 @@ router.put(
         return res.status(400).json({ error: "Image not matched" });
       }
     }
+    if (req.files?.cnicBackPicture) {
+      // Save to /uploads/cnic/
+      const cnicBackImagePath = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
+      update.cnicBackPicture = cnicBackImagePath;
+    }
+    if (req.files?.passportImage) {
+      update.passportImage = `/uploads/passport/${req.files.passportImage[0].filename}`;
+    }
+    if (req.body.passportNumber) {
+      update.passportNumber = req.body.passportNumber;
+    }
     if (
       typeof req.body.profilePicture === "string" &&
       req.body.profilePicture === ""
@@ -521,7 +546,13 @@ router.put(
       req.body.cnicPicture === ""
     ) {
       update.cnicPicture = "";
-      update.imgCNIC = ""; // <-- This line ensures the CNIC image number is also removed
+      update.imgCNIC = ""; // Remove CNIC image number
+    }
+    if (
+      typeof req.body.cnicBackPicture === "string" &&
+      req.body.cnicBackPicture === ""
+    ) {
+      update.cnicBackPicture = "";
     }
 
     try {

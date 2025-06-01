@@ -492,6 +492,33 @@ const User = () => {
                   />
                 )}
               </li>
+              <li>
+                <b>Passport Number:</b>{" "}
+                {selectedUser.passportNumber || (
+                  <span style={{ color: "#e53935" }}>Not provided</span>
+                )}
+              </li>
+              <li>
+                <b>Passport Image:</b>
+                <br />
+                {selectedUser.passportImage ? (
+                  <img
+                    src={`http://localhost:5000/${selectedUser.passportImage.replace(
+                      /^\//,
+                      ""
+                    )}`}
+                    alt="Passport"
+                    style={{
+                      width: 120,
+                      marginTop: 8,
+                      borderRadius: 6,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                ) : (
+                  <span style={{ color: "#e53935" }}>Not provided</span>
+                )}
+              </li>
             </ul>
           </div>
         </div>

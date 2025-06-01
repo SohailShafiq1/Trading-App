@@ -50,6 +50,10 @@ const Profile = () => {
   const [cnicPreview, setCnicPreview] = useState("");
   const [cnicBackPicture, setCnicBackPicture] = useState("");
   const [cnicBackPreview, setCnicBackPreview] = useState("");
+
+  const [passportNumber, setPassportNumber] = useState("");
+  const [passportImage, setPassportImage] = useState("");
+  const [passportPreview, setPassportPreview] = useState("");
   const fileInputRef = useRef(null);
 
   // Delete account modal state
@@ -92,6 +96,8 @@ const Profile = () => {
         setCnicNumber(res.data.cnicNumber || "");
         setCnicPicture(res.data.cnicPicture || "");
         setCnicBackPicture(res.data.cnicBackPicture || "");
+        setPassportNumber(res.data.passportNumber || ""); // <-- add this
+        setPassportImage(res.data.passportImage || ""); // <-- add this
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -153,6 +159,25 @@ const Profile = () => {
     }
   };
 
+  const handlePassportImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPassportPreview(URL.createObjectURL(file));
+      setPassportImage(file);
+
+      setIsOcrLoading(true);
+      Tesseract.recognize(file, "eng")
+        .then(({ data: { text } }) => {
+          const match = text.match(/[A-Z0-9]{9}/i);
+          if (match) {
+            setPassportNumber(match[0].toUpperCase());
+          }
+          setIsOcrLoading(false);
+        })
+        .catch(() => setIsOcrLoading(false));
+    }
+  };
+
   // Format CNIC input as 5 digits - 7 digits - 1 digit
   const formatCnic = (value) => {
     // Remove all non-digits
@@ -173,6 +198,12 @@ const Profile = () => {
   const handleCnicChange = (e) => {
     const formatted = formatCnic(e.target.value);
     setCnicNumber(formatted);
+  };
+
+  const handlePassportChange = (e) => {
+    let value = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (value.length > 9) value = value.slice(0, 9);
+    setPassportNumber(value);
   };
 
   const handleSave = async () => {
@@ -216,6 +247,7 @@ const Profile = () => {
       formData.append("lastName", lastName);
       formData.append("dateOfBirth", dateOfBirth);
       formData.append("cnicNumber", cnicNumber);
+      formData.append("passportNumber", passportNumber);
       if (profilePicture && profilePicture instanceof File) {
         formData.append("profilePicture", profilePicture);
       }
@@ -224,6 +256,9 @@ const Profile = () => {
       }
       if (cnicBackPicture && cnicBackPicture instanceof File) {
         formData.append("cnicBackPicture", cnicBackPicture);
+      }
+      if (passportImage && passportImage instanceof File) {
+        formData.append("passportImage", passportImage);
       }
 
       await axios.put(
@@ -331,43 +366,35 @@ const Profile = () => {
         <div className={s.userInfo}>
           <div className={s.avatar}>
             <div className={s.avatarImgWrapper}>
-              {verified ? (
-                profilePicture ? (
+              <label htmlFor="profilePicInput" style={{ cursor: "pointer" }}>
+                {preview ? (
                   <img
-                    src={`http://localhost:5000${profilePicture}`}
+                    src={preview}
+                    alt="Profile Preview"
+                    className={s.avatarImg}
+                  />
+                ) : profilePicture ? (
+                  <img
+                    src={
+                      profilePicture.startsWith("http")
+                        ? profilePicture
+                        : `http://localhost:5000${profilePicture}`
+                    }
                     alt="Profile"
                     className={s.avatarImg}
                   />
                 ) : (
                   <span className={s.cameraIcon}>📷</span>
-                )
-              ) : (
-                <label htmlFor="profilePicInput" style={{ cursor: "pointer" }}>
-                  {preview ? (
-                    <img
-                      src={preview}
-                      alt="Profile Preview"
-                      className={s.avatarImg}
-                    />
-                  ) : profilePicture ? (
-                    <img
-                      src={`http://localhost:5000${profilePicture}`}
-                      alt="Profile"
-                      className={s.avatarImg}
-                    />
-                  ) : (
-                    <span className={s.cameraIcon}>📷</span>
-                  )}
-                  <input
-                    id="profilePicInput"
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    ref={fileInputRef}
-                    onChange={handleImageChange}
-                  />
-                </label>
-              )}
+                )}
+                <input
+                  id="profilePicInput"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                />
+              </label>
             </div>
           </div>
           <div>
@@ -462,132 +489,228 @@ const Profile = () => {
                 <option value="Passport">Passport</option>
               </select>
             </div>
-            <div className={s.inputBox}>
-              <label>{documentType} Number</label>
-              <input
-                type="text"
-                value={cnicNumber}
-                onChange={handleCnicChange}
-                placeholder={
-                  documentType === "CNIC"
-                    ? "xxxxx-xxxxxxx-x"
-                    : "Passport Number"
-                }
-                maxLength={documentType === "CNIC" ? 15 : 30}
-                disabled={
-                  isOcrLoading ||
-                  !!(
-                    cnicPicture &&
-                    typeof cnicPicture === "string" &&
-                    cnicBackPicture &&
-                    typeof cnicBackPicture === "string"
-                  )
-                }
-              />
-            </div>
+            {documentType === "CNIC" ? (
+              <>
+                <div className={s.inputBox}>
+                  <label>CNIC Number</label>
+                  <input
+                    type="text"
+                    value={cnicNumber}
+                    onChange={handleCnicChange}
+                    placeholder="xxxxx-xxxxxxx-x"
+                    maxLength={15}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={s.inputBox}>
+                  <label>Passport Number</label>
+                  <input
+                    type="text"
+                    value={passportNumber}
+                    onChange={handlePassportChange}
+                    placeholder="e.g. AA0000000"
+                    maxLength={9}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
-          {/* CNIC/Passport images in one row */}
-          <div className={s.row}>
-            {/* FRONT IMAGE */}
-            <div className={s.inputBox}>
-              <label>{documentType} Front Image</label>
-              {cnicPicture && typeof cnicPicture === "string" ? (
-                <div
-                  className={s.cnicImageBox}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    document.getElementById("frontImageInput").click();
-                  }}
-                >
-                  <img
-                    src={
-                      cnicPicture.startsWith("http")
-                        ? cnicPicture
-                        : `http://localhost:5000${
-                            cnicPicture.startsWith("/") ? "" : "/"
-                          }${cnicPicture}`
-                    }
-                    alt="Front"
-                    className={s.cnicImgStyled}
-                  />
-                  <input
-                    id="frontImageInput"
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleCnicImageChange}
-                  />
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCnicImageChange}
-                  />
-                  {cnicPreview ? (
+          {/* Document Images */}
+          {documentType === "CNIC" ? (
+            <div className={s.row}>
+              {/* FRONT IMAGE */}
+              <div className={s.inputBox}>
+                <label>{documentType} Front Image</label>
+                {cnicPicture && typeof cnicPicture === "string" ? (
+                  <div
+                    className={s.cnicImageBox}
+                    style={{ flexDirection: "column" }}
+                  >
                     <img
-                      src={cnicPreview}
-                      alt="Front Preview"
+                      src={
+                        cnicPicture.startsWith("http")
+                          ? cnicPicture
+                          : `http://localhost:5000${
+                              cnicPicture.startsWith("/") ? "" : "/"
+                            }${cnicPicture}`
+                      }
+                      alt="Front"
                       className={s.cnicImgStyled}
                     />
-                  ) : (
-                    <span className={s.cameraIcon}>📷</span>
-                  )}
-                </>
-              )}
-            </div>
-            {/* BACK IMAGE */}
-            <div className={s.inputBox}>
-              <label>{documentType} Back Image</label>
-              {cnicBackPicture && typeof cnicBackPicture === "string" ? (
-                <div
-                  className={s.cnicImageBox}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    document.getElementById("backImageInput").click();
-                  }}
-                >
-                  <img
-                    src={
-                      cnicBackPicture.startsWith("http")
-                        ? cnicBackPicture
-                        : `http://localhost:5000${
-                            cnicBackPicture.startsWith("/") ? "" : "/"
-                          }${cnicBackPicture}`
-                    }
-                    alt="Back"
-                    className={s.cnicImgStyled}
-                  />
-                  <input
-                    id="backImageInput"
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleCnicBackImageChange}
-                  />
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCnicBackImageChange}
-                  />
-                  {cnicBackPreview ? (
+                    <button
+                      className={s.updateImgBtn}
+                      onClick={() =>
+                        document.getElementById("frontImageInput").click()
+                      }
+                    >
+                      Update Front Image
+                    </button>
+                    <input
+                      id="frontImageInput"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleCnicImageChange}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCnicImageChange}
+                    />
+                    {cnicPreview ? (
+                      <img
+                        src={cnicPreview}
+                        alt="Front Preview"
+                        className={s.cnicImgStyled}
+                      />
+                    ) : (
+                      <span className={s.cameraIcon}>📷</span>
+                    )}
+                  </>
+                )}
+              </div>
+              {/* BACK IMAGE */}
+              <div className={s.inputBox}>
+                <label>{documentType} Back Image</label>
+                {cnicBackPicture && typeof cnicBackPicture === "string" ? (
+                  <div
+                    className={s.cnicImageBox}
+                    style={{ flexDirection: "column" }}
+                  >
                     <img
-                      src={cnicBackPreview}
-                      alt="Back Preview"
+                      src={
+                        cnicBackPicture.startsWith("http")
+                          ? cnicBackPicture
+                          : `http://localhost:5000${
+                              cnicBackPicture.startsWith("/") ? "" : "/"
+                            }${cnicBackPicture}`
+                      }
+                      alt="Back"
                       className={s.cnicImgStyled}
                     />
-                  ) : (
-                    <span className={s.cameraIcon}>📷</span>
-                  )}
-                </>
-              )}
+                    <button
+                      className={s.updateImgBtn}
+                      onClick={() =>
+                        document.getElementById("backImageInput").click()
+                      }
+                    >
+                      Update Back Image
+                    </button>
+                    <input
+                      id="backImageInput"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleCnicBackImageChange}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCnicBackImageChange}
+                    />
+                    {cnicBackPreview ? (
+                      <img
+                        src={cnicBackPreview}
+                        alt="Back Preview"
+                        className={s.cnicImgStyled}
+                      />
+                    ) : (
+                      <span className={s.cameraIcon}>📷</span>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className={s.row}>
+              <div className={s.inputBox}>
+                <label>Passport Number</label>
+                {passportNumber &&
+                passportImage &&
+                typeof passportImage === "string" ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "1.1em",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {passportNumber}
+                    </span>
+                    <img
+                      src={
+                        passportImage.startsWith("http")
+                          ? passportImage
+                          : `http://localhost:5000${
+                              passportImage.startsWith("/") ? "" : "/"
+                            }${passportImage}`
+                      }
+                      alt="Passport"
+                      className={s.cnicImgStyled}
+                      style={{ marginBottom: 8 }}
+                    />
+                    <button
+                      className={s.popupBtn}
+                      style={{ marginTop: 4 }}
+                      onClick={() =>
+                        document.getElementById("passportImageInput").click()
+                      }
+                    >
+                      Update Passport Image
+                    </button>
+                    <input
+                      id="passportImageInput"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handlePassportImageChange}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={passportNumber}
+                      onChange={handlePassportChange}
+                      placeholder="e.g. AA0000000"
+                      maxLength={9}
+                      style={{ marginBottom: 8 }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePassportImageChange}
+                    />
+                    {passportPreview ? (
+                      <img
+                        src={passportPreview}
+                        alt="Passport Preview"
+                        className={s.cnicImgStyled}
+                      />
+                    ) : (
+                      <span className={s.cameraIcon}>📷</span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className={s.actions}>
             <button className={s.saveBtn} onClick={handleSave}>

@@ -105,30 +105,49 @@
   transform: translateY(0);
 }
 
-/* Duplicate CNIC Modal Overlay */
+/* Make modalOverlay cover the whole screen and center content */
 .modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(25, 30, 40, 0.65); /* darker overlay for focus */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
 }
 
 /* Modal Box */
 .modal {
   background: #fff;
   padding: 2.5rem 2rem 2rem 2rem;
-  border-radius: 16px;
-  min-width: 340px;
-  max-width: 95vw;
-  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.15);
+  border-radius: 18px;
+  width: 90vw;
+  max-width: 900px;
+  max-height: 92vh;
+  min-height: 60vh;
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.18);
   position: relative;
   animation: modalFadeIn 0.25s;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .modal {
+    width: 98vw;
+    min-height: 80vh;
+    max-width: 99vw;
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+  }
 }
 
 @keyframes modalFadeIn {
@@ -170,56 +189,66 @@
 }
 
 .closeButton {
-  margin-top: 1.2rem;
-  padding: 0.5rem 1.4rem;
-  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  background: #1976d2;
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 1.5rem;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
   box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
   transition: background 0.2s, box-shadow 0.2s;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
 .closeButton:hover {
-  background: linear-gradient(90deg, #1565c0 0%, #64b5f6 100%);
+  background: #1251a3;
   box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15);
 }
 
 .detailsList {
-  list-style: none;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
   padding: 0;
-  margin: 0;
 }
 
 .detailsList li {
-  margin-bottom: 16px;
-  font-size: 1.08em;
+  margin-bottom: 18px;
+  font-size: 1.13em;
   color: #22223b;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 1px 4px rgba(25, 118, 210, 0.04);
 }
 
 .detailsList b {
-  color: #1d3557;
-  min-width: 120px;
+  color: #1976d2;
+  min-width: 140px;
   display: inline-block;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.07em;
 }
 
 .detailsList img {
   margin-top: 6px;
-  border-radius: 7px;
+  border-radius: 8px;
   border: 1.5px solid #d1d5db;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  max-width: 160px;
-  max-height: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  max-width: 220px;
+  max-height: 140px;
   background: #f8fafc;
 }
 
