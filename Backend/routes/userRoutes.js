@@ -78,28 +78,46 @@ router.post("/deposit", async (req, res) => {
       }
     }
 
-    // Create deposit
+    // Create deposit and mark as verified immediately
     const deposit = new Deposit({
       userEmail: email,
       amount,
-      txId: txId || "Pending",
+      txId: txId || "Auto-Approved",
       wallet: process.env.ADMIN_TRON_WALLET,
       bonusPercent: bonusPercent || 0,
       bonusAmount,
       bonusId: bonusId || null,
-      status: "pending",
+      status: "verified", // <-- AUTO-APPROVE
     });
 
     await deposit.save();
 
+    // Credit user immediately
+    user.assets += Number(amount);
+    user.depositCount = (user.depositCount || 0) + 1;
+    user.transactions.push({
+      orderId: deposit._id.toString(),
+      type: "deposit",
+      amount,
+      paymentMethod: "TRC20 Wallet",
+      status: "success",
+      date: new Date(),
+    });
+
+    // Add bonus if any
+    if (bonusAmount > 0) {
+      user.totalBonus = (user.totalBonus || 0) + bonusAmount;
+    }
+
     // Add bonus ID to user's usedBonuses if provided
     if (bonusId && bonusPercent > 0) {
       user.usedBonuses.push(bonusId);
-      await user.save();
     }
 
+    await user.save();
+
     res.status(201).json({
-      message: "Deposit submitted, awaiting confirmation.",
+      message: "Deposit auto-approved and credited.",
       deposit,
       user: {
         usedBonuses: user.usedBonuses,
