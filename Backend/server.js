@@ -51,7 +51,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Static files
 app.use("/bucket", express.static(path.join(process.cwd(), "bucket")));
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Request logging middleware
 app.use((req, res, next) => {

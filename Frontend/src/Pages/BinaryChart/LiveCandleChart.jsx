@@ -10,6 +10,7 @@ import "./LiveCandleChart.css";
 import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import { io } from "socket.io-client";
+import Tabs from "./components/Tabs/Tabs";
 
 // Initialize socket connection to backend
 const socket = io("http://localhost:5000");
@@ -737,13 +738,9 @@ const LiveCandleChart = ({ coinName }) => {
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        tickMarkFormatter: (time) => {
-          const date = new Date(time * 1000);
-          return `${date.getHours()}:${date
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
-        },
+        rightOffset: 2, // Adjust to ensure space on the right
+        barSpacing: 15, // Adjust bar spacing for zoom level
+        minBarSpacing: 5, // Prevent excessive zoom out
       },
       rightPriceScale: {
         borderColor: theme.gridColor,
@@ -767,13 +764,16 @@ const LiveCandleChart = ({ coinName }) => {
 
     // Configure time scale behavior
     chart.timeScale().applyOptions({
-      rightOffset: autoZoom ? 0 : 10,
+      rightOffset: 2,
       fixLeftEdge: false,
-      fixRightEdge: autoZoom,
-      lockVisibleTimeRangeOnResize: autoZoom,
-      handleScroll: !autoZoom,
-      handleScale: !autoZoom,
+      fixRightEdge: false,
+      lockVisibleTimeRangeOnResize: false,
+      handleScroll: true,
+      handleScale: true,
     });
+
+    // Set initial visible range to show approximately 10 candles
+    chart.timeScale().setVisibleLogicalRange({ from: -10, to: 0 });
 
     chart.timeScale().subscribeVisibleTimeRangeChange(() => {
       updateCountdownPosition();
@@ -889,6 +889,25 @@ const LiveCandleChart = ({ coinName }) => {
           seriesRef.current.setData(updated);
         }
       }
+
+      // Adjust visible range to maintain proper candle display
+      if (chartRef.current) {
+        const timeScale = chartRef.current.timeScale();
+        const visibleRange = timeScale.getVisibleLogicalRange();
+        if (visibleRange) {
+          const totalCandles = updated.length;
+          const visibleCandles = visibleRange.to - visibleRange.from;
+
+          // Ensure at least 10 candles are visible
+          if (visibleCandles < 10) {
+            timeScale.setVisibleLogicalRange({
+              from: totalCandles - 10,
+              to: totalCandles,
+            });
+          }
+        }
+      }
+
       applyIndicators();
     });
 
@@ -1044,16 +1063,18 @@ const LiveCandleChart = ({ coinName }) => {
   useEffect(() => {
     if (chartRef.current) {
       chartRef.current.timeScale().applyOptions({
-        rightOffset: autoZoom ? 0 : 10,
-        fixLeftEdge: false,
-        fixRightEdge: autoZoom,
-        lockVisibleTimeRangeOnResize: autoZoom,
-        handleScroll: !autoZoom,
-        handleScale: !autoZoom,
+        rightOffset: 50, // Reduce the right offset for closer zoom
+        fixLeftEdge: true,
+        fixRightEdge: false, // Allow the last candle to move freely
+        lockVisibleTimeRangeOnResize: false, // Allow resizing without locking the time range
+        handleScroll: true,
+        handleScale: true,
       });
 
       if (autoZoom) {
         chartRef.current.timeScale().fitContent();
+      } else {
+        chartRef.current.timeScale().zoomToLogicalRange({ from: 0, to: 100 }); // Increase zoom level
       }
     }
   }, [autoZoom]);
@@ -1061,299 +1082,304 @@ const LiveCandleChart = ({ coinName }) => {
   // Render the chart component
   return (
     <div
+      className="mainBOX"
       style={{
-        padding: 20,
-        paddingTop: 0,
         background: theme.background,
         color: theme.textColor,
         borderRadius: 10,
       }}
     >
       <div
+        className="charting"
         style={{
           display: "flex",
           marginBottom: 10,
-          flexWrap: "wrap",
+          justifyContent: "space-between",
         }}
       >
         {/* Indicator button */}
-        <div style={{ position: "relative" }}>
-          <button
-            className="chartBtns"
-            onClick={() => {
-              setShowIndicatorPopup(!showIndicatorPopup);
-              setShowStylePopup(false);
-              setShowThemePopup(false);
-              setShowDrawingPopup(false);
-            }}
-            style={{
-              fontSize: "1rem",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              color: theme.textColor,
-              cursor: "pointer",
-              background: "linear-gradient(90deg, #66b544, #1a391d)",
-              height: 50,
-            }}
-          >
-            <AiOutlinePlus
-              style={{
-                color: "white",
-                fontSize: "1.5rem",
-                fontWeight: "bolder",
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <div style={{ position: "relative" }}>
+            <button
+              className="chartBtns"
+              onClick={() => {
+                setShowIndicatorPopup(!showIndicatorPopup);
+                setShowStylePopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(false);
               }}
-            />
-          </button>
-          {showIndicatorPopup && (
-            <div
               style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                zIndex: 100,
-                background: "#E0E0E0",
-                border: `1px solid ${theme.gridColor}`,
-                borderRadius: 4,
-                padding: 10,
+                fontSize: "1rem",
                 display: "flex",
-                flexDirection: "column",
-                gap: 5,
+                justifyContent: "center",
+                alignItems: "center",
+                color: theme.textColor,
+                cursor: "pointer",
+                background: "linear-gradient(90deg, #66b544, #1a391d)",
+                height: 50,
               }}
             >
-              {Object.values(INDICATORS).map((ind) => (
-                <div
-                  key={ind}
-                  onClick={() => {
-                    setIndicator(ind);
-                    setShowIndicatorPopup(false);
-                  }}
-                  style={{
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {ind}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ position: "relative" }}>
-          <button
-            className="chartBtns"
-            onClick={() => {
-              setShowIndicatorPopup(false);
-              setShowStylePopup(false);
-              setShowThemePopup(false);
-              setShowDrawingPopup(!showDrawingPopup);
-            }}
-            style={{
-              padding: "6px 12px",
-              color: "black",
-              cursor: "pointer",
-              height: 50,
-              fontSize: "1.5rem",
-              background: "#E0E0E0",
-            }}
-          >
-            <BiPencil />
-          </button>
-          {showDrawingPopup && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                zIndex: 100,
-                background: "#E0E0E0",
-                border: `1px solid ${theme.gridColor}`,
-                borderRadius: 4,
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                gap: 5,
-              }}
-            >
-              {Object.values(DRAWING_TOOLS).map((tool) => (
-                <div
-                  key={tool}
-                  onClick={() => handleDrawingToolClick(tool)}
-                  style={{
-                    padding: "5px 10px",
-                    color: theme.textColor,
-                    cursor: "pointer",
-                  }}
-                >
-                  {tool}
-                </div>
-              ))}
-              <div
-                onClick={clearAllDrawings}
+              <AiOutlinePlus
                 style={{
-                  padding: "5px 10px",
+                  color: "white",
+                  fontSize: "1.5rem",
+                  fontWeight: "bolder",
+                }}
+              />
+            </button>
+            {showIndicatorPopup && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  zIndex: 100,
+                  background: "#E0E0E0",
+                  border: `1px solid ${theme.gridColor}`,
                   borderRadius: 4,
-                  cursor: "pointer",
-                  borderTop: `1px solid ${theme.gridColor}`,
-                  marginTop: 5,
+                  padding: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
                 }}
               >
-                Clear All
+                {Object.values(INDICATORS).map((ind) => (
+                  <div
+                    key={ind}
+                    onClick={() => {
+                      setIndicator(ind);
+                      setShowIndicatorPopup(false);
+                    }}
+                    style={{
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {ind}
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
-        </div>
-        <select
-          value={interval}
-          onClick={() => {
-            setShowThemePopup(false);
-            setShowIndicatorPopup(false);
-            setShowStylePopup(false);
-            setShowDrawingPopup(false);
-          }}
-          className="chartBtns"
-          onChange={(e) => setInterval(e.target.value)}
-          style={{
-            appearance: "none",
-            padding: "6px 12px",
-            color: "black",
-            cursor: "pointer",
-            height: 50,
-            fontSize: "1rem",
-            background: "#E0E0E0",
-          }}
-        >
-          {Object.keys(intervalToSeconds).map((i) => (
-            <option key={i} value={i}>
-              {i}
-            </option>
-          ))}
-        </select>
-        <div style={{ position: "relative" }}>
-          <button
-            className="chartBtns"
-            onClick={() => {
-              setShowThemePopup(!showThemePopup);
-              setShowIndicatorPopup(false);
-              setShowStylePopup(false);
-              setShowDrawingPopup(false);
-            }}
-            style={{
-              padding: "6px 12px",
-              color: "black",
-              cursor: "pointer",
-              height: 50,
-              fontSize: "1.5rem",
-              background: "#E0E0E0",
-            }}
-          >
-            <AiOutlineBgColors />
-          </button>
-          {showThemePopup && (
-            <div
+            )}
+          </div>
+
+          <div style={{ position: "relative" }}>
+            <button
+              className="chartBtns"
+              onClick={() => {
+                setShowIndicatorPopup(false);
+                setShowStylePopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(!showDrawingPopup);
+              }}
               style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                zIndex: 100,
+                padding: "6px 12px",
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1.5rem",
                 background: "#E0E0E0",
-                border: `1px solid ${theme.gridColor}`,
-                borderRadius: 4,
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                gap: 5,
               }}
             >
-              {Object.values(THEMES).map((t) => (
+              <BiPencil />
+            </button>
+            {showDrawingPopup && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  zIndex: 100,
+                  background: "#E0E0E0",
+                  border: `1px solid ${theme.gridColor}`,
+                  borderRadius: 4,
+                  padding: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                {Object.values(DRAWING_TOOLS).map((tool) => (
+                  <div
+                    key={tool}
+                    onClick={() => handleDrawingToolClick(tool)}
+                    style={{
+                      padding: "5px 10px",
+                      color: theme.textColor,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {tool}
+                  </div>
+                ))}
                 <div
-                  key={t.name}
-                  onClick={() => {
-                    setTheme(t);
-                    setShowThemePopup(false);
-                  }}
+                  onClick={clearAllDrawings}
                   style={{
                     padding: "5px 10px",
                     borderRadius: 4,
-                    color: t.textColor,
                     cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
+                    borderTop: `1px solid ${theme.gridColor}`,
+                    marginTop: 5,
                   }}
                 >
-                  <div
-                    style={{
-                      width: 30,
-                      height: 30,
-                      background: t.upColor,
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: 30,
-                      height: 30,
-                      background: t.downColor,
-                    }}
-                  />
+                  Clear All
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div style={{ position: "relative" }}>
-          <button
-            className="chartBtns"
+              </div>
+            )}
+          </div>
+          <select
+            value={interval}
             onClick={() => {
-              setShowStylePopup(!showStylePopup);
-              setShowIndicatorPopup(false);
               setShowThemePopup(false);
+              setShowIndicatorPopup(false);
+              setShowStylePopup(false);
               setShowDrawingPopup(false);
             }}
+            className="chartBtns"
+            onChange={(e) => setInterval(e.target.value)}
             style={{
+              appearance: "none",
               padding: "6px 12px",
               color: "black",
               cursor: "pointer",
               height: 50,
-              fontSize: "1.5rem",
+              fontSize: "1rem",
               background: "#E0E0E0",
             }}
           >
-            <BsBarChartFill />
-          </button>
-          {showStylePopup && (
-            <div
+            {Object.keys(intervalToSeconds).map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+          <div style={{ position: "relative" }}>
+            <button
+              className="chartBtns"
+              onClick={() => {
+                setShowThemePopup(!showThemePopup);
+                setShowIndicatorPopup(false);
+                setShowStylePopup(false);
+                setShowDrawingPopup(false);
+              }}
               style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                zIndex: 100,
+                padding: "6px 12px",
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1.5rem",
                 background: "#E0E0E0",
-                border: `1px solid ${theme.gridColor}`,
-                borderRadius: 4,
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                gap: 5,
               }}
             >
-              {Object.values(CANDLE_STYLES).map((style) => (
-                <div
-                  key={style}
-                  onClick={() => {
-                    setCandleStyle(style);
-                    setShowStylePopup(false);
-                  }}
-                  style={{
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {style}
-                </div>
-              ))}
-            </div>
-          )}
+              <AiOutlineBgColors />
+            </button>
+            {showThemePopup && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  zIndex: 100,
+                  background: "#E0E0E0",
+                  border: `1px solid ${theme.gridColor}`,
+                  borderRadius: 4,
+                  padding: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                {Object.values(THEMES).map((t) => (
+                  <div
+                    key={t.name}
+                    onClick={() => {
+                      setTheme(t);
+                      setShowThemePopup(false);
+                    }}
+                    style={{
+                      padding: "5px 10px",
+                      borderRadius: 4,
+                      color: t.textColor,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 30,
+                        height: 30,
+                        background: t.upColor,
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 30,
+                        height: 30,
+                        background: t.downColor,
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ position: "relative" }}>
+            <button
+              className="chartBtns"
+              onClick={() => {
+                setShowStylePopup(!showStylePopup);
+                setShowIndicatorPopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(false);
+              }}
+              style={{
+                padding: "6px 12px",
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1.5rem",
+                background: "#E0E0E0",
+              }}
+            >
+              <BsBarChartFill />
+            </button>
+            {showStylePopup && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  zIndex: 100,
+                  background: "#E0E0E0",
+                  border: `1px solid ${theme.gridColor}`,
+                  borderRadius: 4,
+                  padding: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                {Object.values(CANDLE_STYLES).map((style) => (
+                  <div
+                    key={style}
+                    onClick={() => {
+                      setCandleStyle(style);
+                      setShowStylePopup(false);
+                    }}
+                    style={{
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {style}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <Tabs />
         </div>
       </div>
 

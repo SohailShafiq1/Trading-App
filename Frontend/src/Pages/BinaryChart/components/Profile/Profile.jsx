@@ -98,6 +98,7 @@ const Profile = () => {
         setCnicBackPicture(res.data.cnicBackPicture || "");
         setPassportNumber(res.data.passportNumber || ""); // <-- add this
         setPassportImage(res.data.passportImage || ""); // <-- add this
+        console.log("CNIC BACK VALUE:", res.data.cnicBackPicture); // <--- ADD THIS
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -604,11 +605,13 @@ const Profile = () => {
                   >
                     <img
                       src={
-                        cnicBackPicture.startsWith("http")
-                          ? cnicBackPicture
-                          : `http://localhost:5000${
-                              cnicBackPicture.startsWith("/") ? "" : "/"
-                            }${cnicBackPicture}`
+                        cnicBackPicture
+                          ? cnicBackPicture.startsWith("http")
+                            ? cnicBackPicture
+                            : cnicBackPicture.startsWith("/uploads/")
+                            ? `http://localhost:5000${cnicBackPicture}`
+                            : `http://localhost:5000/uploads/cnic/${cnicBackPicture}`
+                          : ""
                       }
                       alt="Back"
                       className={s.cnicImgStyled}
