@@ -28,6 +28,8 @@ const User = () => {
   const [blockReason, setBlockReason] = useState("");
   const [blockUserId, setBlockUserId] = useState(null);
   const [showMailSent, setShowMailSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [unblockSuccess, setUnblockSuccess] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -206,18 +208,35 @@ const User = () => {
   };
 
   const confirmBlock = async () => {
+    setIsLoading(true);
     try {
       await axios.put(`${BACKEND_URL}/api/users/block/${blockUserId}`, {
         reason: blockReason,
       });
       setShowBlockModal(false);
       setBlockUserId(null);
-      setShowMailSent(true); // Show confirmation popup
-      // Refresh users
+      setShowMailSent(true);
       const response = await axios.get(`${BACKEND_URL}/api/users`);
       setUsers(response.data);
     } catch (err) {
       alert("Failed to block user");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUnblock = async (userId) => {
+    setIsLoading(true);
+    try {
+      await axios.put(`${BACKEND_URL}/api/users/unblock/${userId}`);
+      const response = await axios.get(`${BACKEND_URL}/api/users`);
+      setUsers(response.data);
+      setUnblockSuccess(true);
+      setTimeout(() => setUnblockSuccess(false), 2000);
+    } catch (err) {
+      alert("Failed to unblock user");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -359,18 +378,7 @@ const User = () => {
                       }}
                       onClick={async (e) => {
                         e.stopPropagation();
-                        try {
-                          await axios.put(
-                            `${BACKEND_URL}/api/users/unblock/${user._id}`
-                          );
-                          // Refresh users
-                          const response = await axios.get(
-                            `${BACKEND_URL}/api/users`
-                          );
-                          setUsers(response.data);
-                        } catch (err) {
-                          alert("Failed to unblock user");
-                        }
+                        await handleUnblock(user._id);
                       }}
                     >
                       Unblock
@@ -466,6 +474,49 @@ const User = () => {
                   selectedUser.imgCNIC
                 ) : (
                   <span style={{ color: "#e53935" }}>Image not matched</span>
+                )}
+              </li>
+              <li>
+                <b>CNIC Back Image:</b>
+                <br />
+                {selectedUser.cnicBackPicture && (
+                  <img
+                    src={`http://localhost:5000/${selectedUser.cnicBackPicture}`}
+                    alt="CNIC Back"
+                    style={{
+                      width: 120,
+                      marginTop: 8,
+                      borderRadius: 6,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                )}
+              </li>
+              <li>
+                <b>Passport Number:</b>{" "}
+                {selectedUser.passportNumber || (
+                  <span style={{ color: "#e53935" }}>Not provided</span>
+                )}
+              </li>
+              <li>
+                <b>Passport Image:</b>
+                <br />
+                {selectedUser.passportImage ? (
+                  <img
+                    src={`http://localhost:5000/${selectedUser.passportImage.replace(
+                      /^\//,
+                      ""
+                    )}`}
+                    alt="Passport"
+                    style={{
+                      width: 120,
+                      marginTop: 8,
+                      borderRadius: 6,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                ) : (
+                  <span style={{ color: "#e53935" }}>Not provided</span>
                 )}
               </li>
             </ul>
@@ -570,6 +621,20 @@ const User = () => {
             >
               OK
             </button>
+          </div>
+        </div>
+      )}
+      {isLoading && (
+        <div className={s.loaderOverlay}>
+          <div className={s.loaderSpinner}></div>
+          <div className={s.loaderText}>Processing, please wait...</div>
+        </div>
+      )}
+      {unblockSuccess && (
+        <div className={s.successOverlay}>
+          <div className={s.successModal}>
+            <span className={s.successIcon}>✔️</span>
+            <div>User unblocked successfully!</div>
           </div>
         </div>
       )}

@@ -21,6 +21,8 @@ const s = styles;
 
 const BinaryLayout = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showSwitchPopup, setShowSwitchPopup] = useState(false);
+  const [switchPopupMsg, setSwitchPopupMsg] = useState("");
   const { user, logout } = useAuth();
   const { logoutAffiliate } = useAffiliateAuth();
   const { userAssets } = useUserAssets();
@@ -145,8 +147,7 @@ const BinaryLayout = () => {
             >
               <p>
                 {isDemo ? "Demo Account" : "Live Account"}
-                <br />
-                $
+                <br />$
                 {isDemo
                   ? demo_assets.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
@@ -170,6 +171,9 @@ const BinaryLayout = () => {
                     onClick={() => {
                       setIsDemo(false);
                       setAccountPopupVisible(false);
+                      setSwitchPopupMsg("Switched to Live Account");
+                      setShowSwitchPopup(true);
+                      setTimeout(() => setShowSwitchPopup(false), 1800);
                     }}
                   >
                     <div className={s.radioCircle}>
@@ -186,6 +190,9 @@ const BinaryLayout = () => {
                     onClick={() => {
                       setIsDemo(true);
                       setAccountPopupVisible(false);
+                      setSwitchPopupMsg("Switched to Demo Account");
+                      setShowSwitchPopup(true);
+                      setTimeout(() => setShowSwitchPopup(false), 1800);
                     }}
                   >
                     <div className={s.radioCircle}>
@@ -383,6 +390,9 @@ const BinaryLayout = () => {
                 onClick={() => {
                   setIsDemo(false);
                   setMobileAccountPopup(false);
+                  setSwitchPopupMsg("Switched to Live Account");
+                  setShowSwitchPopup(true);
+                  setTimeout(() => setShowSwitchPopup(false), 1800);
                 }}
               >
                 <div className={s.mobileRadioCircle}>
@@ -401,6 +411,9 @@ const BinaryLayout = () => {
                 onClick={() => {
                   setIsDemo(true);
                   setMobileAccountPopup(false);
+                  setSwitchPopupMsg("Switched to Demo Account");
+                  setShowSwitchPopup(true);
+                  setTimeout(() => setShowSwitchPopup(false), 1800);
                 }}
               >
                 <div className={s.mobileRadioCircle}>
@@ -468,6 +481,14 @@ const BinaryLayout = () => {
 
       {showLeaderboard && (
         <LeaderboardPopup onClose={() => setShowLeaderboard(false)} />
+      )}
+
+      {showSwitchPopup && (
+        <div className={s.switchPopupOverlay}>
+          <div className={s.switchPopupBox}>
+            {switchPopupMsg}
+          </div>
+        </div>
       )}
     </>
   );

@@ -32,6 +32,7 @@ import Bonuses from "./Admin/components/Bonuses/Bonuses";
 import AdminProtectedRoute from "./Route/ProtectedRoute/AdminProtectedRoute";
 import AdminHome from "./Admin/components/Home/AdminHome";
 import Affiliate from "./Admin/components/Affiliate/Affiliate";
+import Trades from "./Admin/components/Trades/Trades";
 const s = styles;
 
 const App = () => {
@@ -92,7 +93,9 @@ const App = () => {
                     <Route path="/admin/withdraw" element={<Withdraw />} />
                     <Route path="/admin/withdraw" element={<Withdraw />} />
                     <Route path="/admin/bonuses" element={<Bonuses />} />
-                    <Route path="/admin/affiliate" element={<Affiliate/>} />
+                    <Route path="/admin/affiliate" element={<Affiliate />} />
+                    <Route path="/admin/trades" element={<Trades />} />
+                    
                   </Route>
 
                   <Route

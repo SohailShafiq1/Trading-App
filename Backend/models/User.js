@@ -226,6 +226,19 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    cnicBackPicture: {
+      type: String,
+      default: "",
+    },
+    passportNumber: {
+      type: String,
+      default: "",
+      match: [/^[A-Za-z0-9]{9}$/, "Passport number must be 9 letters/digits"],
+    },
+    passportImage: {
+      type: String,
+      default: "",
+    },
     blocked: { type: Boolean, default: false },
     blockReason: { type: String, default: "" },
   },
