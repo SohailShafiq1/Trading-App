@@ -457,7 +457,6 @@ export const updateProfile = async (req, res) => {
       ) {
         return res.status(400).json({ error: "CNIC image does not match" });
       }
-    }
     } else if (
       typeof req.body.cnicPicture === "string" &&
       req.body.cnicPicture === ""
