@@ -1,4 +1,3 @@
-
 import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
@@ -484,39 +483,6 @@ export const getTeamTotalDeposits = async (req, res) => {
     const teamUsers = await User.find({ email: { $in: affiliate.team } });
 
     // Count all successful deposit transactions for all team users
-    let totalDeposits = 0;
-    teamUsers.forEach((user) => {
-      if (Array.isArray(user.transactions)) {
-        totalDeposits += user.transactions.filter(
-          (t) => t.type === "deposit" && t.status === "success"
-        ).length;
-      }
-    });
-
-    return res.status(200).json({
-      success: true,
-      totalDeposits,
-    });
-  } catch (err) {
-    console.error("Error calculating team total deposits:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-};
-
-export const getTeamTotalDeposits = async (req, res) => {
-  try {
-    const { email } = req.params;
-    const affiliate = await Affiliate.findOne({ email });
-    if (!affiliate) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Affiliate not found" });
-    }
-
-    const teamUsers = await User.find({ email: { $in: affiliate.team } });
     let totalDeposits = 0;
     teamUsers.forEach((user) => {
       if (Array.isArray(user.transactions)) {
