@@ -3,6 +3,8 @@ import {
   AiFillTrophy,
   AiOutlineArrowDown,
   AiOutlinePlus,
+  AiFillCrown,
+  AiOutlineEdit,
 } from "react-icons/ai";
 import { CgMoreAlt, CgProfile } from "react-icons/cg";
 import { IoMdImage } from "react-icons/io";
@@ -145,22 +147,61 @@ const BinaryLayout = () => {
               onClick={() => setAccountPopupVisible((v) => !v)}
               style={{ cursor: "pointer" }}
             >
-              <p>
-                {isDemo ? "Demo Account" : "Live Account"}
-                <br />$
-                {isDemo
-                  ? demo_assets.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  : Number(totalBalance).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-              </p>
-              <div className={s.arrow}>
-                <RiArrowDropDownLine style={{ fontSize: "2rem" }} />
-              </div>
+              {!isDemo ? (
+                <div className={s.liveAccountFlex}>
+                  <div className={s.crownBox}>
+                    <AiFillCrown
+                      style={{
+                        color: assets > 5000 ? "#FFA800" : "#404040", // Gold or Silver
+                        fontSize: "2em",
+                        verticalAlign: "middle",
+                      }}
+                    />
+                  </div>
+                  <div className={s.liveInfoBox}>
+                    <div className={s.liveRow}>
+                      <span className={s.liveLabel}>LIVE ACCOUNT</span>
+                      <RiArrowDropDownLine
+                        style={{ fontSize: "1.5em", marginLeft: 8 }}
+                      />
+                    </div>
+                    <div className={s.liveBalance}>
+                      $
+                      {Number(totalBalance).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={s.liveAccountFlex}>
+                  <div className={s.crownBox}>
+                    <AiOutlineEdit
+                      style={{
+                        color: "#666",
+                        fontSize: "2em",
+                        verticalAlign: "middle",
+                      }}
+                    />
+                  </div>
+                  <div className={s.liveInfoBox}>
+                    <div className={s.liveRow}>
+                      <span className={s.liveLabel}>DEMO ACCOUNT</span>
+                      <RiArrowDropDownLine
+                        style={{ fontSize: "1.5em", marginLeft: 8 }}
+                      />
+                    </div>
+                    <div className={s.liveBalance}>
+                      $
+                      {demo_assets.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {accountPopupVisible && (
@@ -309,6 +350,14 @@ const BinaryLayout = () => {
             ) : (
               <div className={s.liveAccount}>
                 <p>
+                  <AiFillCrown
+                    style={{
+                      color: "#FFA800",
+                      fontSize: "1.3em",
+                      verticalAlign: "middle",
+                      marginRight: 4,
+                    }}
+                  />
                   Live{" "}
                   <AiOutlineArrowDown
                     style={{ position: "relative", top: "4px" }}
@@ -485,9 +534,7 @@ const BinaryLayout = () => {
 
       {showSwitchPopup && (
         <div className={s.switchPopupOverlay}>
-          <div className={s.switchPopupBox}>
-            {switchPopupMsg}
-          </div>
+          <div className={s.switchPopupBox}>{switchPopupMsg}</div>
         </div>
       )}
     </>
