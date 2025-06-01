@@ -570,6 +570,67 @@
   font-weight: bold;
 }
 
+.switchPopupOverlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(34, 40, 49, 0.18);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: fadeIn 0.2s;
+}
+
+.switchPopupBox {
+   background: linear-gradient(90deg, #66b544, #1a391d);
+  color: #fff;
+  padding: 2.2rem 3.5rem;
+  border-radius: 18px;
+  font-weight: 700;
+  font-size: 1.35rem;
+  box-shadow: 0 8px 32px rgba(16, 160, 85, 0.18), 0 2px 16px rgba(0, 0, 0, 0.09);
+  text-align: center;
+  min-width: 260px;
+  max-width: 90vw;
+  letter-spacing: 0.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  pointer-events: auto;
+  animation: popupScaleIn 0.25s;
+}
+
+.switchPopupIcon {
+  font-size: 2.5rem;
+  margin-bottom: 0.3rem;
+  color: #fff;
+  filter: drop-shadow(0 2px 8px #0e6b0e55);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popupScaleIn {
+  from {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1200px) {
   .container {
     padding: 0 1rem;
