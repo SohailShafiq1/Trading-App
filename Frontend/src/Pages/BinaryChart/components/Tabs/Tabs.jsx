@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from "react";
 import { AiOutlineSetting } from "react-icons/ai";
 import { HiOutlineVolumeUp } from "react-icons/hi";
 import { AiTwotoneBell } from "react-icons/ai";
+import axios from "axios";
 import styles from "./Tabs.module.css";
 
 const Tabs = () => {
   const unreadNotifications = 5;
   const [showPopup, setShowPopup] = useState(false);
   const [activeTab, setActiveTab] = useState("Notifications");
+  const [newsList, setNewsList] = useState([]);
   const popupRef = useRef(null);
 
   const dummyNotifications = [
@@ -15,27 +17,44 @@ const Tabs = () => {
     "Market update: BTC price has risen by 5%.",
     "New feature available: Dark mode.",
   ];
-  const dummyNews = [
-    "Breaking News: Ethereum hits a new all-time high.",
-    "Crypto adoption increases in South America.",
-    "Regulatory updates: New crypto tax laws introduced.",
-  ];
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/news");
+        setNewsList(res.data);
+      } catch (err) {
+        console.error("Error fetching news:", err);
+      }
+    };
+    fetchNews();
+  }, []);
 
   const renderContent = () => {
-    const data = activeTab === "Notifications" ? dummyNotifications : dummyNews;
-
-    return data.length > 0 ? (
-      data.map((item, index) => (
-        <p key={index} className={styles.popupItem}>
-          {item}
-        </p>
-      ))
-    ) : (
-      <div className={styles.emptyContent}>Empty</div>
-    );
+    if (activeTab === "Notifications") {
+      return dummyNotifications.length > 0 ? (
+        dummyNotifications.map((item, index) => (
+          <p key={index} className={styles.popupItem}>
+            {item}
+          </p>
+        ))
+      ) : (
+        <div className={styles.emptyContent}>No notifications available.</div>
+      );
+    } else if (activeTab === "News") {
+      return newsList.length > 0 ? (
+        newsList.map((news, index) => (
+          <div key={index} className={styles.newsItem}>
+            <h4 className={styles.newsTitle}>{news.title}</h4>
+            <p className={styles.newsContent}>{news.content}</p>
+          </div>
+        ))
+      ) : (
+        <div className={styles.emptyContent}>No news available.</div>
+      );
+    }
   };
 
-  // Close popup if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (popupRef.current && !popupRef.current.contains(event.target)) {
