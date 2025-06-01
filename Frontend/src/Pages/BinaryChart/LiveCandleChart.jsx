@@ -889,6 +889,25 @@ const LiveCandleChart = ({ coinName }) => {
           seriesRef.current.setData(updated);
         }
       }
+
+      // Adjust visible range to maintain proper candle display
+      if (chartRef.current) {
+        const timeScale = chartRef.current.timeScale();
+        const visibleRange = timeScale.getVisibleLogicalRange();
+        if (visibleRange) {
+          const totalCandles = updated.length;
+          const visibleCandles = visibleRange.to - visibleRange.from;
+
+          // Ensure at least 10 candles are visible
+          if (visibleCandles < 10) {
+            timeScale.setVisibleLogicalRange({
+              from: totalCandles - 10,
+              to: totalCandles,
+            });
+          }
+        }
+      }
+
       applyIndicators();
     });
 
@@ -1055,9 +1074,7 @@ const LiveCandleChart = ({ coinName }) => {
       if (autoZoom) {
         chartRef.current.timeScale().fitContent();
       } else {
-        chartRef.current
-          .timeScale()
-          .zoomToLogicalRange({ from: 0, to: 100 }); // Increase zoom level
+        chartRef.current.timeScale().zoomToLogicalRange({ from: 0, to: 100 }); // Increase zoom level
       }
     }
   }, [autoZoom]);
