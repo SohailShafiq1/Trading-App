@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
 import Tesseract from "tesseract.js";
+import Trade from "../models/Trade.js";
 import fs from "fs";
 
 const storage = multer.diskStorage({
@@ -207,6 +208,7 @@ router.get("/transactions/:email", async (req, res) => {
   }
 });
 
+// Save user trade
 router.post("/trade", async (req, res) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ error: "Database not connected" });
@@ -233,6 +235,7 @@ router.post("/trade", async (req, res) => {
       });
     }
 
+    // Deduct from assets first, then bonus if needed
     let assetsToDeduct = Math.min(user.assets, investment);
     let bonusToDeduct = investment - assetsToDeduct;
 
@@ -245,9 +248,6 @@ router.post("/trade", async (req, res) => {
       ...trade,
       result: "pending",
       reward: 0,
-      calculatedReward: 0,
-      status: "running",
-      canClose: false,
       createdAt: new Date(),
     };
 
@@ -264,16 +264,10 @@ router.post("/trade", async (req, res) => {
   }
 });
 
+// Update trade result
 router.put("/trade/result", async (req, res) => {
   try {
-    const { email, startedAt, result, calculatedReward, exitPrice } = req.body;
-
-    if (!email || !startedAt || !result) {
-      return res.status(400).json({
-        error: "Missing required fields",
-        required: ["email", "startedAt", "result"],
-      });
-    }
+    const { email, startedAt, result, reward, exitPrice } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -283,110 +277,67 @@ router.put("/trade/result", async (req, res) => {
     const tradeIndex = user.trades.findIndex(
       (t) =>
         t.startedAt &&
-        Math.abs(
-          new Date(t.startedAt).getTime() - new Date(startedAt).getTime()
-        ) < 1000
+        new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
     );
 
     if (tradeIndex === -1) {
-      return res.status(404).json({
-        error: "Trade not found",
-        details: `No trade found with startedAt: ${startedAt}`,
-      });
+      return res.status(404).json({ error: "Trade not found" });
     }
 
-    if (!["can_close", "win", "loss"].includes(result)) {
-      return res.status(400).json({
-        error: "Invalid result value",
-        allowedValues: ["can_close", "win", "loss"],
-      });
+    user.trades[tradeIndex].result = result;
+    user.trades[tradeIndex].reward = reward;
+    user.trades[tradeIndex].exitPrice = exitPrice;
+
+    const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    let profitChange = 0;
+    if (result === "win") {
+      profitChange = reward;
+    } else if (result === "loss") {
+      profitChange = -user.trades[tradeIndex].investment;
     }
 
-    const trade = user.trades[tradeIndex];
+    // Find today's profit entry
+    let dailyEntry = user.dailyProfits.find((p) => p.date === today);
+    if (dailyEntry) {
+      dailyEntry.profit += profitChange;
+    } else {
+      user.dailyProfits.push({ date: today, profit: profitChange });
+    }
 
-    if (result === "can_close") {
-      trade.result = "can_close";
-      trade.calculatedReward = calculatedReward || 0;
-      trade.exitPrice = exitPrice || trade.entryPrice;
-      trade.status = "can_close";
-      trade.canClose = true;
-    } else if (result === "win" || result === "loss") {
-      trade.result = result;
-      trade.reward = calculatedReward || 0;
-      trade.exitPrice = exitPrice || trade.entryPrice;
-      trade.status = result;
-      trade.canClose = false;
-
-      if (result === "win") {
-        user.assets += Number(calculatedReward) || 0;
-      }
-
-      const today = new Date().toISOString().slice(0, 10);
-      const profitChange =
-        result === "win" ? Number(calculatedReward) || 0 : -trade.investment;
-
-      let dailyEntry = user.dailyProfits.find((p) => p.date === today);
-      if (dailyEntry) {
-        dailyEntry.profit += profitChange;
-      } else {
-        user.dailyProfits.push({ date: today, profit: profitChange });
-      }
+    if (result === "win") {
+      user.assets += reward;
     }
 
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Trade result updated successfully",
-      updatedTrade: trade,
-      newBalance: user.assets + user.totalBonus,
-    });
+    res.status(200).json({ message: "Trade result updated", user });
   } catch (err) {
-    res.status(500).json({
-      error: "Failed to update trade result",
-      details: err.message,
-      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
-    });
+    console.error("Error updating trade result:", err);
+    res.status(500).json({ error: "Failed to update trade result" });
   }
 });
 
+// Get user trades
 router.get("/trades/:email", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const processedTrades = user.trades.map((trade) => ({
-      id: trade._id,
-      type: trade.type,
-      coin: trade.coin,
-      coinType: trade.coinType,
-      investment: trade.investment,
-      entryPrice: trade.entryPrice,
-      exitPrice: trade.exitPrice || trade.entryPrice,
-      result: trade.result,
-      reward: trade.reward,
-      calculatedReward: trade.calculatedReward,
-      status: trade.status,
-      canClose: trade.canClose,
-      startedAt: trade.startedAt,
-      duration: trade.duration,
-      remainingTime:
-        trade.remainingTime ||
-        (trade.startedAt && trade.duration
-          ? Math.max(
-              0,
-              trade.duration -
-                Math.floor((new Date() - new Date(trade.startedAt)) / 1000)
-            )
-          : 0),
-      createdAt: trade.createdAt,
-    }));
+    const validTrades = user.trades
+      .filter((trade) => trade.startedAt && trade.duration)
+      .map((trade) => ({
+        ...trade.toObject(),
+        startedAt: trade.startedAt.toISOString(),
+        createdAt: trade.createdAt.toISOString(),
+      }));
 
-    res.status(200).json(processedTrades.reverse());
+    res.status(200).json(validTrades.reverse());
   } catch (err) {
+    console.error("Error fetching trades:", err);
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
+
 router.put(
   "/update-profile",
   upload.fields([
