@@ -1,3 +1,4 @@
+// controllers/userController.js
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
@@ -6,7 +7,6 @@ import path from "path";
 import Tesseract from "tesseract.js";
 import fs from "fs";
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === "profilePicture") {
@@ -25,7 +25,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Health check controller
 export const healthCheck = async (_req, res) => {
   try {
     await mongoose.connection.db.admin().ping();
@@ -43,48 +42,69 @@ export const healthCheck = async (_req, res) => {
   }
 };
 
-// User Deposit controller
 export const createDeposit = async (req, res) => {
-  const { email, amount, txId, bonusPercent = 0 } = req.body;
+  const { email, amount, txId, bonusId, bonusPercent = 0 } = req.body;
 
   try {
-    // Calculate bonus amount
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (Number(amount) < 10) {
+      return res.status(400).json({ error: "Minimum deposit amount is $10" });
+    }
+
     let bonusAmount = 0;
-    if (bonusPercent) {
-      bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
+    if (bonusPercent && bonusPercent > 0) {
+      bonusAmount = (Number(amount) * Number(bonusPercent)) / 100;
+
+      if (bonusId && user.usedBonuses.includes(bonusId)) {
+        return res
+          .status(400)
+          .json({ error: "This bonus has already been used" });
+      }
     }
 
     const deposit = new Deposit({
       userEmail: email,
       amount,
-      txId,
+      txId: txId || "Pending",
       wallet: process.env.ADMIN_TRON_WALLET,
-      bonusPercent,
+      bonusPercent: bonusPercent || 0,
       bonusAmount,
+      bonusId: bonusId || null,
+      status: "pending",
     });
 
     await deposit.save();
-    res
-      .status(201)
-      .json({ message: "Deposit submitted, awaiting confirmation." });
+
+    if (bonusId && bonusPercent > 0) {
+      user.usedBonuses.push(bonusId);
+      await user.save();
+    }
+
+    res.status(201).json({
+      message: "Deposit submitted, awaiting confirmation.",
+      deposit,
+      user: {
+        usedBonuses: user.usedBonuses,
+      },
+    });
   } catch (err) {
-    console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
   }
 };
 
-// Get all registered users
 export const getAllUsers = async (_req, res) => {
   try {
     const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
   } catch (err) {
-    console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
 
-// Get user by email
 export const getUserByEmail = async (req, res) => {
   const { email } = req.params;
   try {
@@ -92,12 +112,10 @@ export const getUserByEmail = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json(user);
   } catch (err) {
-    console.error("Error fetching user by email:", err);
     res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
-// Get user by ID (for admin view)
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id, { password: 0 });
@@ -108,7 +126,6 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// Update user assets
 export const updateUserAssets = async (req, res) => {
   const { email, assets } = req.body;
   try {
@@ -119,7 +136,6 @@ export const updateUserAssets = async (req, res) => {
     );
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Calculate total balance (assets + totalBonus)
     const totalBalance =
       typeof user.assets === "number" && typeof user.totalBonus === "number"
         ? (user.assets + user.totalBonus).toFixed(2)
@@ -131,12 +147,10 @@ export const updateUserAssets = async (req, res) => {
       totalBalance,
     });
   } catch (err) {
-    console.error("Error updating assets:", err);
     res.status(500).json({ error: "Failed to update assets" });
   }
 };
 
-// User Withdrawal controller
 export const createWithdrawal = async (req, res) => {
   const { email, amount, network, purse, paymentMethod } = req.body;
 
@@ -172,12 +186,10 @@ export const createWithdrawal = async (req, res) => {
 
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
-    console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
 };
 
-// Get all user transactions
 export const getUserTransactions = async (req, res) => {
   const { email } = req.params;
 
@@ -187,13 +199,11 @@ export const getUserTransactions = async (req, res) => {
 
     res.status(200).json(user.transactions || []);
   } catch (err) {
-    console.error("Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 };
 
-// Save user trade
-export const saveTrade = async (req, res) => {
+export const saveUserTrade = async (req, res) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ error: "Database not connected" });
   }
@@ -219,7 +229,6 @@ export const saveTrade = async (req, res) => {
       });
     }
 
-    // Deduct from assets first, then bonus if needed
     let assetsToDeduct = Math.min(user.assets, investment);
     let bonusToDeduct = investment - assetsToDeduct;
 
@@ -248,7 +257,6 @@ export const saveTrade = async (req, res) => {
   }
 };
 
-// Update trade result
 export const updateTradeResult = async (req, res) => {
   try {
     const { email, startedAt, result, reward, exitPrice } = req.body;
@@ -280,7 +288,6 @@ export const updateTradeResult = async (req, res) => {
       profitChange = -user.trades[tradeIndex].investment;
     }
 
-    // Find today's profit entry
     let dailyEntry = user.dailyProfits.find((p) => p.date === today);
     if (dailyEntry) {
       dailyEntry.profit += profitChange;
@@ -301,7 +308,6 @@ export const updateTradeResult = async (req, res) => {
   }
 };
 
-// Get user trades
 export const getUserTrades = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
@@ -322,8 +328,7 @@ export const getUserTrades = async (req, res) => {
   }
 };
 
-// Update user profile (firstName, lastName)
-export const updateProfile = async (req, res) => {
+export const updateUserProfile = async (req, res) => {
   const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
   const update = { firstName, lastName, cnicNumber };
 
@@ -337,14 +342,12 @@ export const updateProfile = async (req, res) => {
     const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
     update.cnicPicture = cnicImagePath;
 
-    // OCR extraction
     try {
       const {
         data: { text },
       } = await Tesseract.recognize(cnicImagePath, "eng", {
-        logger: (m) => console.log(m),
+        logger: (m) => {},
       });
-      // Regex for Pakistani CNIC (13 digits, with or without dashes)
       const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
       if (match) {
         update.imgCNIC = match[0];
@@ -385,7 +388,6 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// Verify user by admin
 export const verifyUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -400,7 +402,6 @@ export const verifyUser = async (req, res) => {
   }
 };
 
-// Unverify user by admin
 export const unverifyUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -415,7 +416,6 @@ export const unverifyUser = async (req, res) => {
   }
 };
 
-// Check user verification status
 export const checkVerificationStatus = async (req, res) => {
   const { id } = req.params;
 
@@ -430,27 +430,22 @@ export const checkVerificationStatus = async (req, res) => {
     }
     res.status(200).json({ verified: user.verified });
   } catch (err) {
-    console.error("Error checking verification status:", err);
     res.status(500).json({ error: "Failed to check verification status" });
   }
 };
 
-// Validate CNIC format
 export const validateCNIC = async (req, res) => {
   const { cnicNumber } = req.body;
 
-  // Check if CNIC number is provided
   if (!cnicNumber) {
     return res.status(400).json({ error: "CNIC number is required" });
   }
 
-  // Check if CNIC number matches the valid format
   if (cnicNumber && !/^\d{5}-\d{7}-\d{1}$/.test(cnicNumber)) {
     return res.status(400).json({ error: "Invalid CNIC format" });
   }
 
   try {
-    // Check if the CNIC number already exists in the database
     const existingUser = await User.findOne({ cnicNumber });
     if (existingUser) {
       return res.status(409).json({ error: "CNIC number already exists" });
@@ -458,10 +453,8 @@ export const validateCNIC = async (req, res) => {
 
     res.status(200).json({ message: "CNIC number is valid" });
   } catch (err) {
-    console.error("Error validating CNIC:", err);
     res.status(500).json({ error: "Failed to validate CNIC" });
   }
 };
 
-// Export multer upload middleware
 export { upload };
