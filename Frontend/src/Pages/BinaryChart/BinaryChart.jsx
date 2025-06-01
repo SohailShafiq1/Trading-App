@@ -13,19 +13,6 @@ import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
-import audio from "./assets/trade.mp3";
-const timeFrames = [
-  { value: 30, label: "30s" },
-  { value: 60, label: "1 min" },
-  { value: 120, label: "2 min" },
-  { value: 180, label: "3 min" },
-  { value: 300, label: "5 min" },
-  { value: 600, label: "10 min" },
-  { value: 900, label: "15 min" },
-  { value: 1800, label: "30 min" },
-  { value: 3600, label: "1 hour" },
-  { value: 7200, label: "2 hour" },
-];
 
 const BinaryChart = () => {
   // State declarations
@@ -417,99 +404,8 @@ const BinaryChart = () => {
             tradeType === "Buy" ? endPrice > tradePrice : endPrice < tradePrice;
 
           const reward = isWin
-            ? (
-                investment *
-                (1 + (profitPercentage / 100) * randomFactor)
-              ).toFixed(2)
-            : -(investment * randomFactor).toFixed(2);
-
-          console.log("Trade result calculated:", {
-            isWin,
-            reward,
-            endPrice,
-            entryPrice: tradePrice,
-          });
-
-          // Update trade to "can_close" state
-          await updateTradeResultInDB({
-            email: user.email,
-            startedAt,
-            result: "can_close",
-            calculatedReward: parseFloat(reward),
-            exitPrice: endPrice,
-          });
-
-          // Update local state
-          setTrades((prev) =>
-            prev.map((t) =>
-              t.id === tradeId
-                ? {
-                    ...t,
-                    status: "can_close",
-                    calculatedReward: parseFloat(reward),
-                    exitPrice: endPrice,
-                    canClose: true,
-                  }
-                : t
-            )
-          );
-
-          setPopupMessage(
-            `Trade ready to close! Potential ${
-              isWin ? "profit" : "loss"
-            }: $${Math.abs(reward)}`
-          );
-          setPopupColor(isWin ? "#10A055" : "#FF1600");
-          setShowPopup(true);
-          setTimeout(() => setShowPopup(false), 3000);
-        } catch (err) {
-          console.error("Failed to check trade result:", {
-            error: err,
-            tradeId,
-            selectedCoin,
-            tradeType,
-          });
-
-          // Mark trade as failed if we can't determine result
-          setTrades((prev) =>
-            prev.map((t) =>
-              t.id === tradeId
-                ? {
-                    ...t,
-                    status: "error",
-                    canClose: false,
-                  }
-                : t
-            )
-          );
-
-          toast.error("Failed to determine trade result");
-        }
-      }, timer * 1000);
-    } catch (err) {
-      console.error("Trade failed:", err);
-    } finally {
-      setIsProcessingTrade(false);
-    }
-  };
-
-  // Function to handle closing a trade
-  const handleCloseTrade = async (tradeId) => {
-    if (isProcessingTrade) return;
-    setIsProcessingTrade(true);
-
-    // Play sound when closing trade
-    playTradeSound();
-
-    try {
-      const trade = trades.find((t) => t.id === tradeId);
-      if (!trade || !trade.canClose) {
-        toast.error("Trade not found or cannot be closed");
-        return;
-      }
-
-      // Determine the final status based on calculated reward
-      const finalStatus = trade.calculatedReward > 0 ? "win" : "loss";
+            ? (investment * (1 + profitPercentage / 100)).toFixed(2)
+            : -investment;
 
           if (isDemo) {
             // Update demo assets if win
@@ -768,16 +664,10 @@ const BinaryChart = () => {
       toast.error("Please verify your account to start trading");
       return;
     }
-    playTradeSound(); // Play sound on buy/sell
     handleTrade(tradeType);
   };
 
   const currentAssets = isDemo ? demoAssets : userAssets;
-
-  const playTradeSound = () => {
-    const sound = new Audio(audio);
-    sound.play();
-  };
 
   return (
     <>
@@ -878,27 +768,19 @@ const BinaryChart = () => {
               </div>
               <div className={styles.timestampPopupContainer}>
                 {showTimestampPopup && (
-                  <div
-                    className={styles.timestampOverlay}
-                    onClick={() => setShowTimestampPopup(false)}
-                  >
-                    <div
-                      className={styles.timestampPopup}
-                      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the popup
-                    >
-                      {timeFrames.map((tf) => (
-                        <div
-                          key={tf.value}
-                          className={styles.timestampOption}
-                          onClick={() => {
-                            setTimer(tf.value);
-                            setShowTimestampPopup(false);
-                          }}
-                        >
-                          {tf.label}
-                        </div>
-                      ))}
-                    </div>
+                  <div className={styles.timestampPopup}>
+                    {[30, 60, 120, 180, 300].map((time) => (
+                      <div
+                        key={time}
+                        className={styles.timestampOption}
+                        onClick={() => {
+                          setTimer(time);
+                          setShowTimestampPopup(false);
+                        }}
+                      >
+                        {formatTime(time)}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

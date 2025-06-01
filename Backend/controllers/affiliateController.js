@@ -469,6 +469,7 @@ export const getAllAffiliates = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 export const getTeamTotalDeposits = async (req, res) => {
   try {
     const { email } = req.params;

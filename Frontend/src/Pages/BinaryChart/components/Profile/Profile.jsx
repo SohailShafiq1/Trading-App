@@ -35,6 +35,7 @@ const Profile = () => {
   const { user, logout } = useAuth();
   const { logoutAffiliate } = useAffiliateAuth();
 
+  // Ensure all state variables have default values to avoid uncontrolled inputs
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -50,7 +51,6 @@ const Profile = () => {
   const [cnicPreview, setCnicPreview] = useState("");
   const [cnicBackPicture, setCnicBackPicture] = useState("");
   const [cnicBackPreview, setCnicBackPreview] = useState("");
-
   const [passportNumber, setPassportNumber] = useState("");
   const [passportImage, setPassportImage] = useState("");
   const [passportPreview, setPassportPreview] = useState("");
@@ -147,7 +147,11 @@ const Profile = () => {
           }
           setIsOcrLoading(false); // Stop OCR loader
         })
-        .catch(() => setIsOcrLoading(false));
+        .catch(() => {
+          setIsOcrLoading(false);
+          setCnicPicture(""); // Clear CNIC picture on OCR error
+          console.error("OCR error:", err);
+        });
     }
   };
 
@@ -207,6 +211,12 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    // Ensure all required fields are validated before sending the request
+    if (!firstName || !lastName || !email) {
+      alert("First Name, Last Name, and Email are required.");
+      return;
+    }
+
     // Age validation
     if (dateOfBirth) {
       const dob = new Date(dateOfBirth);
@@ -261,11 +271,19 @@ const Profile = () => {
         formData.append("passportImage", passportImage);
       }
 
+      // Debugging: Log FormData keys and values
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
       await axios.put(
         "http://localhost:5000/api/users/update-profile",
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
       alert("Profile updated!");
@@ -285,6 +303,7 @@ const Profile = () => {
       setCnicBackPicture(res.data.cnicBackPicture || "");
       setCnicBackPreview("");
     } catch (err) {
+      console.error("Error updating profile:", err);
       alert("Failed to update profile");
     } finally {
       setIsSaving(false); // Stop loader

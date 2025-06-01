@@ -15,7 +15,9 @@ const Affiliate = () => {
   useEffect(() => {
     const fetchAffiliates = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/api/affiliates`);
+        const response = await axios.get(
+          `${BACKEND_URL}/api/affiliate/affiliates`
+        );
         setAffiliates(response.data.affiliates || []);
       } catch (err) {
         console.error("Error fetching affiliates:", err);

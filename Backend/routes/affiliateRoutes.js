@@ -24,5 +24,4 @@ router.get("/traffic-questions-list", getTrafficQuestionsList);
 router.put("/traffic-questions", updateTrafficQuestions);
 router.get("/team-deposit-count/:email", getTeamTotalDeposits);
 router.get("/affiliates", getAllAffiliates);
-
 export default router;

@@ -3,10 +3,11 @@ import Deposit from "../models/Deposit.js";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
-import nodemailer from "nodemailer";
 import Tesseract from "tesseract.js";
 import fs from "fs";
+import nodemailer from "nodemailer";
 
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === "profilePicture") {
@@ -23,9 +24,10 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+export const upload = multer({ storage });
 
-export const healthCheck = async (_req, res) => {
+// Health check
+export const healthCheck = async (req, res) => {
   try {
     await mongoose.connection.db.admin().ping();
     res.status(200).json({
@@ -42,6 +44,7 @@ export const healthCheck = async (_req, res) => {
   }
 };
 
+// Deposit
 export const createDeposit = async (req, res) => {
   const { email, amount, txId, bonusId, bonusPercent = 0 } = req.body;
 
@@ -92,19 +95,23 @@ export const createDeposit = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
   }
 };
 
-export const getAllUsers = async (_req, res) => {
+// Get all users
+export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
   } catch (err) {
+    console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
 
+// Get user by email
 export const getUserByEmail = async (req, res) => {
   const { email } = req.params;
   try {
@@ -112,10 +119,12 @@ export const getUserByEmail = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json(user);
   } catch (err) {
+    console.error("Error fetching user by email:", err);
     res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
+// Get user by ID
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id, { password: 0 });
@@ -126,6 +135,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
+// Update user assets
 export const updateUserAssets = async (req, res) => {
   const { email, assets } = req.body;
   try {
@@ -147,11 +157,13 @@ export const updateUserAssets = async (req, res) => {
       totalBalance,
     });
   } catch (err) {
+    console.error("Error updating assets:", err);
     res.status(500).json({ error: "Failed to update assets" });
   }
 };
 
-export const createWithdrawal = async (req, res) => {
+// Withdraw
+export const withdraw = async (req, res) => {
   const { email, amount, network, purse, paymentMethod } = req.body;
 
   try {
@@ -186,10 +198,12 @@ export const createWithdrawal = async (req, res) => {
 
     res.status(201).json({ message: "Withdrawal submitted" });
   } catch (err) {
+    console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
 };
 
+// Get user transactions
 export const getUserTransactions = async (req, res) => {
   const { email } = req.params;
 
@@ -199,6 +213,7 @@ export const getUserTransactions = async (req, res) => {
 
     res.status(200).json(user.transactions || []);
   } catch (err) {
+    console.error("Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 };
@@ -328,66 +343,94 @@ export const getUserTrades = async (req, res) => {
   }
 };
 
-export const updateUserProfile = async (req, res) => {
-  const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
-  const update = { firstName, lastName, cnicNumber };
+// Update profile
+export const updateProfile = async (req, res) => {
+  try {
+    const {
+      email,
+      firstName,
+      lastName,
+      dateOfBirth,
+      cnicNumber,
+      passportNumber,
+    } = req.body;
 
-  if (dateOfBirth && dateOfBirth !== "") {
-    update.dateOfBirth = new Date(dateOfBirth);
-  }
-  if (req.files?.profilePicture) {
-    update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
-  }
-  if (req.files?.cnicPicture) {
-    const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
-    update.cnicPicture = cnicImagePath;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
 
-    try {
-      const {
-        data: { text },
-      } = await Tesseract.recognize(cnicImagePath, "eng", {
-        logger: (m) => {},
-      });
-      const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
-      if (match) {
-        update.imgCNIC = match[0];
-      } else {
+    const update = { firstName, lastName, cnicNumber, passportNumber };
+
+    if (dateOfBirth && dateOfBirth !== "") {
+      const parsedDate = new Date(dateOfBirth);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ error: "Invalid date of birth" });
+      }
+      update.dateOfBirth = parsedDate;
+    }
+
+    if (req.files?.profilePicture) {
+      update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
+    }
+
+    if (req.files?.cnicPicture) {
+      const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
+      update.cnicPicture = cnicImagePath;
+
+      try {
+        const {
+          data: { text },
+        } = await Tesseract.recognize(cnicImagePath, "eng");
+        const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
+        update.imgCNIC = match ? match[0] : "";
+      } catch (ocrErr) {
+        console.error("OCR error:", ocrErr);
         update.imgCNIC = "";
       }
-    } catch (ocrErr) {
+
+      if (
+        update.imgCNIC &&
+        req.body.cnicNumber &&
+        update.imgCNIC !== req.body.cnicNumber
+      ) {
+        return res.status(400).json({ error: "CNIC image does not match" });
+      }
+    }
+
+    if (req.files?.cnicBackPicture) {
+      update.cnicBackPicture = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
+    } else if (req.files?.cnicPicture && !req.files?.cnicBackPicture) {
+      return res.status(400).json({ error: "CNIC back image is required" });
+    }
+
+    if (req.files?.passportImage) {
+      update.passportImage = `uploads/others/${req.files.passportImage[0].filename}`;
+    }
+
+    if (req.body.profilePicture === "") {
+      update.profilePicture = "";
+    }
+
+    if (req.body.cnicPicture === "") {
+      update.cnicPicture = "";
       update.imgCNIC = "";
     }
 
-    if (
-      update.imgCNIC &&
-      req.body.cnicNumber &&
-      update.imgCNIC !== req.body.cnicNumber
-    ) {
-      return res.status(400).json({ error: "Image not matched" });
-    }
-  }
-  if (
-    typeof req.body.profilePicture === "string" &&
-    req.body.profilePicture === ""
-  ) {
-    update.profilePicture = "";
-  }
-  if (typeof req.body.cnicPicture === "string" && req.body.cnicPicture === "") {
-    update.cnicPicture = "";
-    update.imgCNIC = "";
-  }
-
-  try {
     const user = await User.findOneAndUpdate({ email }, update, {
       new: true,
     });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     res.status(200).json({ message: "Profile updated successfully", user });
   } catch (err) {
+    console.error("Error in update-profile:", err);
     res.status(500).json({ error: "Failed to update profile" });
   }
 };
 
+// Verify user
 export const verifyUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -402,6 +445,7 @@ export const verifyUser = async (req, res) => {
   }
 };
 
+// Unverify user
 export const unverifyUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -416,6 +460,7 @@ export const unverifyUser = async (req, res) => {
   }
 };
 
+// Check verification status
 export const checkVerificationStatus = async (req, res) => {
   const { id } = req.params;
 
@@ -430,10 +475,12 @@ export const checkVerificationStatus = async (req, res) => {
     }
     res.status(200).json({ verified: user.verified });
   } catch (err) {
+    console.error("Error checking verification status:", err);
     res.status(500).json({ error: "Failed to check verification status" });
   }
 };
 
+// Validate CNIC
 export const validateCNIC = async (req, res) => {
   const { cnicNumber } = req.body;
 
@@ -453,11 +500,12 @@ export const validateCNIC = async (req, res) => {
 
     res.status(200).json({ message: "CNIC number is valid" });
   } catch (err) {
+    console.error("Error validating CNIC:", err);
     res.status(500).json({ error: "Failed to validate CNIC" });
   }
 };
 
-// ✅ Block User
+// Block user
 export const blockUser = async (req, res) => {
   const { reason } = req.body;
   const user = await User.findByIdAndUpdate(
@@ -465,7 +513,6 @@ export const blockUser = async (req, res) => {
     { blocked: true, blockReason: reason },
     { new: true }
   );
-
   if (user) {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -492,26 +539,35 @@ export const blockUser = async (req, res) => {
     try {
       await transporter.sendMail(mailOptions);
       console.log("Block email sent to", user.email);
-      user.lastEmailSent = new Date();
-      await user.save();
+      if (user) {
+        user.lastEmailSent = new Date();
+        await user.save();
+      }
     } catch (error) {
-      console.error("Error sending block email:", error);
-      user.emailError = error.message;
-      await user.save();
+      console.error("Error sending block email:", {
+        message: error.message,
+        stack: error.stack,
+        response: error.response,
+      });
+      if (user) {
+        user.emailError = error.message;
+        await user.save();
+      }
     }
   }
-
   res.json({ success: true });
 };
 
-// ✅ Unblock User
+// Unblock user
 export const unblockUser = async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { blocked: false, blockReason: "" },
+    {
+      blocked: false,
+      blockReason: "",
+    },
     { new: true }
   );
-
   if (user) {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -542,11 +598,10 @@ export const unblockUser = async (req, res) => {
       console.error("Error sending unblock email:", error);
     }
   }
-
   res.json({ success: true });
 };
 
-// ✅ Test Email
+// Test email
 export const testEmail = async (req, res) => {
   try {
     const transporter = nodemailer.createTransport({
@@ -575,5 +630,3 @@ export const testEmail = async (req, res) => {
     });
   }
 };
-
-export { upload };

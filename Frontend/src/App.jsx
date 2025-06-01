@@ -5,7 +5,7 @@ import HomePage from "./Pages/HomePage/HomePage";
 import RegisterLayout from "./Layout/RegisterLayout/RegisterLayout";
 import RegisterPage from "./Pages/RegisterPage/RegisterPage";
 import LoginPage from "./Pages/LoginPage/LoginPage";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./Context/AuthContext";
 import BinaryChart from "./Pages/BinaryChart/BinaryChart";
 import BinaryLayout from "./Layout/BinaryLayout/BinaryLayout";
 import Profile from "./Pages/BinaryChart/components/Profile/Profile";
@@ -95,7 +95,6 @@ const App = () => {
                     <Route path="/admin/bonuses" element={<Bonuses />} />
                     <Route path="/admin/affiliate" element={<Affiliate />} />
                     <Route path="/admin/trades" element={<Trades />} />
-                    
                   </Route>
 
                   <Route
