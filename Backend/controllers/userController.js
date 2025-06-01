@@ -12,7 +12,10 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === "profilePicture") {
       cb(null, "uploads/profile/");
-    } else if (file.fieldname === "cnicPicture") {
+    } else if (
+      file.fieldname === "cnicPicture" ||
+      file.fieldname === "cnicBackPicture"
+    ) {
       cb(null, "uploads/cnic/");
     } else {
       cb(null, "uploads/others/");
@@ -77,18 +80,55 @@ export const createDeposit = async (req, res) => {
       bonusPercent: bonusPercent || 0,
       bonusAmount,
       bonusId: bonusId || null,
-      status: "pending",
+      status: "verified", // <-- Now deposits are auto-approved
     });
 
     await deposit.save();
 
-    if (bonusId && bonusPercent > 0) {
+    // CREDIT USER IMMEDIATELY IF VERIFIED
+    if (deposit.status === "verified") {
+      // Only credit if not already credited for this deposit
+      const existingTransaction = user.transactions.find(
+        (t) => t.orderId === deposit._id.toString() && t.type === "deposit"
+      );
+      if (!existingTransaction) {
+        user.assets += Number(deposit.amount);
+        user.depositCount = (user.depositCount || 0) + 1;
+
+        user.transactions.push({
+          orderId: deposit._id.toString(),
+          type: "deposit",
+          amount: deposit.amount,
+          paymentMethod: deposit.network || "USDT (TRC-20)",
+          status: "success",
+          date: new Date(),
+        });
+
+        // Apply bonus if exists
+        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
+          user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
+          user.assets += deposit.bonusAmount; // Add bonus to assets
+
+          // Track bonus percent if not already tracked
+          if (
+            deposit.bonusPercent &&
+            !user.usedBonuses.includes(deposit.bonusId)
+          ) {
+            user.usedBonuses.push(deposit.bonusId);
+          }
+        }
+
+        await user.save();
+      }
+    }
+
+    if (bonusId && bonusPercent > 0 && !user.usedBonuses.includes(bonusId)) {
       user.usedBonuses.push(bonusId);
       await user.save();
     }
 
     res.status(201).json({
-      message: "Deposit submitted, awaiting confirmation.",
+      message: "Deposit submitted and approved.",
       deposit,
       user: {
         usedBonuses: user.usedBonuses,
@@ -353,10 +393,18 @@ export const updateProfile = async (req, res) => {
       dateOfBirth,
       cnicNumber,
       passportNumber,
+      cnicBackPicture: cnicBackPictureBody,
+      // ...other fields...
     } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Fetch the user first to get current values
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
     const update = { firstName, lastName, cnicNumber, passportNumber };
@@ -371,11 +419,21 @@ export const updateProfile = async (req, res) => {
 
     if (req.files?.profilePicture) {
       update.profilePicture = `uploads/profile/${req.files.profilePicture[0].filename}`;
+    } else if (
+      typeof req.body.profilePicture === "string" &&
+      req.body.profilePicture === ""
+    ) {
+      update.profilePicture = "";
+    } else {
+      update.profilePicture = user.profilePicture;
     }
 
     if (req.files?.cnicPicture) {
-      const cnicImagePath = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
-      update.cnicPicture = cnicImagePath;
+      const cnicImagePath = path.resolve(
+        "uploads/cnic",
+        req.files.cnicPicture[0].filename
+      );
+      update.cnicPicture = `uploads/cnic/${req.files.cnicPicture[0].filename}`;
 
       try {
         const {
@@ -395,35 +453,79 @@ export const updateProfile = async (req, res) => {
       ) {
         return res.status(400).json({ error: "CNIC image does not match" });
       }
+    } else if (
+      typeof req.body.cnicPicture === "string" &&
+      req.body.cnicPicture === ""
+    ) {
+      update.cnicPicture = "";
+      update.imgCNIC = "";
+    } else {
+      update.cnicPicture = user.cnicPicture;
+      update.imgCNIC = user.imgCNIC;
     }
 
+    // --- FIX: Preserve CNIC Back Picture ---
     if (req.files?.cnicBackPicture) {
       update.cnicBackPicture = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
-    } else if (req.files?.cnicPicture && !req.files?.cnicBackPicture) {
-      return res.status(400).json({ error: "CNIC back image is required" });
+      console.log("Saving CNIC BACK:", update.cnicBackPicture); // <--- ADD THIS
+    } else if (
+      typeof cnicBackPictureBody === "string" &&
+      cnicBackPictureBody === ""
+    ) {
+      update.cnicBackPicture = "";
+    } else {
+      update.cnicBackPicture = user.cnicBackPicture;
     }
+    // --- END FIX ---
 
     if (req.files?.passportImage) {
       update.passportImage = `uploads/others/${req.files.passportImage[0].filename}`;
+    } else if (
+      typeof req.body.passportImage === "string" &&
+      req.body.passportImage === ""
+    ) {
+      update.passportImage = "";
+    } else {
+      update.passportImage = user.passportImage;
     }
 
-    if (req.body.profilePicture === "") {
-      update.profilePicture = "";
-    }
-
-    if (req.body.cnicPicture === "") {
-      update.cnicPicture = "";
-      update.imgCNIC = "";
-    }
-
-    const user = await User.findOneAndUpdate({ email }, update, {
+    const updatedUser = await User.findOneAndUpdate({ email }, update, {
       new: true,
     });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
 
-    res.status(200).json({ message: "Profile updated successfully", user });
+    // Convert paths to full URLs
+    const userWithUrls = {
+      ...updatedUser.toObject(),
+      profilePicture: updatedUser.profilePicture
+        ? `http://localhost:5000/${updatedUser.profilePicture.replace(
+            /^uploads\//,
+            ""
+          )}`
+        : "",
+      cnicPicture: updatedUser.cnicPicture
+        ? `http://localhost:5000/${updatedUser.cnicPicture.replace(
+            /^uploads\//,
+            ""
+          )}`
+        : "",
+      cnicBackPicture: updatedUser.cnicBackPicture
+        ? `http://localhost:5000/${updatedUser.cnicBackPicture.replace(
+            /^uploads\//,
+            ""
+          )}`
+        : "",
+      passportImage: updatedUser.passportImage
+        ? `http://localhost:5000/${updatedUser.passportImage.replace(
+            /^uploads\//,
+            ""
+          )}`
+        : "",
+    };
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: userWithUrls,
+    });
   } catch (err) {
     console.error("Error in update-profile:", err);
     res.status(500).json({ error: "Failed to update profile" });
