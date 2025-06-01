@@ -1,0 +1,21 @@
+.tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.2rem;
+}
+.tab {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: #9197a4;
+  transition: background-color 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .tab {
+    padding: 0.5rem 0.5rem;
+  }
+  .tabs {
+    gap: 0.2rem;
+  }
+}

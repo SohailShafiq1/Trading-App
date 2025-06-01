@@ -378,13 +378,12 @@ body {
   border: 2px solid #388e1c;
   transform: scale(0.98);
 }
-.timestampOverlay
-{
+.timestampOverlay {
   position: fixed;
   z-index: 9;
-    width: 100vw;
+  width: 100vw;
   height: 100vh;
-    top: 10;
+  top: 10;
   left: 20;
 }
 
