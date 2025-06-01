@@ -5,6 +5,7 @@ import { useAuth } from "../../../../Context/AuthContext";
 import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
 import axios from "axios";
 import Modal from "react-modal";
+import Tesseract from "tesseract.js";
 
 const s = styles;
 
@@ -47,12 +48,26 @@ const Profile = () => {
   const [cnicNumber, setCnicNumber] = useState(user?.cnicNumber || "");
   const [cnicPicture, setCnicPicture] = useState("");
   const [cnicPreview, setCnicPreview] = useState("");
+  const [cnicBackPicture, setCnicBackPicture] = useState("");
+  const [cnicBackPreview, setCnicBackPreview] = useState("");
   const fileInputRef = useRef(null);
 
   // Delete account modal state
   const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
+
+  // Loading state for save operation
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Add document type state
+  const [documentType, setDocumentType] = useState("CNIC");
+
+  // OCR loading state
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
+
+  // CNIC back image required modal state
+  const [showBackImageModal, setShowBackImageModal] = useState(false);
 
   // Set app element for react-modal (for accessibility)
   Modal.setAppElement("#root");
@@ -76,6 +91,7 @@ const Profile = () => {
         setProfilePicture(res.data.profilePicture || "");
         setCnicNumber(res.data.cnicNumber || "");
         setCnicPicture(res.data.cnicPicture || "");
+        setCnicBackPicture(res.data.cnicBackPicture || "");
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
@@ -97,11 +113,43 @@ const Profile = () => {
     }
   };
 
-  const handleCnicImageChange = (e) => {
+  const handleCnicImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setCnicPreview(URL.createObjectURL(file));
       setCnicPicture(file);
+
+      setIsOcrLoading(true); // Start OCR loader
+
+      // OCR: Extract CNIC number from image
+      Tesseract.recognize(file, "eng")
+        .then(({ data: { text } }) => {
+          // Find CNIC pattern in text
+          const match = text.match(/\d{5}-\d{7}-\d{1}/);
+          if (match) {
+            setCnicNumber(match[0]);
+          } else {
+            // Try to find unformatted CNIC and format it
+            const digits = text.replace(/\D/g, "");
+            if (digits.length === 13) {
+              setCnicNumber(
+                `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(
+                  12
+                )}`
+              );
+            }
+          }
+          setIsOcrLoading(false); // Stop OCR loader
+        })
+        .catch(() => setIsOcrLoading(false));
+    }
+  };
+
+  const handleCnicBackImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCnicBackPreview(URL.createObjectURL(file));
+      setCnicBackPicture(file); // Only update back
     }
   };
 
@@ -149,7 +197,19 @@ const Profile = () => {
       return;
     }
 
+    // Require back image if front image is present but back is not
+    if (
+      (cnicPicture && !cnicBackPicture) ||
+      (typeof cnicPicture === "object" &&
+        cnicPicture instanceof File &&
+        !cnicBackPicture)
+    ) {
+      setShowBackImageModal(true); // Show custom modal
+      return;
+    }
+
     try {
+      setIsSaving(true); // Start loader
       const formData = new FormData();
       formData.append("email", email);
       formData.append("firstName", firstName);
@@ -161,6 +221,9 @@ const Profile = () => {
       }
       if (cnicPicture && cnicPicture instanceof File) {
         formData.append("cnicPicture", cnicPicture);
+      }
+      if (cnicBackPicture && cnicBackPicture instanceof File) {
+        formData.append("cnicBackPicture", cnicBackPicture);
       }
 
       await axios.put(
@@ -184,8 +247,12 @@ const Profile = () => {
       setCountry(res.data.country || "");
       setUserId(res.data.userId || "");
       setVerified(res.data.verified || false);
+      setCnicBackPicture(res.data.cnicBackPicture || "");
+      setCnicBackPreview("");
     } catch (err) {
       alert("Failed to update profile");
+    } finally {
+      setIsSaving(false); // Stop loader
     }
   };
 
@@ -238,18 +305,28 @@ const Profile = () => {
   };
 
   const handleDeleteCnicImage = async () => {
-    if (!window.confirm("Delete your CNIC image?")) return;
+    if (!window.confirm("Delete your CNIC image and CNIC back image?")) return;
     await axios.put("http://localhost:5000/api/users/update-profile", {
       email,
       cnicPicture: "",
+      cnicBackPicture: "", // <-- Also clear CNIC back image
     });
     setCnicPicture("");
     setCnicPreview("");
+    setCnicBackPicture(""); // <-- Clear CNIC back image in state
+    setCnicBackPreview(""); // <-- Clear CNIC back preview in state
   };
 
   return (
     <div className={s.container}>
       <div className={s.profileBox}>
+        {/* Loader overlay */}
+        {isSaving && (
+          <div className={s.loaderOverlay}>
+            <div className={s.loaderSpinner}></div>
+            <div className={s.loaderText}>Saving...</div>
+          </div>
+        )}
         <h2 className={s.title}>Personal data:</h2>
         <div className={s.userInfo}>
           <div className={s.avatar}>
@@ -373,32 +450,56 @@ const Profile = () => {
             </div>
           </div>
 
+          {/* Document type selection and CNIC number */}
           <div className={s.row}>
             <div className={s.inputBox}>
-              <label>CNIC Number</label>
+              <label>Document Type</label>
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value)}
+              >
+                <option value="CNIC">CNIC</option>
+                <option value="Passport">Passport</option>
+              </select>
+            </div>
+            <div className={s.inputBox}>
+              <label>{documentType} Number</label>
               <input
                 type="text"
                 value={cnicNumber}
                 onChange={handleCnicChange}
-                placeholder="xxxxx-xxxxxxx-x"
-                maxLength={15}
+                placeholder={
+                  documentType === "CNIC"
+                    ? "xxxxx-xxxxxxx-x"
+                    : "Passport Number"
+                }
+                maxLength={documentType === "CNIC" ? 15 : 30}
+                disabled={
+                  isOcrLoading ||
+                  !!(
+                    cnicPicture &&
+                    typeof cnicPicture === "string" &&
+                    cnicBackPicture &&
+                    typeof cnicBackPicture === "string"
+                  )
+                }
               />
             </div>
+          </div>
+
+          {/* CNIC/Passport images in one row */}
+          <div className={s.row}>
+            {/* FRONT IMAGE */}
             <div className={s.inputBox}>
-              <label>CNIC Picture</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleCnicImageChange}
-              />
-              {cnicPreview ? (
-                <img
-                  src={cnicPreview}
-                  alt="CNIC Preview"
-                  className={s.cnicImg}
-                />
-              ) : cnicPicture && typeof cnicPicture === "string" ? (
-                <div style={{ position: "relative", display: "inline-block" }}>
+              <label>{documentType} Front Image</label>
+              {cnicPicture && typeof cnicPicture === "string" ? (
+                <div
+                  className={s.cnicImageBox}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    document.getElementById("frontImageInput").click();
+                  }}
+                >
                   <img
                     src={
                       cnicPicture.startsWith("http")
@@ -407,21 +508,83 @@ const Profile = () => {
                             cnicPicture.startsWith("/") ? "" : "/"
                           }${cnicPicture}`
                     }
-                    alt="CNIC"
-                    className={s.cnicImg}
+                    alt="Front"
+                    className={s.cnicImgStyled}
                   />
-
-                  <button
-                    type="button"
-                    className={s.deleteCnicBtn}
-                    onClick={handleDeleteCnicImage}
-                    style={{ marginTop: 8, width: "100%" }}
-                  >
-                    Delete CNIC
-                  </button>
+                  <input
+                    id="frontImageInput"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleCnicImageChange}
+                  />
                 </div>
               ) : (
-                <span className={s.cameraIcon}>📷</span>
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCnicImageChange}
+                  />
+                  {cnicPreview ? (
+                    <img
+                      src={cnicPreview}
+                      alt="Front Preview"
+                      className={s.cnicImgStyled}
+                    />
+                  ) : (
+                    <span className={s.cameraIcon}>📷</span>
+                  )}
+                </>
+              )}
+            </div>
+            {/* BACK IMAGE */}
+            <div className={s.inputBox}>
+              <label>{documentType} Back Image</label>
+              {cnicBackPicture && typeof cnicBackPicture === "string" ? (
+                <div
+                  className={s.cnicImageBox}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    document.getElementById("backImageInput").click();
+                  }}
+                >
+                  <img
+                    src={
+                      cnicBackPicture.startsWith("http")
+                        ? cnicBackPicture
+                        : `http://localhost:5000${
+                            cnicBackPicture.startsWith("/") ? "" : "/"
+                          }${cnicBackPicture}`
+                    }
+                    alt="Back"
+                    className={s.cnicImgStyled}
+                  />
+                  <input
+                    id="backImageInput"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleCnicBackImageChange}
+                  />
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCnicBackImageChange}
+                  />
+                  {cnicBackPreview ? (
+                    <img
+                      src={cnicBackPreview}
+                      alt="Back Preview"
+                      className={s.cnicImgStyled}
+                    />
+                  ) : (
+                    <span className={s.cameraIcon}>📷</span>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -473,6 +636,36 @@ const Profile = () => {
           </button>
         </div>
       </Modal>
+
+      {/* CNIC Back Image Required Modal */}
+      <Modal
+        isOpen={showBackImageModal}
+        onRequestClose={() => setShowBackImageModal(false)}
+        style={customStyles}
+        contentLabel="CNIC Back Image Required"
+      >
+        <div className={s.popupContainer}>
+          <div className={s.popupIcon}>📄</div>
+          <h2 className={s.popupTitle}>CNIC Back Image Required</h2>
+          <p className={s.popupText}>
+            Please provide your <b>CNIC back image</b> before saving your
+            profile.
+          </p>
+          <button
+            className={s.popupBtn}
+            onClick={() => setShowBackImageModal(false)}
+          >
+            OK
+          </button>
+        </div>
+      </Modal>
+
+      {isOcrLoading && (
+        <div className={s.ocrLoader}>
+          <span className={s.ocrSpinner}></span>
+          Extracting CNIC number from image...
+        </div>
+      )}
     </div>
   );
 };

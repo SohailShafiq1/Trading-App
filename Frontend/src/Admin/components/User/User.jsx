@@ -476,6 +476,22 @@ const User = () => {
                   <span style={{ color: "#e53935" }}>Image not matched</span>
                 )}
               </li>
+              <li>
+                <b>CNIC Back Image:</b>
+                <br />
+                {selectedUser.cnicBackPicture && (
+                  <img
+                    src={`http://localhost:5000/${selectedUser.cnicBackPicture}`}
+                    alt="CNIC Back"
+                    style={{
+                      width: 120,
+                      marginTop: 8,
+                      borderRadius: 6,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                )}
+              </li>
             </ul>
           </div>
         </div>
