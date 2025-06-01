@@ -359,14 +359,18 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ error: "Email is required" });
     }
 
-    const update = { firstName, lastName, cnicNumber, passportNumber };
+    // Build the update object
+    const update = {
+      firstName,
+      lastName,
+      dateOfBirth,
+      cnicNumber,
+      passportNumber,
+    };
 
-    if (dateOfBirth && dateOfBirth !== "") {
-      const parsedDate = new Date(dateOfBirth);
-      if (isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ error: "Invalid date of birth" });
-      }
-      update.dateOfBirth = parsedDate;
+    // Add this block to handle CNIC back image update
+    if (req.files?.cnicBackPicture) {
+      update.cnicBackPicture = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
     }
 
     if (req.files?.profilePicture) {
@@ -397,12 +401,6 @@ export const updateProfile = async (req, res) => {
       }
     }
 
-    if (req.files?.cnicBackPicture) {
-      update.cnicBackPicture = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
-    } else if (req.files?.cnicPicture && !req.files?.cnicBackPicture) {
-      return res.status(400).json({ error: "CNIC back image is required" });
-    }
-
     if (req.files?.passportImage) {
       update.passportImage = `uploads/others/${req.files.passportImage[0].filename}`;
     }
@@ -416,14 +414,16 @@ export const updateProfile = async (req, res) => {
       update.imgCNIC = "";
     }
 
-    const user = await User.findOneAndUpdate({ email }, update, {
+    const updatedUser = await User.findOneAndUpdate({ email }, update, {
       new: true,
     });
-    if (!user) {
+    if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ message: "Profile updated successfully", user });
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully", user: updatedUser });
   } catch (err) {
     console.error("Error in update-profile:", err);
     res.status(500).json({ error: "Failed to update profile" });
