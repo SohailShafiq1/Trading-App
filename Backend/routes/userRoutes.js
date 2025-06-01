@@ -1,3 +1,4 @@
+// routes/userRoutes.js
 import express from "express";
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
@@ -12,13 +13,8 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === "profilePicture") {
       cb(null, "uploads/profile/");
-    } else if (
-      file.fieldname === "cnicPicture" ||
-      file.fieldname === "cnicBackPicture"
-    ) {
+    } else if (file.fieldname === "cnicPicture") {
       cb(null, "uploads/cnic/");
-    } else if (file.fieldname === "passportImage") {
-      cb(null, "uploads/passport/"); // <-- Add this
     } else {
       cb(null, "uploads/others/");
     }
@@ -83,46 +79,28 @@ router.post("/deposit", async (req, res) => {
       }
     }
 
-    // Create deposit and mark as verified immediately
+    // Create deposit
     const deposit = new Deposit({
       userEmail: email,
       amount,
-      txId: txId || "Auto-Approved",
+      txId: txId || "Pending",
       wallet: process.env.ADMIN_TRON_WALLET,
       bonusPercent: bonusPercent || 0,
       bonusAmount,
       bonusId: bonusId || null,
-      status: "verified", // <-- AUTO-APPROVE
+      status: "pending",
     });
 
     await deposit.save();
 
-    // Credit user immediately
-    user.assets += Number(amount);
-    user.depositCount = (user.depositCount || 0) + 1;
-    user.transactions.push({
-      orderId: deposit._id.toString(),
-      type: "deposit",
-      amount,
-      paymentMethod: "TRC20 Wallet",
-      status: "success",
-      date: new Date(),
-    });
-
-    // Add bonus if any
-    if (bonusAmount > 0) {
-      user.totalBonus = (user.totalBonus || 0) + bonusAmount;
-    }
-
     // Add bonus ID to user's usedBonuses if provided
     if (bonusId && bonusPercent > 0) {
       user.usedBonuses.push(bonusId);
+      await user.save();
     }
 
-    await user.save();
-
     res.status(201).json({
-      message: "Deposit auto-approved and credited.",
+      message: "Deposit submitted, awaiting confirmation.",
       deposit,
       user: {
         usedBonuses: user.usedBonuses,
@@ -190,7 +168,7 @@ router.put("/update-assets", async (req, res) => {
     res.status(200).json({
       message: "Assets updated successfully",
       user,
-      totalBalance: totalBalance, // <-- This is the sum of assets and bonus
+      totalBalance, // <-- This is the sum of assets and bonus
     });
   } catch (err) {
     console.error("Error updating assets:", err);
@@ -477,15 +455,8 @@ router.put(
     { name: "passportImage", maxCount: 1 }, // <-- Add this
   ]),
   async (req, res) => {
-    const {
-      email,
-      firstName,
-      lastName,
-      dateOfBirth,
-      cnicNumber,
-      passportNumber,
-    } = req.body;
-    const update = { firstName, lastName, cnicNumber, passportNumber };
+    const { email, firstName, lastName, dateOfBirth, cnicNumber } = req.body;
+    const update = { firstName, lastName, cnicNumber };
 
     if (dateOfBirth && dateOfBirth !== "") {
       update.dateOfBirth = new Date(dateOfBirth);
@@ -524,17 +495,6 @@ router.put(
         return res.status(400).json({ error: "Image not matched" });
       }
     }
-    if (req.files?.cnicBackPicture) {
-      // Save to /uploads/cnic/
-      const cnicBackImagePath = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
-      update.cnicBackPicture = cnicBackImagePath;
-    }
-    if (req.files?.passportImage) {
-      update.passportImage = `/uploads/passport/${req.files.passportImage[0].filename}`;
-    }
-    if (req.body.passportNumber) {
-      update.passportNumber = req.body.passportNumber;
-    }
     if (
       typeof req.body.profilePicture === "string" &&
       req.body.profilePicture === ""
@@ -546,13 +506,7 @@ router.put(
       req.body.cnicPicture === ""
     ) {
       update.cnicPicture = "";
-      update.imgCNIC = ""; // Remove CNIC image number
-    }
-    if (
-      typeof req.body.cnicBackPicture === "string" &&
-      req.body.cnicBackPicture === ""
-    ) {
-      update.cnicBackPicture = "";
+      update.imgCNIC = ""; // <-- This line ensures the CNIC image number is also removed
     }
 
     try {

@@ -1,4 +1,3 @@
-
 import Affiliate from "../models/Affiliate.js";
 import User from "../models/User.js";
 import crypto from "crypto";
@@ -446,8 +445,6 @@ export const updateTrafficQuestions = async (req, res) => {
     });
   }
 };
-
-// controllers/affiliate.controller.js
 
 export const getTrafficQuestionsList = (req, res) => {
   try {
