@@ -48,7 +48,7 @@ const BinaryChart = () => {
   const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
   const [demoAssets, setDemoAssets] = useState(demo_assets);
   const [showTimestampPopup, setShowTimestampPopup] = useState(false);
-
+  const [allInClicked, setAllInClicked] = useState(false);
   // Check verification status (only for real account)
   useEffect(() => {
     if (isDemo) {
@@ -557,6 +557,7 @@ const BinaryChart = () => {
         return {
           ...trade,
           remainingTime: remaining,
+          id: trade.id, // ensure id is present
         };
       });
 
@@ -593,59 +594,15 @@ const BinaryChart = () => {
             );
 
             if (elapsed > trade.duration) {
-              try {
-                let currentPrice;
-                if (trade.coinType === "Live") {
-                  const priceRes = await fetch(
-                    `https://api.binance.com/api/v3/ticker/price?symbol=${trade.coin}USDT`
-                  );
-                  const priceData = await priceRes.json();
-                  currentPrice = parseFloat(priceData.price);
-                } else {
-                  const priceRes = await axios.get(
-                    `http://localhost:5000/api/coins/price/${trade.coin}`
-                  );
-                  currentPrice = parseFloat(priceRes.data);
-                }
-
-                const isWin =
-                  trade.type === "Buy"
-                    ? currentPrice > trade.entryPrice
-                    : currentPrice < trade.entryPrice;
-
-                const coinData = coins.find((c) => c.name === trade.coin);
-                const profitPercentage = coinData?.profitPercentage || 0;
-                const reward = isWin
-                  ? (trade.investment * (1 + profitPercentage / 100)).toFixed(2)
-                  : -trade.investment;
-
-                await updateTradeResultInDB({
-                  email: user.email,
-                  startedAt: trade.startedAt,
-                  result: isWin ? "win" : "loss",
-                  reward: parseFloat(reward),
-                  exitPrice: currentPrice,
-                });
-
-                return {
-                  ...trade,
-                  price: trade.investment,
-                  coinName: trade.coin,
-                  remainingTime: 0,
-                  status: isWin ? "win" : "loss",
-                  reward: parseFloat(reward),
-                };
-              } catch (err) {
-                console.error("Failed to recover trade:", err);
-                return {
-                  ...trade,
-                  price: trade.investment,
-                  coinName: trade.coin,
-                  remainingTime: 0,
-                  status: "loss",
-                  reward: -trade.investment,
-                };
-              }
+              // Don't auto-close, just set remainingTime to 0 and keep status as "running"
+              return {
+                ...trade,
+                price: trade.investment,
+                coinName: trade.coin,
+                remainingTime: 0,
+                status: "running",
+                // reward: 0, // keep reward as 0 or undefined
+              };
             }
 
             return {
@@ -711,9 +668,11 @@ const BinaryChart = () => {
 
       let centsChange = 0;
       if (trade.type === "Buy") {
-        centsChange = (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
+        centsChange =
+          (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
       } else {
-        centsChange = (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
+        centsChange =
+          (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
       }
 
       let isWin = centsChange >= 0;
@@ -899,9 +858,10 @@ const BinaryChart = () => {
                   type="number"
                   className={styles.value}
                   value={investment}
-                  onChange={(e) =>
-                    setInvestment(Math.max(parseInt(e.target.value) || 1, 1))
-                  }
+                  onChange={(e) => {
+                    setInvestment(Math.max(parseInt(e.target.value) || 1, 1));
+                    setAllInClicked(false);
+                  }}
                   min="1"
                   disabled={
                     isLoading || isProcessingTrade || (!isDemo && !isVerified)
@@ -917,6 +877,37 @@ const BinaryChart = () => {
                   +
                 </button>
               </div>
+              {/* Add All In button below the amount input */}
+              <button
+                className={styles.allInBtn}
+                style={{
+                  marginTop: "8px",
+                  width: "100%",
+                  background: allInClicked ? "#FF1600" : "#10A055",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "6px 0",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                }}
+                onClick={() => {
+                  if (allInClicked) {
+                    setInvestment(0);
+                    setAllInClicked(false);
+                  } else {
+                    setInvestment(currentAssets);
+                    setAllInClicked(true);
+                  }
+                }}
+                disabled={
+                  isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                }
+              >
+                {allInClicked ? "Clear All" : "All In"}
+              </button>
             </div>
             <div>
               <p style={{ textAlign: "center" }}>

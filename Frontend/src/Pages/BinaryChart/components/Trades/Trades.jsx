@@ -14,7 +14,7 @@ const Trades = ({
   <div className={s.tradeHistory}>
     <p>Trades</p>
     <ul>
-      {trades.map((trade, index) => {
+      {trades.map((trade) => {
         let displayStatus = trade.status;
         let displayReward = trade.reward;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
@@ -56,7 +56,7 @@ const Trades = ({
 
         return (
           <li
-            key={index}
+            key={trade.id}
             style={{
               color: "black",
               padding: "2px", // Add padding for better readability
