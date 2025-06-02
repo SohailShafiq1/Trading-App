@@ -3,73 +3,131 @@ import styles from "../../BinaryChart.module.css";
 
 const s = styles;
 
-const Trades = ({ trades, formatTime }) => (
+const Trades = ({
+  trades,
+  formatTime,
+  handleCloseTrade,
+  coins,
+  livePrice,
+  otcPrice,
+}) => (
   <div className={s.tradeHistory}>
     <p>Trades</p>
     <ul>
-      {trades.map((trade, index) => (
-        <li
-          key={index}
-          style={{
-            color: "black",
-            padding: "2px", // Add padding for better readability
-          }}
-        >
-          {/* First Row: Coin Name and Trade Duration */}
-          <div
-            style={{
-              marginBottom: "8px",
-              display: "flex",
-              justifyContent: "space-around",
-            }}
-          >
-            <strong>{trade.coinName}</strong>
-            <span>
-              {trade.status === "running"
-                ? `Time Left: ${formatTime(trade.remainingTime)}`
-                : formatTime(
-                    typeof trade.duration === "number" ? trade.duration : 0
-                  )}
-            </span>{" "}
-            {/* Display trade duration */}
-          </div>
+      {trades.map((trade, index) => {
+        let displayStatus = trade.status;
+        let displayReward = trade.reward;
+        const tradeInvestment = trade.investment ?? trade.price ?? 0;
 
-          {/* Second Row: Trade Amount and Profit/Loss */}
-          <div
+        // For running trades with time up, show real-time floating PnL
+        if (trade.status === "running" && trade.remainingTime === 0) {
+          const endPrice =
+            trade.coinType === "Live"
+              ? parseFloat(livePrice)
+              : parseFloat(otcPrice);
+          const coinData = coins.find((c) => c.name === trade.coinName);
+          const profitPercentage = coinData?.profitPercentage || 0;
+
+          let centsChange = 0;
+          if (trade.type === "Buy") {
+            centsChange =
+              (endPrice - trade.entryPrice) *
+              (tradeInvestment / trade.entryPrice);
+          } else {
+            centsChange =
+              (trade.entryPrice - endPrice) *
+              (tradeInvestment / trade.entryPrice);
+          }
+
+          // Show floating payout: base payout + profit percentage if in profit, or just floating PnL if in loss
+          if (centsChange >= 0) {
+            // In profit: show payout with profit percentage + floating profit
+            displayReward = (
+              tradeInvestment * (1 + profitPercentage / 100) +
+              centsChange
+            ).toFixed(2);
+            displayStatus = "win";
+          } else {
+            // In loss: show only floating loss (can go below zero)
+            displayReward = (tradeInvestment + centsChange).toFixed(2);
+            displayStatus = "loss";
+          }
+        }
+
+        return (
+          <li
+            key={index}
             style={{
-              display: "flex",
-              justifyContent: "space-around",
+              color: "black",
+              padding: "2px", // Add padding for better readability
             }}
           >
-            <span
+            {/* First Row: Coin Name and Trade Duration */}
+            <div
               style={{
-                color:
-                  trade.status === "win"
-                    ? "#10A055"
-                    : trade.status === "loss"
-                    ? "#FF0000"
-                    : "black", // Change color of trade.price based on status
+                marginBottom: "8px",
+                display: "flex",
+                justifyContent: "space-around",
               }}
             >
-              Trade: ${trade.price}
-            </span>
-            <span
+              <strong>{trade.coinName}</strong>
+              <span>
+                {trade.status === "running"
+                  ? `Time Left: ${formatTime(trade.remainingTime)}`
+                  : formatTime(
+                      typeof trade.duration === "number" ? trade.duration : 0
+                    )}
+              </span>{" "}
+              {/* Display trade duration */}
+            </div>
+
+            {/* Second Row: Trade Amount and Profit/Loss */}
+            <div
               style={{
-                color:
-                  trade.status === "win"
-                    ? "#10A055"
-                    : trade.status === "loss"
-                    ? "#FF0000"
-                    : "black", // Change color of trade.reward based on status
+                display: "flex",
+                justifyContent: "space-around",
               }}
             >
-              {trade.status === "running"
-                ? `Time Left: ${trade.remainingTime}s`
-                : `${trade.reward > 0 ? "+" : ""}$${Math.abs(trade.reward)}`}
-            </span>
-          </div>
-        </li>
-      ))}
+              <span
+                style={{
+                  color:
+                    displayStatus === "win"
+                      ? "#10A055"
+                      : displayStatus === "loss"
+                      ? "#FF0000"
+                      : "black", // Change color of trade.price based on status
+                }}
+              >
+                Trade: ${trade.price}
+              </span>
+              <span
+                style={{
+                  color:
+                    displayStatus === "win"
+                      ? "#10A055"
+                      : displayStatus === "loss"
+                      ? "#FF0000"
+                      : "black", // Change color of trade.reward based on status
+                }}
+              >
+                {trade.status === "running" && trade.remainingTime > 0
+                  ? `Time Left: ${trade.remainingTime}s`
+                  : `Payout: $${displayReward}`}
+              </span>
+            </div>
+            {trade.status === "running" && trade.remainingTime === 0 && (
+              <div className={styles.tradeRow}>
+                <button
+                  onClick={() => handleCloseTrade(trade)}
+                  className={styles.closeTradeBtn}
+                >
+                  Close Trade
+                </button>
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   </div>
 );

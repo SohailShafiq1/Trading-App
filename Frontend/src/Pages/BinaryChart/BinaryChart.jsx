@@ -13,7 +13,7 @@ import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
-import track from './assets/trade.mp3'
+import track from "./assets/trade.mp3";
 const BinaryChart = () => {
   // State declarations
   const socket = useRef(null);
@@ -350,8 +350,8 @@ const BinaryChart = () => {
           startedAt,
           duration: timer,
           coinType: selectedCoinType,
-          entryPrice: tradePrice,
-          investment: investment,
+          entryPrice: tradePrice, // <-- ADD THIS
+          investment: investment, // <-- ADD THIS
         };
 
         const updatedTrades = [...trades, newTrade];
@@ -378,13 +378,16 @@ const BinaryChart = () => {
           reward: 0,
           startedAt,
           duration: timer,
+          coinType: selectedCoinType,
+          entryPrice: tradePrice, // <-- ADD THIS
+          investment: investment, // <-- ADD THIS
         };
 
         setTrades((prev) => [...prev, newTrade]);
       }
 
       // Set timeout for trade completion
-      setTimeout(async () => {
+      /* setTimeout(async () => {
         try {
           let endPrice;
           if (selectedCoinType === "Live") {
@@ -493,7 +496,7 @@ const BinaryChart = () => {
           console.error("Failed to check trade result:", err);
           toast.error("Failed to determine trade result");
         }
-      }, timer * 1000);
+      }, timer * 1000); */
     } catch (err) {
       console.error("Trade failed:", err);
     } finally {
@@ -682,6 +685,89 @@ const BinaryChart = () => {
   };
 
   const currentAssets = isDemo ? demoAssets : userAssets;
+
+  const handleCloseTrade = async (trade) => {
+    try {
+      let endPrice;
+      if (trade.coinType === "Live") {
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/price?symbol=${trade.coinName}USDT`
+        );
+        const data = await response.json();
+        endPrice = parseFloat(data.price);
+      } else {
+        const response = await axios.get(
+          `http://localhost:5000/api/coins/price/${trade.coinName}`
+        );
+        endPrice =
+          typeof response.data === "object"
+            ? parseFloat(response.data.price)
+            : parseFloat(response.data);
+      }
+
+      const coinData = coins.find((c) => c.name === trade.coinName);
+      const profitPercentage = coinData?.profitPercentage || 0;
+      const tradeInvestment = trade.investment ?? trade.price ?? 0;
+
+      let centsChange = 0;
+      if (trade.type === "Buy") {
+        centsChange = (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
+      } else {
+        centsChange = (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
+      }
+
+      let isWin = centsChange >= 0;
+      let reward;
+
+      if (isWin) {
+        // Win: payout + floating profit
+        reward = (
+          tradeInvestment * (1 + profitPercentage / 100) +
+          centsChange
+        ).toFixed(2);
+      } else {
+        // Loss: investment + floating loss (can go below zero)
+        reward = (tradeInvestment + centsChange).toFixed(2);
+      }
+
+      // Update local state
+      setTrades((prev) =>
+        prev.map((t) =>
+          t.id === trade.id
+            ? {
+                ...t,
+                status: isWin ? "win" : "loss",
+                reward: parseFloat(reward),
+                remainingTime: 0,
+              }
+            : t
+        )
+      );
+
+      // Save result to DB if not demo
+      if (!isDemo) {
+        await updateTradeResultInDB({
+          email: user.email,
+          startedAt: trade.startedAt,
+          result: isWin ? "win" : "loss",
+          reward: parseFloat(reward),
+          exitPrice: endPrice,
+        });
+      }
+
+      setPopupMessage(
+        isWin
+          ? `Trade Win! You got $${reward}`
+          : `Trade Loss! You lost $${Math.abs(reward)}`
+      );
+      setPopupColor(isWin ? "#10A055" : "#FF1600");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000);
+    } catch (err) {
+      console.error("Failed to close trade:", err);
+      toast.error("Failed to close trade");
+    }
+  };
 
   return (
     <>
@@ -874,7 +960,14 @@ const BinaryChart = () => {
               </div>
             </div>
 
-            <Trades trades={[...trades].reverse()} formatTime={formatTime} />
+            <Trades
+              trades={[...trades].reverse()}
+              formatTime={formatTime}
+              handleCloseTrade={handleCloseTrade}
+              coins={coins}
+              livePrice={livePrice}
+              otcPrice={otcPrice}
+            />
           </div>
         </div>
       </div>

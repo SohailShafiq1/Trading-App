@@ -7,6 +7,31 @@ body {
   margin: 0 auto;
   box-sizing: border-box;
 }
+.closeTradeBtn {
+  background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(255, 88, 88, 0.15);
+  cursor: pointer;
+  transition: 
+    background 0.3s,
+    transform 0.15s,
+    box-shadow 0.3s;
+  outline: none;
+  margin: 10px auto 0 auto;
+  display: block;
+}
+
+.closeTradeBtn:hover, .closeTradeBtn:focus {
+  background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 16px rgba(255, 88, 88, 0.25);
+}
 .chartBoxOtc {
   display: flex;
   flex-direction: column;
