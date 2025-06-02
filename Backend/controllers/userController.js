@@ -727,3 +727,73 @@ export const testEmail = async (req, res) => {
     });
   }
 };
+
+export const getUserWithdrawals = async (req, res) => {
+  const { email } = req.params;
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json([]);
+  res.json(user.withdrawals || []);
+};
+
+// Approve withdrawal
+export const approveWithdrawal = async (req, res) => {
+  const { withdrawalId } = req.params;
+  try {
+    // Find the user who has this withdrawal
+    const user = await User.findOne({ "withdrawals._id": withdrawalId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Find the withdrawal and update status
+    const withdrawal = user.withdrawals.id(withdrawalId);
+    if (!withdrawal)
+      return res.status(404).json({ error: "Withdrawal not found" });
+
+    withdrawal.status = "approved";
+    withdrawal.processedAt = new Date();
+
+    // Optionally, update the corresponding transaction status
+    const transaction = user.transactions.find(
+      (t) => t.orderId === withdrawal.orderId && t.type === "withdrawal"
+    );
+    if (transaction) {
+      transaction.status = "success";
+    }
+
+    await user.save();
+    res.json({ success: true, withdrawal });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to approve withdrawal" });
+  }
+};
+
+// Reject withdrawal
+export const rejectWithdrawal = async (req, res) => {
+  const { withdrawalId } = req.params;
+  try {
+    const user = await User.findOne({ "withdrawals._id": withdrawalId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const withdrawal = user.withdrawals.id(withdrawalId);
+    if (!withdrawal)
+      return res.status(404).json({ error: "Withdrawal not found" });
+
+    withdrawal.status = "rejected";
+    withdrawal.processedAt = new Date();
+
+    // Optionally, update the corresponding transaction status
+    const transaction = user.transactions.find(
+      (t) => t.orderId === withdrawal.orderId && t.type === "withdrawal"
+    );
+    if (transaction) {
+      transaction.status = "failed";
+    }
+
+    // Optionally, refund the amount to the user's assets
+    user.assets += withdrawal.amount;
+
+    await user.save();
+    res.json({ success: true, withdrawal });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reject withdrawal" });
+  }
+};

@@ -20,6 +20,8 @@ import {
   blockUser,
   unblockUser,
   testEmail,
+  getUserWithdrawals,
+  approveWithdrawal, rejectWithdrawal,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -56,5 +58,7 @@ router.post("/validate-cnic", validateCNIC);
 router.put("/block/:id", blockUser);
 router.put("/unblock/:id", unblockUser);
 router.post("/test-email", testEmail);
-
+router.get("/withdrawals/:email", getUserWithdrawals);
+router.put("/withdraw-accept/:withdrawalId", approveWithdrawal);
+router.put("/withdraw-reject/:withdrawalId", rejectWithdrawal);
 export default router;
