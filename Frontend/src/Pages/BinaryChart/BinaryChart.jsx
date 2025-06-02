@@ -19,6 +19,7 @@ const BinaryChart = () => {
   const socket = useRef(null);
 
   useEffect(() => {
+    localStorage
     socket.current = io("http://localhost:5000");
     return () => {
       socket.current.disconnect();

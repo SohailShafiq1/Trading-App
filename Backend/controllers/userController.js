@@ -797,3 +797,28 @@ export const rejectWithdrawal = async (req, res) => {
     res.status(500).json({ error: "Failed to reject withdrawal" });
   }
 };
+
+export const updateTipStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { tipName } = req.body;
+
+    if (!tipName) {
+      return res.status(400).json({ message: "tipName is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const tip = user.tips.find((t) => t.text === tipName);
+    if (!tip)
+      return res.status(404).json({ message: `Tip '${tipName}' not found` });
+
+    tip.status = false;
+    await user.save();
+
+    res.json({ message: `Tip '${tipName}' updated to true`, tips: user.tips });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

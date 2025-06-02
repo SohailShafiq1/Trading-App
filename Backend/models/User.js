@@ -241,19 +241,38 @@ const UserSchema = new mongoose.Schema(
     },
     blocked: { type: Boolean, default: false },
     blockReason: { type: String, default: "" },
+    tips: {
+      type: [
+        {
+          text: { type: String, required: true },
+          status: { type: Boolean, default: true },
+        },
+      ],
+      default: () => [
+        { text: "tip1", status: true },
+        { text: "tip2", status: true },
+        { text: "tip3", status: true },
+        { text: "tip4", status: true },
+        { text: "tip5", status: true },
+        { text: "tip6", status: true },
+        { text: "tip7", status: true },
+        { text: "tip8", status: true },
+        { text: "tip9", status: true },
+        { text: "tip10", status: true },
+      ],
+    },
   },
   {
     timestamps: true,
     toJSON: {
       transform: function (doc, ret) {
-        delete ret.password; // Never send password in responses
+        delete ret.password;
         return ret;
       },
     },
   }
 );
 
-// Simplified password hashing middleware
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
