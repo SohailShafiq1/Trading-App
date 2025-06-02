@@ -5,29 +5,42 @@ const s = styles;
 
 const Trades = () => {
   const [trades, setTrades] = useState([]);
+  const [deposits, setDeposits] = useState([]);
+  const [withdrawals, setWithdrawals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [profitFilter, setProfitFilter] = useState("all");
   const [lossFilter, setLossFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("all"); // NEW
   const navigate = useNavigate();
 
-  // Fetch all trades every second
+  // Fetch all trades and deposits every second
   useEffect(() => {
     let interval;
-    const fetchTrades = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/all-trades");
-        const data = await res.json();
-        setTrades(data);
+        const [tradesRes, depositsRes, withdrawalsRes] = await Promise.all([
+          fetch("http://localhost:5000/api/admin/all-trades"),
+          fetch("http://localhost:5000/api/admin/deposits"),
+          fetch("http://localhost:5000/api/admin/withdraw-requests"), // <-- Add this line
+        ]);
+        const tradesData = await tradesRes.json();
+        const depositsData = await depositsRes.json();
+        const withdrawalsData = await withdrawalsRes.json();
+        setTrades(tradesData);
+        setDeposits(depositsData);
+        setWithdrawals(withdrawalsData);
         setIsLoading(false);
       } catch (err) {
         setTrades([]);
+        setDeposits([]);
+        setWithdrawals([]);
         setIsLoading(false);
       }
     };
-    fetchTrades();
-    interval = setInterval(fetchTrades, 1000);
+    fetchData();
+    interval = setInterval(fetchData, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -101,6 +114,39 @@ const Trades = () => {
         Back
       </button>
       <h2 className={s.heading}>All Users' Trades</h2>
+
+      {/* Tab Buttons */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+        <button
+          className={`${s.tabBtn} ${activeTab === "all" ? s.activeTab : ""}`}
+          onClick={() => setActiveTab("all")}
+        >
+          All
+        </button>
+        <button
+          className={`${s.tabBtn} ${
+            activeTab === "deposit" ? s.activeTab : ""
+          }`}
+          onClick={() => setActiveTab("deposit")}
+        >
+          Deposit
+        </button>
+        <button
+          className={`${s.tabBtn} ${
+            activeTab === "withdrawal" ? s.activeTab : ""
+          }`}
+          onClick={() => setActiveTab("withdrawal")}
+        >
+          Withdrawal
+        </button>
+        <button
+          className={`${s.tabBtn} ${activeTab === "trades" ? s.activeTab : ""}`}
+          onClick={() => setActiveTab("trades")}
+        >
+          Trades
+        </button>
+      </div>
+
       <div className={s.searchBarWrapper}>
         <input
           type="text"
@@ -158,68 +204,179 @@ const Trades = () => {
         </div>
       )}
       <div className={s.tableWrapper}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Type</th>
-              <th>Coin</th>
-              <th>Investment</th>
-              <th>Entry Price</th>
-              <th>Exit Price</th>
-              <th>Status</th>
-              <th>Profit/Loss</th>
-              <th>Opened</th>
-              <th>Closed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTrades.map((trade, idx) => (
-              <tr key={trade._id || idx}>
-                <td>{trade.userName || "-"}</td>
-                <td>{trade.userEmail}</td>
-                <td>{trade.type}</td>
-                <td>{trade.coin}</td>
-                <td>${trade.investment}</td>
-                <td>{trade.entryPrice}</td>
-                <td>{trade.exitPrice || "-"}</td>
-                <td>
-                  {trade.status === "running" || trade.result === "pending" ? (
-                    <span className={s.statusOpen}>Open</span>
-                  ) : trade.result === "win" ? (
-                    <span className={s.statusWin}>Closed (Win)</span>
-                  ) : trade.result === "loss" ? (
-                    <span className={s.statusLoss}>Closed (Loss)</span>
-                  ) : (
-                    trade.result
-                  )}
-                </td>
-                <td>
-                  {trade.result === "win" ? (
-                    <span className={s.profit}>+${trade.reward}</span>
-                  ) : trade.result === "loss" ? (
-                    <span className={s.loss}>-${trade.investment}</span>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-                <td>
-                  {trade.startedAt
-                    ? new Date(trade.startedAt).toLocaleString()
-                    : "-"}
-                </td>
-                <td>
-                  {trade.result === "win" || trade.result === "loss"
-                    ? trade.createdAt
-                      ? new Date(trade.createdAt).toLocaleString()
-                      : "-"
-                    : "-"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Show tables based on activeTab */}
+        {(activeTab === "all" || activeTab === "trades") && (
+          <>
+            <h3>Trades</h3>
+            <table className={s.table}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Type</th>
+                  <th>Coin</th>
+                  <th>Investment</th>
+                  <th>Entry Price</th>
+                  <th>Exit Price</th>
+                  <th>Status</th>
+                  <th>Profit/Loss</th>
+                  <th>Opened</th>
+                  <th>Closed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTrades.map((trade, idx) => (
+                  <tr key={trade._id || idx}>
+                    <td>{trade.userName || "-"}</td>
+                    <td>{trade.userEmail}</td>
+                    <td>{trade.type}</td>
+                    <td>{trade.coin}</td>
+                    <td>${trade.investment}</td>
+                    <td>{trade.entryPrice}</td>
+                    <td>{trade.exitPrice || "-"}</td>
+                    <td>
+                      {trade.status === "running" ||
+                      trade.result === "pending" ? (
+                        <span className={s.statusOpen}>Open</span>
+                      ) : trade.result === "win" ? (
+                        <span className={s.statusWin}>Closed (Win)</span>
+                      ) : trade.result === "loss" ? (
+                        <span className={s.statusLoss}>Closed (Loss)</span>
+                      ) : (
+                        trade.result
+                      )}
+                    </td>
+                    <td>
+                      {trade.result === "win" ? (
+                        <span className={s.profit}>+${trade.reward}</span>
+                      ) : trade.result === "loss" ? (
+                        <span className={s.loss}>-${trade.investment}</span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td>
+                      {trade.startedAt
+                        ? new Date(trade.startedAt).toLocaleString()
+                        : "-"}
+                    </td>
+                    <td>
+                      {trade.result === "win" || trade.result === "loss"
+                        ? trade.createdAt
+                          ? new Date(trade.createdAt).toLocaleString()
+                          : "-"
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {(activeTab === "all" || activeTab === "deposit") && (
+          <>
+            <h3 style={{ marginTop: 32 }}>Deposits</h3>
+            <table className={s.table}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Status</th>
+                  <th>Requested At</th>
+                  <th>Completed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deposits.map((dep, idx) => (
+                  <tr key={dep._id || idx}>
+                    <td>{dep.userName || "-"}</td>
+                    <td>{dep.userEmail}</td>
+                    <td>${dep.amount}</td>
+                    <td>{dep.method || "-"}</td>
+                    <td>
+                      <span
+                        className={
+                          dep.status === "completed"
+                            ? s.statusWin
+                            : dep.status === "pending"
+                            ? s.statusOpen
+                            : s.statusLoss
+                        }
+                      >
+                        {dep.status}
+                      </span>
+                    </td>
+                    <td>
+                      {dep.requestedAt
+                        ? new Date(dep.requestedAt).toLocaleString()
+                        : "-"}
+                    </td>
+                    <td>
+                      {dep.completedAt
+                        ? new Date(dep.completedAt).toLocaleString()
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {(activeTab === "all" || activeTab === "withdrawal") && (
+          <>
+            <h3 style={{ marginTop: 32 }}>Withdrawals</h3>
+            <table className={s.table}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Status</th>
+                  <th>Requested At</th>
+                  <th>Completed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {withdrawals.map((w, idx) => (
+                  <tr key={w._id || idx}>
+                    <td>{w.userName || "-"}</td>
+                    <td>{w.userEmail}</td>
+                    <td>${w.amount}</td>
+                    <td>{w.method || "-"}</td>
+                    <td>
+                      <span
+                        className={
+                          w.status === "completed"
+                            ? s.statusWin
+                            : w.status === "pending"
+                            ? s.statusOpen
+                            : s.statusLoss
+                        }
+                      >
+                        {w.status}
+                      </span>
+                    </td>
+                    <td>
+                      {w.requestedAt
+                        ? new Date(w.requestedAt).toLocaleString()
+                        : "-"}
+                    </td>
+                    <td>
+                      {w.completedAt
+                        ? new Date(w.completedAt).toLocaleString()
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
     </div>
   );
