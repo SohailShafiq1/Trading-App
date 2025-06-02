@@ -395,6 +395,22 @@ export const updateTradeResult = async (req, res) => {
       user.assets += reward;
     }
 
+    const coin = user.trades[tradeIndex].coin || "the asset";
+    if (result === "win") {
+      user.notifications.push({
+        type: "Trade",
+        read: false,
+        message: `You won the trade on ${coin} and earned $${reward}.`,
+        date: new Date(),
+      });
+    } else if (result === "loss") {
+      user.notifications.push({
+        type: "Trade",
+        read: false,
+        message: `You lost the trade on ${coin} and lost $${user.trades[tradeIndex].investment}.`,
+        date: new Date(),
+      });
+    }
     await user.save();
 
     res.status(200).json({ message: "Trade result updated", user });
