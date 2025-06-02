@@ -13,12 +13,13 @@ import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
-import track from './assets/trade.mp3'
+import track from "./assets/trade.mp3";
 const BinaryChart = () => {
   // State declarations
   const socket = useRef(null);
 
   useEffect(() => {
+    localStorage
     socket.current = io("http://localhost:5000");
     return () => {
       socket.current.disconnect();

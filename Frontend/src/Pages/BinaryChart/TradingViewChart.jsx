@@ -1,11 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
-import { AiOutlinePlus, AiOutlineBgColors } from "react-icons/ai";
+import {
+  AiOutlinePlus,
+  AiOutlineBgColors,
+  AiOutlineClose,
+} from "react-icons/ai";
 import { BsBarChartFill } from "react-icons/bs";
 import { BiPencil } from "react-icons/bi";
 import "./LiveCandleChart.css";
 import Tabs from "./components/Tabs/Tabs";
+import { useAuth } from "../../Context/AuthContext";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Time interval mapping
 const intervalToSeconds = {
@@ -84,6 +90,7 @@ const TradingViewChart = ({ coinName }) => {
   const containerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
+  const { user, updateUserTipStatus } = useAuth();
 
   // State variables
   const [interval, setInterval] = useState("30m");
@@ -98,11 +105,81 @@ const TradingViewChart = ({ coinName }) => {
   const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
   const [showDrawingPopup, setShowDrawingPopup] = useState(false);
 
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const buttonRefs = useRef([]);
+
+  // Tips data
+  const tips = [
+    {
+      id: "indicator-btn",
+      text: "⬆️ Add technical indicators like SMA, EMA, RSI to analyze price trends",
+    },
+    {
+      id: "drawing-btn",
+      text: "⬆️ Use drawing tools to mark support/resistance levels and trends",
+    },
+    {
+      id: "interval-select",
+      text: "⬆️ Change the time interval to view different timeframes (1m, 5m, 1h, etc.)",
+    },
+    {
+      id: "theme-btn",
+      text: "⬆️ Switch between light, dark, and other color themes",
+    },
+    {
+      id: "style-btn",
+      text: "⬆️ Change chart style between candlesticks, bars, and line charts",
+    },
+    {
+      id: "chart-container",
+      text: "⬇️ This is your main chart area. Hover to see price details at specific times",
+    },
+  ];
+
   // Refs for indicators and drawings
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
   const rsiSeriesRef = useRef(null);
   const drawingsRef = useRef([]);
+
+  // Initialize tutorial
+  useEffect(() => {
+    // Refetch user from backend when tip1 or tip2 might have changed
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/users/${user._id}`);
+        const updatedUser = res.data;
+        const tip2 = updatedUser?.tips?.find(
+          (tip) => tip.text === "tip2"
+        )?.status;
+        const tip1 = updatedUser?.tips?.find(
+          (tip) => tip.text === "tip1"
+        )?.status;
+        if (!tip1 && tip2) {
+          setShowTutorial(true);
+          buttonRefs.current = buttonRefs.current.slice(0, tips.length);
+        }
+      } catch (err) {
+        // fallback to local user if fetch fails
+        const tip2 = user?.tips?.find((tip) => tip.text === "tip2")?.status;
+        const tip1 = user?.tips?.find((tip) => tip.text === "tip1")?.status;
+        if (!tip1 && tip2) {
+          setShowTutorial(true);
+          buttonRefs.current = buttonRefs.current.slice(0, tips.length);
+        }
+      }
+    };
+
+    if (user && user._id) {
+      fetchUser();
+    }
+    // eslint-disable-next-line
+  }, [
+    user?.tips?.find((tip) => tip.text === "tip1")?.status,
+    user?.tips?.find((tip) => tip.text === "tip2")?.status,
+  ]);
 
   // Fetch candle data
   const fetchCandles = async () => {
@@ -307,6 +384,44 @@ const TradingViewChart = ({ coinName }) => {
     applyIndicators();
   }, [candles, theme, candleStyle, indicator]);
 
+  // Get button position for tooltip
+  const getButtonPosition = (index) => {
+    if (buttonRefs.current[index]) {
+      const rect = buttonRefs.current[index].getBoundingClientRect();
+      return {
+        top: rect.bottom + window.scrollY + 10,
+        left: rect.left + window.scrollX + rect.width / 2,
+        buttonWidth: rect.width,
+      };
+    }
+    return { top: 0, left: 0, buttonWidth: 0 };
+  };
+
+  const handleNextTip = () => {
+    if (currentTipIndex < tips.length - 1) {
+      setCurrentTipIndex(currentTipIndex + 1);
+    }
+  };
+
+  const handlePrevTip = () => {
+    if (currentTipIndex > 0) {
+      setCurrentTipIndex(currentTipIndex - 1);
+    }
+  };
+
+  const handleCloseTutorial = async () => {
+    setShowTutorial(false);
+    try {
+      await axios.put(`${BACKEND_URL}/api/users/update-tip/${user._id}`, {
+        tipName: "tip2",
+      });
+    } catch (error) {
+      console.error("Failed to update tip status:", error);
+    }
+  };
+
+  const position = getButtonPosition(currentTipIndex);
+
   return (
     <div
       className="liveCHART"
@@ -314,8 +429,101 @@ const TradingViewChart = ({ coinName }) => {
         background: theme.background,
         color: theme.textColor,
         borderRadius: 10,
+        position: "relative",
       }}
     >
+      {/* Tutorial Popup */}
+      {showTutorial && currentTipIndex < tips.length && (
+        <div
+          className="tutorial-popup"
+          style={{
+            position: "absolute",
+            top: 50,
+            left: `${position.left + 50}px`,
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            backgroundColor: "#2C2D35",
+            color: "white",
+            padding: "15px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+            maxWidth: "300px",
+            textAlign: "center",
+            width: `${Math.max(position.buttonWidth, 200)}px`,
+          }}
+        >
+          <div className="tutorial-content">
+            <p>{tips[currentTipIndex].text}</p>
+            <div
+              className="tutorial-controls"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: "15px",
+              }}
+            >
+              {currentTipIndex > 0 && (
+                <button
+                  onClick={handlePrevTip}
+                  style={{
+                    background: "#64B243",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 15px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Previous
+                </button>
+              )}
+              {currentTipIndex < tips.length - 1 ? (
+                <button
+                  onClick={handleNextTip}
+                  style={{
+                    background: "#64B243",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 15px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleCloseTutorial}
+                  style={{
+                    background: "#64B243",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 15px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <AiOutlineClose style={{ marginRight: "5px" }} />
+                  Close Tutorial
+                </button>
+              )}
+            </div>
+          </div>
+          <div
+            className="tutorial-progress"
+            style={{
+              marginTop: "10px",
+              fontSize: "0.8em",
+              color: "#aaa",
+            }}
+          >
+            {`${currentTipIndex + 1} of ${tips.length}`}
+          </div>
+        </div>
+      )}
+
       <div className="liveChartBtns">
         <div
           style={{
@@ -324,8 +532,12 @@ const TradingViewChart = ({ coinName }) => {
           }}
         >
           {/* Indicator button */}
-          <div style={{ position: "relative" }}>
+          <div
+            style={{ position: "relative" }}
+            ref={(el) => (buttonRefs.current[0] = el)}
+          >
             <button
+              id="indicator-btn"
               className="chartBtns"
               onClick={() => {
                 setShowIndicatorPopup(!showIndicatorPopup);
@@ -388,8 +600,12 @@ const TradingViewChart = ({ coinName }) => {
           </div>
 
           {/* Drawing tools button */}
-          <div style={{ position: "relative" }}>
+          <div
+            style={{ position: "relative" }}
+            ref={(el) => (buttonRefs.current[1] = el)}
+          >
             <button
+              id="drawing-btn"
               className="chartBtns"
               onClick={() => {
                 setShowIndicatorPopup(false);
@@ -445,30 +661,37 @@ const TradingViewChart = ({ coinName }) => {
           </div>
 
           {/* Interval selector */}
-          <select
-            value={interval}
-            className="chartBtns"
-            onChange={(e) => setInterval(e.target.value)}
-            style={{
-              appearance: "none",
-              padding: "6px 12px",
-              color: "black",
-              cursor: "pointer",
-              height: 50,
-              fontSize: "1rem",
-              background: "#E0E0E0",
-            }}
-          >
-            {Object.keys(intervalToSeconds).map((i) => (
-              <option key={i} value={i}>
-                {i}
-              </option>
-            ))}
-          </select>
+          <div ref={(el) => (buttonRefs.current[2] = el)}>
+            <select
+              id="interval-select"
+              value={interval}
+              className="chartBtns"
+              onChange={(e) => setInterval(e.target.value)}
+              style={{
+                appearance: "none",
+                padding: "6px 12px",
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1rem",
+                background: "#E0E0E0",
+              }}
+            >
+              {Object.keys(intervalToSeconds).map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Theme selector */}
-          <div style={{ position: "relative" }}>
+          <div
+            style={{ position: "relative" }}
+            ref={(el) => (buttonRefs.current[3] = el)}
+          >
             <button
+              id="theme-btn"
               className="chartBtns"
               onClick={() => {
                 setShowThemePopup(!showThemePopup);
@@ -540,8 +763,12 @@ const TradingViewChart = ({ coinName }) => {
           </div>
 
           {/* Chart style selector */}
-          <div style={{ position: "relative" }}>
+          <div
+            style={{ position: "relative" }}
+            ref={(el) => (buttonRefs.current[4] = el)}
+          >
             <button
+              id="style-btn"
               className="chartBtns"
               onClick={() => {
                 setShowStylePopup(!showStylePopup);
@@ -602,7 +829,11 @@ const TradingViewChart = ({ coinName }) => {
 
       {/* Chart container */}
       <div
-        ref={containerRef}
+        id="chart-container"
+        ref={(el) => {
+          containerRef.current = el;
+          buttonRefs.current[5] = el;
+        }}
         style={{ width: "100%", height: "600px", overflow: "hidden" }}
       />
     </div>
