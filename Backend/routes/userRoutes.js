@@ -21,7 +21,9 @@ import {
   unblockUser,
   testEmail,
   getUserWithdrawals,
-  approveWithdrawal, rejectWithdrawal,
+  approveWithdrawal,
+  rejectWithdrawal,
+  updateTipStatus,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -61,4 +63,6 @@ router.post("/test-email", testEmail);
 router.get("/withdrawals/:email", getUserWithdrawals);
 router.put("/withdraw-accept/:withdrawalId", approveWithdrawal);
 router.put("/withdraw-reject/:withdrawalId", rejectWithdrawal);
+router.put("/update-tip/:userId", updateTipStatus);
+
 export default router;

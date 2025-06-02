@@ -18,7 +18,6 @@ const BACKEND_URL = "http://localhost:5000";
 
 // Time interval mapping to seconds
 const intervalToSeconds = {
-  "30s": 30,
   "1m": 60,
   "2m": 120,
   "3m": 180,
@@ -271,7 +270,7 @@ const LiveCandleChart = ({ coinName }) => {
 
   // State for various chart controls
   const [countdown, setCountdown] = useState(0);
-  const [interval, setInterval] = useState("30s");
+  const [interval, setInterval] = useState("1m");
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [liveCandle, setLiveCandle] = useState(null);

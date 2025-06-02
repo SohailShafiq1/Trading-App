@@ -5,6 +5,7 @@ import {
   AiOutlinePlus,
   AiFillCrown,
   AiOutlineEdit,
+  AiOutlineClose,
 } from "react-icons/ai";
 import { CgMoreAlt, CgProfile } from "react-icons/cg";
 import { IoMdImage } from "react-icons/io";
@@ -18,7 +19,8 @@ import { useUserAssets } from "../../Context/UserAssetsContext";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 import LeaderboardPopup from "./LeaderboardPopup";
-
+import axios from "axios";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const s = styles;
 
 const BinaryLayout = () => {
@@ -32,8 +34,81 @@ const BinaryLayout = () => {
   const assets = typeof userAssets === "number" ? userAssets : 0;
   const bonus = typeof user?.totalBonus === "number" ? user.totalBonus : 0;
   const totalBalance = (assets + bonus).toFixed(2);
-
+  const tip1 = user?.tips?.find((tip) => tip.text === "tip1")?.status;
   const navigate = useNavigate();
+
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(tip1);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const buttonRefs = useRef([]);
+  const mobileButtonRefs = useRef([]);
+
+  // Tips data for desktop
+  const desktopTips = [
+    {
+      id: "back-btn",
+      text: "This button takes you back to the previous page",
+    },
+    {
+      id: "trade-btn",
+      text: "Click here to access the trading interface",
+    },
+    {
+      id: "profile-btn",
+      text: "View and edit your profile information here",
+    },
+    {
+      id: "more-btn",
+      text: "Additional options including support and leaderboard",
+    },
+    {
+      id: "account-btn",
+      text: "Switch between live and demo accounts, manage funds",
+    },
+    {
+      id: "withdraw-btn",
+      text: "Quick access to withdraw funds from your account",
+    },
+    {
+      id: "deposit-btn",
+      text: "Quick access to deposit funds into your account",
+    },
+  ];
+
+  // Tips data for mobile (footer buttons)
+  const mobileTips = [
+    {
+      id: "mobile-back-btn",
+      text: "This button takes you back to the previous page",
+    },
+    {
+      id: "mobile-trade-btn",
+      text: "Click here to access the trading interface",
+    },
+    {
+      id: "mobile-profile-btn",
+      text: "View and edit your profile information here",
+    },
+    {
+      id: "mobile-account-btn",
+      text: "Switch between live and demo accounts",
+    },
+    {
+      id: "mobile-more-btn",
+      text: "Additional options including support and leaderboard",
+    },
+    {
+      id: "withdraw-btn",
+      text: "Quick access to withdraw funds from your account",
+    },
+    {
+      id: "deposit-btn",
+      text: "Quick access to deposit funds into your account",
+    },
+  ];
+
+  const tips = isMobileView ? mobileTips : desktopTips;
 
   const [popupVisible, setPopupVisible] = useState(false);
   const popupRef = useRef();
@@ -43,6 +118,28 @@ const BinaryLayout = () => {
 
   const [mobileMorePopup, setMobileMorePopup] = useState(false);
   const [mobileAccountPopup, setMobileAccountPopup] = useState(false);
+
+  // Check for mobile view
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth <= 768);
+    };
+
+    handleResize(); // Check initial size
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (tip1) {
+      setShowTutorial(true);
+      buttonRefs.current = buttonRefs.current.slice(0, desktopTips.length);
+      mobileButtonRefs.current = mobileButtonRefs.current.slice(
+        0,
+        mobileTips.length
+      );
+    }
+  }, [tip1]);
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -59,6 +156,45 @@ const BinaryLayout = () => {
     };
   }, []);
 
+  const handleNextTip = () => {
+    if (currentTipIndex < tips.length - 1) {
+      setCurrentTipIndex(currentTipIndex + 1);
+    }
+  };
+
+  const handlePrevTip = () => {
+    if (currentTipIndex > 0) {
+      setCurrentTipIndex(currentTipIndex - 1);
+    }
+  };
+
+  const handleCloseTutorial = async () => {
+    setShowTutorial(false);
+    try {
+      await axios.put(`${BACKEND_URL}/api/users/update-tip/${user._id}`, {
+        tipName: "tip1",
+      });
+    } catch (error) {
+      console.error("Failed to update tip status:", error);
+    }
+  };  
+
+  const getButtonPosition = (index) => {
+    const refs = isMobileView ? mobileButtonRefs : buttonRefs;
+
+    if (refs.current[index]) {
+      const rect = refs.current[index].getBoundingClientRect();
+      return {
+        top: rect.bottom + window.scrollY + 10,
+        left: rect.left + window.scrollX + rect.width / 2,
+        buttonWidth: rect.width,
+      };
+    }
+    return { top: 0, left: 0, buttonWidth: 0 };
+  };
+
+  const position = getButtonPosition(currentTipIndex);
+
   return (
     <>
       <div className={s.container}>
@@ -71,32 +207,43 @@ const BinaryLayout = () => {
         </div>
 
         <div className={s.navBar}>
-          <NavLink
-            style={{
-              background: `linear-gradient(90deg, #66b544, #1a391d)`,
-              color: "white",
-            }}
-            className={s.btn}
-            onClick={() => navigate(-1)}
-          >
-            <MdUndo className={s.icons} />
-            Back
-          </NavLink>
+          <div ref={(el) => (buttonRefs.current[0] = el)}>
+            <NavLink
+              id="back-btn"
+              style={{
+                background: `linear-gradient(90deg, #66b544, #1a391d)`,
+                color: "white",
+              }}
+              className={s.btn}
+              onClick={() => navigate(-1)}
+            >
+              <MdUndo className={s.icons} />
+              Back
+            </NavLink>
+          </div>
 
-          <NavLink to="/binarychart" className={s.btn}>
-            <IoMdImage className={s.icons} />
-            Trade
-          </NavLink>
+          <div ref={(el) => (buttonRefs.current[1] = el)}>
+            <NavLink id="trade-btn" to="/binarychart" className={s.btn}>
+              <IoMdImage className={s.icons} />
+              Trade
+            </NavLink>
+          </div>
 
-          <NavLink className={s.btn} to="/binarychart/profile">
-            <CgProfile className={s.icons} />
-            Profile
-          </NavLink>
+          <div ref={(el) => (buttonRefs.current[2] = el)}>
+            <NavLink
+              id="profile-btn"
+              className={s.btn}
+              to="/binarychart/profile"
+            >
+              <CgProfile className={s.icons} />
+              Profile
+            </NavLink>
+          </div>
 
-          {/* More Button Popup */}
           <div className={s.moreWrapper} ref={popupRef}>
-            <div>
+            <div ref={(el) => (buttonRefs.current[3] = el)}>
               <NavLink
+                id="more-btn"
                 className={s.btn}
                 onClick={() => setPopupVisible((v) => !v)}
               >
@@ -104,6 +251,7 @@ const BinaryLayout = () => {
                 More
               </NavLink>
             </div>
+
             {popupVisible && (
               <div className={s.popup}>
                 <div
@@ -143,6 +291,7 @@ const BinaryLayout = () => {
           {/* Account Switch Popup */}
           <div className={s.accountWrapper} ref={accountRef}>
             <div
+              ref={(el) => (buttonRefs.current[4] = el)}
               className={s.liveAcc}
               onClick={() => setAccountPopupVisible((v) => !v)}
               style={{ cursor: "pointer" }}
@@ -152,7 +301,7 @@ const BinaryLayout = () => {
                   <div className={s.crownBox}>
                     <AiFillCrown
                       style={{
-                        color: assets > 5000 ? "#FFA800" : "#404040", // Gold or Silver
+                        color: assets > 5000 ? "#FFA800" : "#404040",
                         fontSize: "2em",
                         verticalAlign: "middle",
                       }}
@@ -296,16 +445,18 @@ const BinaryLayout = () => {
 
         <div className={s.asset}>
           <div className={s.bankbtns}>
-            <div>
+            <div ref={(el) => (buttonRefs.current[5] = el)}>
               <NavLink
+                id="withdraw-btn"
                 className={s.withdraw}
                 to={"/binarychart/bankinglayout/withdraw"}
               >
                 Withdraw
               </NavLink>
             </div>
-            <div>
+            <div ref={(el) => (buttonRefs.current[6] = el)}>
               <NavLink
+                id="deposit-btn"
                 className={s.deposit}
                 style={{ color: "white" }}
                 to={"/binarychart/bankinglayout/deposit"}
@@ -322,19 +473,92 @@ const BinaryLayout = () => {
         <Outlet />
       </div>
 
+      {/* Tutorial Popup */}
+      {showTutorial && currentTipIndex < tips.length && (
+        <div
+          className={s.tutorialPopup}
+          style={{
+            position: "absolute",
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            backgroundColor: "#2C2D35",
+            color: "white",
+            padding: "15px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+            maxWidth: "300px",
+            textAlign: "center",
+            width: isMobileView
+              ? `${Math.max(position.buttonWidth, 200)}px`
+              : "auto",
+          }}
+        >
+          <div className={s.tutorialContent}>
+            <p>{tips[currentTipIndex].text}</p>
+            <div className={s.tutorialControls}>
+              {currentTipIndex > 0 && (
+                <button onClick={handlePrevTip} className={s.tutorialButton}>
+                  Previous
+                </button>
+              )}
+              {currentTipIndex < tips.length - 1 ? (
+                <button onClick={handleNextTip} className={s.tutorialButton}>
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleCloseTutorial}
+                  className={s.tutorialButton}
+                >
+                  <AiOutlineClose style={{ marginRight: "5px" }} />
+                  Close Tutorial
+                </button>
+              )}
+            </div>
+          </div>
+          <div className={s.tutorialProgress}>
+            {`${currentTipIndex + 1} of ${tips.length}`}
+          </div>
+        </div>
+      )}
+
       {/* Mobile Footer */}
-      <div className={s.footer}>
+      <div
+        className={s.footer}
+        ref={(el) => isMobileView && (mobileButtonRefs.current[0] = el)}
+      >
         <div className={s.footBar}>
-          <NavLink className={s.footBtn} onClick={() => navigate(-1)}>
-            <MdUndo className={s.icons} />
-          </NavLink>
-          <NavLink to="/binarychart" className={s.footBtn}>
-            <IoMdImage className={s.icons} />
-          </NavLink>
-          <NavLink className={s.footBtn} to="/binarychart/profile">
-            <CgProfile className={s.icons} />
-          </NavLink>
+          <div ref={(el) => isMobileView && (mobileButtonRefs.current[0] = el)}>
+            <NavLink
+              id="mobile-back-btn"
+              className={s.footBtn}
+              onClick={() => navigate(-1)}
+            >
+              <MdUndo className={s.icons} />
+            </NavLink>
+          </div>
+          <div ref={(el) => isMobileView && (mobileButtonRefs.current[1] = el)}>
+            <NavLink
+              id="mobile-trade-btn"
+              to="/binarychart"
+              className={s.footBtn}
+            >
+              <IoMdImage className={s.icons} />
+            </NavLink>
+          </div>
+          <div ref={(el) => isMobileView && (mobileButtonRefs.current[2] = el)}>
+            <NavLink
+              id="mobile-profile-btn"
+              className={s.footBtn}
+              to="/binarychart/profile"
+            >
+              <CgProfile className={s.icons} />
+            </NavLink>
+          </div>
           <div
+            ref={(el) => isMobileView && (mobileButtonRefs.current[3] = el)}
             className={s.footBtn}
             onClick={() => setMobileAccountPopup(true)}
           >
@@ -366,7 +590,11 @@ const BinaryLayout = () => {
               </div>
             )}
           </div>
-          <div className={s.footBtn} onClick={() => setMobileMorePopup(true)}>
+          <div
+            ref={(el) => isMobileView && (mobileButtonRefs.current[4] = el)}
+            className={s.footBtn}
+            onClick={() => setMobileMorePopup(true)}
+          >
             <CgMoreAlt className={s.icons} />
           </div>
         </div>

@@ -13,7 +13,7 @@
     margin: 0;
   }
 }
-.mainBOX{
+.mainBOX {
   padding: 10;
   padding-top: 0;
 }
@@ -33,4 +33,13 @@
   border-radius: 0%;
   border: 1px solid;
   border-image: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent) 1;
+}
+
+.liveChartBtns {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.liveCHART {
+  padding: 0;
 }
