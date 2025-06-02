@@ -13,7 +13,7 @@ import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
-
+import track from './assets/trade.mp3'
 const BinaryChart = () => {
   // State declarations
   const socket = useRef(null);
@@ -659,7 +659,15 @@ const BinaryChart = () => {
     fetchAndRecoverTrades();
   }, [user?.email, coins, isDemo]);
 
+  // 1. Add a ref for the audio element
+  const clickAudioRef = useRef(null);
+
+  // 2. Play sound on Buy/Sell
   const handleTradeButtonClick = (tradeType) => {
+    if (clickAudioRef.current) {
+      clickAudioRef.current.currentTime = 0; // rewind to start
+      clickAudioRef.current.play();
+    }
     if (!isDemo && !isVerified) {
       toast.error("Please verify your account to start trading");
       return;
@@ -872,6 +880,8 @@ const BinaryChart = () => {
       )}
 
       <ToastContainer />
+      {/* 3. Add the audio element at the bottom of your JSX */}
+      <audio ref={clickAudioRef} src={track} preload="auto" />
     </>
   );
 };
