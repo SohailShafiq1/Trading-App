@@ -19,7 +19,6 @@ const BinaryChart = () => {
   const socket = useRef(null);
 
   useEffect(() => {
-    localStorage
     socket.current = io("http://localhost:5000");
     return () => {
       socket.current.disconnect();
@@ -49,7 +48,7 @@ const BinaryChart = () => {
   const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
   const [demoAssets, setDemoAssets] = useState(demo_assets);
   const [showTimestampPopup, setShowTimestampPopup] = useState(false);
-  const [allInClicked, setAllInClicked] = useState(false);
+
   // Check verification status (only for real account)
   useEffect(() => {
     if (isDemo) {
@@ -255,22 +254,22 @@ const BinaryChart = () => {
   };
 
   // Load demo trades from localStorage
-  const loadDemoTrades = () => {
-    const savedTrades = localStorage.getItem("demoTrades");
-    if (!savedTrades) return [];
+const loadDemoTrades = () => {
+  const savedTrades = localStorage.getItem("demoTrades");
+  if (!savedTrades) return [];
 
-    try {
-      const parsedTrades = JSON.parse(savedTrades).map((trade) => ({
-        ...trade,
-        startedAt: new Date(trade.startedAt),
-      }));
-      return parsedTrades;
-    } catch (err) {
-      console.error("Error parsing demo trades:", err);
-      return [];
-    }
-  };
-
+  try {
+    const parsedTrades = JSON.parse(savedTrades).map((trade) => ({
+      ...trade,
+      startedAt: new Date(trade.startedAt),
+      id: trade.id || `${trade.startedAt}-${trade.coinName}-${Math.random()}`,
+    }));
+    return parsedTrades;
+  } catch (err) {
+    console.error("Error parsing demo trades:", err);
+    return [];
+  }
+};
   // Save demo assets to localStorage
   const saveDemoAssets = (assets) => {
     localStorage.setItem("demoAssets", assets.toString());
@@ -314,7 +313,8 @@ const BinaryChart = () => {
     try {
       const currentPrice = selectedCoinType === "OTC" ? otcPrice : livePrice;
       const tradePrice = parseFloat(currentPrice);
-      const tradeId = Date.now();
+     // When creating a new trade
+const tradeId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const startedAt = new Date();
 
       // Create trade object
@@ -571,58 +571,58 @@ const BinaryChart = () => {
     if (isDemo) return;
     if (!user?.email) return;
 
-    const fetchAndRecoverTrades = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:5000/api/users/trades/${user.email}`
-        );
-        const now = Date.now();
+const fetchAndRecoverTrades = async () => {
+  try {
+    const response = await axios.get(
+      `http://localhost:5000/api/users/trades/${user.email}`
+    );
+    const now = Date.now();
 
-        const recoveredTrades = await Promise.all(
-          response.data.map(async (trade) => {
-            if (trade.result !== "pending") {
-              return {
-                ...trade,
-                price: trade.investment,
-                coinName: trade.coin,
-                remainingTime: 0,
-                status: trade.result,
-              };
-            }
+    const recoveredTrades = await Promise.all(
+      response.data.map(async (trade) => {
+        if (trade.result !== "pending") {
+          return {
+            ...trade,
+            id: trade._id || trade.id, // Ensure we have a unique ID
+            price: trade.investment,
+            coinName: trade.coin,
+            remainingTime: 0,
+            status: trade.result,
+          };
+        }
 
-            const elapsed = Math.floor(
-              (now - new Date(trade.startedAt).getTime()) / 1000
-            );
-
-            if (elapsed > trade.duration) {
-              // Don't auto-close, just set remainingTime to 0 and keep status as "running"
-              return {
-                ...trade,
-                price: trade.investment,
-                coinName: trade.coin,
-                remainingTime: 0,
-                status: "running",
-                // reward: 0, // keep reward as 0 or undefined
-              };
-            }
-
-            return {
-              ...trade,
-              price: trade.investment,
-              coinName: trade.coin,
-              remainingTime: Math.max(trade.duration - elapsed, 0),
-              status: "running",
-            };
-          })
+        const elapsed = Math.floor(
+          (now - new Date(trade.startedAt).getTime()) / 1000
         );
 
-        setTrades(recoveredTrades.reverse());
-      } catch (err) {
-        console.error("Failed to fetch trades:", err);
-        toast.error("Failed to load trade history");
-      }
-    };
+        if (elapsed > trade.duration) {
+          return {
+            ...trade,
+            id: trade._id || trade.id, // Ensure we have a unique ID
+            price: trade.investment,
+            coinName: trade.coin,
+            remainingTime: 0,
+            status: "running",
+          };
+        }
 
+        return {
+          ...trade,
+          id: trade._id || trade.id, // Ensure we have a unique ID
+          price: trade.investment,
+          coinName: trade.coin,
+          remainingTime: Math.max(trade.duration - elapsed, 0),
+          status: "running",
+        };
+      })
+    );
+
+    setTrades(recoveredTrades.reverse());
+  } catch (err) {
+    console.error("Failed to fetch trades:", err);
+    toast.error("Failed to load trade history");
+  }
+};
     fetchAndRecoverTrades();
   }, [user?.email, coins, isDemo]);
 
@@ -645,89 +645,86 @@ const BinaryChart = () => {
   const currentAssets = isDemo ? demoAssets : userAssets;
 
   const handleCloseTrade = async (trade) => {
-    try {
-      let endPrice;
-      if (trade.coinType === "Live") {
-        const response = await fetch(
-          `https://api.binance.com/api/v3/ticker/price?symbol=${trade.coinName}USDT`
-        );
-        const data = await response.json();
-        endPrice = parseFloat(data.price);
-      } else {
-        const response = await axios.get(
-          `http://localhost:5000/api/coins/price/${trade.coinName}`
-        );
-        endPrice =
-          typeof response.data === "object"
-            ? parseFloat(response.data.price)
-            : parseFloat(response.data);
-      }
-
-      const coinData = coins.find((c) => c.name === trade.coinName);
-      const profitPercentage = coinData?.profitPercentage || 0;
-      const tradeInvestment = trade.investment ?? trade.price ?? 0;
-
-      let centsChange = 0;
-      if (trade.type === "Buy") {
-        centsChange =
-          (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
-      } else {
-        centsChange =
-          (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
-      }
-
-      let isWin = centsChange >= 0;
-      let reward;
-
-      if (isWin) {
-        // Win: payout + floating profit
-        reward = (
-          tradeInvestment * (1 + profitPercentage / 100) +
-          centsChange
-        ).toFixed(2);
-      } else {
-        // Loss: investment + floating loss (can go below zero)
-        reward = (tradeInvestment + centsChange).toFixed(2);
-      }
-
-      // Update local state
-      setTrades((prev) =>
-        prev.map((t) =>
-          t.id === trade.id
-            ? {
-                ...t,
-                status: isWin ? "win" : "loss",
-                reward: parseFloat(reward),
-                remainingTime: 0,
-              }
-            : t
-        )
+  try {
+    let endPrice;
+    if (trade.coinType === "Live") {
+      const response = await fetch(
+        `https://api.binance.com/api/v3/ticker/price?symbol=${trade.coinName}USDT`
       );
-
-      // Save result to DB if not demo
-      if (!isDemo) {
-        await updateTradeResultInDB({
-          email: user.email,
-          startedAt: trade.startedAt,
-          result: isWin ? "win" : "loss",
-          reward: parseFloat(reward),
-          exitPrice: endPrice,
-        });
-      }
-
-      setPopupMessage(
-        isWin
-          ? `Trade Win! You got $${reward}`
-          : `Trade Loss! You lost $${Math.abs(reward)}`
+      const data = await response.json();
+      endPrice = parseFloat(data.price);
+    } else {
+      const response = await axios.get(
+        `http://localhost:5000/api/coins/price/${trade.coinName}`
       );
-      setPopupColor(isWin ? "#10A055" : "#FF1600");
-      setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 3000);
-    } catch (err) {
-      console.error("Failed to close trade:", err);
-      toast.error("Failed to close trade");
+      endPrice =
+        typeof response.data === "object"
+          ? parseFloat(response.data.price)
+          : parseFloat(response.data);
     }
-  };
+
+    const coinData = coins.find((c) => c.name === trade.coinName);
+    const profitPercentage = coinData?.profitPercentage || 0;
+    const tradeInvestment = trade.investment ?? trade.price ?? 0;
+
+    let centsChange = 0;
+    if (trade.type === "Buy") {
+      centsChange =
+        (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
+    } else {
+      centsChange =
+        (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
+    }
+
+    let isWin = centsChange >= 0;
+    let reward;
+
+    if (isWin) {
+      reward = (
+        tradeInvestment * (1 + profitPercentage / 100) +
+        centsChange
+      ).toFixed(2);
+    } else {
+      reward = (tradeInvestment + centsChange).toFixed(2);
+    }
+
+    // Update only the specific trade in state
+    setTrades((prev) =>
+      prev.map((t) =>
+        t.id === trade.id
+          ? {
+              ...t,
+              status: isWin ? "win" : "loss",
+              reward: parseFloat(reward),
+              remainingTime: 0,
+            }
+          : t
+      )
+    );
+
+    if (!isDemo) {
+      await updateTradeResultInDB({
+        email: user.email,
+        startedAt: trade.startedAt,
+        result: isWin ? "win" : "loss",
+        reward: parseFloat(reward),
+        exitPrice: endPrice,
+      });
+    }
+
+    setPopupMessage(
+      isWin
+        ? `Trade Win! You got $${reward}`
+        : `Trade Loss! You lost $${Math.abs(reward)}`
+    );
+    setPopupColor(isWin ? "#10A055" : "#FF1600");
+    setShowPopup(true);
+    setTimeout(() => setShowPopup(false), 3000);
+  } catch (err) {
+    console.error("Failed to close trade:", err);
+    toast.error("Failed to close trade");
+  }
+};
 
   return (
     <>
@@ -859,10 +856,9 @@ const BinaryChart = () => {
                   type="number"
                   className={styles.value}
                   value={investment}
-                  onChange={(e) => {
-                    setInvestment(Math.max(parseInt(e.target.value) || 1, 1));
-                    setAllInClicked(false);
-                  }}
+                  onChange={(e) =>
+                    setInvestment(Math.max(parseInt(e.target.value) || 1, 1))
+                  }
                   min="1"
                   disabled={
                     isLoading || isProcessingTrade || (!isDemo && !isVerified)
@@ -878,37 +874,6 @@ const BinaryChart = () => {
                   +
                 </button>
               </div>
-              {/* Add All In button below the amount input */}
-              <button
-                className={styles.allInBtn}
-                style={{
-                  marginTop: "8px",
-                  width: "100%",
-                  background: allInClicked ? "#FF1600" : "#10A055",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "6px 0",
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                  transition: "background 0.2s",
-                }}
-                onClick={() => {
-                  if (allInClicked) {
-                    setInvestment(0);
-                    setAllInClicked(false);
-                  } else {
-                    setInvestment(currentAssets);
-                    setAllInClicked(true);
-                  }
-                }}
-                disabled={
-                  isLoading || isProcessingTrade || (!isDemo && !isVerified)
-                }
-              >
-                {allInClicked ? "Clear All" : "All In"}
-              </button>
             </div>
             <div>
               <p style={{ textAlign: "center" }}>

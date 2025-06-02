@@ -18,7 +18,7 @@ const Trades = ({
         let displayStatus = trade.status;
         let displayReward = trade.reward;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
-
+const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
         // For running trades with time up, show real-time floating PnL
         if (trade.status === "running" && trade.remainingTime === 0) {
           const endPrice =
@@ -56,7 +56,7 @@ const Trades = ({
 
         return (
           <li
-            key={trade.id}
+            key={tradeId}
             style={{
               color: "black",
               padding: "2px", // Add padding for better readability
