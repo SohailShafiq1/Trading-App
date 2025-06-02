@@ -119,7 +119,22 @@ const Profile = () => {
     if (user?.email) fetchProfile();
   }, [user?.email]);
 
+  const logoutNotification = () => {
+    axios
+      .post("http://localhost:5000/api/users/notifications/create", {
+        email: user.email,
+        notification: {
+          type: "Logout",
+          message: "You have successfully logged out.",
+        },
+      })
+      .catch((err) => {
+        console.error("Error creating logout notification:", err);
+      });
+  };
+
   const handleLogout = () => {
+    logoutNotification();
     logout();
     logoutAffiliate();
     navigate("/login");
@@ -139,17 +154,14 @@ const Profile = () => {
       setCnicPreview(URL.createObjectURL(file));
       setCnicPicture(file);
 
-      setIsOcrLoading(true); // Start OCR loader
+      setIsOcrLoading(true);
 
-      // OCR: Extract CNIC number from image
       Tesseract.recognize(file, "eng")
         .then(({ data: { text } }) => {
-          // Find CNIC pattern in text
           const match = text.match(/\d{5}-\d{7}-\d{1}/);
           if (match) {
             setCnicNumber(match[0]);
           } else {
-            // Try to find unformatted CNIC and format it
             const digits = text.replace(/\D/g, "");
             if (digits.length === 13) {
               setCnicNumber(
@@ -159,11 +171,11 @@ const Profile = () => {
               );
             }
           }
-          setIsOcrLoading(false); // Stop OCR loader
+          setIsOcrLoading(false);
         })
         .catch(() => {
           setIsOcrLoading(false);
-          setCnicPicture(""); // Clear CNIC picture on OCR error
+          setCnicPicture("");
           console.error("OCR error:", err);
         });
     }
@@ -173,7 +185,7 @@ const Profile = () => {
     const file = e.target.files[0];
     if (file) {
       setCnicBackPreview(URL.createObjectURL(file));
-      setCnicBackPicture(file); // Only update back
+      setCnicBackPicture(file);
     }
   };
 

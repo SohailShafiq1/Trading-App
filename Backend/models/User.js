@@ -261,6 +261,30 @@ const UserSchema = new mongoose.Schema(
         { text: "tip10", status: true },
       ],
     },
+    unReadNotification: {
+      type: Number,
+      default: 0,
+    },
+    notifications: [
+      {
+        type: {
+          type: String,
+          required: false,
+        },
+        message: {
+          type: String,
+          required: true,
+        },
+        read: {
+          type: Boolean,
+          default: false,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -822,3 +822,44 @@ export const updateTipStatus = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const getNotifications = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email }, { notifications: 1 });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json(user.notifications || []);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+};
+
+export const createNotification = async (req, res) => {
+  const { email, notification } = req.body;
+  console.log(req.body);
+
+  if (!email || !notification) {
+    return res
+      .status(400)
+      .json({ error: "Email and notification are required" });
+  }
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.notifications = user.notifications || [];
+    user.notifications.push({
+      ...notification,
+      createdAt: new Date(),
+      read: false,
+    });
+    await user.save();
+
+    res.status(201).json({
+      message: "Notification created",
+      notifications: user.notifications,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create notification" });
+  }
+};

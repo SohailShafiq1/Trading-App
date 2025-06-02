@@ -33,64 +33,44 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/check-admin", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: form.email }),
-    });
+    e.preventDefault();
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/check-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: form.email }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!data.success) {
-      throw new Error(data.message || "Failed to check admin status");
+      if (!data.success) {
+        throw new Error(data.message || "Failed to check admin status");
+      }
+      // Successful login
+      await login({ email: form.email, password: form.password });
+
+      if (form.rememberMe) {
+        localStorage.setItem("rememberedEmail", form.email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
+      if (data.isAdmin === true) {
+        navigate("/admin");
+      } else {
+        navigate("/binarychart");
+      }
+    } catch (err) {
+      // Check for block reason in error message
+      if (err.message && err.message.toLowerCase().includes("blocked")) {
+        setBlockMsg(err.message); // Show custom popup
+      } else {
+        alert(err.message || "Login failed");
+      }
     }
-
-    // Try to login
-    const loginRes = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: form.email,
-        password: form.password,
-      }),
-    });
-
-    const loginData = await loginRes.json();
-
-    if (!loginRes.ok) {
-      // This will catch 403 and other error statuses
-      throw new Error(loginData.message || "Login failed");
-    }
-
-    // Successful login
-    await login({ email: form.email, password: form.password });
-
-    if (form.rememberMe) {
-      localStorage.setItem("rememberedEmail", form.email);
-    } else {
-      localStorage.removeItem("rememberedEmail");
-    }
-
-    if (data.isAdmin === true) {
-      navigate("/admin");
-    } else {
-      navigate("/binarychart");
-    }
-  } catch (err) {
-    // Check for block reason in error message
-    if (err.message && err.message.toLowerCase().includes("blocked")) {
-      setBlockMsg(err.message); // Show custom popup
-    } else {
-      alert(err.message || "Login failed");
-    }
-  }
-};
+  };
 
   const handleForgotPassword = async () => {
     if (!form.email) {
@@ -182,9 +162,7 @@ const LoginPage = () => {
               Forgot Password?
             </div>
           </div>
-          <button type="submit" className={styles.loginBtn}>
-            Login
-          </button>
+          <button className={styles.loginBtn}>Login</button>
           <div id="googleBtn" className={styles.googleSignin}></div>
         </form>
       </div>

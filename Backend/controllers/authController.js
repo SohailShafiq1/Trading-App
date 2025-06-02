@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Affiliate from "../models/Affiliate.js";
 import { OAuth2Client } from "google-auth-library";
+import { read } from "fs";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -40,6 +41,14 @@ const register = async (req, res) => {
       password,
       country,
       currency: currency || "USD",
+      notifications: [
+        {
+          type: "Registeration",
+          message: "Welcome to the platform!",
+          read: false,
+          date: new Date(),
+        },
+      ], // Add initial notification
     });
 
     // Handle referral if provided
@@ -82,6 +91,8 @@ const register = async (req, res) => {
 
 // Login User
 const login = async (req, res) => {
+  console.log("log in accessed");
+
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -118,6 +129,16 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user._id);
+
+    // Add login notification
+    user.notifications.push({
+      type: "Login",
+      read: false,
+      message: "You have successfully logged in.",
+      date: new Date(),
+    });
+    await user.save();
+
     const userResponse = user.toObject();
     delete userResponse.password;
 

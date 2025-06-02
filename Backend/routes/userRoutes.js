@@ -24,6 +24,8 @@ import {
   approveWithdrawal,
   rejectWithdrawal,
   updateTipStatus,
+  getNotifications,
+  createNotification,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -64,5 +66,6 @@ router.get("/withdrawals/:email", getUserWithdrawals);
 router.put("/withdraw-accept/:withdrawalId", approveWithdrawal);
 router.put("/withdraw-reject/:withdrawalId", rejectWithdrawal);
 router.put("/update-tip/:userId", updateTipStatus);
-
+router.get("/notifications/:email", getNotifications);
+router.post("/notifications/create", createNotification);
 export default router;
