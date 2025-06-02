@@ -17,7 +17,6 @@ h2 {
   font-weight: bold;
 }
 
-
 .filterDropdown {
   width: 200px;
   padding: 10px;
@@ -158,4 +157,60 @@ button:hover {
 .backButton:hover {
   background-color: #0056b3;
   transform: scale(1.05);
+}
+
+.limitBox {
+  margin-bottom: 24px;
+  background: #fff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.limitLabel {
+  font-weight: 600;
+  font-size: 16px;
+  color: #222;
+}
+
+.limitInput {
+  width: 120px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #bdbdbd;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.limitInput:focus {
+  border-color: #388e3c;
+}
+
+.limitButton {
+  background: #388e3c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 1px 2px rgba(56, 142, 60, 0.08);
+}
+
+.limitButton:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+
+.limitDesc {
+  color: #666;
+  font-size: 15px;
 }

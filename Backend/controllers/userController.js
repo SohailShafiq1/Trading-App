@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
+import Settings from "../models/Settings.js";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
@@ -207,6 +208,19 @@ export const withdraw = async (req, res) => {
   const { email, amount, network, purse, paymentMethod } = req.body;
 
   try {
+    // Get auto-approve range from settings
+    let settings = await Settings.findOne();
+    if (!settings) settings = await Settings.create({});
+    const limit = Number(settings.withdrawAutoApproveLimit);
+
+    let status = "pending";
+    let processedAt = undefined;
+
+    if (!isNaN(limit) && limit > 0 && amount <= limit) {
+      status = "autoapproved";
+      processedAt = new Date();
+    }
+
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.assets < amount)
@@ -219,7 +233,7 @@ export const withdraw = async (req, res) => {
       type: "withdrawal",
       amount,
       paymentMethod: `${paymentMethod} (${network})`,
-      status: "pending",
+      status: status === "approved" ? "success" : "pending",
       date: new Date(),
     });
 
@@ -229,14 +243,20 @@ export const withdraw = async (req, res) => {
       purse,
       network,
       paymentMethod,
-      status: "pending",
+      status,
       createdAt: new Date(),
+      processedAt,
     });
 
     user.assets -= amount;
     await user.save();
 
-    res.status(201).json({ message: "Withdrawal submitted" });
+    res.status(201).json({
+      message:
+        status === "approved"
+          ? "Withdrawal auto-approved"
+          : "Withdrawal submitted",
+    });
   } catch (err) {
     console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });

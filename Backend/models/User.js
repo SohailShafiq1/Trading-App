@@ -131,7 +131,7 @@ const UserSchema = new mongoose.Schema(
         },
         status: {
           type: String,
-          enum: ["pending", "approved", "rejected"],
+          enum: ["pending", "approved", "autoapproved", "rejected"],
           default: "pending",
         },
         purse: {

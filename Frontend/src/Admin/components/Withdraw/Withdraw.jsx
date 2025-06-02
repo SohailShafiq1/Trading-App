@@ -6,31 +6,68 @@ const Withdraw = () => {
   const [withdrawRequests, setWithdrawRequests] = useState([]);
   const [filter, setFilter] = useState("all"); // "all", "pending", "approved", "rejected"
   const [error, setError] = useState("");
+  const [autoLimit, setAutoLimit] = useState("");
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   // Fetch requests based on filter
-const fetchWithdrawRequests = async () => {
-  try {
-    const url = filter === "all" 
-      ? "http://localhost:5000/api/admin/withdraw-requests"
-      : `http://localhost:5000/api/admin/withdraw-requests?status=${filter}`;
+  const fetchWithdrawRequests = async () => {
+    try {
+      const url =
+        filter === "all"
+          ? "http://localhost:5000/api/admin/withdraw-requests"
+          : `http://localhost:5000/api/admin/withdraw-requests?status=${filter}`;
 
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    // Sort by newest first
-    const sortedRequests = data.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    
-    setWithdrawRequests(sortedRequests);
-  } catch (err) {
-    setError("Failed to fetch requests");
-  }
-};
+      const response = await fetch(url);
+      const data = await response.json();
+
+      // Sort by newest first
+      const sortedRequests = data.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setWithdrawRequests(sortedRequests);
+    } catch (err) {
+      setError("Failed to fetch requests");
+    }
+  };
+
+  // Fetch auto-approve limit
+  const fetchAutoLimit = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/settings/withdraw-limit"
+      );
+      const data = await res.json();
+      setAutoLimit(data.limit);
+    } catch {
+      setError("Failed to fetch auto-approve limit");
+    }
+  };
+
+  // Save auto-approve limit
+  const saveAutoLimit = async () => {
+    setSaving(true);
+    try {
+      await fetch("http://localhost:5000/api/settings/withdraw-limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: Number(autoLimit) }),
+      });
+      fetchAutoLimit();
+    } catch {
+      setError("Failed to save auto-approve limit");
+    }
+    setSaving(false);
+  };
+
   useEffect(() => {
     fetchWithdrawRequests();
   }, [filter]); // ✅ Refetch when filter changes
+
+  useEffect(() => {
+    fetchAutoLimit();
+  }, []);
 
   const handleAccept = async (withdrawalId) => {
     try {
@@ -61,8 +98,31 @@ const fetchWithdrawRequests = async () => {
       <button onClick={() => navigate(-1)}>Back</button>
       <h2>Withdrawal Requests</h2>
 
-      <select 
-        value={filter} 
+      {/* Auto-approval limit controls */}
+      <div className={styles.limitBox}>
+        <span className={styles.limitLabel}>Auto-Approve Withdraw Limit:</span>
+        <input
+          type="number"
+          value={autoLimit}
+          onChange={(e) => setAutoLimit(e.target.value)}
+          className={styles.limitInput}
+          min={0}
+          placeholder="Limit"
+        />
+        <button
+          onClick={saveAutoLimit}
+          disabled={saving}
+          className={styles.limitButton}
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+        <span className={styles.limitDesc}>
+          All withdrawals <b>≤ ${autoLimit || 0}</b> will be auto-approved.
+        </span>
+      </div>
+
+      <select
+        value={filter}
         onChange={(e) => setFilter(e.target.value)}
         className={styles.filterDropdown}
       >
@@ -90,26 +150,36 @@ const fetchWithdrawRequests = async () => {
               <td>{request.email}</td>
               <td>${request.amount}</td>
               <td>
-                <span className={
-                  request.status === "approved" ? styles.statusApproved :
-                  request.status === "rejected" ? styles.statusRejected :
-                  styles.statusPending
-                }>
-                  {request.status}
+                <span
+                  style={{
+                    color:
+                      request.status === "approved" ||
+                      request.status === "autoapproved"
+                        ? "#388e3c"
+                        : request.status === "rejected"
+                        ? "#e53935"
+                        : "#fbc02d",
+                    fontWeight: "bold",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {request.status === "autoapproved"
+                    ? "Auto Approved"
+                    : request.status}
                 </span>
               </td>
               <td>{new Date(request.createdAt).toLocaleString()}</td>
               <td>
-                {/* Show buttons only for pending requests */}
+                {/* Only show buttons for pending */}
                 {request.status === "pending" && (
                   <>
-                    <button 
+                    <button
                       onClick={() => handleAccept(request.withdrawalId)}
                       className={styles.acceptButton}
                     >
                       Approve
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleReject(request.withdrawalId)}
                       className={styles.rejectButton}
                     >

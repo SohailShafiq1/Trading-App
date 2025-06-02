@@ -26,14 +26,14 @@ export const getAllWithdrawalRequests = async (req, res) => {
 
   try {
     const users = await User.find(
-      status ? { "withdrawals.status": status } : {},
+      status && status !== "all" ? { "withdrawals.status": status } : {},
       { email: 1, withdrawals: 1 }
     );
 
     const allRequests = users
       .flatMap((user) =>
         user.withdrawals
-          .filter((w) => !status || w.status === status)
+          .filter((w) => status === "all" || !status || w.status === status)
           .map((w) => ({
             email: user.email,
             withdrawalId: w._id.toString(),
