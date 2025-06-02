@@ -293,6 +293,12 @@ const BinaryChart = () => {
       return;
     }
 
+    // Enforce single trade limit
+    if (investment > 4000) {
+      toast.error("Single trade limit is $4000");
+      return;
+    }
+
     const currentAssets = isDemo ? demoAssets : userAssets;
     const totalAvailable = isDemo
       ? demoAssets
