@@ -47,8 +47,23 @@ const Tabs = () => {
       return (notifications || []).length > 0 ? (
         notifications.map((item, index) => (
           <p key={index} className={styles.popupItem}>
-            {item.type ? `${item.type}: ` : ""} {item.message} -{" "}
-            {new Date(item.createdAt).toLocaleString()}{" "}
+            <strong style={{ color: "Green", fontSize: "14px" }}>
+              {item.type ? `${item.type}: ` : ""}
+            </strong>{" "}
+            <br />
+            <div
+              style={{
+                color: "black",
+                fontWeight: "700",
+                fontSize: "16px",
+              }}
+            >
+              {item.message}
+            </div>{" "}
+            <br />
+            <strong style={{ color: "red" }}>
+              {new Date(item.createdAt).toLocaleString()}{" "}
+            </strong>
           </p>
         ))
       ) : (

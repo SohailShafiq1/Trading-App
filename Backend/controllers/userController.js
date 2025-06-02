@@ -118,6 +118,21 @@ export const createDeposit = async (req, res) => {
             user.usedBonuses.push(deposit.bonusId);
           }
         }
+        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
+          user.notifications.push({
+            type: "Deposit",
+            read: false,
+            message: `Deposit of $${deposit.amount} + $${deposit.bonusAmount} bonus has been credited to your account.`,
+            date: new Date(),
+          });
+        } else {
+          user.notifications.push({
+            type: "Deposit",
+            read: false,
+            message: `Deposit of $${deposit.amount} has been credited to your account.`,
+            date: new Date(),
+          });
+        }
 
         await user.save();
       }
@@ -249,6 +264,12 @@ export const withdraw = async (req, res) => {
     });
 
     user.assets -= amount;
+    user.notifications.push({
+      type: "Withdraw",
+      read: false,
+      message: `You have made a Withdrawal of $${amount}.`,
+      date: new Date(),
+    });
     await user.save();
 
     res.status(201).json({
@@ -426,7 +447,6 @@ export const updateProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-
     // Build the update object
     const update = {
       firstName,
@@ -516,6 +536,14 @@ export const updateProfile = async (req, res) => {
     const updatedUser = await User.findOneAndUpdate({ email }, update, {
       new: true,
     });
+    user.notifications.push({
+      type: "Profile",
+      read: false,
+      message: "You have updated your profile.",
+      date: new Date(),
+    });
+    await user.save();
+
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -623,7 +651,12 @@ export const blockUser = async (req, res) => {
         rejectUnauthorized: false,
       },
     });
-
+    user.notifications.push({
+      type: "Account",
+      read: false,
+      message: `Your Account was blocked beacuse of : ${reason}`,
+      date: new Date(),
+    });
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
@@ -691,6 +724,13 @@ export const unblockUser = async (req, res) => {
     try {
       await transporter.sendMail(mailOptions);
       console.log("Unblock email sent to", user.email);
+      user.notifications.push({
+        type: "Account",
+        read: false,
+        message: "Your Account has been unblocked.",
+        date: new Date(),
+      });
+      await user.save();
     } catch (error) {
       console.error("Error sending unblock email:", error);
     }
