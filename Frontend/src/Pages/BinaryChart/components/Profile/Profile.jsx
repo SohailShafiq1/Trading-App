@@ -630,15 +630,7 @@ const Profile = () => {
                     style={{ flexDirection: "column" }}
                   >
                     <img
-                      src={
-                        cnicBackPicture
-                          ? cnicBackPicture.startsWith("http")
-                            ? cnicBackPicture
-                            : cnicBackPicture.startsWith("/uploads/")
-                            ? `http://localhost:5000${cnicBackPicture}`
-                            : `http://localhost:5000/uploads/cnic/${cnicBackPicture}`
-                          : ""
-                      }
+                      src={`http://localhost:5000/${cnicBackPicture}`}
                       alt="Back"
                       className={s.cnicImgStyled}
                     />
