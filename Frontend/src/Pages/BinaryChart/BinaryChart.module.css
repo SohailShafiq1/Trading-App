@@ -417,33 +417,36 @@ body {
 } */
 
 @media (max-width: 768px) {
+  .coinList {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
   .chart {
     height: 100%;
     display: flex;
     flex-direction: column-reverse;
   }
-  .controlStuff{
+  .controlStuff {
+    flex-direction: row;
+    width: 100%;
+    gap: 0.3rem;
+  }
+  .controlBox {
+    width: 50%;
+  }
+  .moneyBox {
+    width: 50%;
+  }
+  .buySelling {
     flex-direction: row;
     width: 100%;
   }
-  .controlBox{
-    width: 50%;
-  }
-  .moneyBox{
-    width: 50%;
-  }
-  .buySelling{
-    flex-direction: row;
-    width: 100%;
-  }
-  .buyBox{
+  .buyBox {
     width: 50%;
     gap: 0;
   }
-  .SellBox{
+  .SellBox {
     width: 50%;
     gap: 0;
   }
 }
-
-
