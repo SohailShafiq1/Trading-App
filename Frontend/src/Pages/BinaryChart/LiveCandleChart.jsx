@@ -11,6 +11,7 @@ import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import { io } from "socket.io-client";
 import Tabs from "./components/Tabs/Tabs";
+import CoinSelector from "./components/CoinSelector/CoinSelector";
 
 // Initialize socket connection to backend
 const socket = io("http://localhost:5000");
@@ -262,11 +263,12 @@ const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
 };
 
 // Main chart component
-const LiveCandleChart = ({ coinName }) => {
+const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
   // Refs for chart elements
   const chartContainerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
+  const coinSelectorRef = useRef();
 
   // State for various chart controls
   const [countdown, setCountdown] = useState(0);
@@ -285,6 +287,7 @@ const LiveCandleChart = ({ coinName }) => {
   const [showStylePopup, setShowStylePopup] = useState(false);
   const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
   const [showDrawingPopup, setShowDrawingPopup] = useState(false);
+  const [showCoinSelector, setShowCoinSelector] = useState(false);
 
   // Refs for indicators
   const smaSeriesRef = useRef(null);
@@ -1078,6 +1081,25 @@ const LiveCandleChart = ({ coinName }) => {
     }
   }, [autoZoom]);
 
+  // Close coin selector on outside click
+  useEffect(() => {
+    if (!showCoinSelector) return;
+
+    function handleClickOutside(event) {
+      if (
+        coinSelectorRef.current &&
+        !coinSelectorRef.current.contains(event.target)
+      ) {
+        setShowCoinSelector(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showCoinSelector]);
+
   // Render the chart component
   return (
     <div
@@ -1101,12 +1123,6 @@ const LiveCandleChart = ({ coinName }) => {
           <div style={{ position: "relative" }}>
             <button
               className="chartBtns"
-              onClick={() => {
-                setShowIndicatorPopup(!showIndicatorPopup);
-                setShowStylePopup(false);
-                setShowThemePopup(false);
-                setShowDrawingPopup(false);
-              }}
               style={{
                 fontSize: "1rem",
                 display: "flex",
@@ -1116,7 +1132,9 @@ const LiveCandleChart = ({ coinName }) => {
                 cursor: "pointer",
                 background: "linear-gradient(90deg, #66b544, #1a391d)",
                 height: 50,
+                gap: 8,
               }}
+              onClick={() => setShowCoinSelector(true)}
             >
               <AiOutlinePlus
                 style={{
@@ -1126,6 +1144,53 @@ const LiveCandleChart = ({ coinName }) => {
                 }}
               />
             </button>
+            {showCoinSelector && (
+              <div
+                ref={coinSelectorRef}
+                style={{
+                  position: "absolute",
+                  top: "110%",
+                  left: 0,
+                  zIndex: 200,
+                  minWidth: 260,
+                }}
+              >
+                <CoinSelector
+                  selectedCoin={coinName}
+                  setSelectedCoin={(coin) => {
+                    setShowCoinSelector(false);
+                    setSelectedCoin(coin);
+                  }}
+                  disabled={false}
+                  isOpen={showCoinSelector}
+                  setIsOpen={setShowCoinSelector}
+                  coins={coins}
+                />
+              </div>
+            )}
+          </div>
+
+          <div style={{ position: "relative" }}>
+            <button
+              className="chartBtns"
+              onClick={() => {
+                setShowIndicatorPopup(!showIndicatorPopup);
+                setShowStylePopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(false);
+              }}
+              style={{
+                padding: "6px 12px",
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1.5rem",
+                background: "#E0E0E0",
+              }}
+            >
+              <FiMaximize2 />
+            </button>
+
             {showIndicatorPopup && (
               <div
                 style={{
@@ -1159,9 +1224,7 @@ const LiveCandleChart = ({ coinName }) => {
                 ))}
               </div>
             )}
-          </div>
 
-          <div style={{ position: "relative" }}>
             <button
               className="chartBtns"
               onClick={() => {

@@ -734,25 +734,7 @@ const BinaryChart = () => {
       <div className={styles.container}>
         <div className={styles.Cbox}>
           <div className={styles.chart}>
-            <div className={styles.coinList}>
-              <CoinSelector
-                ref={coinSelectorRef}
-                coins={coins}
-                selectedCoin={selectedCoin}
-                setSelectedCoin={setSelectedCoin}
-                disabled={isProcessingTrade}
-                isOpen={isCoinSelectorOpen}
-                setIsOpen={setIsCoinSelectorOpen}
-              />
-              {trades.length > 0 && (
-                <div className={styles.timer}>
-                  <p>
-                    Latest Trade Timer:{" "}
-                    {formatTime(trades[trades.length - 1].remainingTime)}
-                  </p>
-                </div>
-              )}
-            </div>
+            
 
             {isLoading ? (
               <div className={styles.loadingContainer}>
@@ -765,14 +747,16 @@ const BinaryChart = () => {
                   {selectedCoinType === "Live" && (
                     <TradingViewChart
                       coinName={selectedCoin}
-                      intervalSeconds={timer}
+                      setSelectedCoin={setSelectedCoin}
+                      coins={coins}
                     />
                   )}
                   {selectedCoinType === "OTC" && (
                     <div className={styles.chartBoxOTC}>
                       <LiveCandleChart
                         coinName={selectedCoin}
-                        price={otcPrice}
+                        setSelectedCoin={setSelectedCoin}
+                        coins={coins}
                       />
                     </div>
                   )}

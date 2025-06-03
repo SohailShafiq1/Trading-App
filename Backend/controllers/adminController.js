@@ -1,6 +1,7 @@
 // controllers/adminController.js
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
+import nodemailer from "nodemailer";
 
 let currentTrend = "Normal"; // Default trend
 
@@ -231,6 +232,7 @@ export const getAllSupportRequests = async (req, res) => {
         lastName: 1,
         email: 1,
         complaints: 1,
+        userId: 1, 
       }
     );
 
@@ -242,6 +244,7 @@ export const getAllSupportRequests = async (req, res) => {
           userName:
             `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
             user.email,
+          userId:  user.userId,
           userEmail: user.email,
           _id: c._id,
           subject: c.subject,
@@ -277,8 +280,73 @@ export const markSupportReviewed = async (req, res) => {
     complaint.reviewed = true;
     complaint.status = "reviewed";
     await user.save();
+
+    // --- Send reviewed email ---
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Your Support Request Has Been Reviewed",
+        text: `Dear ${user.firstName || "User"},\n\nOur team has reviewed your support request regarding "${complaint.subject}". We will resolve your query as soon as possible.\n\nThank you for your patience!\n\nBest regards,\nSupport Team`,
+      };
+
+      await transporter.sendMail(mailOptions);
+    } catch (emailErr) {
+      console.error("Failed to send reviewed email:", emailErr);
+      // Don't fail the request if email fails
+    }
+    // --- End email ---
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to update complaint" });
+  }
+};
+
+export const markSupportCompleted = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({ "complaints._id": id });
+    if (!user) return res.status(404).json({ error: "Complaint not found" });
+    const complaint = user.complaints.id(id);
+    complaint.succeed = true;
+    complaint.status = "succeed";
+    await user.save();
+
+    // --- Send completed email ---
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Your Support Request Has Been Completed",
+        text: `Dear ${user.firstName || "User"},\n\nWe are pleased to inform you that your support request regarding "${complaint.subject}" has been resolved \n\nIf you have any further questions, feel free to contact us.\n\nBest regards,\nSupport Team`,
+      };
+
+      await transporter.sendMail(mailOptions);
+    } catch (emailErr) {
+      console.error("Failed to send completed email:", emailErr);
+      // Don't fail the request if email fails
+    }
+    // --- End email ---
+
+    res.json({ message: "Marked as completed" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to mark as completed" });
   }
 };

@@ -3,20 +3,31 @@ import styles from "./CoinSelector.module.css";
 import axios from "axios";
 
 const CoinSelector = forwardRef(
-  ({ selectedCoin, setSelectedCoin, disabled, isOpen, setIsOpen }, ref) => {
+  (
+    {
+      selectedCoin,
+      setSelectedCoin,
+      disabled,
+      isOpen,
+      setIsOpen,
+      coins: propCoins,
+    },
+    ref
+  ) => {
     const [search, setSearch] = useState("");
     const [activeTab, setActiveTab] = useState("Live");
     const [coins, setCoins] = useState([]);
 
     useEffect(() => {
-      axios
-        .get("http://localhost:5000/api/coins")
-        .then((res) => {
-          console.log(res.data);
-          setCoins(res.data);
-        })
-        .catch(() => setCoins([]));
-    }, []);
+      if (propCoins) {
+        setCoins(propCoins);
+      } else {
+        axios
+          .get("http://localhost:5000/api/coins")
+          .then((res) => setCoins(res.data))
+          .catch(() => setCoins([]));
+      }
+    }, [propCoins]);
 
     // On mount, initialize selectedCoin from localStorage if available
     useEffect(() => {

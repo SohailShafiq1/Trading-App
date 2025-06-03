@@ -18,6 +18,7 @@ const Support = () => {
     success: false,
   });
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleScreenshotChange = (e) => {
     setScreenshots([...e.target.files]);
@@ -34,6 +35,7 @@ const Support = () => {
       return;
     }
 
+    setLoading(true); // Start loader
     setStatus("Pending");
     const formData = new FormData();
     formData.append("email", user.email);
@@ -67,6 +69,8 @@ const Support = () => {
         message: "Failed to submit your request. Please try again.",
         success: false,
       });
+    } finally {
+      setLoading(false); // Stop loader
     }
   };
 
@@ -108,19 +112,70 @@ const Support = () => {
         </label>
         <label className={s.label}>
           Add Screenshots:
-          <input
-            type="file"
-            name="screenshots"
-            className={s.input}
-            accept="image/*"
-            multiple
-            onChange={handleScreenshotChange}
-          />
+          {screenshots.length > 0 ? (
+            <div style={{ display: "flex", gap: 12, margin: "10px 0" }}>
+              {screenshots.map((file, idx) => (
+                <div key={idx} style={{ position: "relative" }}>
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`Screenshot ${idx + 1}`}
+                    style={{
+                      width: 120,
+                      borderRadius: 6,
+                      border: "1px solid #eee",
+                      objectFit: "cover",
+                      boxShadow: "0 2px 8px rgba(44,62,80,0.08)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={s.removeImgBtn}
+                    onClick={() =>
+                      setScreenshots(screenshots.filter((_, i) => i !== idx))
+                    }
+                    title="Remove"
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      right: 2,
+                      background: "#fff",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: 24,
+                      height: 24,
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      color: "#d32f2f",
+                      boxShadow: "0 1px 4px rgba(44,62,80,0.12)",
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <input
+              type="file"
+              name="screenshots"
+              className={s.input}
+              accept="image/*"
+              multiple
+              onChange={handleScreenshotChange}
+            />
+          )}
         </label>
-        <button className={s.submitBtn} type="submit">
-          Submit
+        <button className={s.submitBtn} type="submit" disabled={loading}>
+          {loading ? "Submitting..." : "Submit"}
         </button>
       </form>
+
+      {loading && (
+        <div className={s.loaderOverlay}>
+          <div className={s.loader}></div>
+          <div className={s.loaderText}>Submitting your request...</div>
+        </div>
+      )}
 
       {status && (
         <div className={s.statusMsg}>
@@ -190,7 +245,7 @@ const Support = () => {
               {popup.message}
             </p>
             <button
-              className={s.submitBtn}
+              className={s.okBtn}
               onClick={() => setPopup({ ...popup, show: false })}
             >
               OK

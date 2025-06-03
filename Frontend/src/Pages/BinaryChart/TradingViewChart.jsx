@@ -11,6 +11,8 @@ import { BiPencil } from "react-icons/bi";
 import "./LiveCandleChart.css";
 import Tabs from "./components/Tabs/Tabs";
 import { useAuth } from "../../Context/AuthContext";
+import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
+import CoinSelector from "./components/CoinSelector/CoinSelector";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Time interval mapping
@@ -86,13 +88,13 @@ const DRAWING_TOOLS = {
   TREND_LINE: "Trend Line",
 };
 
-const TradingViewChart = ({ coinName }) => {
+const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
   const containerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
   const { user, updateUserTipStatus } = useAuth();
-
-  // State variables
+  const [showCoinSelector, setShowCoinSelector] = useState(false);
+  const coinSelectorRef = useRef();
   const [interval, setInterval] = useState("30m");
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
@@ -180,6 +182,14 @@ const TradingViewChart = ({ coinName }) => {
     user?.tips?.find((tip) => tip.text === "tip1")?.status,
     user?.tips?.find((tip) => tip.text === "tip2")?.status,
   ]);
+
+  // Fetch coin data
+  useEffect(() => {
+    axios
+      .get(`${BACKEND_URL}/api/coins`)
+      .then((res) => setCoins(res.data))
+      .catch(() => setCoins([]));
+  }, []);
 
   // Fetch candle data
   const fetchCandles = async () => {
@@ -422,6 +432,20 @@ const TradingViewChart = ({ coinName }) => {
 
   const position = getButtonPosition(currentTipIndex);
 
+  useEffect(() => {
+    if (!showCoinSelector) return;
+    function handleClickOutside(event) {
+      if (
+        coinSelectorRef.current &&
+        !coinSelectorRef.current.contains(event.target)
+      ) {
+        setShowCoinSelector(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showCoinSelector]);
+
   return (
     <div
       className="liveCHART"
@@ -539,12 +563,7 @@ const TradingViewChart = ({ coinName }) => {
             <button
               id="indicator-btn"
               className="chartBtns"
-              onClick={() => {
-                setShowIndicatorPopup(!showIndicatorPopup);
-                setShowStylePopup(false);
-                setShowThemePopup(false);
-                setShowDrawingPopup(false);
-              }}
+              onClick={() => setShowCoinSelector(true)}
               style={{
                 fontSize: "1rem",
                 display: "flex",
@@ -564,6 +583,57 @@ const TradingViewChart = ({ coinName }) => {
                 }}
               />
             </button>
+            {showCoinSelector && (
+              <div
+                ref={coinSelectorRef}
+                style={{
+                  position: "absolute",
+                  top: "110%",
+                  left: 0,
+                  zIndex: 200,
+                  minWidth: 260,
+                }}
+              >
+                <CoinSelector
+                  selectedCoin={coinName}
+                  setSelectedCoin={(coin) => {
+                    setShowCoinSelector(false);
+                    setSelectedCoin(coin); // This updates BinaryChart state!
+                  }}
+                  disabled={false}
+                  isOpen={showCoinSelector}
+                  setIsOpen={setShowCoinSelector}
+                  coins={coins}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Drawing tools button */}
+          <div
+            style={{ position: "relative" }}
+            ref={(el) => (buttonRefs.current[1] = el)}
+          >
+            <button
+              className="chartBtns"
+              onClick={() => {
+                setShowIndicatorPopup(!showIndicatorPopup);
+                setShowStylePopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(false);
+              }}
+              style={{
+                padding: "6px 12px",
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1.5rem",
+                background: "#E0E0E0",
+              }}
+            >
+              <FiMaximize2 />
+            </button>
+
             {showIndicatorPopup && (
               <div
                 style={{
@@ -597,13 +667,7 @@ const TradingViewChart = ({ coinName }) => {
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Drawing tools button */}
-          <div
-            style={{ position: "relative" }}
-            ref={(el) => (buttonRefs.current[1] = el)}
-          >
             <button
               id="drawing-btn"
               className="chartBtns"

@@ -103,3 +103,74 @@ h2 {
   font-weight: 600;
   text-align: center;
 }
+
+/* Loader styles */
+.loaderOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.7);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.loader {
+  border: 6px solid #e3f2fd;
+  border-top: 6px solid #1976d2;
+  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 18px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+.loaderText {
+  color: #1976d2;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Improved OK button */
+.okBtn {
+  background: linear-gradient(90deg, #1976d2 0%, #43e97b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 28px;
+  font-weight: 700;
+  font-size: 1.08rem;
+  cursor: pointer;
+  margin-top: 18px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  transition: background 0.2s, transform 0.15s;
+  letter-spacing: 0.5px;
+}
+.okBtn:hover, .okBtn:focus {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  transform: translateY(-2px) scale(1.03);
+  outline: none;
+}
+
+.removeImgBtn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #d32f2f;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.12);
+  transition: background 0.15s;
+}
+.removeImgBtn:hover {
+  background: #ffeaea;
+}

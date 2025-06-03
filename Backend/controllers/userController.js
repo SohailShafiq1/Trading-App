@@ -964,6 +964,31 @@ export const submitSupportRequest = async (req, res) => {
     });
 
     await user.save();
+
+    // --- Send confirmation email to user ---
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Support Request Received",
+        text: `Dear ${user.firstName || "User"},\n\nWe have received your support request regarding "${subject}". Our team will review it and resolve your query as soon as possible.\n\nThank you for contacting support!\n\nBest regards,\nSupport Team`,
+      };
+
+      await transporter.sendMail(mailOptions);
+    } catch (emailErr) {
+      console.error("Failed to send support confirmation email:", emailErr);
+      // Don't fail the request if email fails
+    }
+    // --- End email ---
+
     res.status(201).json({ message: "Support request submitted successfully" });
   } catch (err) {
     console.error("Error submitting support request:", err);
