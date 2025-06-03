@@ -81,6 +81,7 @@ const SupportCentre = () => {
             )}
             {(selected.screenshots || []).map((imageUrl, i) => (
               <img
+                className={s.image}
                 key={i}
                 src={imageUrl}
                 alt={`Screenshot ${i + 1}`}

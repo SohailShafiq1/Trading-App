@@ -61,14 +61,14 @@ h2 {
 strong {
   color: #1976d2;
 }
-img {
+.image {
   box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
   transition: transform 0.2s;
   max-width: 120px;
   border-radius: 6px;
   border: 1px solid #eee;
 }
-img:hover {
+.image:hover {
   transform: scale(1.08);
   z-index: 2;
   border-color: #1976d2;
