@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Support.module.css";
-import {useAuth} from "../../Context/AuthContext";
+import { useAuth } from "../../Context/AuthContext";
 import axios from "axios";
+
 const s = styles;
 
 const Support = () => {
@@ -32,21 +33,21 @@ const Support = () => {
       });
       return;
     }
-    setStatus("Pending");
 
-    // Prepare form data for file upload
+    setStatus("Pending");
     const formData = new FormData();
     formData.append("email", user.email);
     formData.append("subject", subject);
     formData.append("issue", issue);
-    for (let i = 0; i < screenshots.length; i++) {
-      formData.append("screenshots", screenshots[i]);
-    }
+    screenshots.forEach((file) => {
+      formData.append("screenshots", file);
+    });
 
     try {
       await axios.post("http://localhost:5000/api/users/support", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       setConfirmation(
         "Your request has been received. Our team will contact you ASAP!"
       );
@@ -60,6 +61,7 @@ const Support = () => {
         success: true,
       });
     } catch (err) {
+      console.error("Error submitting support request:", err);
       setPopup({
         show: true,
         message: "Failed to submit your request. Please try again.",
@@ -68,7 +70,6 @@ const Support = () => {
     }
   };
 
-  // Fetch all requests for the user
   useEffect(() => {
     const fetchRequests = async () => {
       if (!user?.email) return;
@@ -77,12 +78,10 @@ const Support = () => {
           `http://localhost:5000/api/users/support?email=${user.email}`
         );
         setRequests(res.data || []);
-      } catch (err) {
-        // Optionally show error popup
-      }
+      } catch (err) {}
     };
     fetchRequests();
-  }, [user?.email, confirmation]); // refetch after new submission
+  }, [user?.email, confirmation]);
 
   return (
     <div className={s.container}>
@@ -111,6 +110,7 @@ const Support = () => {
           Add Screenshots:
           <input
             type="file"
+            name="screenshots"
             className={s.input}
             accept="image/*"
             multiple
@@ -121,12 +121,14 @@ const Support = () => {
           Submit
         </button>
       </form>
+
       {status && (
         <div className={s.statusMsg}>
           <strong>Status:</strong> {status}
         </div>
       )}
       {confirmation && <div className={s.confirmMsg}>{confirmation}</div>}
+
       <h3 style={{ marginTop: 32 }}>Your Support Requests</h3>
       <table className={s.table}>
         <thead>
@@ -172,7 +174,7 @@ const Support = () => {
           ))}
         </tbody>
       </table>
-      {/* Popup Modal */}
+
       {popup.show && (
         <div className={s.popupOverlay}>
           <div

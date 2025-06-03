@@ -226,29 +226,41 @@ export const getAllSupportRequests = async (req, res) => {
   try {
     const users = await User.find(
       {},
-      { firstName: 1, lastName: 1, email: 1, complaints: 1 }
+      {
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        complaints: 1,
+      }
     );
-    // Flatten all complaints with user info
+
     const allRequests = users.flatMap((user) =>
       (user.complaints || []).map((complaint) => {
         const c = complaint.toObject ? complaint.toObject() : complaint;
         return {
           ...c,
-          userName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+          userName:
+            `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+            user.email,
           userEmail: user.email,
+          _id: c._id,
           subject: c.subject,
           status: c.status,
-          reviewed: c.reviewed,
-          succeed: c.succeed,
+          reviewed: c.reviewed || false,
+          succeed: c.succeed || false,
           createdAt: c.createdAt,
-          _id: c._id,
+          screenshots: (c.screenshots || []).map(
+            (filename) =>
+              `http://localhost:5000/${filename.replace(/\\/g, "/")}`
+          ),
         };
       })
     );
-    // Sort by newest first
+
     allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json(allRequests);
   } catch (err) {
+    console.error("Error fetching support requests:", err);
     res.status(500).json({ error: "Failed to fetch support requests" });
   }
 };
@@ -260,7 +272,8 @@ export const markSupportReviewed = async (req, res) => {
     const user = await User.findOne({ "complaints._id": id });
     if (!user) return res.status(404).json({ error: "Complaint not found" });
     const complaint = user.complaints.id(id);
-    if (!complaint) return res.status(404).json({ error: "Complaint not found" });
+    if (!complaint)
+      return res.status(404).json({ error: "Complaint not found" });
     complaint.reviewed = true;
     complaint.status = "reviewed";
     await user.save();

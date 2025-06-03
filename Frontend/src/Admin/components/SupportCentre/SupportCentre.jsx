@@ -23,7 +23,6 @@ const SupportCentre = () => {
     fetchRequests();
   }, []);
 
-  // Mark as reviewed and show detail page
   const handleRowClick = async (req) => {
     setSelected(req);
     try {
@@ -34,7 +33,6 @@ const SupportCentre = () => {
           headers: { "Content-Type": "application/json" },
         }
       );
-      // Optionally update local state for reviewed
       setRequests((prev) =>
         prev.map((r) =>
           r._id === req._id ? { ...r, reviewed: true, status: "reviewed" } : r
@@ -43,14 +41,9 @@ const SupportCentre = () => {
     } catch (err) {}
   };
 
-  // Back to list
   const handleBack = () => setSelected(null);
 
-  // Detail view
   if (selected) {
-    console.log('Screenshots:', selected.screenshots);
-    console.log('Image URLs:', (selected.screenshots || []).map(url => `/uploads/support/${url.split(/[\\/]/).pop()}`));
-    
     return (
       <div className={s.container}>
         <button className={s.backButton} onClick={handleBack}>
@@ -80,36 +73,34 @@ const SupportCentre = () => {
         </p>
         <div>
           <strong>Screenshots:</strong>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-            {(selected.screenshots || []).length === 0 && <span>No screenshots</span>}
-            {(selected.screenshots || []).map((url, i) => {
-              // Always extract just the filename
-              const filename = url.split(/[\\/]/).pop();
-              const imageUrl = `/uploads/support/${filename}`;
-              return (
-                <img
-                  key={i}
-                  src={imageUrl}
-                  alt={`Screenshot ${i + 1}`}
-                  style={{
-                    width: 120,
-                    borderRadius: 6,
-                    border: "1px solid #eee",
-                  }}
-                  onError={e => {
-                    e.target.onerror = null;
-                    e.target.src = '/placeholder-image.png'; // fallback
-                  }}
-                />
-              );
-            })}
+          <div
+            style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}
+          >
+            {(selected.screenshots || []).length === 0 && (
+              <span>No screenshots</span>
+            )}
+            {(selected.screenshots || []).map((imageUrl, i) => (
+              <img
+                key={i}
+                src={imageUrl}
+                alt={`Screenshot ${i + 1}`}
+                style={{
+                  width: 120,
+                  borderRadius: 6,
+                  border: "1px solid #eee",
+                }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/placeholder-image.png";
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  // List view
   return (
     <div className={s.container}>
       <button className={s.backButton} onClick={() => navigate(-1)}>
