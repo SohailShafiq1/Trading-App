@@ -71,13 +71,13 @@ const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
               }}
             >
               <strong>{trade.coinName}</strong>
-              <span>
-                {trade.status === "running"
-                  ? `Time Left: ${formatTime(trade.remainingTime)}`
-                  : formatTime(
-                      typeof trade.duration === "number" ? trade.duration : 0
-                    )}
-              </span>{" "}
+           <span>
+  {trade.type === "Buy" ? (
+    <span style={{ color: "#10A055", fontWeight: 600 }}>Buy</span>
+  ) : (
+    <span style={{ color: "#FF0000", fontWeight: 600 }}>Sell</span>
+  )}
+</span>{" "}
               {/* Display trade duration */}
             </div>
 

@@ -48,6 +48,7 @@ const BinaryChart = () => {
   const [isCoinSelectorOpen, setIsCoinSelectorOpen] = useState(false);
   const [demoAssets, setDemoAssets] = useState(demo_assets);
   const [showTimestampPopup, setShowTimestampPopup] = useState(false);
+   const [allInClicked, setAllInClicked] = useState(false);
 
   // Check verification status (only for real account)
   useEffect(() => {
@@ -874,6 +875,36 @@ const fetchAndRecoverTrades = async () => {
                   +
                 </button>
               </div>
+               <button
+                className={styles.allInBtn}
+                style={{
+                  marginTop: "8px",
+                  width: "100%",
+                  background: allInClicked ? "#FF1600" : "#10A055",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "6px 0",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                }}
+                onClick={() => {
+                  if (allInClicked) {
+                    setInvestment(0);
+                    setAllInClicked(false);
+                  } else {
+                    setInvestment(currentAssets);
+                    setAllInClicked(true);
+                  }
+                }}
+                disabled={
+                  isLoading || isProcessingTrade || (!isDemo && !isVerified)
+                }
+              >
+                {allInClicked ? "Clear All" : "All In"}
+              </button>
             </div>
             <div>
               <p style={{ textAlign: "center" }}>
