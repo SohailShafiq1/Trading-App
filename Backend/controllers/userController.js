@@ -919,3 +919,45 @@ export const createNotification = async (req, res) => {
     res.status(500).json({ error: "Failed to create notification" });
   }
 };
+
+// Submit support request
+export const submitSupportRequest = async (req, res) => {
+  try {
+    const { email, subject, issue } = req.body;
+    if (!email || !subject || !issue) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Store only filenames1
+    const screenshots = (req.files?.screenshots || []).map((f) => f.filename);
+
+    user.complaints = user.complaints || [];
+    user.complaints.push({
+      subject,
+      issue,
+      screenshots,
+      status: "pending",
+      createdAt: new Date(),
+    });
+
+    await user.save();
+    res.status(201).json({ message: "Support request submitted" });
+  } catch (err) {
+    console.error("Support request error:", err);
+    res.status(500).json({ error: "Failed to submit support request" });
+  }
+};
+
+export const getSupportRequests = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.json([]);
+    res.json(user.complaints || []);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch support requests" });
+  }
+};

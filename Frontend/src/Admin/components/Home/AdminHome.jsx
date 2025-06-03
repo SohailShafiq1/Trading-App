@@ -30,6 +30,9 @@ const AdminHome = () => {
         <NavLink to="/admin/news" className={s.link}>
           News
         </NavLink>
+        <NavLink to="/admin/support" className={s.link}>
+          Support
+        </NavLink>
       </div>
     </div>
   );

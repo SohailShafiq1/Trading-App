@@ -1,0 +1,105 @@
+.container {
+  max-width: 480px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08);
+  padding: 32px 28px;
+}
+
+.popupOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(44,62,80,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.popupBox {
+  background: #fff;
+  border: 2px solid #10A055;
+  border-radius: 10px;
+  padding: 32px 24px 18px 24px;
+  min-width: 320px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(44,62,80,0.12);
+}
+h2 {
+  text-align: center;
+  color: #1976d2;
+
+  margin-bottom: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.label {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input,
+.textarea {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #1976d2;
+  outline: none;
+  background: #fff;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.submitBtn {
+    background: linear-gradient(90deg, #66b544, #1a391d);
+
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+}
+
+.submitBtn:hover {
+  background: linear-gradient(90deg, #10a055 0%, #1976d2 100%);
+}
+
+.statusMsg {
+  margin-top: 18px;
+  color: #1976d2;
+  font-weight: 600;
+  text-align: center;
+}
+
+.confirmMsg {
+  margin-top: 10px;
+  color: #10a055;
+  font-weight: 600;
+  text-align: center;
+}

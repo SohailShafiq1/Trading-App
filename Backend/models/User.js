@@ -285,6 +285,17 @@ const UserSchema = new mongoose.Schema(
         },
       },
     ],
+    complaints: [
+      {
+        subject: String,
+        issue: String,
+        screenshots: [String],
+        status: { type: String, default: "pending" }, // "pending", "reviewed", "succeed"
+        reviewed: { type: Boolean, default: false },
+        succeed: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

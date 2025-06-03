@@ -220,3 +220,52 @@ export const getAllTrades = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 };
+
+// Get all support requests from all users
+export const getAllSupportRequests = async (req, res) => {
+  try {
+    const users = await User.find(
+      {},
+      { firstName: 1, lastName: 1, email: 1, complaints: 1 }
+    );
+    // Flatten all complaints with user info
+    const allRequests = users.flatMap((user) =>
+      (user.complaints || []).map((complaint) => {
+        const c = complaint.toObject ? complaint.toObject() : complaint;
+        return {
+          ...c,
+          userName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+          userEmail: user.email,
+          subject: c.subject,
+          status: c.status,
+          reviewed: c.reviewed,
+          succeed: c.succeed,
+          createdAt: c.createdAt,
+          _id: c._id,
+        };
+      })
+    );
+    // Sort by newest first
+    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json(allRequests);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch support requests" });
+  }
+};
+
+export const markSupportReviewed = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Find the user containing this complaint
+    const user = await User.findOne({ "complaints._id": id });
+    if (!user) return res.status(404).json({ error: "Complaint not found" });
+    const complaint = user.complaints.id(id);
+    if (!complaint) return res.status(404).json({ error: "Complaint not found" });
+    complaint.reviewed = true;
+    complaint.status = "reviewed";
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update complaint" });
+  }
+};

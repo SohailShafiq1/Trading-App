@@ -258,7 +258,7 @@ const BinaryLayout = () => {
                   className={s.popupItem}
                   style={{ background: "#2C2D35" }}
                   onClick={() => {
-                    navigate("/support");
+                    navigate("/binarychart/support");
                     setPopupVisible(false);
                   }}
                 >

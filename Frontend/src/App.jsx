@@ -34,6 +34,8 @@ import AdminHome from "./Admin/components/Home/AdminHome";
 import Affiliate from "./Admin/components/Affiliate/Affiliate";
 import Trades from "./Admin/components/Trades/Trades";
 import News from "./Admin/components/News/News";
+import SupportCentre from "./Admin/components/SupportCentre/SupportCentre";
+import Support from "./Pages/Support/Support";
 const s = styles;
 
 const App = () => {
@@ -60,6 +62,7 @@ const App = () => {
                   >
                     <Route index element={<BinaryChart />} />
                     <Route path="/binarychart/profile" element={<Profile />} />
+                    <Route path="/binarychart/support" element={ <Support/>} />
                     <Route
                       path="/binarychart/bankinglayout"
                       element={<BankingLayout />}
@@ -97,6 +100,7 @@ const App = () => {
                     <Route path="/admin/affiliate" element={<Affiliate />} />
                     <Route path="/admin/trades" element={<Trades />} />
                     <Route path="/admin/news" element={<News />} />
+                    <Route path="/admin/support" element={<SupportCentre />} />
                   </Route>
 
                   <Route

@@ -26,14 +26,32 @@ import {
   updateTipStatus,
   getNotifications,
   createNotification,
+  submitSupportRequest,
+  getSupportRequests,
 } from "../controllers/userController.js";
+import multer from "multer";
+import path from "path";
 
 const router = express.Router();
+
+// Use process.cwd() for cross-platform compatibility
+const supportUpload = multer({
+  dest: path.join(process.cwd(), "uploads", "support"),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB per file
+    files: 5,
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed!"), false);
+  },
+});
 
 // Middleware
 router.use(express.json());
 
 // Routes
+router.get("/support", getSupportRequests);
 router.get("/health", healthCheck);
 router.post("/deposit", createDeposit);
 router.get("/", getAllUsers);
@@ -68,4 +86,10 @@ router.put("/withdraw-reject/:withdrawalId", rejectWithdrawal);
 router.put("/update-tip/:userId", updateTipStatus);
 router.get("/notifications/:email", getNotifications);
 router.post("/notifications/create", createNotification);
+router.post(
+  "/support",
+  supportUpload.array("screenshots", 5),
+  submitSupportRequest
+);
+
 export default router;
