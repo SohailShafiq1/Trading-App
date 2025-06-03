@@ -617,7 +617,7 @@ const BinaryLayout = () => {
               <div
                 className={s.mobilePopupItem}
                 onClick={() => {
-                  navigate("/support");
+                  navigate("/binarychart/support");
                   setMobileMorePopup(false);
                 }}
               >
