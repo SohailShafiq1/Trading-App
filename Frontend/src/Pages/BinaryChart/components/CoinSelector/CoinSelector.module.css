@@ -96,10 +96,9 @@
 }
 
 @media (max-width: 768px) {
-
   .coinPopup {
     width: 100%;
     left: 0;
-    top: 3.2rem;
+    top: -14.2rem;
   }
 }

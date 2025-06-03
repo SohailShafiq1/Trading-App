@@ -95,7 +95,7 @@
   right: 370px;
   background-color: white;
   border: 1px solid #64b243;
-  z-index: 1000;
+  z-index: 1001;
   overflow: hidden;
 }
 
@@ -383,6 +383,8 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
+  position: sticky;
+  z-index: 10001;
 }
 
 .footBtn {
@@ -716,6 +718,9 @@
   color: #fff;
   filter: drop-shadow(0 2px 8px #0e6b0e55);
 }
+.accountPopupMobile {
+  display: none;
+}
 
 @keyframes fadeIn {
   from {
@@ -861,5 +866,164 @@
   .liveAcc p {
     font-size: 1rem;
     font-weight: 600;
+  }
+}
+.liveAccMobile {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  .accountPopup {
+    right: 0;
+    left: 0;
+  }
+  .liveAccMobile {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    transition: background 0.3s;
+  }
+
+  .liveAccMobile:hover {
+    background-color: #e9e9e9;
+  }
+
+  .liveAccountFlexMobile {
+    display: flex;
+    align-items: center;
+  }
+
+  .crownBoxMobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+  }
+
+  .liveInfoBoxMobile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.1;
+  }
+
+  .liveRowMobile {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 11px;
+    color: #444;
+  }
+
+  .liveLabelMobile {
+    text-transform: uppercase;
+  }
+
+  .liveBalanceMobile {
+    font-size: 12px;
+    font-weight: 600;
+    color: #222;
+  }
+
+  .accountPopupMobile {
+    display: block;
+    position: absolute;
+    top: 80px;
+    background-color: #ffffff;
+    border: 1px solid black;
+    border-radius: 10px;
+    width: 220px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    z-index: 999;
+    padding: 10px 0;
+  }
+
+  .accountSectionMobile {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .accountItemMobile {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .accountItemMobile:hover {
+    background-color: #f7f7f7;
+  }
+
+  .activeMobile {
+    background-color: #e8f5e9;
+  }
+
+  .radioCircleMobile {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+  }
+
+  .radioCheckMobile {
+    font-size: 12px;
+    color: green;
+  }
+
+  .accountTextMobile {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .labelMobile {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+
+  .amountMobile {
+    font-size: 13px;
+    color: #555;
+    margin-top: 2px;
+  }
+}
+@media (max-width: 400px) {
+  .liveAccMobile {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .liveRowMobile {
+    font-size: 10px;
+  }
+
+  .liveBalanceMobile {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .accountPopupMobile {
+    width: 190px;
+  }
+
+  .accountItemMobile {
+    padding: 8px 10px;
+  }
+
+  .labelMobile,
+  .amountMobile {
+    font-size: 11px;
   }
 }

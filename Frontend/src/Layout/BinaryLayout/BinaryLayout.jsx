@@ -1,3 +1,4 @@
+import { AiOutlineBank } from "react-icons/ai";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import {
   AiFillTrophy,
@@ -118,6 +119,8 @@ const BinaryLayout = () => {
 
   const [mobileMorePopup, setMobileMorePopup] = useState(false);
   const [mobileAccountPopup, setMobileAccountPopup] = useState(false);
+  const [mobileAccountPopupVisible, setMobileAccountPopupVisible] =
+    useState(false);
 
   // Check for mobile view
   useEffect(() => {
@@ -177,7 +180,7 @@ const BinaryLayout = () => {
     } catch (error) {
       console.error("Failed to update tip status:", error);
     }
-  };  
+  };
 
   const getButtonPosition = (index) => {
     const refs = isMobileView ? mobileButtonRefs : buttonRefs;
@@ -204,6 +207,119 @@ const BinaryLayout = () => {
             onClick={() => navigate("/binarychart")}
             alt="WealthX Logo"
           />
+        </div>
+        <div className={s.accountWrapper} ref={accountRef}>
+          <div
+            ref={(el) => (buttonRefs.current[4] = el)}
+            className={s.liveAccMobile}
+            onClick={() => setMobileAccountPopupVisible((v) => !v)}
+            style={{ cursor: "pointer" }}
+          >
+            {!isDemo ? (
+              <div className={s.liveAccountFlexMobile}>
+                <div className={s.crownBoxMobile}>
+                  <AiFillCrown
+                    style={{
+                      color: assets > 5000 ? "#FFA800" : "#404040",
+                      fontSize: "1rem",
+                      verticalAlign: "middle",
+                    }}
+                  />
+                </div>
+                <div className={s.liveInfoBoxMobile}>
+                  <div className={s.liveRowMobile}>
+                    <span className={s.liveLabelMobile}>LIVE ACCOUNT</span>
+                    <RiArrowDropDownLine
+                      style={{ fontSize: "1.5rem", marginLeft: 8 }}
+                    />
+                  </div>
+                  <div className={s.liveBalanceMobile}>
+                    $
+                    {Number(totalBalance).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={s.liveAccountFlexMobile}>
+                <div className={s.crownBoxMobile}>
+                  <AiOutlineEdit
+                    style={{
+                      color: "#666",
+                      fontSize: "1rem",
+                      verticalAlign: "middle",
+                    }}
+                  />
+                </div>
+                <div className={s.liveInfoBoxMobile}>
+                  <div className={s.liveRowMobile}>
+                    <span className={s.liveLabelMobile}>DEMO ACCOUNT</span>
+                    <RiArrowDropDownLine
+                      style={{ fontSize: "1.5rem", marginLeft: 8 }}
+                    />
+                  </div>
+                  <div className={s.liveBalanceMobile}>
+                    $
+                    {demo_assets.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          {mobileAccountPopupVisible && (
+            <div className={s.accountPopupMobile}>
+              <div className={s.accountSectionMobile}>
+                <div
+                  className={`${s.accountItemMobile} ${
+                    !isDemo ? s.activeMobile : ""
+                  }`}
+                  onClick={() => {
+                    setIsDemo(false);
+                    setMobileAccountPopupVisible(false);
+                    setSwitchPopupMsg("Switched to Live Account");
+                    setShowSwitchPopup(true);
+                    setTimeout(() => setShowSwitchPopup(false), 1800);
+                  }}
+                >
+                  <div className={s.radioCircleMobile}>
+                    {!isDemo && <span className={s.radioCheckMobile}>✔</span>}
+                  </div>
+                  <div className={s.accountTextMobile}>
+                    <p className={s.labelMobile}>LIVE ACCOUNT</p>
+                    <p className={s.amountMobile}>${totalBalance}</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`${s.accountItemMobile} ${
+                    isDemo ? s.activeMobile : ""
+                  }`}
+                  onClick={() => {
+                    setIsDemo(true);
+                    setMobileAccountPopupVisible(false);
+                    setSwitchPopupMsg("Switched to Demo Account");
+                    setShowSwitchPopup(true);
+                    setTimeout(() => setShowSwitchPopup(false), 1800);
+                  }}
+                >
+                  <div className={s.radioCircleMobile}>
+                    {isDemo && <span className={s.radioCheckMobile}>✔</span>}
+                  </div>
+                  <div className={s.accountTextMobile}>
+                    <p className={s.labelMobile}>DEMO ACCOUNT</p>
+                    <p className={s.amountMobile}>
+                      ${demo_assets.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className={s.navBar}>
@@ -557,45 +673,21 @@ const BinaryLayout = () => {
               <CgProfile className={s.icons} />
             </NavLink>
           </div>
-          <div
-            ref={(el) => isMobileView && (mobileButtonRefs.current[3] = el)}
-            className={s.footBtn}
-            onClick={() => setMobileAccountPopup(true)}
-          >
-            {isDemo ? (
-              <div className={s.demoAccount}>
-                <p>
-                  Demo{" "}
-                  <AiOutlineArrowDown
-                    style={{ position: "relative", top: "4px" }}
-                  />{" "}
-                </p>
-              </div>
-            ) : (
-              <div className={s.liveAccount}>
-                <p>
-                  <AiFillCrown
-                    style={{
-                      color: "#FFA800",
-                      fontSize: "1.3em",
-                      verticalAlign: "middle",
-                      marginRight: 4,
-                    }}
-                  />
-                  Live{" "}
-                  <AiOutlineArrowDown
-                    style={{ position: "relative", top: "4px" }}
-                  />{" "}
-                </p>
-              </div>
-            )}
+          <div ref={(el) => isMobileView && (mobileButtonRefs.current[3] = el)}>
+            <NavLink
+              className={s.footBtn}
+              onClick={() => setMobileAccountPopup(true)}
+            >
+              <AiOutlineBank className={s.icons} />
+            </NavLink>
           </div>
-          <div
-            ref={(el) => isMobileView && (mobileButtonRefs.current[4] = el)}
-            className={s.footBtn}
-            onClick={() => setMobileMorePopup(true)}
-          >
-            <CgMoreAlt className={s.icons} />
+          <div ref={(el) => isMobileView && (mobileButtonRefs.current[4] = el)}>
+            <NavLink
+              className={s.footBtn}
+              onClick={() => setMobileMorePopup(true)}
+            >
+              <CgMoreAlt className={s.icons} />
+            </NavLink>
           </div>
         </div>
       </div>
@@ -651,58 +743,13 @@ const BinaryLayout = () => {
         <div className={s.mobilePopup}>
           <div className={s.mobilePopupContent}>
             <div className={s.mobilePopupHeader}>
-              <h3>Account</h3>
+              <h3>Settings</h3>
               <button
                 className={s.mobilePopupClose}
                 onClick={() => setMobileAccountPopup(false)}
               >
                 ×
               </button>
-            </div>
-            <div className={s.mobileAccountSection}>
-              <div
-                className={`${s.mobileAccountItem} ${
-                  !isDemo ? s.mobileActive : ""
-                }`}
-                onClick={() => {
-                  setIsDemo(false);
-                  setMobileAccountPopup(false);
-                  setSwitchPopupMsg("Switched to Live Account");
-                  setShowSwitchPopup(true);
-                  setTimeout(() => setShowSwitchPopup(false), 1800);
-                }}
-              >
-                <div className={s.mobileRadioCircle}>
-                  {!isDemo && <span className={s.mobileRadioCheck}>✔</span>}
-                </div>
-                <div className={s.mobileAccountText}>
-                  <p className={s.mobileLabel}>LIVE ACCOUNT</p>
-                  <p className={s.mobileAmount}>${assets}</p>
-                </div>
-              </div>
-
-              <div
-                className={`${s.mobileAccountItem} ${
-                  isDemo ? s.mobileActive : ""
-                }`}
-                onClick={() => {
-                  setIsDemo(true);
-                  setMobileAccountPopup(false);
-                  setSwitchPopupMsg("Switched to Demo Account");
-                  setShowSwitchPopup(true);
-                  setTimeout(() => setShowSwitchPopup(false), 1800);
-                }}
-              >
-                <div className={s.mobileRadioCircle}>
-                  {isDemo && <span className={s.mobileRadioCheck}>✔</span>}
-                </div>
-                <div className={s.mobileAccountText}>
-                  <p className={s.mobileLabel}>DEMO ACCOUNT</p>
-                  <p className={s.mobileAmount}>
-                    ${demo_assets.toLocaleString()}
-                  </p>
-                </div>
-              </div>
             </div>
             <div className={s.mobileMenuSection}>
               <div

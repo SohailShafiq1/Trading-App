@@ -18,16 +18,14 @@ body {
   letter-spacing: 1px;
   box-shadow: 0 2px 8px rgba(255, 88, 88, 0.15);
   cursor: pointer;
-  transition: 
-    background 0.3s,
-    transform 0.15s,
-    box-shadow 0.3s;
+  transition: background 0.3s, transform 0.15s, box-shadow 0.3s;
   outline: none;
   margin: 10px auto 0 auto;
   display: block;
 }
 
-.closeTradeBtn:hover, .closeTradeBtn:focus {
+.closeTradeBtn:hover,
+.closeTradeBtn:focus {
   background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 4px 16px rgba(255, 88, 88, 0.25);
@@ -344,7 +342,7 @@ body {
   }
 
   .chart {
-    margin-bottom: 20rem;
+    padding-bottom: 0;
     width: 100%;
     height: 300px;
   }
@@ -411,9 +409,44 @@ body {
   top: 10;
   left: 20;
 }
-
+/* 
 @media (max-width: 430px) {
   .chart {
     margin-bottom: 25rem;
+  }
+} */
+
+@media (max-width: 768px) {
+  .coinList {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  .chart {
+    height: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .controlStuff {
+    flex-direction: row;
+    width: 100%;
+    gap: 0.3rem;
+  }
+  .controlBox {
+    width: 50%;
+  }
+  .moneyBox {
+    width: 50%;
+  }
+  .buySelling {
+    flex-direction: row;
+    width: 100%;
+  }
+  .buyBox {
+    width: 50%;
+    gap: 0;
+  }
+  .SellBox {
+    width: 50%;
+    gap: 0;
   }
 }
