@@ -7,24 +7,44 @@ import path from "path";
 import Tesseract from "tesseract.js";
 import fs from "fs";
 import nodemailer from "nodemailer";
+import { log } from "console";
 
-// Configure multer for file uploads
+const ensureDir = (dir) => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+};
+[
+  "uploads/profile",
+  "uploads/cnic",
+  "uploads/support",
+  "uploads/others",
+].forEach(ensureDir);
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    if (file.fieldname === "profilePicture") {
-      cb(null, "uploads/profile/");
-    } else if (
+    if (file.fieldname === "profilePicture") cb(null, "uploads/profile/");
+    else if (
       file.fieldname === "cnicPicture" ||
       file.fieldname === "cnicBackPicture"
-    ) {
+    )
       cb(null, "uploads/cnic/");
-    } else {
-      cb(null, "uploads/others/");
-    }
+    else if (file.fieldname === "screenshots") cb(null, "uploads/support/");
+    else cb(null, "uploads/others/");
   },
   filename: function (req, file, cb) {
     const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
+    cb(null, uniqueName + path.extname(file.originalname)); // .jpg, .png, etc.
+  },
+});
+
+export const supportUpload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB per file
+    files: 5,
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed!"), false);
   },
 });
 
@@ -920,7 +940,6 @@ export const createNotification = async (req, res) => {
   }
 };
 
-// Submit support request
 export const submitSupportRequest = async (req, res) => {
   try {
     const { email, subject, issue } = req.body;
@@ -931,8 +950,9 @@ export const submitSupportRequest = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Store only filenames1
-    const screenshots = (req.files?.screenshots || []).map((f) => f.filename);
+    const screenshots = (req.files || []).map(
+      (file) => `uploads/support/${file.filename}`
+    );
 
     user.complaints = user.complaints || [];
     user.complaints.push({
@@ -944,9 +964,9 @@ export const submitSupportRequest = async (req, res) => {
     });
 
     await user.save();
-    res.status(201).json({ message: "Support request submitted" });
+    res.status(201).json({ message: "Support request submitted successfully" });
   } catch (err) {
-    console.error("Support request error:", err);
+    console.error("Error submitting support request:", err);
     res.status(500).json({ error: "Failed to submit support request" });
   }
 };

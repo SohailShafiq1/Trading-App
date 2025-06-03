@@ -28,24 +28,12 @@ import {
   createNotification,
   submitSupportRequest,
   getSupportRequests,
+  supportUpload,
 } from "../controllers/userController.js";
 import multer from "multer";
 import path from "path";
 
 const router = express.Router();
-
-// Use process.cwd() for cross-platform compatibility
-const supportUpload = multer({
-  dest: path.join(process.cwd(), "uploads", "support"),
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per file
-    files: 5,
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Only image files are allowed!"), false);
-  },
-});
 
 // Middleware
 router.use(express.json());
