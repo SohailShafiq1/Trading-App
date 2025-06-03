@@ -383,6 +383,8 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
+  position: sticky;
+  z-index: 10001;
 }
 
 .footBtn {
