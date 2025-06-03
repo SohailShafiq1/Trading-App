@@ -62,12 +62,7 @@ const CoinSelector = forwardRef(
 
     return (
       <div className={styles.coinSelectorWrapper} ref={ref}>
-        <div
-          className={styles.coinSelectCustom}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
-        >
-          {selectedCoin || "Select Trade Pair"}
-        </div>
+       
 
         {isOpen && (
           <div className={styles.coinPopup}>
