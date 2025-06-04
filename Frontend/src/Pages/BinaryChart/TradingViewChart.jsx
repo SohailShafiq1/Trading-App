@@ -672,7 +672,7 @@ const TradingViewChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "203%",
+                  top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
@@ -725,7 +725,7 @@ const TradingViewChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "203%",
+                  top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",

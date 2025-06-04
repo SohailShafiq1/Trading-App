@@ -429,7 +429,6 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column-reverse;
-    /* margin-bottom: 6rem; */
   }
   .controlStuff {
     flex-direction: row;
@@ -448,11 +447,17 @@ body {
   }
   .buyBox {
     width: 50%;
-    gap: 0;
+    gap: 1rem;
   }
   .SellBox {
     width: 50%;
-    gap: 0;
+    gap: 1rem;
+  }
+  .buyBox p,
+  .buyBox .icons,
+  .SellBox p,
+  .SellBox .icons {
+    font-size: 1.5rem;
   }
   .Cbox {
     padding: 0;
