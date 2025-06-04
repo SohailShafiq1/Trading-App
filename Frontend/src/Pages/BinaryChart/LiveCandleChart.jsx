@@ -12,6 +12,7 @@ import { createChart, CrosshairMode } from "lightweight-charts";
 import { io } from "socket.io-client";
 import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import { RiArrowDropDownLine } from "react-icons/ri";
 
 // Initialize socket connection to backend
 const socket = io("http://localhost:5000");
@@ -19,6 +20,7 @@ const BACKEND_URL = "http://localhost:5000";
 
 // Time interval mapping to seconds
 const intervalToSeconds = {
+  "30s": 30,
   "1m": 60,
   "2m": 120,
   "3m": 180,
@@ -263,7 +265,13 @@ const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
 };
 
 // Main chart component
-const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
+const LiveCandleChart = ({
+  coinName,
+  setSelectedCoin,
+  coins,
+  profit,
+  type,
+}) => {
   // Refs for chart elements
   const chartContainerRef = useRef();
   const chartRef = useRef(null);
@@ -748,7 +756,7 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
         borderColor: theme.gridColor,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 500,
+      height: 600,
     });
 
     chartRef.current = chart;
@@ -1115,14 +1123,15 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
         style={{
           display: "flex",
           marginBottom: 10,
-          justifyContent: "space-between",
         }}
       >
         {/* Indicator button */}
         <div style={{ display: "flex", flexDirection: "row" }}>
-          <div style={{ position: "relative" }}>
+          <div className="coinSelectorMobile2">
             <button
+              id="indicator-btn"
               className="chartBtns"
+              onClick={() => setShowCoinSelector(!showCoinSelector)}
               style={{
                 fontSize: "1rem",
                 display: "flex",
@@ -1130,19 +1139,40 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
                 alignItems: "center",
                 color: theme.textColor,
                 cursor: "pointer",
-                background: "linear-gradient(90deg, #66b544, #1a391d)",
                 height: 50,
-                gap: 8,
               }}
-              onClick={() => setShowCoinSelector(true)}
             >
               <AiOutlinePlus
+                className="coinAdd"
                 style={{
                   color: "white",
                   fontSize: "1.5rem",
                   fontWeight: "bolder",
                 }}
               />
+              <div
+                className="lines"
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                <p className="nameProfit">
+                  {coinName}
+                  {"("}
+                  {type}
+                  {")"}
+                </p>
+                <p className="nameProfit">
+                  &nbsp;&nbsp;
+                  {profit}
+                  {"% "}
+                </p>
+                <p className="nameProfit">
+                  <RiArrowDropDownLine style={{ fontSize: "1.4rem" }} />
+                </p>
+              </div>
             </button>
             {showCoinSelector && (
               <div
@@ -1170,7 +1200,7 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
             )}
           </div>
 
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", display: "flex" }}>
             <button
               className="chartBtns"
               onClick={() => {
@@ -1180,7 +1210,6 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(false);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -1234,7 +1263,6 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(!showDrawingPopup);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -1300,7 +1328,6 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
             onChange={(e) => setInterval(e.target.value)}
             style={{
               appearance: "none",
-              padding: "6px 12px",
               color: "black",
               cursor: "pointer",
               height: 50,
@@ -1324,7 +1351,6 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(false);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -1395,7 +1421,6 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(false);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -1448,7 +1473,8 @@ const LiveCandleChart = ({ coinName, setSelectedCoin, coins }) => {
       <div style={{ position: "relative" }}>
         <div
           ref={chartContainerRef}
-          style={{ width: "100%", height: "500px", overflow: "hidden" }}
+          className="chartMain"
+          style={{ width: "100%", height: "500px" }}
         />
         <div
           id="candle-countdown"

@@ -6,12 +6,19 @@
 }
 
 .tab {
-  padding: 0.5rem 1rem;
-  font-size: 1.4rem;
+  padding: 0.5rem 0.3rem;
   cursor: pointer;
   color: #9197a4;
   transition: background-color 0.3s ease;
   position: relative;
+}
+.tab button {
+  background: none;
+  color: #9197a4;
+  font-size: 1.4rem;
+}
+.tab :hover {
+  background: #ffffff;
 }
 
 .notificationBadge {
@@ -121,11 +128,23 @@
 @media (max-width: 768px) {
   .tab {
     padding: 0;
-    padding-top: 1rem;
   }
 
   .tabs {
-    gap: 0.2rem;
+    padding: 0;
+    gap: 0;
+  }
+  .tab button {
+    padding: 0;
+    padding: 6px 12px;
+    color: black;
+    cursor: pointer;
+    height: 50px;
+    font-size: 1.5rem;
+    background: rgb(224, 224, 224);
+    border-radius: 0%;
+    border: 1px solid;
+    border-image: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent) 1;
   }
 
   .popup {
@@ -135,8 +154,14 @@
 }
 
 @media (max-width: 480px) {
+  .tabs {
+    gap: 0;
+  }
   .popup {
     top: 50px;
     left: auto;
+  }
+  .tab button{
+    padding: 6px 7px;
   }
 }

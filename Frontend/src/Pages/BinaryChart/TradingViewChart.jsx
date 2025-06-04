@@ -1,3 +1,4 @@
+import { RiArrowDropDownLine } from "react-icons/ri";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { createChart, CrosshairMode } from "lightweight-charts";
@@ -88,7 +89,13 @@ const DRAWING_TOOLS = {
   TREND_LINE: "Trend Line",
 };
 
-const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
+const TradingViewChart = ({
+  coinName,
+  setSelectedCoin,
+  coins,
+  profit,
+  type,
+}) => {
   const containerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
@@ -552,12 +559,13 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
         <div
           style={{
             display: "flex",
+            flexDirection: "row",
             marginBottom: 10,
           }}
         >
-          {/* Indicator button */}
+          {/* Coin Selector Button*/}
           <div
-            style={{ position: "relative" }}
+            className="coinSelectorMobile"
             ref={(el) => (buttonRefs.current[0] = el)}
           >
             <button
@@ -571,17 +579,40 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
                 alignItems: "center",
                 color: theme.textColor,
                 cursor: "pointer",
-                background: "linear-gradient(90deg, #66b544, #1a391d)",
                 height: 50,
               }}
             >
               <AiOutlinePlus
+                className="coinAdd"
                 style={{
                   color: "white",
                   fontSize: "1.5rem",
                   fontWeight: "bolder",
                 }}
               />
+              <div
+                className="lines"
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                <p className="nameProfit">
+                  {coinName}
+                  {"("}
+                  {type}
+                  {")"}
+                </p>
+                <p className="nameProfit">
+                  &nbsp;&nbsp;
+                  {profit}
+                  {"% "}
+                </p>
+                <p className="nameProfit">
+                  <RiArrowDropDownLine style={{ fontSize: "1.4rem" }} />
+                </p>
+              </div>
             </button>
             {showCoinSelector && (
               <div
@@ -598,7 +629,7 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
                   selectedCoin={coinName}
                   setSelectedCoin={(coin) => {
                     setShowCoinSelector(false);
-                    setSelectedCoin(coin); // This updates BinaryChart state!
+                    setSelectedCoin(coin);
                   }}
                   disabled={false}
                   isOpen={showCoinSelector}
@@ -611,7 +642,11 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
 
           {/* Drawing tools button */}
           <div
-            style={{ position: "relative" }}
+            style={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "row",
+            }}
             ref={(el) => (buttonRefs.current[1] = el)}
           >
             <button
@@ -623,7 +658,6 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(false);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -638,7 +672,7 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "203%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
@@ -678,7 +712,6 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(!showDrawingPopup);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -692,7 +725,7 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "203%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
@@ -733,7 +766,6 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
               onChange={(e) => setInterval(e.target.value)}
               style={{
                 appearance: "none",
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -764,7 +796,6 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(false);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,
@@ -828,7 +859,9 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
 
           {/* Chart style selector */}
           <div
-            style={{ position: "relative" }}
+            style={{
+              position: "relative",
+            }}
             ref={(el) => (buttonRefs.current[4] = el)}
           >
             <button
@@ -841,7 +874,6 @@ const TradingViewChart = ({ coinName, setSelectedCoin, coins }) => {
                 setShowDrawingPopup(false);
               }}
               style={{
-                padding: "6px 12px",
                 color: "black",
                 cursor: "pointer",
                 height: 50,

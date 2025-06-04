@@ -99,7 +99,9 @@ const Tabs = () => {
   return (
     <div className={styles.tabs}>
       <div className={styles.tab} style={{ position: "relative" }}>
-        <AiTwotoneBell onClick={() => setShowPopup(!showPopup)} />
+        <button>
+          <AiTwotoneBell onClick={() => setShowPopup(!showPopup)} />
+        </button>
         {unreadNotifications > 0 && (
           <span className={styles.notificationBadge}>
             {unreadNotifications}
@@ -131,10 +133,14 @@ const Tabs = () => {
       </div>
 
       <div className={styles.tab}>
-        <HiOutlineVolumeUp />
+        <button>
+          <HiOutlineVolumeUp />
+        </button>
       </div>
       <div className={styles.tab}>
-        <AiOutlineSetting />
+        <button>
+          <AiOutlineSetting />
+        </button>
       </div>
     </div>
   );

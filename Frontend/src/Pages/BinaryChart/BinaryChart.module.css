@@ -412,6 +412,15 @@ body {
 
 /*Mobile Design New */
 @media (max-width: 768px) {
+  .selectedCoinTitle {
+    display: none;
+  }
+  .selectedCoinPrice {
+    display: none;
+  }
+  .selectedCoinPayout {
+    display: none;
+  }
   .coinList {
     margin-top: 1rem;
     margin-bottom: 1rem;
@@ -420,6 +429,7 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column-reverse;
+    /* margin-bottom: 6rem; */
   }
   .controlStuff {
     flex-direction: row;
@@ -443,5 +453,8 @@ body {
   .SellBox {
     width: 50%;
     gap: 0;
+  }
+  .Cbox {
+    padding: 0;
   }
 }
