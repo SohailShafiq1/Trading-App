@@ -6,7 +6,7 @@ import Trades from "../../../Pages/BinaryChart/components/Trades/Trades"; // Imp
 const s = styles;
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-agia
+
 function calculatePayout(trade, coins, getPriceForTrade) {
   let displayReward = trade.reward;
   let displayStatus = trade.status;
@@ -381,147 +381,152 @@ const UserTrade = () => {
           </table>
         )
       ) : (
-        <div className={s.userActionsPanel}>
-          <button className={s.backButton} onClick={() => setActiveUser(null)}>
-            ← Back to User List
-          </button>
-          <h3>
-            Actions for {activeUser.firstName} {activeUser.lastName} (
-            {activeUser.email})
-          </h3>
-          <div className={s.actionPanel}>
-            {/* Assets */}
-            {typeof activeUser.assets === "number" ? (
-              <div className={s.assetsBox}>
-                <b>Assets:</b>
-                <ul>
-                  <li>
-                    <span className={s.assetCoin}>USDT:</span>{" "}
-                    <span className={s.assetAmount}>{activeUser.assets}</span>
-                  </li>
-                </ul>
-              </div>
-            ) : (
-              activeUser.assets && (
+        <div className={s.pageContent}>
+          {/* Left: Action Panel */}
+          <div className={s.userActionsPanel}>
+            <button className={s.backButton} onClick={() => setActiveUser(null)}>
+              ← Back to User List
+            </button>
+            <h3>
+              Actions for {activeUser.firstName} {activeUser.lastName} (
+              {activeUser.email})
+            </h3>
+            <div className={s.actionPanel}>
+              {/* Assets */}
+              {typeof activeUser.assets === "number" ? (
                 <div className={s.assetsBox}>
                   <b>Assets:</b>
                   <ul>
-                    {Object.entries(activeUser.assets).map(([coin, amount]) => (
-                      <li key={coin}>
-                        <span className={s.assetCoin}>{coin}:</span>{" "}
-                        <span className={s.assetAmount}>{amount}</span>
-                      </li>
-                    ))}
+                    <li>
+                      <span className={s.assetCoin}>USDT:</span>{" "}
+                      <span className={s.assetAmount}>{activeUser.assets}</span>
+                    </li>
                   </ul>
                 </div>
-              )
-            )}
-
-            {/* Trade Controls */}
-            <div className={s.tradeControls}>
-              <label>
-                Amount:{" "}
-                <input
-                  type="number"
-                  min="1"
-                  value={tradeAmount}
-                  onChange={(e) => setTradeAmount(Number(e.target.value))}
-                  className={s.input}
-                  disabled={tradeLoading}
-                />
-              </label>
-              <label>
-                Timer (seconds):{" "}
-                <input
-                  type="number"
-                  min="10"
-                  step="10"
-                  value={tradeTimer}
-                  onChange={(e) => setTradeTimer(Number(e.target.value))}
-                  className={s.input}
-                  disabled={tradeLoading}
-                />
-              </label>
-            </div>
-
-            {/* Coin Selector */}
-            <button
-              className={s.actionButton}
-              onClick={() => setShowCoinSelector(true)}
-              disabled={tradeLoading}
-            >
-              {selectedCoin ? `Change Coin (${selectedCoin})` : "Select Coin"}
-            </button>
-            {showCoinSelector && (
-              <div className={s.coinSelectorBox}>
-                <h4>Select a Coin</h4>
-                <CoinSelector
-                  selectedCoin={selectedCoin}
-                  setSelectedCoin={(coin) => {
-                    setUserCoinMap((prev) => ({
-                      ...prev,
-                      [activeUser._id]: coin,
-                    }));
-                    setShowCoinSelector(false);
-                  }}
-                  disabled={false}
-                  isOpen={showCoinSelector}
-                  setIsOpen={setShowCoinSelector}
-                  coins={coins}
-                />
-              </div>
-            )}
-            {selectedCoin && (
-              <div className={s.selectedCoinBox}>
-                <b>Selected Coin:</b> {selectedCoin}
-              </div>
-            )}
-
-            {/* Actions */}
-            <button
-              className={s.actionButton}
-              onClick={() => handleTrade("Buy")}
-              disabled={tradeLoading}
-            >
-              {tradeLoading ? "Processing..." : "Buy"}
-            </button>
-            <button
-              className={s.actionButton}
-              onClick={() => handleTrade("Sell")}
-              disabled={tradeLoading}
-            >
-              {tradeLoading ? "Processing..." : "Sell"}
-            </button>
-            {tradeMessage && (
-              <div className={s.tradeMessage}>{tradeMessage}</div>
-            )}
-          </div>
-
-          {/* User's Trades Section */}
-          {activeUser && (
-            <div style={{ marginTop: "2rem" }}>
-              <h3>
-                {activeUser.firstName} {activeUser.lastName}'s Trades
-              </h3>
-              {loadingUserTrades ? (
-                <div>Loading trades...</div>
               ) : (
-                <Trades
-                  trades={mappedUserTrades}
-                  formatTime={(seconds) => {
-                    if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0)
-                      return "00:00";
-                    const mins = Math.floor(seconds / 60);
-                    const secs = seconds % 60;
-                    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-                  }}
-                  handleCloseTrade={handleCloseTrade}
-                  coins={coins}
-                  getPriceForTrade={getPriceForTrade}
-                />
+                activeUser.assets && (
+                  <div className={s.assetsBox}>
+                    <b>Assets:</b>
+                    <ul>
+                      {Object.entries(activeUser.assets).map(([coin, amount]) => (
+                        <li key={coin}>
+                          <span className={s.assetCoin}>{coin}:</span>{" "}
+                          <span className={s.assetAmount}>{amount}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              )}
+
+              {/* Trade Controls */}
+              <div className={s.tradeControls}>
+                <label>
+                  Amount:{" "}
+                  <input
+                    type="number"
+                    min="1"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(Number(e.target.value))}
+                    className={s.input}
+                    disabled={tradeLoading}
+                  />
+                </label>
+                <label>
+                  Timer (seconds):{" "}
+                  <input
+                    type="number"
+                    min="10"
+                    step="10"
+                    value={tradeTimer}
+                    onChange={(e) => setTradeTimer(Number(e.target.value))}
+                    className={s.input}
+                    disabled={tradeLoading}
+                  />
+                </label>
+              </div>
+
+              {/* Coin Selector */}
+              <button
+                className={s.actionButton}
+                onClick={() => setShowCoinSelector(true)}
+                disabled={tradeLoading}
+              >
+                {selectedCoin ? `Change Coin (${selectedCoin})` : "Select Coin"}
+              </button>
+              {showCoinSelector && (
+                <div className={s.coinSelectorBox}>
+                  <h4>Select a Coin</h4>
+                  <CoinSelector
+                    selectedCoin={selectedCoin}
+                    setSelectedCoin={(coin) => {
+                      setUserCoinMap((prev) => ({
+                        ...prev,
+                        [activeUser._id]: coin,
+                      }));
+                      setShowCoinSelector(false);
+                    }}
+                    disabled={false}
+                    isOpen={showCoinSelector}
+                    setIsOpen={setShowCoinSelector}
+                    coins={coins}
+                  />
+                </div>
+              )}
+              {selectedCoin && (
+                <div className={s.selectedCoinBox}>
+                  <b>Selected Coin:</b> {selectedCoin}
+                </div>
+              )}
+
+              {/* Actions */}
+              <button
+                className={s.actionButton}
+                onClick={() => handleTrade("Buy")}
+                disabled={tradeLoading}
+              >
+                {tradeLoading ? "Processing..." : "Buy"}
+              </button>
+              <button
+                className={s.actionButton}
+                onClick={() => handleTrade("Sell")}
+                disabled={tradeLoading}
+              >
+                {tradeLoading ? "Processing..." : "Sell"}
+              </button>
+              {tradeMessage && (
+                <div className={s.tradeMessage}>{tradeMessage}</div>
               )}
             </div>
-          )}
+          </div>
+
+          {/* Right: Trades Panel */}
+          <div className={s.tradeHistoryPanel}>
+            <h3>
+              {activeUser.firstName} {activeUser.lastName}'s Trades
+            </h3>
+            {loadingUserTrades ? (
+              <div>Loading trades...</div>
+            ) : (
+              <Trades
+                trades={mappedUserTrades}
+                formatTime={(seconds) => {
+                  if (
+                    typeof seconds !== "number" ||
+                    isNaN(seconds) ||
+                    seconds < 0
+                  )
+                    return "00:00";
+                  const mins = Math.floor(seconds / 60);
+                  const secs = seconds % 60;
+                  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+                }}
+                handleCloseTrade={handleCloseTrade}
+                coins={coins}
+                getPriceForTrade={getPriceForTrade}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
