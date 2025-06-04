@@ -25,7 +25,7 @@ const BinaryChart = () => {
     };
   }, []);
 
-  const { isDemo, demo_assets, setDemo_assets } = useAccountType();
+  const { isDemo, demo_assets, setDemo_assets, mute } = useAccountType();
   const [coins, setCoins] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState("");
   const [selectedCoinType, setSelectedCoinType] = useState("");
@@ -637,6 +637,8 @@ const BinaryChart = () => {
   const handleTradeButtonClick = (tradeType) => {
     if (clickAudioRef.current) {
       clickAudioRef.current.currentTime = 0; // rewind to start
+    }
+    if (!mute) {
       clickAudioRef.current.play();
     }
     if (!isDemo && !isVerified) {
@@ -734,9 +736,14 @@ const BinaryChart = () => {
     <>
       <div className={styles.container}>
         <div className={styles.Cbox}>
-          <div className={styles.chart}>
-            
-
+          <div
+            className={styles.chart}
+            style={
+              selectedCoinType === "OTC"
+                ? { marginBottom: "6rem" }
+                : { marginBottom: 0 }
+            }
+          >
             {isLoading ? (
               <div className={styles.loadingContainer}>
                 <div className={styles.loadingSpinner}></div>
@@ -750,6 +757,11 @@ const BinaryChart = () => {
                       coinName={selectedCoin}
                       setSelectedCoin={setSelectedCoin}
                       coins={coins}
+                      profit={
+                        coins.find((c) => c.name === selectedCoin)
+                          ?.profitPercentage || 0
+                      }
+                      type={selectedCoinType}
                     />
                   )}
                   {selectedCoinType === "OTC" && (
@@ -758,6 +770,11 @@ const BinaryChart = () => {
                         coinName={selectedCoin}
                         setSelectedCoin={setSelectedCoin}
                         coins={coins}
+                        profit={
+                          coins.find((c) => c.name === selectedCoin)
+                            ?.profitPercentage || 0
+                        }
+                        type={selectedCoinType}
                       />
                     </div>
                   )}
@@ -770,7 +787,7 @@ const BinaryChart = () => {
             <h1 className={styles.selectedCoinTitle}>
               {selectedCoin || "Select Coin"} Trading
             </h1>
-            <p>
+            <p className={styles.selectedCoinPrice}>
               Current Price:{" "}
               {selectedCoinType === "OTC"
                 ? !isNaN(otcPrice)
@@ -860,38 +877,11 @@ const BinaryChart = () => {
                 </button>
               </div>
             </div>
-            <button
-              className={styles.allInBtn}
-              style={{
-                marginTop: "8px",
-                width: "100%",
-                background: allInClicked ? "#FF1600" : "#10A055",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                padding: "6px 0",
-                fontWeight: 600,
-                fontSize: "1rem",
-                cursor: "pointer",
-                transition: "background 0.2s",
-              }}
-              onClick={() => {
-                if (allInClicked) {
-                  setInvestment(0);
-                  setAllInClicked(false);
-                } else {
-                  setInvestment(currentAssets);
-                  setAllInClicked(true);
-                }
-              }}
-              disabled={
-                isLoading || isProcessingTrade || (!isDemo && !isVerified)
-              }
-            >
-              {allInClicked ? "Clear All" : "All In"}
-            </button>
             <div>
-              <p style={{ textAlign: "center" }}>
+              <p
+                className={styles.selectedCoinPayout}
+                style={{ textAlign: "center" }}
+              >
                 Your Payout:{" "}
                 {investment +
                   investment *
@@ -931,7 +921,36 @@ const BinaryChart = () => {
                 <p>Sell</p>
               </div>
             </div>
-
+            <button
+              className={styles.allInBtn}
+              style={{
+                marginTop: "8px",
+                width: "100%",
+                background: allInClicked ? "#FF1600" : "#10A055",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                padding: "6px 0",
+                fontWeight: 600,
+                fontSize: "1rem",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+              onClick={() => {
+                if (allInClicked) {
+                  setInvestment(0);
+                  setAllInClicked(false);
+                } else {
+                  setInvestment(currentAssets);
+                  setAllInClicked(true);
+                }
+              }}
+              disabled={
+                isLoading || isProcessingTrade || (!isDemo && !isVerified)
+              }
+            >
+              {allInClicked ? "Clear All" : "All In"}
+            </button>
             <Trades
               trades={[...trades].reverse()}
               formatTime={formatTime}

@@ -985,7 +985,9 @@ export const submitSupportRequest = async (req, res) => {
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Support Request Received",
-        text: `Dear ${user.firstName || "User"},\n\nWe have received your support request regarding "${subject}". Our team will review it and resolve your query as soon as possible.\n\nThank you for contacting support!\n\nBest regards,\nSupport Team`,
+        text: `Dear ${
+          user.firstName || "User"
+        },\n\nWe have received your support request regarding "${subject}". Our team will review it and resolve your query as soon as possible.\n\nThank you for contacting support!\n\nBest regards,\nSupport Team`,
       };
 
       await transporter.sendMail(mailOptions);
@@ -1010,5 +1012,17 @@ export const getSupportRequests = async (req, res) => {
     res.json(user.complaints || []);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch support requests" });
+  }
+};
+
+export const getTotalTradeCount = async (req, res) => {
+  const { email } = req.params;
+  try {
+    const user = await User.findOne({ email }, { trades: 1 });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const totalTrades = Array.isArray(user.trades) ? user.trades.length : 0;
+    res.json({ totalTrades });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get total trade count" });
   }
 };

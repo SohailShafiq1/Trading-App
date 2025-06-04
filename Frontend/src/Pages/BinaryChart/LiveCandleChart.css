@@ -30,6 +30,7 @@
 }
 
 .chartBtns {
+  padding: 6px 12px;
   border-radius: 0%;
   border: 1px solid;
   border-image: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent) 1;
@@ -42,4 +43,87 @@
 }
 .liveCHART {
   padding: 0;
+}
+
+.chartMain {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.coinSelectorMobile {
+  position: relative;
+}
+.coinSelectorMobile button {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+}
+.coinSelectorMobile2 {
+  position: relative;
+}
+.coinSelectorMobile2 button {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+}
+.nameProfit {
+  display: none;
+}
+.coinAdd {
+  display: block;
+}
+.lines {
+  display: none;
+}
+.charting {
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .coinSelectorMobile {
+    position: absolute;
+    top: 50px;
+    z-index: 100;
+    left: 0;
+  }
+  .coinSelectorMobile button {
+    background: rgb(224, 224, 224);
+    width: 150px;
+    border: 2px solid #10a055;
+  }
+  .coinSelectorMobile button:hover {
+    background: rgb(224, 224, 224);
+  }
+  .nameProfit {
+    display: block;
+  }
+  .coinAdd {
+    display: none;
+  }
+  .lines {
+    display: flex;
+  }
+  .coinSelectorMobile2 {
+    position: absolute;
+    top: 67px;
+    z-index: 100;
+    left: 0;
+  }
+  .coinSelectorMobile2 button {
+    background: rgb(224, 224, 224);
+    width: 200px;
+    border: 2px solid #10a055;
+  }
+  .coinSelectorMobile2 button:hover {
+    background: rgb(224, 224, 224);
+  }
+  .charting {
+    justify-content: center;
+    background: rgb(224, 224, 224);
+  }
+  .liveChartBtns {
+    justify-content: center;
+    background: rgb(224, 224, 224);
+  }
+}
+@media (max-width: 480px) {
+  .chartBtns {
+    padding: 6px 10px;
+  }
 }

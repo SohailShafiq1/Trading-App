@@ -412,6 +412,15 @@ body {
 
 /*Mobile Design New */
 @media (max-width: 768px) {
+  .selectedCoinTitle {
+    display: none;
+  }
+  .selectedCoinPrice {
+    display: none;
+  }
+  .selectedCoinPayout {
+    display: none;
+  }
   .coinList {
     margin-top: 1rem;
     margin-bottom: 1rem;
@@ -438,10 +447,19 @@ body {
   }
   .buyBox {
     width: 50%;
-    gap: 0;
+    gap: 1rem;
   }
   .SellBox {
     width: 50%;
-    gap: 0;
+    gap: 1rem;
+  }
+  .buyBox p,
+  .buyBox .icons,
+  .SellBox p,
+  .SellBox .icons {
+    font-size: 1.5rem;
+  }
+  .Cbox {
+    padding: 0;
   }
 }
