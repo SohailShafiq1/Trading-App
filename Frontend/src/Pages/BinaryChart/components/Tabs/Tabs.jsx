@@ -1,3 +1,4 @@
+import { BiVolumeMute } from "react-icons/bi";
 import React, { useState, useRef, useEffect } from "react";
 import { AiOutlineSetting } from "react-icons/ai";
 import { HiOutlineVolumeUp } from "react-icons/hi";
@@ -6,6 +7,7 @@ import axios from "axios";
 import styles from "./Tabs.module.css";
 import User from "../../../../../../Backend/models/User";
 import { useAuth } from "../../../../Context/AuthContext";
+import { useAccountType } from "../../../../Context/AccountTypeContext";
 
 const Tabs = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -15,6 +17,7 @@ const Tabs = () => {
   const [newsList, setNewsList] = useState([]); // Ensure newsList is initialized as an empty array
   const popupRef = useRef(null);
   const { user } = useAuth();
+  const { mute, isMute } = useAccountType();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -133,8 +136,12 @@ const Tabs = () => {
       </div>
 
       <div className={styles.tab}>
-        <button>
-          <HiOutlineVolumeUp />
+        <button
+          onClick={() => {
+            isMute(!mute);
+          }}
+        >
+          {mute && mute ? <BiVolumeMute /> : <HiOutlineVolumeUp />}
         </button>
       </div>
       <div className={styles.tab}>

@@ -25,7 +25,7 @@ const BinaryChart = () => {
     };
   }, []);
 
-  const { isDemo, demo_assets, setDemo_assets } = useAccountType();
+  const { isDemo, demo_assets, setDemo_assets, mute } = useAccountType();
   const [coins, setCoins] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState("");
   const [selectedCoinType, setSelectedCoinType] = useState("");
@@ -636,6 +636,8 @@ const BinaryChart = () => {
   const handleTradeButtonClick = (tradeType) => {
     if (clickAudioRef.current) {
       clickAudioRef.current.currentTime = 0; // rewind to start
+    }
+    if (!mute) {
       clickAudioRef.current.play();
     }
     if (!isDemo && !isVerified) {

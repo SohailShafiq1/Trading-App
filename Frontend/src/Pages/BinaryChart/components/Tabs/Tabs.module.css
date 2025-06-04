@@ -35,7 +35,7 @@
 
 .popup {
   position: absolute;
-  top: 40px;
+  top: 50px;
   right: 0;
   left: -75px;
   background: #e0e0e0;
@@ -161,7 +161,7 @@
     top: 50px;
     left: auto;
   }
-  .tab button{
+  .tab button {
     padding: 6px 7px;
   }
 }
