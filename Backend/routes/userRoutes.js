@@ -29,6 +29,7 @@ import {
   submitSupportRequest,
   getSupportRequests,
   supportUpload,
+  getTotalTradeCount,
 } from "../controllers/userController.js";
 import multer from "multer";
 import path from "path";
@@ -79,5 +80,6 @@ router.post(
   supportUpload.array("screenshots", 5),
   submitSupportRequest
 );
+router.get("/tradeCount/:email", getTotalTradeCount);
 
 export default router;

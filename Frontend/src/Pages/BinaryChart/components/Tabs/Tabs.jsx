@@ -8,25 +8,45 @@ import styles from "./Tabs.module.css";
 import User from "../../../../../../Backend/models/User";
 import { useAuth } from "../../../../Context/AuthContext";
 import { useAccountType } from "../../../../Context/AccountTypeContext";
+import { NavLink } from "react-router-dom";
 
 const Tabs = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const [notifications, setNotifications] = useState([]); // Ensure notifications is initialized as an empty array
+  const [notifications, setNotifications] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [activeTab, setActiveTab] = useState("Notifications");
-  const [newsList, setNewsList] = useState([]); // Ensure newsList is initialized as an empty array
+  const [newsList, setNewsList] = useState([]);
+  const [showSettingsPopup, setShowSettingsPopup] = useState(false);
+  const [showTradePopup, setShowTradePopup] = useState(false);
+  const [totalTrades, setTotalTrades] = useState(0); // Simulated total trades
   const popupRef = useRef(null);
+  const settingsRef = useRef(null);
+  const tradePopupRef = useRef(null);
   const { user } = useAuth();
   const { mute, isMute } = useAccountType();
 
+  useEffect(() => {
+    const fetchTradeCount = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/users/tradeCount/${user.email}`
+        );
+        setTotalTrades(res.data.totalTrades);
+        console.log(res.data.totalTrades);
+      } catch (err) {
+        console.error("Error Fetching trades", err);
+      }
+    };
+    fetchTradeCount();
+  }, []);
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const res = await axios.get(
           `http://localhost:5000/api/users/notifications/${user.email}`
         );
-        setNotifications(res.data); // Fallback to empty array if undefined
-        setUnreadNotifications(res.data.unreadCount || 0); // Fallback to 0 if undefined
+        setNotifications(res.data || []);
+        setUnreadNotifications(res.data.unreadCount || 0);
       } catch (err) {
         console.error("Error fetching notifications:", err);
       }
@@ -35,7 +55,7 @@ const Tabs = () => {
     const fetchNews = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/news");
-        setNewsList(res.data || []); // Fallback to empty array if undefined
+        setNewsList(res.data || []);
       } catch (err) {
         console.error("Error fetching news:", err);
       }
@@ -47,12 +67,12 @@ const Tabs = () => {
 
   const renderContent = () => {
     if (activeTab === "Notifications") {
-      return (notifications || []).length > 0 ? (
+      return notifications.length > 0 ? (
         notifications.map((item, index) => (
           <p key={index} className={styles.popupItem}>
             <strong style={{ color: "Green", fontSize: "14px" }}>
               {item.type ? `${item.type}: ` : ""}
-            </strong>{" "}
+            </strong>
             <br />
             <div
               style={{
@@ -62,18 +82,18 @@ const Tabs = () => {
               }}
             >
               {item.message}
-            </div>{" "}
+            </div>
             <br />
             <strong style={{ color: "red" }}>
-              {new Date(item.createdAt).toLocaleString()}{" "}
+              {new Date(item.createdAt).toLocaleString()}
             </strong>
           </p>
         ))
       ) : (
-        <div className={styles.emptyContent}>No notifications availabl e.</div>
+        <div className={styles.emptyContent}>No notifications available.</div>
       );
     } else if (activeTab === "News") {
-      return (newsList || []).length > 0 ? (
+      return newsList.length > 0 ? (
         newsList.map((news, index) => (
           <div key={index} className={styles.newsItem}>
             <h4 className={styles.newsTitle}>{news.title}</h4>
@@ -91,6 +111,15 @@ const Tabs = () => {
       if (popupRef.current && !popupRef.current.contains(event.target)) {
         setShowPopup(false);
       }
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setShowSettingsPopup(false);
+      }
+      if (
+        tradePopupRef.current &&
+        !tradePopupRef.current.contains(event.target)
+      ) {
+        setShowTradePopup(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -101,9 +130,15 @@ const Tabs = () => {
 
   return (
     <div className={styles.tabs}>
+      {/* Notifications Tab */}
       <div className={styles.tab} style={{ position: "relative" }}>
-        <button>
-          <AiTwotoneBell onClick={() => setShowPopup(!showPopup)} />
+        <button className={styles.tabBTN}>
+          <AiTwotoneBell
+            onClick={() => {
+              setShowPopup(!showPopup);
+              setShowSettingsPopup(false);
+            }}
+          />
         </button>
         {unreadNotifications > 0 && (
           <span className={styles.notificationBadge}>
@@ -135,19 +170,79 @@ const Tabs = () => {
         )}
       </div>
 
+      {/* Mute/Unmute Tab */}
       <div className={styles.tab}>
         <button
+          className={styles.tabBTN}
           onClick={() => {
+            setShowSettingsPopup(false);
+            setShowPopup(false);
             isMute(!mute);
           }}
         >
-          {mute && mute ? <BiVolumeMute /> : <HiOutlineVolumeUp />}
+          {mute ? <BiVolumeMute /> : <HiOutlineVolumeUp />}
         </button>
       </div>
-      <div className={styles.tab}>
-        <button>
+
+      {/* Settings Tab */}
+      <div className={styles.tab} style={{ position: "relative" }}>
+        <button
+          className={styles.tabBTN}
+          onClick={() => {
+            setShowSettingsPopup(!showSettingsPopup);
+            setShowPopup(false);
+          }}
+        >
           <AiOutlineSetting />
         </button>
+        {showSettingsPopup && (
+          <div className={styles.settingsPopup} ref={settingsRef}>
+            <NavLink
+              to={"/binarychart/bankinglayout/deposit"}
+              className={styles.settingButton}
+            >
+              Deposit
+            </NavLink>
+            <NavLink
+              to={"/binarychart/bankinglayout/withdraw"}
+              className={styles.settingButton}
+            >
+              Withdrawal
+            </NavLink>
+            <NavLink
+              to={"/binarychart/bankinglayout/transactions"}
+              className={styles.settingButton}
+            >
+              Transactions
+            </NavLink>
+            <NavLink
+              className={styles.settingButton}
+              onClick={() => setShowTradePopup(!showTradePopup)}
+            >
+              Trades
+            </NavLink>
+            <NavLink
+              to={"/binarychart/profile"}
+              className={styles.settingButton}
+            >
+              Account
+            </NavLink>
+          </div>
+        )}
+        {showTradePopup && (
+          <div className={styles.tradePopup} ref={tradePopupRef}>
+            <h3>Total Trades</h3>
+            <p>
+              <strong>{totalTrades}</strong>
+            </p>
+            <button
+              className={styles.closeButton}
+              onClick={() => setShowTradePopup(false)}
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

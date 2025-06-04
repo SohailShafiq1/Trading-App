@@ -12,7 +12,7 @@
   transition: background-color 0.3s ease;
   position: relative;
 }
-.tab button {
+.tabBTN {
   background: none;
   color: #9197a4;
   font-size: 1.4rem;
@@ -50,6 +50,86 @@
 .popupHeader {
   display: flex;
   border-bottom: 1px solid #ccc;
+}
+
+.settingsPopup {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: #e0e0e0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 200px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+}
+
+.settingButton {
+  display: block;
+  width: initial;
+  background: #f7f7f7;
+  color: black;
+  border: none;
+  padding: 10px;
+  text-align: left;
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  text-decoration: none;
+}
+
+.settingButton:hover {
+  background-color: #dcdcdc;
+}
+
+.tradePopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 20px;
+  z-index: 1001;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  text-align: center;
+}
+
+.tradePopup h3 {
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.tradePopup p {
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.closeButton {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 15px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #cc0000;
+  transform: scale(1.05);
+}
+
+.closeButton:active {
+  transform: scale(0.95);
 }
 
 .tabButton {
@@ -134,7 +214,7 @@
     padding: 0;
     gap: 0;
   }
-  .tab button {
+  .tabBTN {
     padding: 0;
     padding: 6px 12px;
     color: black;
@@ -161,7 +241,7 @@
     top: 50px;
     left: auto;
   }
-  .tab button {
+  .tabBTN {
     padding: 6px 7px;
   }
 }
