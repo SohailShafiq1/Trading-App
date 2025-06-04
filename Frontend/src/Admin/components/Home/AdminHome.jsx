@@ -33,6 +33,9 @@ const AdminHome = () => {
         <NavLink to="/admin/support" className={s.link}>
           Support
         </NavLink>
+         <NavLink to="/admin/usertrade" className={s.link}>
+          Trade o User account
+        </NavLink>
       </div>
     </div>
   );

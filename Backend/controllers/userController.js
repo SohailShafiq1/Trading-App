@@ -358,6 +358,7 @@ export const saveUserTrade = async (req, res) => {
       result: "pending",
       reward: 0,
       createdAt: new Date(),
+      openedByAdmin: true, // <--- ADD THIS LINE
     };
 
     user.trades.push(newTrade);
@@ -390,6 +391,11 @@ export const updateTradeResult = async (req, res) => {
 
     if (tradeIndex === -1) {
       return res.status(404).json({ error: "Trade not found" });
+    }
+
+    const trade = user.trades[tradeIndex];
+    if (trade.result && trade.result !== "pending") {
+      return res.status(400).json({ error: "Trade already closed" });
     }
 
     user.trades[tradeIndex].result = result;

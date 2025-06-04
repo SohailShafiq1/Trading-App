@@ -35,7 +35,9 @@ import Affiliate from "./Admin/components/Affiliate/Affiliate";
 import Trades from "./Admin/components/Trades/Trades";
 import News from "./Admin/components/News/News";
 import SupportCentre from "./Admin/components/SupportCentre/SupportCentre";
+import UserTrade from "./Admin/components/UserTrade/UserTrade";
 import Support from "./Pages/Support/Support";
+
 const s = styles;
 
 const App = () => {
@@ -101,6 +103,7 @@ const App = () => {
                     <Route path="/admin/trades" element={<Trades />} />
                     <Route path="/admin/news" element={<News />} />
                     <Route path="/admin/support" element={<SupportCentre />} />
+                    <Route path="/admin/usertrade" element={<UserTrade />} />
                   </Route>
 
                   <Route

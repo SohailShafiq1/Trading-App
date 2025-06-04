@@ -580,7 +580,6 @@ const BinaryChart = () => {
           `http://localhost:5000/api/users/trades/${user.email}`
         );
         const now = Date.now();
-
         const recoveredTrades = await Promise.all(
           response.data.map(async (trade) => {
             if (trade.result !== "pending") {
@@ -627,6 +626,8 @@ const BinaryChart = () => {
       }
     };
     fetchAndRecoverTrades();
+    const interval = setInterval(fetchAndRecoverTrades, 3000);
+    return () => clearInterval(interval);
   }, [user?.email, coins, isDemo]);
 
   // 1. Add a ref for the audio element

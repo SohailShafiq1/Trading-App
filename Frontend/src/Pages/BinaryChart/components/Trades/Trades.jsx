@@ -10,6 +10,7 @@ const Trades = ({
   coins,
   livePrice,
   otcPrice,
+  getPriceForTrade, // <-- add this
 }) => (
   <div className={s.tradeHistory}>
     <p>Trades</p>
@@ -18,13 +19,19 @@ const Trades = ({
         let displayStatus = trade.status;
         let displayReward = trade.reward;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
-const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+        const tradeId =
+          trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
         // For running trades with time up, show real-time floating PnL
-        if (trade.status === "running" && trade.remainingTime === 0) {
-          const endPrice =
+        let endPrice;
+        if (typeof getPriceForTrade === "function") {
+          endPrice = getPriceForTrade(trade);
+        } else {
+          endPrice =
             trade.coinType === "Live"
               ? parseFloat(livePrice)
               : parseFloat(otcPrice);
+        }
+        if (trade.status === "running" && trade.remainingTime === 0) {
           const coinData = coins.find((c) => c.name === trade.coinName);
           const profitPercentage = coinData?.profitPercentage || 0;
 
@@ -39,19 +46,21 @@ const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
               (tradeInvestment / trade.entryPrice);
           }
 
-          // Show floating payout: base payout + profit percentage if in profit, or just floating PnL if in loss
           if (centsChange >= 0) {
-            // In profit: show payout with profit percentage + floating profit
-            displayReward = (
-              tradeInvestment * (1 + profitPercentage / 100) +
-              centsChange
-            ).toFixed(2);
+            const rawReward =
+              tradeInvestment * (1 + profitPercentage / 100) + centsChange;
+            displayReward = round2(rawReward).toFixed(2);
             displayStatus = "win";
           } else {
-            // In loss: show only floating loss (can go below zero)
-            displayReward = (tradeInvestment + centsChange).toFixed(2);
+            displayReward = round2(tradeInvestment + centsChange).toFixed(2);
             displayStatus = "loss";
           }
+        } else if (trade.status === "win" || trade.status === "loss") {
+          // Always use backend reward for closed trades
+          displayReward =
+            typeof trade.reward === "number"
+              ? trade.reward.toFixed(2)
+              : trade.reward;
         }
 
         return (
@@ -71,13 +80,15 @@ const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
               }}
             >
               <strong>{trade.coinName}</strong>
-           <span>
-  {trade.type === "Buy" ? (
-    <span style={{ color: "#10A055", fontWeight: 600 }}>Buy</span>
-  ) : (
-    <span style={{ color: "#FF0000", fontWeight: 600 }}>Sell</span>
-  )}
-</span>{" "}
+              <span>
+                {trade.type === "Buy" ? (
+                  <span style={{ color: "#10A055", fontWeight: 600 }}>Buy</span>
+                ) : (
+                  <span style={{ color: "#FF0000", fontWeight: 600 }}>
+                    Sell
+                  </span>
+                )}
+              </span>{" "}
               {/* Display trade duration */}
             </div>
 
@@ -125,12 +136,32 @@ const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
                 </button>
               </div>
             )}
+            <div>
+              {trade.openedByAdmin && (
+                <span
+                  style={{
+                    marginLeft: 8,
+                    background: "#388e3c",
+                    color: "#fff",
+                    borderRadius: 4,
+                    padding: "2px 8px",
+                    fontSize: "0.85em",
+                  }}
+                >
+                  Opened by Admin
+                </span>
+              )}
+            </div>
           </li>
         );
       })}
     </ul>
   </div>
 );
+
+function round2(num) {
+  return Math.round((num + Number.EPSILON) * 100) / 100;
+}
 
 const handleCoinClick = (coin) => {
   setSelected(coin.name);

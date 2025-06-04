@@ -2,7 +2,7 @@
 import User from "../models/User.js";
 import Deposit from "../models/Deposit.js";
 import nodemailer from "nodemailer";
-
+import AdminTrade from "../models/AdminTrade.js";
 let currentTrend = "Normal"; // Default trend
 
 // Trend Management
@@ -348,5 +348,31 @@ export const markSupportCompleted = async (req, res) => {
     res.json({ message: "Marked as completed" });
   } catch (err) {
     res.status(500).json({ error: "Failed to mark as completed" });
+  }
+};
+export const getAllUsers = async (req, res) => {
+  try {
+    console.log("GET /api/admin/all-users HIT");
+    const users = await User.find(
+      { email: { $exists: true, $ne: "" } },
+      { _id: 1, email: 1, firstName: 1, lastName: 1, userId: 1 }
+    );
+    console.log("USERS FOUND:", users.length);
+    res.json(users);
+  } catch (err) {
+    console.error("ERROR FETCHING USERS:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
+// Get all admin trades
+export const getAllAdminTrades = async (req, res) => {
+  try {
+    const trades = await AdminTrade.find()
+      .populate("adminId", "email firstName lastName")
+      .populate("userId", "email firstName lastName")
+      .sort({ createdAt: -1 });
+    res.json(trades);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch admin trades" });
   }
 };

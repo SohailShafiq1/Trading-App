@@ -13,6 +13,8 @@ import {
   getAllSupportRequests,
   markSupportReviewed,
   markSupportCompleted,
+  getAllUsers,
+  getAllAdminTrades,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -29,6 +31,7 @@ router.put("/deposit-status/:id", updateDepositStatus);
 router.get("/support-requests", getAllSupportRequests);
 router.put("/support-reviewed/:id", markSupportReviewed);
 router.put("/support-completed/:id", markSupportCompleted);
-// Get all trades from all users
 router.get("/all-trades", getAllTrades);
+router.get("/all-users", getAllUsers);
+router.get("/admin-trades", getAllAdminTrades);
 export default router;
