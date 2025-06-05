@@ -15,7 +15,10 @@ export const UserAssetsProvider = ({ children }) => {
           const response = await axios.get(
             `http://localhost:5000/api/users/email/${user.email}`
           );
-          setUserAssets(response.data.assets); // Set the fetched assets
+          const fetchedAssets = response.data.assets;
+          if (fetchedAssets !== userAssets) {
+            setUserAssets(fetchedAssets); // Update only if assets have changed
+          }
         }
       } catch (err) {
         console.error("Error fetching user assets:", err);
@@ -23,7 +26,10 @@ export const UserAssetsProvider = ({ children }) => {
     };
 
     fetchAssets();
-  }, [user]); // Fetch assets whenever the user changes
+
+    const interval = setInterval(fetchAssets, 1000); // Poll every 5 seconds
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, [user, userAssets]); // Include userAssets in dependency array
 
   return (
     <UserAssetsContext.Provider value={{ userAssets, setUserAssets }}>

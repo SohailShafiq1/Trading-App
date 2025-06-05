@@ -271,6 +271,7 @@ const LiveCandleChart = ({
   coins,
   profit,
   type,
+  trades,
 }) => {
   // Refs for chart elements
   const chartContainerRef = useRef();

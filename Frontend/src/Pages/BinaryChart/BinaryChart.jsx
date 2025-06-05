@@ -774,6 +774,7 @@ const BinaryChart = () => {
                             ?.profitPercentage || 0
                         }
                         type={selectedCoinType}
+                        trades={[...trades].reverse()}
                       />
                     </div>
                   )}
