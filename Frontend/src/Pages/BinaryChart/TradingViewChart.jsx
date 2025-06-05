@@ -639,7 +639,21 @@ const TradingViewChart = ({
               </div>
             )}
           </div>
-
+          <div className="webCoinInfoT" style={{ position: "absolute" }}>
+            <div className="coininfoBox">
+              <p className="nameProfitWeb">
+                {coinName}
+                {"("}
+                {type}
+                {")"}
+              </p>
+              <p className="nameProfitWeb">
+                &nbsp;&nbsp;
+                {profit}
+                {"% "}
+              </p>
+            </div>
+          </div>
           {/* Drawing tools button */}
           <div
             style={{

@@ -20,6 +20,7 @@
 
 .coinPopup {
   position: absolute;
+  top: 40px;
   left: 0;
   width: 320px;
   background: white;
@@ -40,11 +41,10 @@
   flex: 1;
   background: #e5e5e5;
   border: none;
-  color: #475569;
   padding: 0.4rem;
   margin: 0 0.2rem;
   border-radius: 4px;
-  color: #475569;
+  color: rgb(243, 228, 228);
   cursor: pointer;
   font-weight: 500;
 }
