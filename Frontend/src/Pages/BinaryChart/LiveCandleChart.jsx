@@ -271,6 +271,7 @@ const LiveCandleChart = ({
   coins,
   profit,
   type,
+  trades,
 }) => {
   // Refs for chart elements
   const chartContainerRef = useRef();
@@ -1125,7 +1126,7 @@ const LiveCandleChart = ({
           marginBottom: 10,
         }}
       >
-        {/* Indicator button */}
+        {/* Coin Selector Button */}
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div className="coinSelectorMobile2">
             <button
@@ -1198,6 +1199,21 @@ const LiveCandleChart = ({
                 />
               </div>
             )}
+          </div>
+          <div className="webCoinInfo" style={{ position: "absolute" }}>
+            <div className="coininfoBox">
+              <p className="nameProfitWeb">
+                {coinName}
+                {"("}
+                {type}
+                {")"}
+              </p>
+              <p className="nameProfitWeb">
+                &nbsp;&nbsp;
+                {profit}
+                {"% "}
+              </p>
+            </div>
           </div>
 
           <div style={{ position: "relative", display: "flex" }}>

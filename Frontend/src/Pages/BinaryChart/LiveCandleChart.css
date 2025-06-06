@@ -75,7 +75,43 @@
   justify-content: space-between;
 }
 
+.webCoinInfo {
+  display: flex;
+  flex-direction: row;
+  border: 2px solid #10a055;
+  top: 67px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  background: rgb(224, 224, 224);
+  z-index: 10001;
+  width: fit-content;
+}
+.webCoinInfoT {
+  display: flex;
+  flex-direction: row;
+  border: 2px solid #10a055;
+  top: 50px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  background: rgb(224, 224, 224);
+  z-index: 10001;
+  width: fit-content;
+}
+.coininfoBox {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+}
+
 @media (max-width: 768px) {
+  .webCoinInfo {
+    display: none;
+  }
+  .webCoinInfoT {
+    display: none;
+  }
   .coinSelectorMobile {
     position: absolute;
     top: 50px;
