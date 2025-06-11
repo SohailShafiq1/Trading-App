@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
+import { AiOutlineClose,AiOutlineRocket } from "react-icons/ai"; // For close icon
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
 import LiveCandleChart from "./LiveCandleChart";
@@ -14,6 +15,8 @@ import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
 import track from "./assets/trade.mp3";
+import { useNavigate } from "react-router-dom";
+
 const BinaryChart = () => {
   // State declarations
   const socket = useRef(null);
@@ -49,8 +52,27 @@ const BinaryChart = () => {
   const [demoAssets, setDemoAssets] = useState(demo_assets);
   const [showTimestampPopup, setShowTimestampPopup] = useState(false);
   const [allInClicked, setAllInClicked] = useState(false);
+  const [showBonusPopup, setShowBonusPopup] = useState(true);
+  const [latestBonus, setLatestBonus] = useState(null);
+
+  const navigate = useNavigate();
 
   // Check verification status (only for real account)
+  useEffect(() => {
+    const fetchLatestBonus = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/bonuses");
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          // Get the last (latest) bonus
+          const latest = res.data[res.data.length - 1];
+          setLatestBonus(latest);
+        }
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchLatestBonus();
+  }, []);
   useEffect(() => {
     if (isDemo) {
       setCheckingVerification(false);
@@ -734,6 +756,35 @@ const BinaryChart = () => {
 
   return (
     <>
+   {showBonusPopup &&
+  latestBonus &&
+  user &&
+  Array.isArray(user.usedBonuses) &&
+  !user.usedBonuses.includes(latestBonus._id) && (
+    <div
+      className={styles.bonusPopupWrapper}
+      onClick={() => navigate("/binarychart/bankinglayout/deposit")}
+    >
+      <div className={styles.bonusPopupContent}>
+        <AiOutlineRocket className={styles.bonusIcon} />
+        <span className={styles.bonusText}>
+          Get a <b>{latestBonus.percent}% bonus</b> on your first deposit of <b>${latestBonus.min}</b> or more!
+        </span>
+        <span className={styles.bonusBadge}>{latestBonus.percent}%</span>
+        <button
+          className={styles.closeBtn}
+          onClick={e => {
+            e.stopPropagation();
+            setShowBonusPopup(false);
+          }}
+          aria-label="Close"
+        >
+          <AiOutlineClose />
+        </button>
+      </div>
+    </div>
+)}
+
       <div className={styles.container}>
         <div className={styles.Cbox}>
           <div
@@ -785,9 +836,29 @@ const BinaryChart = () => {
           </div>
 
           <div className={styles.control}>
-            <h1 className={styles.selectedCoinTitle}>
-              {selectedCoin || "Select Coin"} Trading
-            </h1>
+           <h1 className={styles.selectedCoinTitle}>
+  {selectedCoin
+    ? `${selectedCoin} Trading`
+    : "Select Coin Trading"}
+  {selectedCoin && (
+    <>
+      {" "}
+      <span style={{
+        fontSize: "1rem",
+        color: "#10A055",
+        background: "#eafbee",
+        borderRadius: "1rem",
+        padding: "2px 10px",
+        marginLeft: 8,
+        fontWeight: 600,
+        display: "inline-block",
+        verticalAlign: "middle"
+      }}>
+        {coins.find((c) => c.name === selectedCoin)?.profitPercentage ?? 0}% 
+      </span>
+    </>
+  )}
+</h1>
             <p className={styles.selectedCoinPrice}>
               Current Price:{" "}
               {selectedCoinType === "OTC"
@@ -797,6 +868,7 @@ const BinaryChart = () => {
                 : selectedCoinType === "Live"
                 ? livePrice
                 : "N/A"}
+                
             </p>
 
             <div className={styles.controlStuff}>
