@@ -279,6 +279,9 @@ const LiveCandleChart = ({
   const seriesRef = useRef(null);
   const coinSelectorRef = useRef();
 
+  // Add this line to define the tradeLineSeriesRef
+  const tradeLineSeriesRef = useRef({});
+
   // State for various chart controls
   const [countdown, setCountdown] = useState(0);
   const [interval, setInterval] = useState("1m");
@@ -1108,6 +1111,84 @@ const LiveCandleChart = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showCoinSelector]);
+
+  // Helper to add or update a trade line
+  const updateTradeLines = () => {
+    if (!chartRef.current || !trades) return;
+
+    // Remove lines for closed trades
+    Object.keys(tradeLineSeriesRef.current).forEach((tradeId) => {
+      const trade = trades.find(
+        (t) => (t.id || t._id || `${t.startedAt}-${t.coinName}`) === tradeId
+      );
+      if (!trade || trade.status !== "running") {
+        if (tradeLineSeriesRef.current[tradeId]) {
+          chartRef.current.removeSeries(tradeLineSeriesRef.current[tradeId]);
+          delete tradeLineSeriesRef.current[tradeId];
+        }
+      }
+    });
+
+    // Add/update lines for running trades
+    trades.forEach((trade) => {
+      const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+      if (trade.status !== "running") return;
+
+      // Parse entry time and price
+      const entryTime =
+        typeof trade.startedAt === "number"
+          ? Math.floor(trade.startedAt / 1000)
+          : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+      const entryPrice = parseFloat(trade.entryPrice);
+
+      // Current time and price for the line's end
+      let endTime = entryTime;
+      let endPrice = entryPrice;
+      if (trade.remainingTime > 0) {
+        // Still running, end at current candle
+        endTime = liveCandle?.time || entryTime;
+        endPrice = liveCandle?.close || entryPrice;
+      } else {
+        // If trade is running but time is up, end at current price
+        endTime = Math.floor(Date.now() / 1000);
+        endPrice = liveCandle?.close || entryPrice;
+      }
+
+      // Prepare line data
+      const lineData = [
+        { time: entryTime, value: entryPrice },
+        { time: endTime, value: endPrice },
+      ];
+
+      // If line already exists, update it
+      if (tradeLineSeriesRef.current[tradeId]) {
+        tradeLineSeriesRef.current[tradeId].setData(lineData);
+      } else {
+        // Create a new line series for this trade
+        const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
+        const lineSeries = chartRef.current.addLineSeries({
+          color,
+          lineWidth: 2,
+          priceLineVisible: false,
+          crosshairMarkerVisible: false,
+        });
+        lineSeries.setData(lineData);
+        tradeLineSeriesRef.current[tradeId] = lineSeries;
+      }
+    });
+  };
+
+  // Effect to update trade lines when trades, liveCandle, or chart changes
+  useEffect(() => {
+    updateTradeLines();
+    // Cleanup on unmount: remove all trade lines
+    return () => {
+      Object.values(tradeLineSeriesRef.current).forEach((series) => {
+        chartRef.current?.removeSeries(series);
+      });
+      tradeLineSeriesRef.current = {};
+    };
+  }, [trades, liveCandle, chartRef.current]);
 
   // Render the chart component
   return (
