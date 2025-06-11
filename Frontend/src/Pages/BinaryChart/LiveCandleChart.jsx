@@ -1797,9 +1797,9 @@ const LiveCandleChart = ({
               const textColor = "#fff";
 
               // --- Calculate chart coordinates for each trade box ---
-              let left = 0, top = 0;
+              let left = 0,
+                top = 0;
               let opacity = 0.95;
-              let stackOffset = 0;
               if (
                 chartRef.current &&
                 seriesRef.current &&
@@ -1854,8 +1854,9 @@ const LiveCandleChart = ({
                 const containerWidth = containerRect.width;
                 const containerHeight = containerRect.height;
 
-                // Stack horizontally if multiple trades at same candle
-                const tradesAtTime = arr.filter((t) => {
+                // --- Prevent overlap: stack vertically if multiple trades at same candle/price ---
+                // Find all trades at this mappedTime and price, and use their index for stacking
+                const tradesAtSameSpot = arr.filter((t) => {
                   let tTimestamp;
                   if (typeof t.startedAt === "number") {
                     tTimestamp =
@@ -1879,17 +1880,25 @@ const LiveCandleChart = ({
                         : prev
                     );
                   }
-                  return tMapped === mappedTime;
+                  const tPrice = t.entryPrice ?? t.coinPrice ?? t.price;
+                  return (
+                    tMapped === mappedTime &&
+                    Number(tPrice) ===
+                      Number(trade.entryPrice ?? trade.coinPrice ?? trade.price)
+                  );
                 });
-                const stackIndex = tradesAtTime.findIndex(
+                const stackIndex = tradesAtSameSpot.findIndex(
                   (t) => t.id === trade.id
                 );
 
                 // Position: if x/y are valid, use them, else stack at right
                 if (x != null && y != null && !isNaN(x) && !isNaN(y)) {
-                  // Stack horizontally with 44px spacing for each trade at same candle
-                  left = Math.max(0, Math.min(x + stackIndex * 44, containerWidth - 60));
-                  top = Math.max(0, Math.min(y, containerHeight - 28));
+                  // Stack vertically with 22px spacing for each trade at same candle/price
+                  left = Math.max(0, Math.min(x, containerWidth - 60));
+                  top = Math.max(
+                    0,
+                    Math.min(y + stackIndex * 22, containerHeight - 28)
+                  );
                   opacity = 1;
                 } else {
                   // fallback: stack at right, spaced vertically
@@ -1942,9 +1951,7 @@ const LiveCandleChart = ({
                     ${trade.investment ?? trade.price ?? trade.coinPrice}
                   </span>
                   <span style={{ fontSize: 9, color: "#fff", opacity: 0.85 }}>
-                    {trade.remainingTime > 0
-                      ? `${trade.remainingTime}s`
-                      : "⏰"}
+                    {trade.remainingTime > 0 ? `${trade.remainingTime}s` : "⏰"}
                   </span>
                   {tradeHover[tradeId] && (
                     <div
