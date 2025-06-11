@@ -1163,11 +1163,20 @@ const LiveCandleChart = ({
         endPrice = liveCandle?.close || entryPrice;
       }
 
-      // Prepare line data
-      const lineData = [
+      // Prepare line data and ensure times are strictly increasing
+      let lineData = [
         { time: entryTime, value: entryPrice },
         { time: endTime, value: endPrice },
       ];
+
+      // If entryTime === endTime, skip drawing the line (avoid duplicate times)
+      if (lineData[0].time === lineData[1].time) {
+        // Optionally, you can skip or draw a single point, but lightweight-charts requires strictly increasing times
+        return;
+      }
+
+      // Ensure lineData is sorted by time ascending (should always be, but just in case)
+      lineData = lineData.sort((a, b) => a.time - b.time);
 
       // If line already exists, update it
       if (tradeLineSeriesRef.current[tradeId]) {
