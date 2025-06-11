@@ -1122,16 +1122,25 @@ const LiveCandleChart = ({
         (t) => (t.id || t._id || `${t.startedAt}-${t.coinName}`) === tradeId
       );
       if (!trade || trade.status !== "running") {
-        if (tradeLineSeriesRef.current[tradeId]) {
-          chartRef.current.removeSeries(tradeLineSeriesRef.current[tradeId]);
-          delete tradeLineSeriesRef.current[tradeId];
+        // Only remove if the series is defined
+        if (
+          tradeLineSeriesRef.current[tradeId] &&
+          typeof chartRef.current.removeSeries === "function"
+        ) {
+          try {
+            chartRef.current.removeSeries(tradeLineSeriesRef.current[tradeId]);
+          } catch (e) {
+            // Ignore errors if already removed
+          }
         }
+        delete tradeLineSeriesRef.current[tradeId];
       }
     });
 
     // Add/update lines for running trades
     trades.forEach((trade) => {
-      const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+      const tradeId =
+        trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
       if (trade.status !== "running") return;
 
       // Parse entry time and price
@@ -1184,7 +1193,13 @@ const LiveCandleChart = ({
     // Cleanup on unmount: remove all trade lines
     return () => {
       Object.values(tradeLineSeriesRef.current).forEach((series) => {
-        chartRef.current?.removeSeries(series);
+        if (series && typeof chartRef.current?.removeSeries === "function") {
+          try {
+            chartRef.current.removeSeries(series);
+          } catch (e) {
+            // Ignore errors if already removed
+          }
+        }
       });
       tradeLineSeriesRef.current = {};
     };
