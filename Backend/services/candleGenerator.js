@@ -56,11 +56,14 @@ const updateCandles = async () => {
     const coins = await Coin.find();
 
     for (const coin of coins) {
-      const roundedTime = new Date(
-        Math.floor(Date.now() / INTERVAL_MS) * INTERVAL_MS
-      );
+      // --- CHANGE: Use real current time for each candle (not bucketed) ---
+      const now = new Date();
+      const roundedTime = now.toISOString();
+
+      // Only use candles for this interval and bucket
       const lastCandle = coin.candles
         .filter((c) => c.interval === "30s")
+        .sort((a, b) => new Date(a.time) - new Date(b.time))
         .at(-1);
 
       const open = round(lastCandle?.close ?? coin.currentPrice);
@@ -72,7 +75,7 @@ const updateCandles = async () => {
       const low = round(Math.max(0.01, Math.min(open, close) - wiggle));
 
       const candle = {
-        time: roundedTime.toISOString(),
+        time: roundedTime, // real ISO time, not bucketed
         open,
         close,
         high,
@@ -80,9 +83,13 @@ const updateCandles = async () => {
         interval: "30s",
       };
 
+      // Remove any existing candle for this exact time to avoid duplicates
+      coin.candles = coin.candles.filter(
+        (c) => !(c.interval === "30s" && c.time === roundedTime)
+      );
+
       coin.candles.push(candle);
       coin.currentPrice = close;
-      coin.candles = coin.candles;
       await coin.save();
 
       if (io) io.emit(`candle:${coin.name}`, { ...candle, trend: coin.trend });
@@ -107,7 +114,10 @@ const emitTicks = async () => {
       );
 
       if (!last) {
-        const prev = coin.candles.filter((c) => c.interval === "30s").at(-1);
+        const prev = coin.candles
+          .filter((c) => c.interval === "30s")
+          .sort((a, b) => new Date(a.time) - new Date(b.time))
+          .at(-1);
         const open = round(prev?.close ?? coin.currentPrice);
         last = {
           time: roundedTime,

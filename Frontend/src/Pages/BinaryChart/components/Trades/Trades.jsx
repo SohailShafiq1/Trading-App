@@ -18,7 +18,8 @@ const Trades = ({
         let displayStatus = trade.status;
         let displayReward = trade.reward;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
-const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+        const tradeId =
+          trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
         // For running trades with time up, show real-time floating PnL
         if (trade.status === "running" && trade.remainingTime === 0) {
           const endPrice =
@@ -71,13 +72,15 @@ const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
               }}
             >
               <strong>{trade.coinName}</strong>
-           <span>
-  {trade.type === "Buy" ? (
-    <span style={{ color: "#10A055", fontWeight: 600 }}>Buy</span>
-  ) : (
-    <span style={{ color: "#FF0000", fontWeight: 600 }}>Sell</span>
-  )}
-</span>{" "}
+              <span>
+                {trade.type === "Buy" ? (
+                  <span style={{ color: "#10A055", fontWeight: 600 }}>Buy</span>
+                ) : (
+                  <span style={{ color: "#FF0000", fontWeight: 600 }}>
+                    Sell
+                  </span>
+                )}
+              </span>{" "}
               {/* Display trade duration */}
             </div>
 
