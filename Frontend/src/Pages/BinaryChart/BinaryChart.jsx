@@ -827,6 +827,7 @@ const BinaryChart = () => {
                         }
                         type={selectedCoinType}
                         trades={[...trades].reverse()}
+                        handleCloseTrade={handleCloseTrade} // <-- pass this
                       />
                     </div>
                   )}

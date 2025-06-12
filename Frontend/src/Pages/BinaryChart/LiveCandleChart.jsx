@@ -13,12 +13,9 @@ import { io } from "socket.io-client";
 import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { RiArrowDropDownLine } from "react-icons/ri";
-
-// Initialize socket connection to backend
+import { AiOutlineClose } from "react-icons/ai"; // Add close icon
 const socket = io("http://localhost:5000");
 const BACKEND_URL = "http://localhost:5000";
-
-// Time interval mapping to seconds
 const intervalToSeconds = {
   "30s": 30,
   "1m": 60,
@@ -31,16 +28,12 @@ const intervalToSeconds = {
   "4h": 14400,
   "1d": 86400,
 };
-
-// Chart style options
 const CANDLE_STYLES = {
   CANDLE: "Candlestick",
   BAR: "Bar",
   LINE: "Line",
   HOLLOW: "Hollow Candle",
 };
-
-// Indicator options
 const INDICATORS = {
   NONE: "None",
   SMA: "SMA (20)",
@@ -49,8 +42,6 @@ const INDICATORS = {
   MACD: "MACD",
   BB: "Bollinger Bands",
 };
-
-// Theme options
 const THEMES = {
   LIGHT: {
     name: "Light",
@@ -83,30 +74,37 @@ const THEMES = {
     wickVisible: true,
   },
 };
-
-// Drawing tool options
 const DRAWING_TOOLS = {
   NONE: "None",
   HORIZONTAL_LINE: "Horizontal Line",
   VERTICAL_LINE: "Vertical Line",
   TREND_LINE: "Trend Line",
 };
-
-// Function to group raw candle data into specified intervals
 const groupCandles = (candles, interval) => {
   const intervalSec = intervalToSeconds[interval];
   const grouped = [];
   const sorted = [...candles]
     .filter((c) => c?.time && c?.open != null)
-    .sort((a, b) => Number(a.time) - Number(b.time));
-
+    .sort((a, b) => {
+      const aTime =
+        typeof a.time === "string"
+          ? Math.floor(Date.parse(a.time) / 1000)
+          : Number(a.time);
+      const bTime =
+        typeof b.time === "string"
+          ? Math.floor(Date.parse(b.time) / 1000)
+          : Number(b.time);
+      return aTime - bTime;
+    });
   for (const c of sorted) {
-    const utc = Date.parse(c.time);
-    if (isNaN(utc)) continue;
-
-    const ts = Math.floor(utc / 1000);
+    let ts;
+    if (typeof c.time === "string") {
+      ts = Math.floor(Date.parse(c.time) / 1000);
+    } else {
+      ts = Number(c.time);
+    }
+    if (isNaN(ts)) continue;
     const bucket = Math.floor(ts / intervalSec) * intervalSec;
-
     const last = grouped[grouped.length - 1];
     if (last && last.time === bucket) {
       last.high = Math.max(last.high, c.high);
@@ -124,11 +122,8 @@ const groupCandles = (candles, interval) => {
       });
     }
   }
-
   return grouped;
 };
-
-// Function to calculate Simple Moving Average
 const calculateSMA = (data, period) => {
   if (!data || data.length < period) return [];
   const sma = [];
@@ -143,8 +138,6 @@ const calculateSMA = (data, period) => {
   }
   return sma;
 };
-
-// Function to calculate Exponential Moving Average
 const calculateEMA = (data, period) => {
   if (!data || data.length < period) return [];
   const ema = [];
@@ -152,21 +145,17 @@ const calculateEMA = (data, period) => {
   let emaPrev =
     data.slice(0, period).reduce((acc, val) => acc + val.close, 0) / period;
   ema.push({ time: data[period - 1].time, value: emaPrev });
-
   for (let i = period; i < data.length; i++) {
     emaPrev = data[i].close * k + emaPrev * (1 - k);
     ema.push({ time: data[i].time, value: emaPrev });
   }
   return ema;
 };
-
-// Function to calculate Relative Strength Index
 const calculateRSI = (data, period = 14) => {
   if (!data || data.length <= period) return [];
   const rsi = [];
   let gains = 0;
   let losses = 0;
-
   for (let i = 1; i <= period; i++) {
     const change = data[i].close - data[i - 1].close;
     if (change > 0) {
@@ -175,34 +164,27 @@ const calculateRSI = (data, period = 14) => {
       losses -= change;
     }
   }
-
   let avgGain = gains / period;
   let avgLoss = losses / period;
   const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
   rsi.push({ time: data[period].time, value: 100 - 100 / (1 + rs) });
-
   for (let i = period + 1; i < data.length; i++) {
     const change = data[i].close - data[i - 1].close;
     let currentGain = 0;
     let currentLoss = 0;
-
     if (change > 0) {
       currentGain = change;
     } else {
       currentLoss = -change;
     }
-
     avgGain = (avgGain * (period - 1) + currentGain) / period;
     avgLoss = (avgLoss * (period - 1) + currentLoss) / period;
 
     const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
     rsi.push({ time: data[i].time, value: 100 - 100 / (1 + rs) });
   }
-
   return rsi;
 };
-
-// Function to calculate Moving Average Convergence Divergence
 const calculateMACD = (
   data,
   fastPeriod = 12,
@@ -211,10 +193,8 @@ const calculateMACD = (
 ) => {
   if (!data || data.length < slowPeriod + signalPeriod)
     return { macd: [], signal: [] };
-
   const emaFast = calculateEMA(data, fastPeriod);
   const emaSlow = calculateEMA(data, slowPeriod);
-
   const macdLine = [];
   for (let i = slowPeriod - fastPeriod; i < emaSlow.length; i++) {
     macdLine.push({
@@ -222,26 +202,20 @@ const calculateMACD = (
       value: emaFast[i + (slowPeriod - fastPeriod)].value - emaSlow[i].value,
     });
   }
-
   const signalLine = calculateEMA(
     macdLine.map((d) => ({ close: d.value, time: d.time })),
     signalPeriod
   );
-
   return {
     macd: macdLine.slice(signalPeriod - 1),
     signal: signalLine,
   };
 };
-
-// Function to calculate Bollinger Bands
 const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
   if (!data || data.length < period)
     return { upper: [], middle: [], lower: [] };
-
   const sma = calculateSMA(data, period);
   const bands = { upper: [], middle: sma, lower: [] };
-
   for (let i = period - 1; i < data.length; i++) {
     const slice = data.slice(i - period + 1, i + 1);
     const sum = slice.reduce(
@@ -249,22 +223,17 @@ const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
       0
     );
     const stdDev = Math.sqrt(sum / period);
-
     bands.upper.push({
       time: data[i].time,
       value: sma[i - period + 1].value + multiplier * stdDev,
     });
-
     bands.lower.push({
       time: data[i].time,
       value: sma[i - period + 1].value - multiplier * stdDev,
     });
   }
-
   return bands;
 };
-
-// Main chart component
 const LiveCandleChart = ({
   coinName,
   setSelectedCoin,
@@ -272,14 +241,12 @@ const LiveCandleChart = ({
   profit,
   type,
   trades,
+  handleCloseTrade,
 }) => {
-  // Refs for chart elements
   const chartContainerRef = useRef();
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
   const coinSelectorRef = useRef();
-
-  // State for various chart controls
   const [countdown, setCountdown] = useState(0);
   const [interval, setInterval] = useState("1m");
   const [candles, setCandles] = useState([]);
@@ -297,8 +264,6 @@ const LiveCandleChart = ({
   const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
   const [showDrawingPopup, setShowDrawingPopup] = useState(false);
   const [showCoinSelector, setShowCoinSelector] = useState(false);
-
-  // Refs for indicators
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
   const rsiSeriesRef = useRef(null);
@@ -309,38 +274,25 @@ const LiveCandleChart = ({
   const bbUpperSeriesRef = useRef(null);
   const bbMiddleSeriesRef = useRef(null);
   const bbLowerSeriesRef = useRef(null);
-
-  // Refs for drawing tools
   const countdownRef = useRef();
   const activeDrawingToolRef = useRef(null);
   const drawingStartPointRef = useRef(null);
   const drawingsRef = useRef([]);
-
-  // State for zoom control
   const [autoZoom, setAutoZoom] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
-
-  // Update countdown reference
   countdownRef.current = countdown;
-
-  // Fix for the oscillation glitch
   const lastCandleRef = useRef(null);
   const lastUpdateRef = useRef(0);
-
-  // Countdown timer for next candle
   const updateCountdown = () => {
     const intervalSec = intervalToSeconds[interval];
     const now = Math.floor(Date.now() / 1000);
     const currentBucket = Math.floor(now / intervalSec) * intervalSec;
     const nextCandle = currentBucket + intervalSec;
     const remaining = nextCandle - now;
-
     if (Math.abs(countdownRef.current - remaining) > 0.5) {
       setCountdown(remaining);
     }
   };
-
-  // Effect for countdown animation
   useEffect(() => {
     let animationFrameId;
     const tick = () => {
@@ -350,8 +302,6 @@ const LiveCandleChart = ({
     tick();
     return () => cancelAnimationFrame(animationFrameId);
   }, [interval]);
-
-  // Position the countdown label on the chart
   const updateCountdownPosition = () => {
     if (!chartRef.current || !liveCandle || !seriesRef.current) return;
 
@@ -360,15 +310,10 @@ const LiveCandleChart = ({
     const x = timeScale.timeToCoordinate(liveCandle.time);
     const y = seriesRef.current.priceToCoordinate(liveCandle.close);
     const label = document.getElementById("candle-countdown");
-
     if (!label || x == null || y == null) return;
-
-    // Get chart container bounds
     const containerRect = chartContainerRef.current.getBoundingClientRect();
     const labelWidth = label.offsetWidth;
     const labelHeight = label.offsetHeight;
-
-    // Constrain position within chart bounds
     const constrainedX = Math.max(
       labelWidth / 2,
       Math.min(x, containerRect.width - labelWidth / 2)
@@ -380,8 +325,6 @@ const LiveCandleChart = ({
 
     label.style.left = `${constrainedX}px`;
     label.style.top = `${constrainedY}px`;
-
-    // Adjust font size based on zoom level
     const width = timeScale.width();
     const range = timeScale.getVisibleLogicalRange();
     if (range) {
@@ -396,8 +339,6 @@ const LiveCandleChart = ({
       )}px`;
     }
   };
-
-  // Effect for countdown position animation
   useEffect(() => {
     let raf;
     const animate = () => {
@@ -407,11 +348,8 @@ const LiveCandleChart = ({
     animate();
     return () => cancelAnimationFrame(raf);
   }, [liveCandle, interval]);
-
-  // Apply selected theme to chart
   const applyTheme = () => {
     if (!chartRef.current) return;
-
     chartRef.current.applyOptions({
       layout: {
         background: { color: theme.background },
@@ -437,7 +375,6 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
       },
     });
-
     if (seriesRef.current) {
       seriesRef.current.applyOptions({
         upColor: theme.upColor,
@@ -447,15 +384,12 @@ const LiveCandleChart = ({
       });
     }
   };
-
-  // Apply selected candle style to chart
   const applyCandleStyle = () => {
     if (!chartRef.current) return;
 
     if (seriesRef.current) {
       chartRef.current.removeSeries(seriesRef.current);
     }
-
     switch (candleStyle) {
       case CANDLE_STYLES.CANDLE:
         seriesRef.current = chartRef.current.addCandlestickSeries({
@@ -499,7 +433,6 @@ const LiveCandleChart = ({
           wickDownColor: theme.downColor,
         });
     }
-
     const data = groupCandles(candles, interval);
     if (candleStyle === CANDLE_STYLES.LINE) {
       const lineData = data.map((candle) => ({
@@ -512,10 +445,7 @@ const LiveCandleChart = ({
     }
     applyIndicators();
   };
-
-  // Apply selected indicators to chart
   const applyIndicators = () => {
-    // Remove previous indicators
     const cleanupIndicator = (ref) => {
       if (ref.current) {
         try {
@@ -526,7 +456,6 @@ const LiveCandleChart = ({
         }
       }
     };
-
     cleanupIndicator(smaSeriesRef);
     cleanupIndicator(emaSeriesRef);
     cleanupIndicator(rsiSeriesRef);
@@ -535,21 +464,16 @@ const LiveCandleChart = ({
     cleanupIndicator(bbUpperSeriesRef);
     cleanupIndicator(bbMiddleSeriesRef);
     cleanupIndicator(bbLowerSeriesRef);
-
     if (rsiPaneRef.current) {
       chartRef.current?.removePane(rsiPaneRef.current);
       rsiPaneRef.current = null;
     }
-
     if (macdPaneRef.current) {
       chartRef.current?.removePane(macdPaneRef.current);
       macdPaneRef.current = null;
     }
-
     if (indicator === INDICATORS.NONE) return;
-
     const data = groupCandles(candles, interval);
-
     try {
       switch (indicator) {
         case INDICATORS.SMA:
@@ -580,8 +504,6 @@ const LiveCandleChart = ({
               lineWidth: 2,
               priceScaleId: "rsi-scale",
             });
-
-            // Configure RSI scale
             chartRef.current.priceScale("rsi-scale").applyOptions({
               scaleMargins: {
                 top: 0.1,
@@ -589,11 +511,9 @@ const LiveCandleChart = ({
               },
               position: "right",
             });
-
             rsiSeriesRef.current.setData(rsiData);
           }
           break;
-
         case INDICATORS.MACD:
           {
             const macdData = calculateMACD(data);
@@ -618,7 +538,6 @@ const LiveCandleChart = ({
             macdSignalSeriesRef.current.setData(macdData.signal);
           }
           break;
-
         case INDICATORS.BB:
           {
             const bbData = calculateBollingerBands(data);
@@ -644,32 +563,23 @@ const LiveCandleChart = ({
       console.error("Error applying indicator:", e);
     }
   };
-
-  // Handle drawing tool selection
   const handleDrawingToolClick = (tool) => {
     setDrawingTool(tool);
     setShowDrawingPopup(false);
     activeDrawingToolRef.current = tool;
     drawingStartPointRef.current = null;
   };
-
-  // Handle chart click events for drawing tools
   const handleChartClick = (param) => {
     if (!activeDrawingToolRef.current || !chartRef.current || !param.point)
       return;
-
     const point = param.point;
     const price = seriesRef.current.coordinateToPrice(point.y);
     const time = chartRef.current.timeScale().coordinateToTime(point.x);
-
     if (!drawingStartPointRef.current) {
-      // First click - set the starting point
       drawingStartPointRef.current = { time, price, x: point.x, y: point.y };
     } else {
-      // Second click - draw the line
       const start = drawingStartPointRef.current;
       let drawing;
-
       switch (activeDrawingToolRef.current) {
         case DRAWING_TOOLS.HORIZONTAL_LINE:
           drawing = seriesRef.current.createPriceLine({
@@ -699,35 +609,26 @@ const LiveCandleChart = ({
           });
           break;
       }
-
       if (drawing) {
         drawingsRef.current.push(drawing);
       }
-
-      // Reset drawing state
       drawingStartPointRef.current = null;
       activeDrawingToolRef.current = null;
       setDrawingTool(DRAWING_TOOLS.NONE);
     }
   };
-
-  // Clear all drawings from chart
   const clearAllDrawings = () => {
     drawingsRef.current.forEach((drawing) => {
       if (drawing.remove) drawing.remove();
     });
     drawingsRef.current = [];
   };
-
-  // Toggle auto-zoom behavior
   const toggleAutoZoom = () => {
     setAutoZoom(!autoZoom);
     if (!autoZoom) {
       chartRef.current.timeScale().fitContent();
     }
   };
-
-  // Initialize chart
   useEffect(() => {
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -759,7 +660,6 @@ const LiveCandleChart = ({
       width: chartContainerRef.current.clientWidth,
       height: 600,
     });
-
     chartRef.current = chart;
     seriesRef.current = chart.addCandlestickSeries({
       upColor: theme.upColor,
@@ -769,11 +669,7 @@ const LiveCandleChart = ({
       wickUpColor: theme.upColor,
       wickDownColor: theme.downColor,
     });
-
-    // Subscribe to click events for drawing tools
     chart.subscribeClick(handleChartClick);
-
-    // Configure time scale behavior
     chart.timeScale().applyOptions({
       rightOffset: 2,
       fixLeftEdge: false,
@@ -857,6 +753,11 @@ const LiveCandleChart = ({
     load();
   }, [coinName, interval]);
 
+  // Clear tradeHover when trades change to prevent stuck hover effect
+  useEffect(() => {
+    setTradeHover({});
+  }, [trades]);
+
   // Update chart when data changes
   useEffect(() => {
     if (!liveCandle) return;
@@ -901,22 +802,10 @@ const LiveCandleChart = ({
         }
       }
 
-      // Adjust visible range to maintain proper candle display
-      if (chartRef.current) {
-        const timeScale = chartRef.current.timeScale();
-        const visibleRange = timeScale.getVisibleLogicalRange();
-        if (visibleRange) {
-          const totalCandles = updated.length;
-          const visibleCandles = visibleRange.to - visibleRange.from;
-
-          // Ensure at least 10 candles are visible
-          if (visibleCandles < 10) {
-            timeScale.setVisibleLogicalRange({
-              from: totalCandles - 10,
-              to: totalCandles,
-            });
-          }
-        }
+      // Only fit content on first load or if autoZoom is toggled, not on every update
+      if (chartRef.current && firstLoad) {
+        chartRef.current.timeScale().fitContent();
+        setFirstLoad(false);
       }
 
       applyIndicators();
@@ -1108,6 +997,529 @@ const LiveCandleChart = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showCoinSelector]);
+
+  // --- FIX: Render trade boxes inside chart container absolutely using chart-relative coordinates ---
+  const [tradeHover, setTradeHover] = useState({});
+
+  // --- TRADE BOXES DYNAMIC SIZE AND POSITION ---
+  const [tradeBoxSize, setTradeBoxSize] = useState({
+    width: 44,
+    height: 16,
+    font: 9,
+  });
+  const prevBoxSizeRef = useRef(tradeBoxSize);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    let raf;
+    const updateSize = () => {
+      if (!chartRef.current) return;
+      const timeScale = chartRef.current.timeScale();
+      let barSpacing = 10;
+      if (typeof timeScale.barSpacing === "function") {
+        barSpacing = timeScale.barSpacing();
+      } else if (timeScale.options && timeScale.options.barSpacing) {
+        barSpacing = timeScale.options.barSpacing;
+      }
+      barSpacing = Math.max(3, Math.min(barSpacing, 40));
+      const width = Math.max(28, Math.min(90, barSpacing * 4.2));
+      const height = Math.max(14, Math.min(36, barSpacing * 1.6));
+      const font = Math.max(8, Math.min(18, barSpacing * 0.85));
+      const newSize = { width, height, font };
+      const prev = prevBoxSizeRef.current;
+      if (
+        prev.width !== width ||
+        prev.height !== height ||
+        prev.font !== font
+      ) {
+        setTradeBoxSize(newSize);
+        prevBoxSizeRef.current = newSize;
+      }
+      raf = requestAnimationFrame(updateSize);
+    };
+    updateSize();
+    return () => cancelAnimationFrame(raf);
+  }, [interval]);
+
+  // Helper: get chart coordinates for a trade (time, price)
+  const getTradeBoxStyle = (trade) => {
+    // Debug: log the trade object and key fields
+    console.log("TRADE DEBUG", {
+      startedAt: trade.startedAt,
+      entryPrice: trade.entryPrice,
+      coinPrice: trade.coinPrice,
+      price: trade.price,
+      investment: trade.investment,
+      coinName: trade.coinName,
+      trade,
+    });
+
+    if (!chartRef.current || !seriesRef.current || !chartContainerRef.current) {
+      // Don't hide, just return minimal style so you can debug visually
+      return {
+        position: "absolute",
+        left: 50,
+        top: 0,
+        zIndex: 100000000,
+        background: "#fff",
+        color: "#222",
+        border: "1px solid #888",
+        borderRadius: 6,
+        padding: "6px 10px",
+        minWidth: 60,
+        minHeight: 32,
+        fontSize: 13,
+        opacity: 0.5,
+        pointerEvents: "auto",
+      };
+    }
+
+    // Parse trade time (convert to integer seconds)
+    let tradeTimestamp;
+    if (typeof trade.startedAt === "number") {
+      tradeTimestamp =
+        trade.startedAt > 1e12
+          ? Math.floor(trade.startedAt / 1000)
+          : trade.startedAt;
+    } else if (typeof trade.startedAt === "string") {
+      const parsed = Date.parse(trade.startedAt);
+      if (!isNaN(parsed)) {
+        tradeTimestamp = Math.floor(parsed / 1000);
+      } else {
+        // Debug: log invalid startedAt
+        console.log("TRADE INVALID startedAt", trade.startedAt);
+        // Show at left:0,top:0 for debugging
+        return {
+          position: "absolute",
+          left: 0,
+          top: 0,
+          zIndex: 10,
+          background: "#fff",
+          color: "#222",
+          border: "1px solid #888",
+          borderRadius: 6,
+          padding: "6px 10px",
+          minWidth: 60,
+          minHeight: 32,
+          fontSize: 13,
+          opacity: 0.5,
+          pointerEvents: "auto",
+        };
+      }
+    } else if (trade.startedAt instanceof Date) {
+      tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
+    } else {
+      // Debug: log missing startedAt
+      console.log("TRADE MISSING startedAt", trade);
+      return {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        zIndex: 10,
+        background: "#fff",
+        color: "#222",
+        border: "1px solid #888",
+        borderRadius: 6,
+        padding: "6px 10px",
+        minWidth: 60,
+        minHeight: 32,
+        fontSize: 13,
+        opacity: 0.5,
+        pointerEvents: "auto",
+      };
+    }
+
+    if (isNaN(tradeTimestamp)) {
+      // Debug: log NaN timestamp
+      console.log("TRADE TIMESTAMP NaN", trade);
+      return {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        zIndex: 10,
+        background: "#fff",
+        color: "#222",
+        border: "1px solid #888",
+        borderRadius: 6,
+        padding: "6px 10px",
+        minWidth: 60,
+        minHeight: 32,
+        fontSize: 13,
+        opacity: 0.5,
+        pointerEvents: "auto",
+      };
+    }
+
+    // Get trade price
+    const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
+    if (tradePrice == null || isNaN(Number(tradePrice))) {
+      // Debug: log invalid price
+      console.log("TRADE INVALID PRICE", tradePrice, trade);
+      return {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        zIndex: 10,
+        background: "#fff",
+        color: "#222",
+        border: "1px solid #888",
+        borderRadius: 6,
+        padding: "6px 10px",
+        minWidth: 60,
+        minHeight: 32,
+        fontSize: 13,
+        opacity: 0.5,
+        pointerEvents: "auto",
+      };
+    }
+
+    // Convert to chart coordinates
+    const timeScale = chartRef.current.timeScale();
+
+    // --- Extract chartTimes from the actual chart data (bucketed) ---
+    let chartTimes = [];
+    let chartData = [];
+    if (seriesRef.current && seriesRef.current._internal__data?._data) {
+      chartData = seriesRef.current._internal__data._data;
+      chartTimes = chartData.map((c) =>
+        typeof c.time === "string"
+          ? Math.floor(Date.parse(c.time) / 1000)
+          : Number(c.time)
+      );
+    }
+
+    // --- Bucket tradeTimestamp to match chart candle times ---
+    const intervalSec = intervalToSeconds[interval];
+    let mappedTime = Math.floor(tradeTimestamp / intervalSec) * intervalSec;
+
+    // Find the closest chart time if not present
+    if (!chartTimes.includes(mappedTime) && chartTimes.length > 0) {
+      mappedTime = chartTimes.reduce((prev, curr) =>
+        Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime) ? curr : prev
+      );
+    }
+
+    // --- KEY: log mappedTime and chartTimes for debugging ---
+    console.log("TRADE MAPPING", { tradeTimestamp, mappedTime, chartTimes });
+
+    // --- DEBUG: log if mappedTime is in chartTimes ---
+    console.log(
+      "MAPPED TIME IN CHART TIMES?",
+      chartTimes.includes(mappedTime),
+      "mappedTime:",
+      mappedTime
+    );
+
+    // --- DEBUG: log difference to closest chartTime ---
+    if (chartTimes.length > 0) {
+      const closest = chartTimes.reduce((prev, curr) =>
+        Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime) ? curr : prev
+      );
+      console.log(
+        "CLOSEST CHART TIME TO mappedTime",
+        closest,
+        "DIFF",
+        Math.abs(closest - mappedTime)
+      );
+    }
+
+    const x = chartRef.current.timeScale().timeToCoordinate(mappedTime);
+    const y = seriesRef.current.priceToCoordinate(Number(tradePrice));
+
+    // If coordinates are not available, show at left:0,top:0 for debugging
+    if (x == null || y == null || isNaN(x) || isNaN(y)) {
+      return {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        zIndex: 10,
+        background: "#fff",
+        color: "#222",
+        border: "1px solid #888",
+        borderRadius: 6,
+        padding: "6px 10px",
+        minWidth: 60,
+        minHeight: 32,
+        fontSize: 13,
+        opacity: 0.5,
+        pointerEvents: "auto",
+      };
+    }
+
+    // Get container dimensions
+    const containerRect = chartContainerRef.current.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    // Clamp coordinates within visible area
+    const left = Math.max(0, Math.min(x, containerWidth - 60));
+    const top = Math.max(0, Math.min(y, containerHeight - 40));
+
+    return {
+      position: "absolute",
+      left: `${left}px`,
+      top: `${top}px`,
+      zIndex: 10,
+      background: "#fff",
+      color: "#222",
+      border: "1px solid #888",
+      borderRadius: 6,
+      padding: "6px 10px",
+      minWidth: 60,
+      minHeight: 32,
+      fontSize: 13,
+      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+      cursor: "pointer",
+      opacity: 0.95,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      transition: "box-shadow 0.2s",
+      pointerEvents: "auto",
+    };
+  };
+
+  // Helper: get payout for a trade
+  const getTradePayout = (trade) => {
+    const coinData = coins.find((c) => c.name === trade.coinName);
+    const profitPercentage = coinData?.profitPercentage || 0;
+    return (trade.investment * (1 + profitPercentage / 100)).toFixed(2);
+  };
+
+  // --- TRADE BOXES COMPONENT FOR LIVE POSITIONING ---
+  const TradeBoxes = ({
+    trades,
+    chartRef,
+    seriesRef,
+    chartContainerRef,
+    coinName,
+    interval,
+    tradeBoxSize,
+    getTradePayout,
+    handleCloseTrade,
+    tradeHover,
+    setTradeHover,
+  }) => {
+    const [, setRerender] = React.useState(0);
+    React.useEffect(() => {
+      let raf;
+      const rerender = () => {
+        setRerender((v) => v + 1);
+        raf = requestAnimationFrame(rerender);
+      };
+      rerender();
+      return () => cancelAnimationFrame(raf);
+    }, [interval]);
+
+    // Group trades by mapped interval (ignore type)
+    const intervalSec = intervalToSeconds[interval];
+    let chartTimes = [];
+    let chartData = [];
+    if (seriesRef.current && seriesRef.current._internal__data?._data) {
+      chartData = seriesRef.current._internal__data._data;
+      chartTimes = chartData.map((c) =>
+        typeof c.time === "string"
+          ? Math.floor(Date.parse(c.time) / 1000)
+          : Number(c.time)
+      );
+    }
+    // Map: { intervalTime: [trades] }
+    const grouped = {};
+    trades
+      .filter(
+        (trade) =>
+          trade &&
+          trade.status === "running" &&
+          trade.coinName === coinName &&
+          (trade.investment !== undefined ||
+            trade.price !== undefined ||
+            trade.coinPrice !== undefined)
+      )
+      .forEach((trade) => {
+        let tradeTimestamp;
+        if (typeof trade.startedAt === "number") {
+          tradeTimestamp =
+            trade.startedAt > 1e12
+              ? Math.floor(trade.startedAt / 1000)
+              : trade.startedAt;
+        } else if (typeof trade.startedAt === "string") {
+          const parsed = Date.parse(trade.startedAt);
+          if (!isNaN(parsed)) {
+            tradeTimestamp = Math.floor(parsed / 1000);
+          }
+        } else if (trade.startedAt instanceof Date) {
+          tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
+        }
+        let mappedTime = Math.floor(tradeTimestamp / intervalSec) * intervalSec;
+        if (!chartTimes.includes(mappedTime) && chartTimes.length > 0) {
+          mappedTime = chartTimes.reduce((prev, curr) =>
+            Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime)
+              ? curr
+              : prev
+          );
+        }
+        if (!grouped[mappedTime]) grouped[mappedTime] = [];
+        grouped[mappedTime].push(trade);
+      });
+    // For each interval, render all trades in the same row (horizontal offset)
+    const boxWidth = tradeBoxSize.width;
+    const boxHeight = tradeBoxSize.height;
+    const fontSize = tradeBoxSize.font;
+    let rendered = [];
+    Object.keys(grouped)
+      .sort((a, b) => a - b)
+      .forEach((mappedTime) => {
+        const tradesArr = grouped[mappedTime];
+        // Sort by startedAt ascending (oldest first)
+        tradesArr.sort((a, b) => {
+          const aTime = new Date(a.startedAt).getTime();
+          const bTime = new Date(b.startedAt).getTime();
+          return aTime - bTime;
+        });
+        tradesArr.forEach((trade, idx, arr) => {
+          // Always use the same id logic as in BinaryChart.jsx
+          const tradeId =
+            trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+          const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
+          const x = chartRef.current
+            ?.timeScale()
+            .timeToCoordinate(Number(mappedTime));
+          const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
+          const containerRect =
+            chartContainerRef.current?.getBoundingClientRect() || {
+              width: 600,
+              height: 500,
+            };
+          // The latest trade (last in arr) should be centered on the candle
+          // Others are offset to the left
+          const isLatest = idx === arr.length - 1;
+          const offset = isLatest
+            ? 0
+            : -(arr.length - 1 - idx) * (boxWidth + 8);
+          const left =
+            x != null && !isNaN(x)
+              ? Math.max(
+                  boxWidth / 2,
+                  Math.min(x + offset, containerRect.width - boxWidth / 2)
+                )
+              : containerRect.width - boxWidth - 10;
+          const top =
+            y != null && !isNaN(y)
+              ? Math.max(
+                  boxHeight / 2,
+                  Math.min(y, containerRect.height - boxHeight / 2)
+                )
+              : 40;
+          const isBuy = trade.type === "Buy";
+          const boxColor = isBuy ? "#10A055" : "#FF0000";
+          const borderColor = isBuy ? "#0d7a3a" : "#b80000";
+          const textColor = "#fff";
+          rendered.push(
+            <div
+              key={tradeId}
+              style={{
+                position: "absolute",
+                left: `${left}px`,
+                top: `${top}px`,
+                background: boxColor,
+                color: textColor,
+                border: `1.2px solid ${borderColor}`,
+                borderRadius: 5,
+                minWidth: 38,
+                minHeight: 24,
+                width: boxWidth,
+                height: boxHeight,
+                fontWeight: 600,
+                fontSize: fontSize,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.13)",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "2px 7px",
+                gap: 6,
+                transition:
+                  "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
+                cursor: "pointer",
+                zIndex: 10,
+                pointerEvents: "auto",
+                opacity: 1,
+              }}
+              onMouseEnter={() =>
+                setTradeHover((h) => ({ ...h, [tradeId]: true }))
+              }
+              onMouseLeave={() =>
+                setTradeHover((h) => ({ ...h, [tradeId]: false }))
+              }
+            >
+              <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
+                {isBuy ? "B" : "S"}
+              </span>
+              <span style={{ fontWeight: 600, fontSize: fontSize }}>
+                ${trade.investment ?? trade.price ?? trade.coinPrice}
+              </span>
+              <span
+                style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
+              >
+                {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
+              </span>
+              {tradeHover[tradeId] && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: `-${boxHeight}px`,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: "#222",
+                    color: "#fff",
+                    padding: "2px 7px",
+                    borderRadius: 4,
+                    fontSize: fontSize,
+                    whiteSpace: "nowrap",
+                    zIndex: 10001,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                  }}
+                >
+                  Payout: ${getTradePayout(trade)}
+                </div>
+              )}
+              {trade.remainingTime === 0 && tradeId && (
+                <button
+                  style={{
+                    position: "absolute",
+                    top: 1,
+                    right: 1,
+                    background: "rgba(255,255,255,0.15)",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: fontSize - 1,
+                    cursor: "pointer",
+                    zIndex: 30,
+                    borderRadius: 2,
+                    padding: 0,
+                    transition: "background 0.2s",
+                    width: fontSize + 6,
+                    height: fontSize + 6,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onClick={() =>
+                    handleCloseTrade &&
+                    handleCloseTrade({ ...trade, id: tradeId })
+                  }
+                  title="Close Trade"
+                >
+                  <AiOutlineClose />
+                </button>
+              )}
+            </div>
+          );
+        });
+      });
+    return rendered;
+  };
 
   // Render the chart component
   return (
@@ -1490,7 +1902,7 @@ const LiveCandleChart = ({
         <div
           ref={chartContainerRef}
           className="chartMain"
-          style={{ width: "100%", height: "500px" }}
+          style={{ width: "100%", height: "500px", position: "relative" }}
         />
         <div
           id="candle-countdown"
@@ -1508,6 +1920,20 @@ const LiveCandleChart = ({
         >
           {countdown}s
         </div>
+        {/* --- TRADE BOXES ON CHART --- */}
+        <TradeBoxes
+          trades={trades}
+          chartRef={chartRef}
+          seriesRef={seriesRef}
+          chartContainerRef={chartContainerRef}
+          coinName={coinName}
+          interval={interval}
+          tradeBoxSize={tradeBoxSize}
+          getTradePayout={getTradePayout}
+          handleCloseTrade={handleCloseTrade}
+          tradeHover={tradeHover}
+          setTradeHover={setTradeHover}
+        />
       </div>
     </div>
   );
