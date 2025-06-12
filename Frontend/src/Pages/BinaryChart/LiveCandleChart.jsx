@@ -1377,33 +1377,85 @@ const LiveCandleChart = ({
           const bTime = new Date(b.startedAt).getTime();
           return aTime - bTime;
         });
+        // Calculate total width needed for all boxes and center them on the candle
+        const gap = 28; // space between boxes
+        const totalWidth =
+          tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
+        const x = chartRef.current
+          ?.timeScale()
+          .timeToCoordinate(Number(mappedTime));
+        const containerRect =
+          chartContainerRef.current?.getBoundingClientRect() || {
+            width: 600,
+            height: 500,
+          };
+        const startLeft =
+          x != null && !isNaN(x)
+            ? Math.max(
+                boxWidth / 2,
+                Math.min(
+                  x - totalWidth / 2,
+                  containerRect.width - totalWidth + boxWidth / 2
+                )
+              )
+            : containerRect.width - totalWidth - 10;
+        // Draw a line connecting all trades in this interval if more than 1
+        if (
+          tradesArr.length > 1 &&
+          chartRef.current &&
+          seriesRef.current &&
+          chartContainerRef.current
+        ) {
+          const points = tradesArr.map((trade, idx) => {
+            const tradePrice =
+              trade.entryPrice ?? trade.coinPrice ?? trade.price;
+            const y = seriesRef.current.priceToCoordinate(Number(tradePrice));
+            const left = startLeft + idx * (boxWidth + gap) + boxWidth / 2;
+            const top =
+              y != null && !isNaN(y)
+                ? Math.max(
+                    boxHeight / 2,
+                    Math.min(y, containerRect.height - boxHeight / 2)
+                  )
+                : 40;
+            return { left, top };
+          });
+          // Draw a line segment between each consecutive pair
+          for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            rendered.push(
+              <svg
+                key={`line-${mappedTime}-${i}`}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
+                  zIndex: 8,
+                }}
+              >
+                <line
+                  x1={p1.left}
+                  y1={p1.top + boxHeight / 2}
+                  x2={p2.left}
+                  y2={p2.top + boxHeight / 2}
+                  stroke="#888"
+                  strokeWidth={2}
+                  strokeDasharray="6,3"
+                />
+              </svg>
+            );
+          }
+        }
         tradesArr.forEach((trade, idx, arr) => {
-          // Always use the same id logic as in BinaryChart.jsx
           const tradeId =
             trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
           const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
-          const x = chartRef.current
-            ?.timeScale()
-            .timeToCoordinate(Number(mappedTime));
           const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
-          const containerRect =
-            chartContainerRef.current?.getBoundingClientRect() || {
-              width: 600,
-              height: 500,
-            };
-          // The latest trade (last in arr) should be centered on the candle
-          // Others are offset to the left
-          const isLatest = idx === arr.length - 1;
-          const offset = isLatest
-            ? 0
-            : -(arr.length - 1 - idx) * (boxWidth + 8);
-          const left =
-            x != null && !isNaN(x)
-              ? Math.max(
-                  boxWidth / 2,
-                  Math.min(x + offset, containerRect.width - boxWidth / 2)
-                )
-              : containerRect.width - boxWidth - 10;
+          const left = startLeft + idx * (boxWidth + gap);
           const top =
             y != null && !isNaN(y)
               ? Math.max(
