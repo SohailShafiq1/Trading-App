@@ -1389,16 +1389,25 @@ const LiveCandleChart = ({
             width: 600,
             height: 500,
           };
-        const startLeft =
+        // Ensure the latest trade does not exceed the candle (x)
+        // The latest trade is the last in tradesArr
+        let startLeft =
           x != null && !isNaN(x)
             ? Math.max(
                 boxWidth / 2,
                 Math.min(
+                  x - totalWidth + boxWidth,
                   x - totalWidth / 2,
                   containerRect.width - totalWidth + boxWidth / 2
                 )
               )
             : containerRect.width - totalWidth - 10;
+        // If the rightmost box (latest trade) would exceed x, shift left
+        const latestBoxRight =
+          startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
+        if (x != null && latestBoxRight > x + boxWidth / 2) {
+          startLeft -= latestBoxRight - (x + boxWidth / 2);
+        }
         // Draw a line connecting all trades in this interval if more than 1
         if (
           tradesArr.length > 1 &&
@@ -1418,12 +1427,18 @@ const LiveCandleChart = ({
                     Math.min(y, containerRect.height - boxHeight / 2)
                   )
                 : 40;
-            return { left, top };
+            return { left, top, type: trade.type };
           });
-          // Draw a line segment between each consecutive pair
+          // Draw a bold green or red line segment between each consecutive pair
           for (let i = 0; i < points.length - 1; i++) {
             const p1 = points[i];
             const p2 = points[i + 1];
+            // If both trades are Buy, green; if both Sell, red; else gray
+            let color = "#888";
+            if (p1.type === "Buy" && p2.type === "Buy") color = "#10A055";
+            else if (p1.type === "Sell" && p2.type === "Sell")
+              color = "#FF0000";
+            else color = "#888";
             rendered.push(
               <svg
                 key={`line-${mappedTime}-${i}`}
@@ -1442,9 +1457,9 @@ const LiveCandleChart = ({
                   y1={p1.top + boxHeight / 2}
                   x2={p2.left}
                   y2={p2.top + boxHeight / 2}
-                  stroke="#888"
-                  strokeWidth={2}
-                  strokeDasharray="6,3"
+                  stroke={color}
+                  strokeWidth={5}
+                  strokeDasharray=""
                 />
               </svg>
             );
