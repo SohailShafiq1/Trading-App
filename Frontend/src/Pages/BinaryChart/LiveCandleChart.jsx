@@ -753,6 +753,11 @@ const LiveCandleChart = ({
     load();
   }, [coinName, interval]);
 
+  // Clear tradeHover when trades change to prevent stuck hover effect
+  useEffect(() => {
+    setTradeHover({});
+  }, [trades]);
+
   // Update chart when data changes
   useEffect(() => {
     if (!liveCandle) return;
@@ -797,22 +802,10 @@ const LiveCandleChart = ({
         }
       }
 
-      // Adjust visible range to maintain proper candle display
-      if (chartRef.current) {
-        const timeScale = chartRef.current.timeScale();
-        const visibleRange = timeScale.getVisibleLogicalRange();
-        if (visibleRange) {
-          const totalCandles = updated.length;
-          const visibleCandles = visibleRange.to - visibleRange.from;
-
-          // Ensure at least 10 candles are visible
-          if (visibleCandles < 10) {
-            timeScale.setVisibleLogicalRange({
-              from: totalCandles - 10,
-              to: totalCandles,
-            });
-          }
-        }
+      // Only fit content on first load or if autoZoom is toggled, not on every update
+      if (chartRef.current && firstLoad) {
+        chartRef.current.timeScale().fitContent();
+        setFirstLoad(false);
       }
 
       applyIndicators();
@@ -1014,8 +1007,8 @@ const LiveCandleChart = ({
     height: 16,
     font: 9,
   });
+  const prevBoxSizeRef = useRef(tradeBoxSize);
 
-  // Update trade box size on every animation frame for smoothness
   useEffect(() => {
     if (!chartRef.current) return;
     let raf;
@@ -1028,12 +1021,20 @@ const LiveCandleChart = ({
       } else if (timeScale.options && timeScale.options.barSpacing) {
         barSpacing = timeScale.options.barSpacing;
       }
-      // Allow larger max for zoom in
       barSpacing = Math.max(3, Math.min(barSpacing, 40));
       const width = Math.max(28, Math.min(90, barSpacing * 4.2));
       const height = Math.max(14, Math.min(36, barSpacing * 1.6));
       const font = Math.max(8, Math.min(18, barSpacing * 0.85));
-      setTradeBoxSize({ width, height, font });
+      const newSize = { width, height, font };
+      const prev = prevBoxSizeRef.current;
+      if (
+        prev.width !== width ||
+        prev.height !== height ||
+        prev.font !== font
+      ) {
+        setTradeBoxSize(newSize);
+        prevBoxSizeRef.current = newSize;
+      }
       raf = requestAnimationFrame(updateSize);
     };
     updateSize();
@@ -1377,6 +1378,7 @@ const LiveCandleChart = ({
           return aTime - bTime;
         });
         tradesArr.forEach((trade, idx, arr) => {
+          // Always use the same id logic as in BinaryChart.jsx
           const tradeId =
             trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
           const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
@@ -1424,8 +1426,8 @@ const LiveCandleChart = ({
                 color: textColor,
                 border: `1.2px solid ${borderColor}`,
                 borderRadius: 5,
-                minWidth: 28,
-                minHeight: 14,
+                minWidth: 38,
+                minHeight: 24,
                 width: boxWidth,
                 height: boxHeight,
                 fontWeight: 600,
@@ -1482,7 +1484,7 @@ const LiveCandleChart = ({
                   Payout: ${getTradePayout(trade)}
                 </div>
               )}
-              {trade.remainingTime === 0 && (
+              {trade.remainingTime === 0 && tradeId && (
                 <button
                   style={{
                     position: "absolute",
@@ -1503,7 +1505,10 @@ const LiveCandleChart = ({
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  onClick={() => handleCloseTrade && handleCloseTrade(trade)}
+                  onClick={() =>
+                    handleCloseTrade &&
+                    handleCloseTrade({ ...trade, id: tradeId })
+                  }
                   title="Close Trade"
                 >
                   <AiOutlineClose />
