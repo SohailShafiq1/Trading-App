@@ -36,6 +36,10 @@ const AdminHome = () => {
          <NavLink to="/admin/usertrade" className={s.link}>
           Trade of User account
         </NavLink>
+           <NavLink to="/admin/leaderboard" className={s.link}>
+          Leader board
+        </NavLink>
+
       </div>
     </div>
   );

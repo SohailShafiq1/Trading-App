@@ -14,7 +14,7 @@ import { MdUndo } from "react-icons/md";
 import React, { useState, useRef, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import logo from "../../../assets/WealthXLogo.png";
+import logo from "../../../assets/logo.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import { useAccountType } from "../../Context/AccountTypeContext";

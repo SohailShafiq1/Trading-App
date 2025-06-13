@@ -37,7 +37,7 @@ import News from "./Admin/components/News/News";
 import SupportCentre from "./Admin/components/SupportCentre/SupportCentre";
 import UserTrade from "./Admin/components/UserTrade/UserTrade";
 import Support from "./Pages/Support/Support";
-
+import Leaderboard from "./Admin/components/LeaderPage/LeaderPage";
 const s = styles;
 
 const App = () => {
@@ -104,6 +104,7 @@ const App = () => {
                     <Route path="/admin/news" element={<News />} />
                     <Route path="/admin/support" element={<SupportCentre />} />
                     <Route path="/admin/usertrade" element={<UserTrade />} />
+                    <Route path="/admin/leaderboard" element={<Leaderboard />} />
                   </Route>
 
                   <Route

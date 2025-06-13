@@ -4,30 +4,86 @@ import { AiOutlineClose } from "react-icons/ai";
 import axios from "axios";
 import { useAuth } from "../../Context/AuthContext"; // adjust path if needed
 
+const todayStr = new Date().toISOString().slice(0, 10);
+
 const LeaderboardPopup = ({ onClose }) => {
   const [leaders, setLeaders] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchLeaders = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/users");
-        // Sort users by profit (assuming you want today's profit)
-        const today = new Date().toISOString().slice(0, 10);
-        const sorted = res.data
-          .map((u) => ({
-            ...u,
-            todayProfit:
-              u.dailyProfits?.find((p) => p.date === today)?.profit || 0,
-          }))
-          .sort((a, b) => b.todayProfit - a.todayProfit);
+        // Fetch admin leaderboard entries
+        const adminRes = await axios.get("http://localhost:5000/api/admin/leaderboard");
+        const adminEntries = adminRes.data;
+
+        // Fetch all users (with email, userId, etc.)
+        const usersRes = await axios.get("http://localhost:5000/api/admin/all-users");
+        const users = usersRes.data;
+
+        // For each user, fetch their profit for today and trades info
+        const userProfits = await Promise.all(
+          users.map(async (u) => {
+            try {
+              const userDetailRes = await axios.get(
+                `http://localhost:5000/api/users/email/${u.email}`
+              );
+              const userDetail = userDetailRes.data;
+              const todayProfit =
+                userDetail.dailyProfits?.find((p) => p.date === todayStr)?.profit || 0;
+              const trades = userDetail.trades || [];
+              const tradesCount = trades.length;
+              const profitableTrades = trades.filter((t) => t.result === "win").length;
+              return {
+                ...u,
+                username: userDetail.username || u.firstName || u.email,
+                country: userDetail.country || "",
+                todayProfit,
+                tradesCount,
+                profitableTrades,
+                trades,
+              };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        // Merge logic: for each unique email, use the higher of real or admin-entered profit
+        const byEmail = {};
+
+        // Add all admin entries
+        for (const entry of adminEntries) {
+          byEmail[entry.email] = {
+            ...entry,
+            tradesCount: entry.tradesCount ?? 0,
+            profitableTrades: entry.profitableTrades ?? 0,
+            trades: [],
+            username: entry.username || entry.email,
+          };
+        }
+
+        // For each real user, if profit is higher, use it
+        for (const real of userProfits.filter(Boolean)) {
+          if (
+            !byEmail[real.email] ||
+            real.todayProfit > Number(byEmail[real.email].todayProfit)
+          ) {
+            byEmail[real.email] = real;
+          }
+        }
+
+        // Sort by profit descending
+        const sorted = Object.values(byEmail).sort(
+          (a, b) => Number(b.todayProfit) - Number(a.todayProfit)
+        );
         setLeaders(sorted);
       } catch (err) {
         setLeaders([]);
       }
     };
-    fetchUsers();
+    fetchLeaders();
   }, []);
 
   // Find current user's position
@@ -55,14 +111,14 @@ const LeaderboardPopup = ({ onClose }) => {
               </strong>
               <div>Your Position: {userIndex + 1}</div>
             </div>
-            <span>${leaders[userIndex].todayProfit.toLocaleString()}</span>
+            <span>${Number(leaders[userIndex].todayProfit).toLocaleString()}</span>
           </div>
         )}
 
         <div className={styles.lbList}>
           {leaders.map((entry, i) => (
             <div
-              key={entry._id}
+              key={entry.email}
               className={`${styles.lbItem} ${
                 user && entry.email === user.email ? styles.lbActive : ""
               }`}
@@ -73,7 +129,7 @@ const LeaderboardPopup = ({ onClose }) => {
               </span>
               <span className={styles.lbId}>{entry.userId || entry.email}</span>
               <span className={styles.lbAmount}>
-                ${entry.todayProfit.toLocaleString()}
+                ${Number(entry.todayProfit).toLocaleString()}
               </span>
             </div>
           ))}
@@ -99,22 +155,22 @@ const LeaderboardPopup = ({ onClose }) => {
           </div>
           <div className={styles.userStats}>
             <div>
-              <div>{selectedUser.trades?.length || 0}</div>
+              <div>{selectedUser.tradesCount ?? selectedUser.trades?.length ?? 0}</div>
               <div>Trades count</div>
             </div>
             <div>
               <div>
-                {selectedUser.trades
-                  ? selectedUser.trades.filter((t) => t.result === "win").length
-                  : 0}
+                {selectedUser.profitableTrades ??
+                  (selectedUser.trades
+                    ? selectedUser.trades.filter((t) => t.result === "win").length
+                    : 0)}
               </div>
               <div>Profitable trades</div>
             </div>
             <div>
-              <div>${selectedUser.todayProfit.toLocaleString()}</div>
+              <div>${Number(selectedUser.todayProfit).toLocaleString()}</div>
               <div>Today's profit</div>
             </div>
-            {/* Add more stats as needed */}
           </div>
         </div>
       )}

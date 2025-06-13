@@ -17,6 +17,7 @@ import affiliateRoutes from "./routes/affiliateRoutes.js";
 import bonusRoutes from "./routes/bonusRoutes.js";
 import newsRoutes from "./routes/newsRoute.js";
 import settingsRoutes from "./routes/settings.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 
 // Services
 import candleService from "./services/candleGenerator.js";
@@ -73,6 +74,7 @@ app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/bonuses", bonusRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/admin/leaderboard", leaderboardRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
