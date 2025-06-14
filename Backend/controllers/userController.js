@@ -910,9 +910,39 @@ export const getNotifications = async (req, res) => {
     const { email } = req.params;
     const user = await User.findOne({ email }, { notifications: 1 });
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json(user.notifications || []);
+    const notifications = user.notifications || [];
+    // Sort: unread first, then by date desc
+    notifications.sort((a, b) => {
+      if (a.read === b.read) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      return a.read ? 1 : -1;
+    });
+    const unreadCount = notifications.filter((n) => !n.read).length;
+    res.status(200).json({ notifications, unreadCount });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+};
+
+// Mark all notifications as read for a user
+export const markAllNotificationsRead = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    let updated = false;
+    user.notifications = (user.notifications || []).map((n) => {
+      if (!n.read) {
+        updated = true;
+        return { ...n, read: true };
+      }
+      return n;
+    });
+    if (updated) await user.save();
+    res.status(200).json({ message: "All notifications marked as read" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to mark notifications as read" });
   }
 };
 
