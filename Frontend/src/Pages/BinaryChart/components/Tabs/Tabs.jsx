@@ -58,7 +58,11 @@ const Tabs = () => {
         const res = await axios.get(
           `http://localhost:5000/api/news?email=${user.email}`
         );
-        setNewsList(res.data.news || []);
+        // Sort news by createdAt (latest first)
+        const sortedNews = (res.data.news || [])
+          .slice()
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setNewsList(sortedNews);
         setUnreadNews(res.data.unreadCount || 0);
       } catch (err) {
         console.error("Error fetching news:", err);
@@ -165,7 +169,10 @@ const Tabs = () => {
       axios
         .get(`http://localhost:5000/api/news?email=${user.email}`)
         .then((res) => {
-          setNewsList(res.data.news || []);
+          const sortedNews = (res.data.news || [])
+            .slice()
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setNewsList(sortedNews);
           setUnreadNews(res.data.unreadCount || 0);
         });
     }, 10000); // 10 seconds
