@@ -1,3 +1,4 @@
+import { GiPodiumWinner } from "react-icons/gi"; 
 import { AiOutlineBank } from "react-icons/ai";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import {
@@ -14,7 +15,7 @@ import { MdUndo } from "react-icons/md";
 import React, { useState, useRef, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import logo from "../../../assets/WealthXLogo.png";
+import logo from "../../../assets/Logo.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import { useAccountType } from "../../Context/AccountTypeContext";
@@ -324,20 +325,7 @@ const BinaryLayout = () => {
           </div>
 
           <div className={s.navBar}>
-            <div ref={(el) => (buttonRefs.current[0] = el)}>
-              <NavLink
-                id="back-btn"
-                style={{
-                  background: `linear-gradient(90deg, #66b544, #1a391d)`,
-                  color: "white",
-                }}
-                className={s.btn}
-                onClick={() => navigate(-1)}
-              >
-                <MdUndo className={s.icons} />
-                Back
-              </NavLink>
-            </div>
+          
 
             <div ref={(el) => (buttonRefs.current[1] = el)}>
               <NavLink id="trade-btn" to="/binarychart" className={s.btn}>
@@ -345,7 +333,20 @@ const BinaryLayout = () => {
                 Trade
               </NavLink>
             </div>
-
+  <div ref={(el) => (buttonRefs.current[0] = el)}>
+              
+              <div
+                    className={s.btn}
+                   
+                    onClick={() => {
+                      setShowLeaderboard(true);
+                      setPopupVisible(false);
+                    }}
+                  >
+                    <GiPodiumWinner className={s.icons} />
+                    Top
+                  </div>
+            </div>
             <div ref={(el) => (buttonRefs.current[2] = el)}>
               <NavLink
                 id="profile-btn"

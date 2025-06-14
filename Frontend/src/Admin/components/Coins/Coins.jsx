@@ -345,13 +345,30 @@ const Coins = () => {
               >
                 Loss
               </button>
+              {/* Show Restart button only if a trend is active */}
               {trendAction && (
-                <span className={s.countdown}>
-                  Trend set to {trendAction === "profit" ? "Up" : "Down"} for{" "}
-                  {countdown > 60
-                    ? `${Math.floor(countdown / 60)}m ${countdown % 60}s`
-                    : `${countdown}s`}
-                </span>
+                <>
+                  <span className={s.countdown}>
+                    Trend set to {trendAction === "profit" ? "Up" : "Down"} for{" "}
+                    {countdown > 60
+                      ? `${Math.floor(countdown / 60)}m ${countdown % 60}s`
+                      : `${countdown}s`}
+                  </span>
+                  <button
+                    className={s.trendButton}
+                    onClick={() => {
+                      revertAllCoinTrends();
+                      setCountdown(0);
+                      if (trendTimer) {
+                        clearTimeout(trendTimer);
+                        setTrendTimer(null);
+                      }
+                    }}
+                    disabled={isLoading}
+                  >
+                    Restart
+                  </button>
+                </>
               )}
             </div>
           )}
