@@ -23,6 +23,13 @@ const Coins = () => {
   const [error, setError] = useState("");
   const [showTrendPopup, setShowTrendPopup] = useState(false);
   const [currentTrendCoin, setCurrentTrendCoin] = useState(null);
+  const [tradePercentage, setTradePercentage] = useState(null);
+
+  // --- Profit/Loss Trend Control ---
+  const [trendTimer, setTrendTimer] = useState(null);
+  const [trendAction, setTrendAction] = useState(null); // 'profit' or 'loss'
+  const [countdown, setCountdown] = useState(0);
+
   const navigate = useNavigate();
 
   const fetchCoins = async () => {
@@ -39,8 +46,22 @@ const Coins = () => {
     }
   };
 
+  // Inline fetch for trade percentage
+  const fetchTradePercentage = async () => {
+    try {
+      const response = await axios.get(
+        `${BACKEND_URL}/api/users/trade-Percentage/trades`
+      );
+      setTradePercentage(response.data);
+      console.log("Trade Percentage:", response.data);
+    } catch (error) {
+      setTradePercentage({ error: "Failed to fetch trade percentage" });
+    }
+  };
+
   useEffect(() => {
     fetchCoins();
+    fetchTradePercentage();
   }, []);
 
   const addCoin = async (e) => {
@@ -180,12 +201,165 @@ const Coins = () => {
     }
   };
 
+  // --- Profit/Loss Trend Control ---
+  const setAllCoinTrends = async (mode) => {
+    setIsLoading(true);
+    try {
+      // Update all coins to the given trend (Up/Down)
+      await axios.post(`${BACKEND_URL}/api/coins/trend/all`, {
+        mode,
+      });
+      fetchCoins();
+      setError("");
+    } catch (err) {
+      setError("Failed to update coin trends");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const revertAllCoinTrends = async () => {
+    setIsLoading(true);
+    try {
+      await axios.post(`${BACKEND_URL}/api/coins/trend/all`, {
+        mode: "Random",
+      });
+      fetchCoins();
+      setError("");
+    } catch (err) {
+      setError("Failed to revert coin trends");
+    } finally {
+      setIsLoading(false);
+      setTrendAction(null);
+      setTrendTimer(null);
+    }
+  };
+
+  const handleProfitClick = async () => {
+    if (
+      tradePercentage &&
+      Number(tradePercentage.buyPercentage) >
+        Number(tradePercentage.sellPercentage)
+    ) {
+      await setAllCoinTrends("Up");
+      setTrendAction("profit");
+      setCountdown(3600);
+      const endTime = Date.now() + 3600 * 1000;
+      localStorage.setItem(
+        "trendTimerState",
+        JSON.stringify({ trendAction: "profit", endTime })
+      );
+      const timer = setTimeout(revertAllCoinTrends, 3600 * 1000); // 1 hour
+      setTrendTimer(timer);
+    }
+  };
+
+  const handleLossClick = async () => {
+    if (
+      tradePercentage &&
+      Number(tradePercentage.buyPercentage) >
+        Number(tradePercentage.sellPercentage)
+    ) {
+      await setAllCoinTrends("Down");
+      setTrendAction("loss");
+      setCountdown(3600);
+      const endTime = Date.now() + 3600 * 1000;
+      localStorage.setItem(
+        "trendTimerState",
+        JSON.stringify({ trendAction: "loss", endTime })
+      );
+      const timer = setTimeout(revertAllCoinTrends, 3600 * 1000); // 1 hour
+      setTrendTimer(timer);
+    }
+  };
+
+  // Persist timer state in localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("trendTimerState");
+    if (saved) {
+      const { trendAction, endTime } = JSON.parse(saved);
+      const now = Date.now();
+      if (trendAction && endTime > now) {
+        setTrendAction(trendAction);
+        setCountdown(Math.ceil((endTime - now) / 1000));
+        const timer = setTimeout(revertAllCoinTrends, endTime - now);
+        setTrendTimer(timer);
+      } else {
+        localStorage.removeItem("trendTimerState");
+      }
+    }
+  }, []);
+
+  // Countdown effect
+  useEffect(() => {
+    if (trendAction && countdown > 0) {
+      const interval = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (countdown === 0 && trendAction) {
+      setTrendAction(null);
+      localStorage.removeItem("trendTimerState");
+    }
+  }, [trendAction, countdown]);
+
+  // Helper to check if both percentages are 0
+  const bothPercentagesZero =
+    tradePercentage &&
+    Number(tradePercentage.buyPercentage) === 0 &&
+    Number(tradePercentage.sellPercentage) === 0;
+
   return (
     <div className={s.container}>
+      {/* Show trade percentage at the top */}
+
       <button className={s.backButton} onClick={() => navigate(-1)}>
         Back
       </button>
       <h2>Coin Management</h2>
+      {tradePercentage && !tradePercentage.error && (
+        <div className={s.trendBar}>
+          <div className={s.tradePercentageInfo}>
+            <strong>Trade Percentage:</strong> Buy:{" "}
+            {tradePercentage.buyPercentage}% | Sell:{" "}
+            {tradePercentage.sellPercentage}%
+          </div>
+          {Number(tradePercentage.buyPercentage) >
+            Number(tradePercentage.sellPercentage) && (
+            <div className={s.trendButtonGroup}>
+              <button
+                onClick={handleProfitClick}
+                className={s.trendButton}
+                disabled={
+                  isLoading || trendAction === "profit" || bothPercentagesZero
+                }
+              >
+                Profit
+              </button>
+              <button
+                onClick={handleLossClick}
+                className={s.trendButton}
+                disabled={
+                  isLoading || trendAction === "loss" || bothPercentagesZero
+                }
+              >
+                Loss
+              </button>
+              {trendAction && (
+                <span className={s.countdown}>
+                  Trend set to {trendAction === "profit" ? "Up" : "Down"} for{" "}
+                  {countdown > 60
+                    ? `${Math.floor(countdown / 60)}m ${countdown % 60}s`
+                    : `${countdown}s`}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {tradePercentage && tradePercentage.error && (
+        <div className={s.error}>{tradePercentage.error}</div>
+      )}
 
       {error && <div className={s.error}>{error}</div>}
       {isLoading && <div className={s.loading}>Loading...</div>}

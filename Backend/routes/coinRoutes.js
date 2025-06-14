@@ -11,4 +11,6 @@ router.put("/:id", coinController.updateCoin);
 router.delete("/:id", coinController.deleteCoin);
 router.get("/candles/:name/:interval", coinController.getCoinCandles);
 router.post("/trend", coinController.updateCoinTrend);
+router.post("/trend/all", coinController.updateAllCoinTrends);
+router.get("/type/:name", coinController.getCoinTypeByName);
 export default router;

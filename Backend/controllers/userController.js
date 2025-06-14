@@ -1026,3 +1026,70 @@ export const getTotalTradeCount = async (req, res) => {
     res.status(500).json({ error: "Failed to get total trade count" });
   }
 };
+
+export const getRunningTradePercentage = async (req, res) => {
+  console.log("=== TRADE PERCENTAGE ENDPOINT HIT ===");
+  try {
+    console.log("getRunningTradePercentage called");
+    const users = await User.find(
+      { "trades.result": "pending" },
+      { trades: 1 }
+    );
+    console.log("Users found:", users.length);
+    if (users.length > 0) {
+      console.log("Sample user:", JSON.stringify(users[0], null, 2));
+    }
+    if (!users || users.length === 0) {
+      return res.status(200).json({ buyPercentage: 0, sellPercentage: 0 });
+    }
+
+    let buyCount = 0;
+    let sellCount = 0;
+    let resultValues = [];
+
+    users.forEach((user) => {
+      if (!Array.isArray(user.trades)) {
+        console.warn(
+          "User with malformed trades array:",
+          user._id,
+          user.trades
+        );
+        return;
+      }
+      user.trades.forEach((trade) => {
+        resultValues.push(trade.result);
+        if (trade.result === "pending") {
+          if (trade.type === "Buy") buyCount++;
+          else if (trade.type === "Sell") sellCount++;
+        }
+      });
+    });
+
+    console.log("Trade result values:", resultValues);
+
+    const totalRunningTrades = buyCount + sellCount;
+    const buyPercentage =
+      totalRunningTrades > 0
+        ? ((buyCount / totalRunningTrades) * 100).toFixed(2)
+        : 0;
+    const sellPercentage =
+      totalRunningTrades > 0
+        ? ((sellCount / totalRunningTrades) * 100).toFixed(2)
+        : 0;
+
+    console.log({
+      buyCount,
+      sellCount,
+      totalRunningTrades,
+      buyPercentage,
+      sellPercentage,
+    });
+    res.json({ buyPercentage, sellPercentage });
+  } catch (err) {
+    console.error("Error getting running trade percentage:", err);
+    res.status(500).json({
+      error: "Failed to get running trade percentage",
+      details: err.message,
+    });
+  }
+};

@@ -30,6 +30,7 @@ import {
   getSupportRequests,
   supportUpload,
   getTotalTradeCount,
+  getRunningTradePercentage,
 } from "../controllers/userController.js";
 import multer from "multer";
 import path from "path";
@@ -81,5 +82,6 @@ router.post(
   submitSupportRequest
 );
 router.get("/tradeCount/:email", getTotalTradeCount);
+router.get("/trade-Percentage/trades", getRunningTradePercentage);
 
 export default router;

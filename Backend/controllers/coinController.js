@@ -188,3 +188,51 @@ export const updateCoinTrend = async (req, res) => {
     });
   }
 };
+
+export const updateAllCoinTrends = async (req, res) => {
+  try {
+    const { mode } = req.body;
+    const validTrends = [
+      "Up",
+      "Down",
+      "Random",
+      "Scenario1",
+      "Scenario2",
+      "Scenario3",
+      "Scenario4",
+      "Scenario5",
+    ];
+    if (!validTrends.includes(mode)) {
+      return res.status(400).json({ message: "Invalid trend mode" });
+    }
+    // Only update OTC coins
+    const result = await Coin.updateMany(
+      { type: "OTC" },
+      { $set: { trend: mode } }
+    );
+    res.json({
+      success: true,
+      updatedCount: result.modifiedCount,
+      coins: await Coin.find(),
+    });
+  } catch (err) {
+    console.error("Error updating all coin trends:", err);
+    res.status(500).json({
+      message: "Failed to update all coin trends",
+      error: err.message,
+    });
+  }
+};
+
+export const getCoinTypeByName = async (req, res) => {
+  try {
+    const { name } = req.params;
+    const coin = await Coin.findOne({ name });
+    if (!coin) {
+      return res.status(404).json({ message: "Coin not found" });
+    }
+    res.json({ type: coin.type });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch coin type" });
+  }
+};

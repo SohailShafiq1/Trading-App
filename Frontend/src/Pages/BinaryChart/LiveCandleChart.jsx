@@ -1389,8 +1389,6 @@ const LiveCandleChart = ({
             width: 600,
             height: 500,
           };
-        // Ensure the latest trade does not exceed the candle (x)
-        // The latest trade is the last in tradesArr
         let startLeft =
           x != null && !isNaN(x)
             ? Math.max(
@@ -1402,68 +1400,10 @@ const LiveCandleChart = ({
                 )
               )
             : containerRect.width - totalWidth - 10;
-        // If the rightmost box (latest trade) would exceed x, shift left
         const latestBoxRight =
           startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
         if (x != null && latestBoxRight > x + boxWidth / 2) {
           startLeft -= latestBoxRight - (x + boxWidth / 2);
-        }
-        // Draw a line connecting all trades in this interval if more than 1
-        if (
-          tradesArr.length > 1 &&
-          chartRef.current &&
-          seriesRef.current &&
-          chartContainerRef.current
-        ) {
-          const points = tradesArr.map((trade, idx) => {
-            const tradePrice =
-              trade.entryPrice ?? trade.coinPrice ?? trade.price;
-            const y = seriesRef.current.priceToCoordinate(Number(tradePrice));
-            const left = startLeft + idx * (boxWidth + gap) + boxWidth / 2;
-            const top =
-              y != null && !isNaN(y)
-                ? Math.max(
-                    boxHeight / 2,
-                    Math.min(y, containerRect.height - boxHeight / 2)
-                  )
-                : 40;
-            return { left, top, type: trade.type };
-          });
-          // Draw a bold green or red line segment between each consecutive pair
-          for (let i = 0; i < points.length - 1; i++) {
-            const p1 = points[i];
-            const p2 = points[i + 1];
-            // If both trades are Buy, green; if both Sell, red; else gray
-            let color = "#888";
-            if (p1.type === "Buy" && p2.type === "Buy") color = "#10A055";
-            else if (p1.type === "Sell" && p2.type === "Sell")
-              color = "#FF0000";
-            else color = "#888";
-            rendered.push(
-              <svg
-                key={`line-${mappedTime}-${i}`}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: "100%",
-                  height: "100%",
-                  pointerEvents: "none",
-                  zIndex: 8,
-                }}
-              >
-                <line
-                  x1={p1.left}
-                  y1={p1.top + boxHeight / 2}
-                  x2={p2.left}
-                  y2={p2.top + boxHeight / 2}
-                  stroke={color}
-                  strokeWidth={5}
-                  strokeDasharray=""
-                />
-              </svg>
-            );
-          }
         }
         tradesArr.forEach((trade, idx, arr) => {
           const tradeId =
@@ -1584,6 +1524,77 @@ const LiveCandleChart = ({
             </div>
           );
         });
+        // --- Add lines for each trade after the latest trade ---
+        if (tradesArr.length > 0 && chartRef.current && seriesRef.current && chartContainerRef.current) {
+          const lastTrade = tradesArr[tradesArr.length - 1];
+          const lastTradePrice = lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
+          const yLast = seriesRef.current.priceToCoordinate(Number(lastTradePrice));
+          const leftLast = startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth / 2;
+          const topLast = yLast != null && !isNaN(yLast) ? Math.max(boxHeight / 2, Math.min(yLast, containerRect.height - boxHeight / 2)) : 40;
+          // Draw a line for every trade (including the first)
+          tradesArr.forEach((trade, idx) => {
+            if (typeof trade.remainingTime === 'number' && trade.remainingTime <= 0) return;
+            // Calculate line length in pixels based on trade duration (in seconds)
+            let durationSec = 60; // default 1m
+            if (typeof trade.duration === 'number') {
+              durationSec = trade.duration;
+            } else if (typeof trade.remainingTime === 'number' && typeof trade.startedAt !== 'undefined') {
+              // Estimate duration as (expiry - startedAt)
+              const now = Math.floor(Date.now() / 1000);
+              const started = typeof trade.startedAt === 'number' ? (trade.startedAt > 1e12 ? Math.floor(trade.startedAt / 1000) : trade.startedAt) : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+              durationSec = (trade.remainingTime + (now - started));
+            }
+            // Calculate the time in seconds for the line's end
+            let tradeStartSec = typeof trade.startedAt === 'number' ? (trade.startedAt > 1e12 ? Math.floor(trade.startedAt / 1000) : trade.startedAt) : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+            let tradeEndSec = tradeStartSec + durationSec;
+            // Use chart time scale to get pixel length
+            let x0 = chartRef.current.timeScale().timeToCoordinate(tradeStartSec);
+            let x1 = chartRef.current.timeScale().timeToCoordinate(tradeEndSec);
+            let lineLength = 80; // fallback
+            if (x0 != null && x1 != null && !isNaN(x0) && !isNaN(x1)) {
+              lineLength = Math.max(20, Math.abs(x1 - x0));
+            }
+            // Shrink the line as remainingTime decreases
+            let percentLeft = 1;
+            if (typeof trade.remainingTime === 'number' && durationSec > 0) {
+              percentLeft = Math.max(0, Math.min(1, trade.remainingTime / durationSec));
+            }
+            let visibleLength = lineLength * percentLeft;
+            if (visibleLength <= 0) return;
+            const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
+            const lineLeft = leftLast + boxWidth / 2 + 16;
+            const lineTop = topLast + (idx * 16) + 10;
+            // Clamp lineLeft and visibleLength to stay within chart container
+            let clampedLineLeft = Math.max(0, Math.min(lineLeft, containerRect.width - 20));
+            let clampedVisibleLength = Math.max(0, Math.min(visibleLength, containerRect.width - clampedLineLeft - 8));
+            let clampedLineTop = Math.max(0, Math.min(lineTop, containerRect.height - 8));
+            rendered.push(
+              <svg
+                key={`afterline-${mappedTime}-${trade.id || trade._id || idx}`}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
+                  zIndex: 20, // ensure in front of trade boxes
+                }}
+              >
+                <circle cx={clampedLineLeft} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <line
+                  x1={clampedLineLeft}
+                  y1={clampedLineTop}
+                  x2={clampedLineLeft + clampedVisibleLength}
+                  y2={clampedLineTop}
+                  stroke={color}
+                  strokeWidth={4}
+                />
+                <circle cx={clampedLineLeft + clampedVisibleLength} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+              </svg>
+            );
+          });
+        }
       });
     return rendered;
   };

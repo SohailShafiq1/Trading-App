@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Trades.module.css";
+import axios from "axios";
 const s = styles;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Trades = () => {
   const [trades, setTrades] = useState([]);
@@ -107,6 +109,29 @@ const Trades = () => {
       }
     });
   }
+
+  // Helper to get coin type by name (async)
+  const [coinTypes, setCoinTypes] = useState({});
+
+  const fetchCoinType = async (coinName) => {
+    if (!coinName || coinTypes[coinName]) return;
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/coins/type/${coinName}`);
+      setCoinTypes((prev) => ({ ...prev, [coinName]: res.data.type }));
+    } catch {
+      setCoinTypes((prev) => ({ ...prev, [coinName]: null }));
+    }
+  };
+
+  useEffect(() => {
+    // Preload coin types for all running trades
+    filteredTrades.forEach((trade) => {
+      if ((trade.status === "running" || trade.result === "pending") && trade.coin) {
+        fetchCoinType(trade.coin);
+      }
+    });
+    // eslint-disable-next-line
+  }, [filteredTrades]);
 
   return (
     <div className={s.container}>
@@ -230,7 +255,48 @@ const Trades = () => {
                     <td>{trade.userName || "-"}</td>
                     <td>{trade.userEmail}</td>
                     <td>{trade.type}</td>
-                    <td>{trade.coin}</td>
+                    <td>{trade.coin}
+                      {(trade.status === "running" || trade.result === "pending") && coinTypes[trade.coin] === "OTC" && (
+                        <span className={s.trendBtnGroup}>
+                          <button
+                            className={s.trendSetBtnUp}
+                            title="Set trend to Up"
+                            onClick={async () => {
+                              await axios.post(`${BACKEND_URL}/api/coins/trend`, {
+                                coinName: trade.coin,
+                                mode: "Up",
+                              });
+                            }}
+                          >
+                            ⬆ Up
+                          </button>
+                          <button
+                            className={s.trendSetBtnDown}
+                            title="Set trend to Down"
+                            onClick={async () => {
+                              await axios.post(`${BACKEND_URL}/api/coins/trend`, {
+                                coinName: trade.coin,
+                                mode: "Down",
+                              });
+                            }}
+                          >
+                            ⬇ Down
+                          </button>
+                          <button
+                            className={s.trendSetBtnRandom}
+                            title="Set trend to Random"
+                            onClick={async () => {
+                              await axios.post(`${BACKEND_URL}/api/coins/trend`, {
+                                coinName: trade.coin,
+                                mode: "Random",
+                              });
+                            }}
+                          >
+                            🎲 Random
+                          </button>
+                        </span>
+                      )}
+                    </td>
                     <td>${trade.investment}</td>
                     <td>{trade.entryPrice}</td>
                     <td>{trade.exitPrice || "-"}</td>
