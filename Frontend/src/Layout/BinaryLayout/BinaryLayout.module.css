@@ -27,7 +27,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   max-width: 300px;
   text-align: center;
-  z-index: 1000;
+  z-index: 100011;
 }
 
 .tutorialPopup:after {
