@@ -813,6 +813,8 @@ const BinaryChart = () => {
                           ?.profitPercentage || 0
                       }
                       type={selectedCoinType}
+                      trades={[...trades].reverse()}
+                      handleCloseTrade={handleCloseTrade}
                     />
                   )}
                   {selectedCoinType === "OTC" && (
