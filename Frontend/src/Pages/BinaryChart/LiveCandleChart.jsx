@@ -1564,6 +1564,10 @@ const LiveCandleChart = ({
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
             const lineLeft = leftLast + boxWidth / 2 + 16;
             const lineTop = topLast + (idx * 16) + 10;
+            // Clamp lineLeft and visibleLength to stay within chart container
+            let clampedLineLeft = Math.max(0, Math.min(lineLeft, containerRect.width - 20));
+            let clampedVisibleLength = Math.max(0, Math.min(visibleLength, containerRect.width - clampedLineLeft - 8));
+            let clampedLineTop = Math.max(0, Math.min(lineTop, containerRect.height - 8));
             rendered.push(
               <svg
                 key={`afterline-${mappedTime}-${trade.id || trade._id || idx}`}
@@ -1577,16 +1581,16 @@ const LiveCandleChart = ({
                   zIndex: 20, // ensure in front of trade boxes
                 }}
               >
-                <circle cx={lineLeft} cy={lineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <circle cx={clampedLineLeft} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
                 <line
-                  x1={lineLeft}
-                  y1={lineTop}
-                  x2={lineLeft + visibleLength}
-                  y2={lineTop}
+                  x1={clampedLineLeft}
+                  y1={clampedLineTop}
+                  x2={clampedLineLeft + clampedVisibleLength}
+                  y2={clampedLineTop}
                   stroke={color}
                   strokeWidth={4}
                 />
-                <circle cx={lineLeft + visibleLength} cy={lineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <circle cx={clampedLineLeft + clampedVisibleLength} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
               </svg>
             );
           });
