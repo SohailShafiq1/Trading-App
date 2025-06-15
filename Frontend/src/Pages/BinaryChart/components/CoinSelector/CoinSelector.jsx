@@ -73,14 +73,7 @@ const CoinSelector = forwardRef(
 
     const handleTabClick = (tab) => {
       setActiveTab(tab);
-      if (tab === "Forex") {
-        // Find the first Forex coin and select it
-        const forexCoin = coins.find((c) => c.type === "Forex");
-        if (forexCoin) {
-          setSelectedCoin(forexCoin.name);
-          localStorage.setItem("selectedCoin", forexCoin.name);
-        }
-      }
+      // Do not auto-select a Forex coin; just show the list
     };
 
     return (
