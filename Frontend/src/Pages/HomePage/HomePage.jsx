@@ -68,7 +68,7 @@ const HomePage = () => {
             <div key={index} className={s.featureCard}>
               <h3>{item.title}</h3>
               <p>{item.desc}</p>
-              <NavLink to={"/"} className={s.featureLink}>
+              <NavLink to={"/register"} className={s.featureLink}>
                 {item.link} →
               </NavLink>
             </div>
@@ -84,7 +84,7 @@ const HomePage = () => {
       </div>
     </div>
     <div className={s.demoButtons}>
-      <NavLink to="/demo" className={s.demoBtnDark}>
+      <NavLink to="/register" className={s.demoBtnDark}>
         Try demo
       </NavLink>
       <NavLink to="/register" className={s.demoBtnGreen}>
@@ -101,21 +101,21 @@ const HomePage = () => {
   <div className={s.testimonialGrid}>
     {[
       {
-        name: "Abhi",
+        name: "Rizwan",
         registered: "November 28, 2024",
         earned: "$1041",
         rating: 5,
         text: "This is a great trading platform. I tried some others before, but this one is smooth, fast, and gives real payouts...",
       },
       {
-        name: "Bhagvan",
+        name: "Sofia",
         registered: "November 15, 2023",
         earned: "$612",
         rating: 5,
         text: "My best choice so far. Super easy for deposits and withdrawals. Excellent support team as well.",
       },
       {
-        name: "Shree Ganesh",
+        name: "Adarsh",
         registered: "November 01, 2024",
         earned: "$379",
         rating: 5,
@@ -140,7 +140,7 @@ const HomePage = () => {
         registered: "December 03, 2023",
         earned: "$780",
         rating: 5,
-        text: "QXBroker is fantastic. From signup to trading, everything was super smooth.",
+        text: "WealthX is fantastic. From signup to trading, everything was super smooth.",
       },
     ].map((item, idx) => (
       <div key={idx} className={s.testimonialCard}>
@@ -157,13 +157,43 @@ const HomePage = () => {
       </div>
     ))}
   </div>
-  <div className={s.centerBtn}>
-    <NavLink to="/reviews" className={s.greenButton}>
-      View all reviews
-    </NavLink>
-  </div>
+
 </div>
 <FAQSection />
+<div className={s.footer}>
+  <div className={s.footerLeft}>
+    <div className={s.footerLogo}>WEALTHX</div>
+    <div className={s.footerColumn}>
+      <h4>FAQ →</h4>
+      <p>General questions</p>
+      <p>Financial questions</p>
+      <p>Verification</p>
+    </div>
+    <div className={s.footerColumn}>
+      <h4>About us →</h4>
+      <p>Contacts</p>
+    </div>
+    <div className={s.footerColumn}>
+      <h4>More</h4>
+      <p>Demo account</p>
+      <p>
+        Affiliate program <span style={{ fontSize: "0.8rem" }}>↗</span>
+      </p>
+    </div>
+  </div>
+
+  <div className={s.footerRight}>
+    
+    <div className={s.footerSocials}>
+      <p>Follow us on social media</p>
+      <div className={s.socialIcons}>
+        <a href="#"><span>📘</span></a>
+        <a href="#"><span>📷</span></a>
+        <a href="#"><span>✈️</span></a>
+      </div>
+    </div>
+  </div>
+</div>
 
       </div>
     </>
