@@ -68,8 +68,15 @@ const updateCandles = async () => {
       const close = generatePrice(open, coin.trend, lastTick, coin.name);
 
       const wiggle = Math.random() * 0.05;
-      const high = round(Math.max(open, close) + wiggle);
-      const low = round(Math.max(0.01, Math.min(open, close) - wiggle));
+      // Make wicks visually much bigger
+      const minWick = 0.15; // Increased for much bigger wicks
+      let high = Math.max(open, close) + wiggle + minWick;
+      let low = Math.max(0.01, Math.min(open, close) - wiggle - minWick);
+      // Enforce minimum wick size
+      if (high - Math.max(open, close) < minWick) high = Math.max(open, close) + minWick;
+      if (Math.min(open, close) - low < minWick) low = Math.max(0.01, Math.min(open, close) - minWick);
+      high = round(high);
+      low = round(low);
 
       const candle = {
         time: roundedTime.toISOString(),
