@@ -25,6 +25,7 @@ import testimonialRoutes from "./routes/testimonialRoutes.js";
 import candleService from "./services/candleGenerator.js";
 import { checkTrc20Deposits } from "./utils/tronWatcher.js";
 import AffiliateTimers from "./utils/affiliateTimers.js";
+import './utils/affiliateCron.js'; // Start affiliate cron job
 
 // Load environment variables
 dotenv.config();

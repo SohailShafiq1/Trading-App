@@ -47,31 +47,40 @@ const THEMES = {
     name: "Light",
     background: "#ffffff",
     textColor: "#333333",
-    gridColor: "#3A3A3A+",
+    gridColor: "rgba(60,60,60,0.10)", // lighter, more transparent
     upColor: "#26a69a",
     downColor: "#ef5350",
     borderVisible: true,
     wickVisible: true,
+    wickUpColor: "#009900",
+    wickDownColor: "#cc0000",
+    wickWidth: 4,
   },
   DARK: {
     name: "Dark",
     background: "#121212",
     textColor: "#d1d4dc",
-    gridColor: "#444444",
+    gridColor: "rgba(200,200,200,0.08)", // lighter, more transparent
     upColor: "#00e676",
     downColor: "#ff1744",
     borderVisible: true,
     wickVisible: true,
+    wickUpColor: "#00ff00",
+    wickDownColor: "#ff2222",
+    wickWidth: 4,
   },
   BLUE: {
     name: "Blue",
     background: "#0e1a2f",
     textColor: "#ffffff",
-    gridColor: "#1e2a3f",
+    gridColor: "rgba(30,42,63,0.12)", // lighter, more transparent
     upColor: "#4caf50",
     downColor: "#f44336",
     borderVisible: true,
     wickVisible: true,
+    wickUpColor: "#00ff00",
+    wickDownColor: "#ff2222",
+    wickWidth: 4,
   },
 };
 const DRAWING_TOOLS = {
@@ -381,6 +390,9 @@ const LiveCandleChart = ({
         downColor: theme.downColor,
         borderVisible: theme.borderVisible,
         wickVisible: theme.wickVisible,
+        wickUpColor: theme.wickUpColor,
+        wickDownColor: theme.wickDownColor,
+        wickWidth: theme.wickWidth,
       });
     }
   };
@@ -397,8 +409,9 @@ const LiveCandleChart = ({
           downColor: theme.downColor,
           borderUpColor: theme.upColor,
           borderDownColor: theme.downColor,
-          wickUpColor: theme.upColor,
-          wickDownColor: theme.downColor,
+          wickUpColor: theme.wickUpColor,
+          wickDownColor: theme.wickDownColor,
+          wickWidth: theme.wickWidth,
         });
         break;
       case CANDLE_STYLES.BAR:
@@ -419,8 +432,9 @@ const LiveCandleChart = ({
           downColor: "transparent",
           borderUpColor: theme.upColor,
           borderDownColor: theme.downColor,
-          wickUpColor: theme.upColor,
-          wickDownColor: theme.downColor,
+          wickUpColor: theme.wickUpColor,
+          wickDownColor: theme.wickDownColor,
+          wickWidth: theme.wickWidth,
         });
         break;
       default:
@@ -429,8 +443,9 @@ const LiveCandleChart = ({
           downColor: theme.downColor,
           borderUpColor: theme.upColor,
           borderDownColor: theme.downColor,
-          wickUpColor: theme.upColor,
-          wickDownColor: theme.downColor,
+          wickUpColor: theme.wickUpColor,
+          wickDownColor: theme.wickDownColor,
+          wickWidth: theme.wickWidth,
         });
     }
     const data = groupCandles(candles, interval);
@@ -1525,30 +1540,66 @@ const LiveCandleChart = ({
           );
         });
         // --- Add lines for each trade after the latest trade ---
-        if (tradesArr.length > 0 && chartRef.current && seriesRef.current && chartContainerRef.current) {
+        if (
+          tradesArr.length > 0 &&
+          chartRef.current &&
+          seriesRef.current &&
+          chartContainerRef.current
+        ) {
           const lastTrade = tradesArr[tradesArr.length - 1];
-          const lastTradePrice = lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
-          const yLast = seriesRef.current.priceToCoordinate(Number(lastTradePrice));
-          const leftLast = startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth / 2;
-          const topLast = yLast != null && !isNaN(yLast) ? Math.max(boxHeight / 2, Math.min(yLast, containerRect.height - boxHeight / 2)) : 40;
+          const lastTradePrice =
+            lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
+          const yLast = seriesRef.current.priceToCoordinate(
+            Number(lastTradePrice)
+          );
+          const leftLast =
+            startLeft +
+            (tradesArr.length - 1) * (boxWidth + gap) +
+            boxWidth / 2;
+          const topLast =
+            yLast != null && !isNaN(yLast)
+              ? Math.max(
+                  boxHeight / 2,
+                  Math.min(yLast, containerRect.height - boxHeight / 2)
+                )
+              : 40;
           // Draw a line for every trade (including the first)
           tradesArr.forEach((trade, idx) => {
-            if (typeof trade.remainingTime === 'number' && trade.remainingTime <= 0) return;
+            if (
+              typeof trade.remainingTime === "number" &&
+              trade.remainingTime <= 0
+            )
+              return;
             // Calculate line length in pixels based on trade duration (in seconds)
             let durationSec = 60; // default 1m
-            if (typeof trade.duration === 'number') {
+            if (typeof trade.duration === "number") {
               durationSec = trade.duration;
-            } else if (typeof trade.remainingTime === 'number' && typeof trade.startedAt !== 'undefined') {
+            } else if (
+              typeof trade.remainingTime === "number" &&
+              typeof trade.startedAt !== "undefined"
+            ) {
               // Estimate duration as (expiry - startedAt)
               const now = Math.floor(Date.now() / 1000);
-              const started = typeof trade.startedAt === 'number' ? (trade.startedAt > 1e12 ? Math.floor(trade.startedAt / 1000) : trade.startedAt) : Math.floor(new Date(trade.startedAt).getTime() / 1000);
-              durationSec = (trade.remainingTime + (now - started));
+              const started =
+                typeof trade.startedAt === "number"
+                  ? trade.startedAt > 1e12
+                    ? Math.floor(trade.startedAt / 1000)
+                    : trade.startedAt
+                  : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+              durationSec = trade.remainingTime + (now - started);
             }
             // Calculate the time in seconds for the line's end
-            let tradeStartSec = typeof trade.startedAt === 'number' ? (trade.startedAt > 1e12 ? Math.floor(trade.startedAt / 1000) : trade.startedAt) : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+            let tradeStartSec =
+              typeof trade.startedAt === "number"
+                ? trade.startedAt > 1e12
+                  ? Math.floor(trade.startedAt / 1000)
+                  : trade.startedAt
+                : Math.floor(new Date(trade.startedAt).getTime() / 1000);
             let tradeEndSec = tradeStartSec + durationSec;
             // Use chart time scale to get pixel length
-            let x0 = chartRef.current.timeScale().timeToCoordinate(tradeStartSec);
+            let x0 = chartRef.current
+              .timeScale()
+              .timeToCoordinate(tradeStartSec);
             let x1 = chartRef.current.timeScale().timeToCoordinate(tradeEndSec);
             let lineLength = 80; // fallback
             if (x0 != null && x1 != null && !isNaN(x0) && !isNaN(x1)) {
@@ -1556,18 +1607,30 @@ const LiveCandleChart = ({
             }
             // Shrink the line as remainingTime decreases
             let percentLeft = 1;
-            if (typeof trade.remainingTime === 'number' && durationSec > 0) {
-              percentLeft = Math.max(0, Math.min(1, trade.remainingTime / durationSec));
+            if (typeof trade.remainingTime === "number" && durationSec > 0) {
+              percentLeft = Math.max(
+                0,
+                Math.min(1, trade.remainingTime / durationSec)
+              );
             }
             let visibleLength = lineLength * percentLeft;
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
             const lineLeft = leftLast + boxWidth / 2 + 16;
-            const lineTop = topLast + (idx * 16) + 10;
+            const lineTop = topLast + idx * 16 + 10;
             // Clamp lineLeft and visibleLength to stay within chart container
-            let clampedLineLeft = Math.max(0, Math.min(lineLeft, containerRect.width - 20));
-            let clampedVisibleLength = Math.max(0, Math.min(visibleLength, containerRect.width - clampedLineLeft - 8));
-            let clampedLineTop = Math.max(0, Math.min(lineTop, containerRect.height - 8));
+            let clampedLineLeft = Math.max(
+              0,
+              Math.min(lineLeft, containerRect.width - 20)
+            );
+            let clampedVisibleLength = Math.max(
+              0,
+              Math.min(visibleLength, containerRect.width - clampedLineLeft - 8)
+            );
+            let clampedLineTop = Math.max(
+              0,
+              Math.min(lineTop, containerRect.height - 8)
+            );
             rendered.push(
               <svg
                 key={`afterline-${mappedTime}-${trade.id || trade._id || idx}`}
@@ -1581,7 +1644,14 @@ const LiveCandleChart = ({
                   zIndex: 20, // ensure in front of trade boxes
                 }}
               >
-                <circle cx={clampedLineLeft} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <circle
+                  cx={clampedLineLeft}
+                  cy={clampedLineTop}
+                  r={4}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                />
                 <line
                   x1={clampedLineLeft}
                   y1={clampedLineTop}
@@ -1590,7 +1660,14 @@ const LiveCandleChart = ({
                   stroke={color}
                   strokeWidth={4}
                 />
-                <circle cx={clampedLineLeft + clampedVisibleLength} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <circle
+                  cx={clampedLineLeft + clampedVisibleLength}
+                  cy={clampedLineTop}
+                  r={4}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                />
               </svg>
             );
           });
@@ -1730,7 +1807,7 @@ const LiveCandleChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "150%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
@@ -1782,7 +1859,7 @@ const LiveCandleChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "150%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
