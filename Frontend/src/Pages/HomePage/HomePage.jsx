@@ -3,7 +3,8 @@ import styles from "./HomePage.module.css";
 import HomeContent from "../../../assets/HomeContect.png";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext"; // if needed
-import FAQSection from "./FAQSection";
+import FAQSection from "./Components/FAQSection";
+import Testimonials from "./Components/Testimonials";
 const s = styles;
 
 const HomePage = () => {
@@ -98,66 +99,7 @@ const HomePage = () => {
   <p className={s.testimonialSubtitle}>
     We asked our customers to rate our platform on a five-point scale.
   </p>
-  <div className={s.testimonialGrid}>
-    {[
-      {
-        name: "Rizwan",
-        registered: "November 28, 2024",
-        earned: "$1041",
-        rating: 5,
-        text: "This is a great trading platform. I tried some others before, but this one is smooth, fast, and gives real payouts...",
-      },
-      {
-        name: "Sofia",
-        registered: "November 15, 2023",
-        earned: "$612",
-        rating: 5,
-        text: "My best choice so far. Super easy for deposits and withdrawals. Excellent support team as well.",
-      },
-      {
-        name: "Adarsh",
-        registered: "November 01, 2024",
-        earned: "$379",
-        rating: 5,
-        text: "The platform is intuitive and smooth. I’m happy with the returns and interface!",
-      },
-      {
-        name: "Zain",
-        registered: "November 21, 2023",
-        earned: "$134",
-        rating: 5,
-        text: "Very user-friendly. My trades process instantly and I like the demo account too.",
-      },
-      {
-        name: "Md Imran",
-        registered: "November 24, 2024",
-        earned: "$217",
-        rating: 5,
-        text: "Deposit and withdrawal system is top-notch. Happy user!",
-      },
-      {
-        name: "Bilal",
-        registered: "December 03, 2023",
-        earned: "$780",
-        rating: 5,
-        text: "WealthX is fantastic. From signup to trading, everything was super smooth.",
-      },
-    ].map((item, idx) => (
-      <div key={idx} className={s.testimonialCard}>
-        <h3>{item.name}</h3>
-        <p className={s.meta}><strong>Registered:</strong> {item.registered}</p>
-        <p className={s.meta}><strong>Earned:</strong> {item.earned}</p>
-        <div className={s.stars}>
-          {Array.from({ length: item.rating }, (_, i) => (
-            <span key={i}>⭐</span>
-          ))}
-        </div>
-        <p className={s.feedback}>{item.text}</p>
-        <a href="#" className={s.readMore}>Read More →</a>
-      </div>
-    ))}
-  </div>
-
+ <Testimonials/>
 </div>
 <FAQSection />
 <div className={s.footer}>

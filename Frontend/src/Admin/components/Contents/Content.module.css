@@ -1,0 +1,84 @@
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 32px 24px;
+}
+
+.faqForm, .editForm {
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input, .textarea {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.button {
+  background: #10A055;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+.button:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ff1600;
+  margin-top: 8px;
+}
+.success {
+  color: #10A055;
+  margin-top: 8px;
+}
+
+.faqList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.faqItem {
+  background: #f8f8f8;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  padding: 16px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  position: relative;
+}
+.faqActions {
+  margin-top: 10px;
+}
+.faqActions .button {
+  background: #007bff;
+  margin-right: 8px;
+}
+.faqActions .button:last-child {
+  background: #ff1600;
+}

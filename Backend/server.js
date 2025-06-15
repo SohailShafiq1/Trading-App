@@ -18,6 +18,8 @@ import bonusRoutes from "./routes/bonusRoutes.js";
 import newsRoutes from "./routes/newsRoute.js";
 import settingsRoutes from "./routes/settings.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import faqRoutes from "./routes/faqRoutes.js";
+import testimonialRoutes from "./routes/testimonialRoutes.js";
 
 // Services
 import candleService from "./services/candleGenerator.js";
@@ -75,6 +77,8 @@ app.use("/api/bonuses", bonusRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/admin/leaderboard", leaderboardRoutes);
+app.use("/api/faqs", faqRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
