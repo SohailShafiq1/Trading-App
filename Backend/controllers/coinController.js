@@ -68,7 +68,7 @@ export const createCoin = async (req, res) => {
             firstName,
             lastName,
             startingPrice,
-            name: `${firstName}/${lastName}`,
+            name: `${firstName}-${lastName}`,
             trend: trend || "Normal", // Default trend for OTC coins
             selectedInterval: "30s",
           }
