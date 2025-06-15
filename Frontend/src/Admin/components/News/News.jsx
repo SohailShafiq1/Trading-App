@@ -19,13 +19,26 @@ const News = () => {
     const fetchNews = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/news");
-        setNewsList(res.data);
+        setNewsList(res.data.news || []);
         toast.success("News fetched successfully!");
       } catch (err) {
         toast.error("Error fetching news.");
       }
     };
     fetchNews();
+  }, []);
+
+  // Poll for new news every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/news");
+        setNewsList(res.data.news || []);
+      } catch (err) {
+        // Optionally handle error
+      }
+    }, 10000); // 10 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const handleAddNews = async () => {
@@ -36,7 +49,7 @@ const News = () => {
 
     try {
       setIsLoading(true);
-      const res = await axios.post(
+      await axios.post(
         "http://localhost:5000/api/news",
         { title, content },
         {
@@ -45,7 +58,9 @@ const News = () => {
           },
         }
       );
-      setNewsList((prev) => [...prev, res.data]);
+      // Re-fetch news after adding
+      const res = await axios.get("http://localhost:5000/api/news");
+      setNewsList(res.data.news || []);
       setTitle("");
       setContent("");
       toast.success("News added successfully!");

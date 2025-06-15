@@ -19,6 +19,7 @@ const Tabs = () => {
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
   const [showTradePopup, setShowTradePopup] = useState(false);
   const [totalTrades, setTotalTrades] = useState(0); // Simulated total trades
+  const [unreadNews, setUnreadNews] = useState(0);
   const popupRef = useRef(null);
   const settingsRef = useRef(null);
   const tradePopupRef = useRef(null);
@@ -45,7 +46,7 @@ const Tabs = () => {
         const res = await axios.get(
           `http://localhost:5000/api/users/notifications/${user.email}`
         );
-        setNotifications(res.data || []);
+        setNotifications(res.data.notifications || []);
         setUnreadNotifications(res.data.unreadCount || 0);
       } catch (err) {
         console.error("Error fetching notifications:", err);
@@ -54,8 +55,15 @@ const Tabs = () => {
 
     const fetchNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
-        setNewsList(res.data || []);
+        const res = await axios.get(
+          `http://localhost:5000/api/news?email=${user.email}`
+        );
+        // Sort news by createdAt (latest first)
+        const sortedNews = (res.data.news || [])
+          .slice()
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setNewsList(sortedNews);
+        setUnreadNews(res.data.unreadCount || 0);
       } catch (err) {
         console.error("Error fetching news:", err);
       }
@@ -63,7 +71,23 @@ const Tabs = () => {
 
     fetchNotifications();
     fetchNews();
-  }, []);
+  }, [user.email]);
+
+  // Mark all notifications/news as read when popup is opened
+  useEffect(() => {
+    if (showPopup) {
+      // Mark notifications as read
+      axios
+        .put(
+          `http://localhost:5000/api/users/notifications/mark-all-read/${user.email}`
+        )
+        .then(() => setUnreadNotifications(0));
+      // Mark news as read
+      axios
+        .put(`http://localhost:5000/api/news/mark-all-read/${user.email}`)
+        .then(() => setUnreadNews(0));
+    }
+  }, [showPopup, user.email]);
 
   const renderContent = () => {
     if (activeTab === "Notifications") {
@@ -128,6 +152,33 @@ const Tabs = () => {
     };
   }, []);
 
+  // Combine unread notifications and news
+  const totalUnread = unreadNotifications + unreadNews;
+
+  // Poll for new notifications and news every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Fetch notifications
+      axios
+        .get(`http://localhost:5000/api/users/notifications/${user.email}`)
+        .then((res) => {
+          setNotifications(res.data.notifications || []);
+          setUnreadNotifications(res.data.unreadCount || 0);
+        });
+      // Fetch news
+      axios
+        .get(`http://localhost:5000/api/news?email=${user.email}`)
+        .then((res) => {
+          const sortedNews = (res.data.news || [])
+            .slice()
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setNewsList(sortedNews);
+          setUnreadNews(res.data.unreadCount || 0);
+        });
+    }, 10000); // 10 seconds
+    return () => clearInterval(interval);
+  }, [user.email]);
+
   return (
     <div className={styles.tabs}>
       {/* Notifications Tab */}
@@ -140,9 +191,16 @@ const Tabs = () => {
             }}
           />
         </button>
-        {unreadNotifications > 0 && (
-          <span className={styles.notificationBadge}>
-            {unreadNotifications}
+        {totalUnread > 0 && (
+          <span
+            className={styles.notificationBadge}
+            onClick={() => {
+              setShowPopup(true);
+              setShowSettingsPopup(false);
+              setShowTradePopup(false);
+            }}
+          >
+            {totalUnread}
           </span>
         )}
         {showPopup && (

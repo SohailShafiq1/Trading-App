@@ -31,6 +31,7 @@ import {
   supportUpload,
   getTotalTradeCount,
   getRunningTradePercentage,
+  markAllNotificationsRead,
 } from "../controllers/userController.js";
 import multer from "multer";
 import path from "path";
@@ -75,6 +76,7 @@ router.put("/withdraw-accept/:withdrawalId", approveWithdrawal);
 router.put("/withdraw-reject/:withdrawalId", rejectWithdrawal);
 router.put("/update-tip/:userId", updateTipStatus);
 router.get("/notifications/:email", getNotifications);
+router.put("/notifications/mark-all-read/:email", markAllNotificationsRead);
 router.post("/notifications/create", createNotification);
 router.post(
   "/support",

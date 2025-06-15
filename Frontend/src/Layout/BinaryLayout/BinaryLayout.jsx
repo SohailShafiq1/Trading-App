@@ -94,19 +94,11 @@ const BinaryLayout = () => {
     },
     {
       id: "mobile-account-btn",
-      text: "Switch between live and demo accounts",
+      text: "See Banking options like deposits and withdrawals",
     },
     {
       id: "mobile-more-btn",
       text: "Additional options including support and leaderboard",
-    },
-    {
-      id: "withdraw-btn",
-      text: "Quick access to withdraw funds from your account",
-    },
-    {
-      id: "deposit-btn",
-      text: "Quick access to deposit funds into your account",
     },
   ];
 
@@ -198,6 +190,75 @@ const BinaryLayout = () => {
   };
 
   const position = getButtonPosition(currentTipIndex);
+
+  // --- FIX: Ensure all refs and tips are aligned and robust ---
+  // Map tip ids to button refs for both desktop and mobile
+  const tipIdToIndex = tips.reduce((acc, tip, idx) => {
+    acc[tip.id] = idx;
+    return acc;
+  }, {});
+
+  // Helper: Scroll to and highlight the current tip's button
+  useEffect(() => {
+    const refs = isMobileView ? mobileButtonRefs : buttonRefs;
+    const currentRef = refs.current[currentTipIndex];
+    if (currentRef) {
+      currentRef.classList.add(s.tutorialHighlight);
+      // Remove highlight from all other buttons
+      refs.current.forEach((btn, idx) => {
+        if (btn && idx !== currentTipIndex) {
+          btn.classList.remove(s.tutorialHighlight);
+        }
+      });
+    }
+  }, [currentTipIndex, isMobileView]);
+
+  // Calculate tutorial popup position
+  let tutorialPopupStyle;
+  if (isMobileView) {
+    // Try to get the current button's bounding rect for horizontal position
+    const refs = mobileButtonRefs.current;
+    const currentRef = refs[currentTipIndex];
+    let left = "50vw";
+    if (currentRef) {
+      const rect = currentRef.getBoundingClientRect();
+      left = `${rect.left + rect.width / 2}px`;
+    }
+    tutorialPopupStyle = {
+      position: "fixed",
+      zIndex: 2000,
+      backgroundColor: "#2C2D35",
+      color: "white",
+      padding: "6px 6px",
+      borderRadius: "5px",
+      boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+      maxWidth: "140px",
+      minWidth: "90px",
+      textAlign: "center",
+      fontSize: "0.65rem",
+      left,
+      bottom: "54px",
+      transform: "translateX(-50%)",
+      pointerEvents: "auto",
+    };
+  } else {
+    tutorialPopupStyle = {
+      position: "absolute",
+      zIndex: 2000,
+      backgroundColor: "#2C2D35",
+      color: "white",
+      padding: "15px",
+      borderRadius: "8px",
+      boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+      maxWidth: "300px",
+      textAlign: "center",
+      width: position.buttonWidth ? `${position.buttonWidth}px` : undefined,
+      left: `${position.left}px`,
+      top: `${position.top}px`,
+      transform: "translateX(-50%)",
+      pointerEvents: "auto",
+    };
+  }
 
   return (
     <>
@@ -595,26 +656,7 @@ const BinaryLayout = () => {
 
       {/* Tutorial Popup */}
       {showTutorial && currentTipIndex < tips.length && (
-        <div
-          className={s.tutorialPopup}
-          style={{
-            position: "absolute",
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-            backgroundColor: "#2C2D35",
-            color: "white",
-            padding: "15px",
-            borderRadius: "8px",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
-            maxWidth: "300px",
-            textAlign: "center",
-            width: isMobileView
-              ? `${Math.max(position.buttonWidth, 200)}px`
-              : "auto",
-          }}
-        >
+        <div className={s.tutorialPopup} style={tutorialPopupStyle}>
           <div className={s.tutorialContent}>
             <p>{tips[currentTipIndex].text}</p>
             <div className={s.tutorialControls}>
@@ -633,7 +675,7 @@ const BinaryLayout = () => {
                   className={s.tutorialButton}
                 >
                   <AiOutlineClose style={{ marginRight: "5px" }} />
-                  Close Tutorial
+                  Close
                 </button>
               )}
             </div>

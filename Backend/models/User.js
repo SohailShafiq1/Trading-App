@@ -296,6 +296,10 @@ const UserSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    newsRead: {
+      type: [mongoose.Schema.Types.ObjectId], // Array of News IDs the user has read
+      default: [],
+    },
   },
   {
     timestamps: true,
