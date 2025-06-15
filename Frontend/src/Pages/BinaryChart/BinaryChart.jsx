@@ -962,15 +962,14 @@ const BinaryChart = () => {
             </h1>
             <p className={styles.selectedCoinPrice}>
               Current Price:{" "}
-              {selectedCoinType === "OTC"
-                ? !isNaN(otcPrice)
-                  ? otcPrice.toFixed(2)
-                  : "Loading..."
-                : selectedCoinType === "Live"
-                ? livePrice
-                : "N/A"}
+              {selectedCoinType === "OTC" && !isNaN(otcPrice)
+                ? otcPrice.toFixed(2)
+                : selectedCoinType === "Live" && !isNaN(livePrice)
+                ? livePrice.toFixed(2)
+                : selectedCoinType === "Forex" && !isNaN(forexPrice)
+                ? forexPrice.toFixed(4)
+                : "Loading..."}
             </p>
-
             <div className={styles.controlStuff}>
               <div className={styles.controlBox}>
                 <button
