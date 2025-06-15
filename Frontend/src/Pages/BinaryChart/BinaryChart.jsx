@@ -915,22 +915,8 @@ const BinaryChart = () => {
                       />
                     </div>
                   )}
-                  {/* Chart rendering logic */}
-                  {selectedCoinType === "Forex" ? (
+                  {selectedCoinType === "Forex" && (
                     <ForexTradingChart
-                      coinName={selectedCoin}
-                      setSelectedCoin={setSelectedCoin}
-                      coins={coins}
-                      profit={
-                        coins.find((c) => c.name === selectedCoin)
-                          ?.profitPercentage
-                      }
-                      type={selectedCoinType}
-                      trades={trades}
-                      handleCloseTrade={handleCloseTrade}
-                    />
-                  ) : (
-                    <TradingViewChart
                       coinName={selectedCoin}
                       setSelectedCoin={setSelectedCoin}
                       coins={coins}
