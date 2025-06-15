@@ -18,6 +18,17 @@ import track from "./assets/trade.mp3";
 import { useNavigate } from "react-router-dom";
 
 const BinaryChart = () => {
+  // getPriceForTrade MUST be the first function in the component
+  const getPriceForTrade = (trade) => {
+    const coinData = coins.find((c) => c.name === trade.coinName);
+    if (!coinData) return 0;
+    if (trade.coinType === "Live") {
+      return coinData.currentPrice ?? livePrice;
+    } else {
+      return coinData.currentPrice ?? otcPrice;
+    }
+  };
+
   // State declarations
   const socket = useRef(null);
 
@@ -219,16 +230,43 @@ const BinaryChart = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setTrades((prevTrades) =>
-        prevTrades.map((trade) =>
-          trade.remainingTime > 0
-            ? { ...trade, remainingTime: trade.remainingTime - 1 }
-            : trade
-        )
+        prevTrades.map((trade) => {
+          if (trade.remainingTime > 1) {
+            return { ...trade, remainingTime: trade.remainingTime - 1 };
+          } else if (trade.remainingTime === 1) {
+            // Timer will hit 0 now, lock status and reward
+            const endPrice = getPriceForTrade(trade) ?? 0;
+            const coinData = coins.find((c) => c.name === trade.coinName);
+            const profitPercentage = coinData?.profitPercentage || 0;
+            const tradeInvestment = trade.investment ?? trade.price ?? 0;
+            let centsChange = 0;
+            if (trade.type === "Buy") {
+              centsChange =
+                (endPrice - trade.entryPrice) *
+                (tradeInvestment / trade.entryPrice);
+            } else {
+              centsChange =
+                (trade.entryPrice - endPrice) *
+                (tradeInvestment / trade.entryPrice);
+            }
+            const basePayout = tradeInvestment * (1 + profitPercentage / 100);
+            const lockedReward = Math.round((basePayout + centsChange) * 100) / 100;
+            const lockedStatus = centsChange >= 0 ? "win" : "loss";
+            return {
+              ...trade,
+              remainingTime: 0,
+              lockedStatus,
+              lockedReward,
+            };
+          } else {
+            // After timer 0, do not recalculate anything, just keep locked values
+            return trade;
+          }
+        })
       );
     }, 1000);
-
     return () => clearInterval(interval);
-  }, []);
+  }, [coins, getPriceForTrade]);
 
   const saveTradeToDB = async (trade) => {
     if (isDemo) return { status: "demo" };
@@ -707,7 +745,10 @@ const BinaryChart = () => {
       let isWin = centsChange >= 0;
       let reward;
 
-      if (isWin) {
+      // Use frontendReward if provided (from UI logic), otherwise fallback to calculated
+      if (trade.frontendReward !== undefined) {
+        reward = parseFloat(trade.frontendReward);
+      } else if (isWin) {
         reward = (
           tradeInvestment * (1 + profitPercentage / 100) +
           centsChange

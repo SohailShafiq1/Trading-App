@@ -8,16 +8,17 @@ const s = styles;
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 function calculatePayout(trade, coins, getPriceForTrade) {
-  let displayReward = trade.reward;
-  let displayStatus = trade.status;
+  let displayReward = trade.lockedReward ?? trade.reward;
+  let displayStatus = trade.lockedStatus ?? trade.status;
   const tradeInvestment = trade.investment ?? trade.price ?? 0;
-  let endPrice = typeof getPriceForTrade === "function"
-    ? getPriceForTrade(trade)
-    : 0;
+  let endPrice =
+    typeof getPriceForTrade === "function" ? getPriceForTrade(trade) : 0;
 
-  if (trade.status === "running" && trade.remainingTime === 0) {
+  // Only calculate floating PnL if trade is running and timer > 0
+  if (trade.status === "running" && trade.remainingTime > 0) {
     const coinData = coins.find((c) => c.name === trade.coinName);
     const profitPercentage = coinData?.profitPercentage || 0;
+    const basePayout = tradeInvestment * (1 + profitPercentage / 100);
 
     let centsChange = 0;
     if (trade.type === "Buy") {
@@ -28,16 +29,14 @@ function calculatePayout(trade, coins, getPriceForTrade) {
         (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
     }
 
-    if (centsChange >= 0) {
-      displayReward = (
-        tradeInvestment * (1 + profitPercentage / 100) +
-        centsChange
-      ).toFixed(2);
-      displayStatus = "win";
-    } else {
-      displayReward = (tradeInvestment + centsChange).toFixed(2);
-      displayStatus = "loss";
-    }
+    let rawReward = basePayout + centsChange;
+    displayReward = round2(rawReward).toFixed(2);
+    displayStatus = centsChange >= 0 ? "win" : "loss";
+  } else {
+    // After timer 0, always use backend-locked reward and status
+    displayReward =
+      typeof trade.reward === "number" ? trade.reward.toFixed(2) : trade.reward;
+    displayStatus = trade.status;
   }
   return { payout: displayReward, status: displayStatus };
 }
@@ -181,8 +180,7 @@ const UserTrade = () => {
                     ? prev.assets - tradeAmount
                     : {
                         ...prev.assets,
-                        USDT:
-                          (prev.assets?.USDT || 0) - tradeAmount,
+                        USDT: (prev.assets?.USDT || 0) - tradeAmount,
                       },
               }
             : prev
@@ -247,11 +245,12 @@ const UserTrade = () => {
           email: activeUser.email,
           startedAt: trade.startedAt,
           result: isWin ? "win" : "loss",
-          reward: parseFloat(reward),
+          reward: trade.frontendReward
+            ? parseFloat(trade.frontendReward)
+            : parseFloat(reward),
           exitPrice: endPrice,
         }),
       });
-
       // Update local state
       setUserTrades((prev) =>
         prev.map((t) =>
@@ -335,9 +334,56 @@ const UserTrade = () => {
   }, [coins.length]);
 
   const getPriceForTrade = (trade) => {
-    const coinData = coins.find((c) => c.name === trade.coinName || c.name === trade.coin);
+    const coinData = coins.find(
+      (c) => c.name === trade.coinName || c.name === trade.coin
+    );
     return coinData?.currentPrice || 0;
   };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUserTrades((prevTrades) =>
+        prevTrades.map((trade) => {
+          if (trade.remainingTime > 1) {
+            return { ...trade, remainingTime: trade.remainingTime - 1 };
+          } else if (trade.remainingTime === 1) {
+            // Timer will hit 0 now, lock status and reward
+            const endPrice = getPriceForTrade(trade) ?? 0;
+            const coinData = coins.find(
+              (c) => c.name === trade.coinName || c.name === trade.coin
+            );
+            const profitPercentage = coinData?.profitPercentage || 0;
+            const tradeInvestment = trade.investment ?? trade.price ?? 0;
+            let centsChange = 0;
+            if (trade.type === "Buy") {
+              centsChange =
+                (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
+            } else {
+              centsChange =
+                (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
+            }
+            const basePayout = tradeInvestment * (1 + profitPercentage / 100);
+            const isWin = centsChange >= 0;
+            // If win: basePayout + centsChange, if loss: only centsChange (base payout is zero)
+            const lockedReward = isWin
+              ? Math.round((basePayout + centsChange) * 100) / 100
+              : Math.round(centsChange * 100) / 100;
+            const lockedStatus = isWin ? "win" : "loss";
+            return {
+              ...trade,
+              remainingTime: 0,
+              lockedStatus,
+              lockedReward,
+            };
+          } else {
+            // After timer 0, do not recalculate anything, just keep locked values
+            return trade;
+          }
+        })
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [coins, getPriceForTrade]);
 
   return (
     <div className={s.container}>
@@ -384,7 +430,10 @@ const UserTrade = () => {
         <div className={s.pageContent}>
           {/* Left: Action Panel */}
           <div className={s.userActionsPanel}>
-            <button className={s.backButton} onClick={() => setActiveUser(null)}>
+            <button
+              className={s.backButton}
+              onClick={() => setActiveUser(null)}
+            >
               ← Back to User List
             </button>
             <h3>
@@ -408,12 +457,14 @@ const UserTrade = () => {
                   <div className={s.assetsBox}>
                     <b>Assets:</b>
                     <ul>
-                      {Object.entries(activeUser.assets).map(([coin, amount]) => (
-                        <li key={coin}>
-                          <span className={s.assetCoin}>{coin}:</span>{" "}
-                          <span className={s.assetAmount}>{amount}</span>
-                        </li>
-                      ))}
+                      {Object.entries(activeUser.assets).map(
+                        ([coin, amount]) => (
+                          <li key={coin}>
+                            <span className={s.assetCoin}>{coin}:</span>{" "}
+                            <span className={s.assetAmount}>{amount}</span>
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )
@@ -519,7 +570,9 @@ const UserTrade = () => {
                     return "00:00";
                   const mins = Math.floor(seconds / 60);
                   const secs = seconds % 60;
-                  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+                  return `${String(mins).padStart(2, "0")}:${String(
+                    secs
+                  ).padStart(2, "0")}`;
                 }}
                 handleCloseTrade={handleCloseTrade}
                 coins={coins}
