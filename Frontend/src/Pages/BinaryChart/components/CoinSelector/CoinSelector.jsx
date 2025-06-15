@@ -34,17 +34,6 @@ const CoinSelector = forwardRef(
       const storedCoin = localStorage.getItem("selectedCoin");
       if (storedCoin && !selectedCoin) {
         setSelectedCoin(storedCoin);
-      } else if (!storedCoin && !selectedCoin) {
-        // If no coin is selected or stored, default to EURUSD if it exists in the list
-        axios.get("http://localhost:5000/api/coins").then((res) => {
-          const forexCoin = res.data.find(
-            (c) => c.type === "Forex" && c.name === "EURUSD"
-          );
-          if (forexCoin) {
-            setSelectedCoin("EURUSD");
-            localStorage.setItem("selectedCoin", "EURUSD");
-          }
-        });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -73,20 +62,11 @@ const CoinSelector = forwardRef(
 
     const handleTabClick = (tab) => {
       setActiveTab(tab);
-      if (tab === "Forex") {
-        // Find the first Forex coin and select it
-        const forexCoin = coins.find((c) => c.type === "Forex");
-        if (forexCoin) {
-          setSelectedCoin(forexCoin.name);
-          localStorage.setItem("selectedCoin", forexCoin.name);
-        }
-      }
+      // Removed auto-select logic for Forex
     };
 
     return (
       <div className={styles.coinSelectorWrapper} ref={ref}>
-       
-
         {isOpen && (
           <div className={styles.coinPopup}>
             <div className={styles.coinTabs}>

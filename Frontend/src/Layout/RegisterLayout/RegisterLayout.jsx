@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./RegisterLayout.module.css";
-import WealthXLogo from "../../../assets/WealthXLogo.png";
+import WealthXLogo from "../../../assets/Logo.png";
 import { NavLink } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 const s = styles;
