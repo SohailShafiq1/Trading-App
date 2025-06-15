@@ -504,7 +504,7 @@ export const getTeamTotalDeposits = async (req, res) => {
     teamUsers.forEach((user) => {
       if (Array.isArray(user.transactions)) {
         totalDeposits += user.transactions.filter(
-          (t) => t.type === "deposit" && t.status === "success" && new Date(t.createdAt) > new Date(resetTime)
+          (t) => t.type === "deposit" && t.status === "success" && new Date(t.date) > new Date(resetTime)
         ).length;
       }
     });
