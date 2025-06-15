@@ -29,11 +29,22 @@ const CoinSelector = forwardRef(
       }
     }, [propCoins]);
 
-    // On mount, initialize selectedCoin from localStorage if available
+    // On mount, initialize selectedCoin from localStorage if available, or default to EURUSD for Forex
     useEffect(() => {
       const storedCoin = localStorage.getItem("selectedCoin");
       if (storedCoin && !selectedCoin) {
         setSelectedCoin(storedCoin);
+      } else if (!storedCoin && !selectedCoin) {
+        // If no coin is selected or stored, default to EURUSD if it exists in the list
+        axios.get("http://localhost:5000/api/coins").then((res) => {
+          const forexCoin = res.data.find(
+            (c) => c.type === "Forex" && c.name === "EURUSD"
+          );
+          if (forexCoin) {
+            setSelectedCoin("EURUSD");
+            localStorage.setItem("selectedCoin", "EURUSD");
+          }
+        });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -60,6 +71,18 @@ const CoinSelector = forwardRef(
       localStorage.setItem("selectedCoin", coin.name);
     };
 
+    const handleTabClick = (tab) => {
+      setActiveTab(tab);
+      if (tab === "Forex") {
+        // Find the first Forex coin and select it
+        const forexCoin = coins.find((c) => c.type === "Forex");
+        if (forexCoin) {
+          setSelectedCoin(forexCoin.name);
+          localStorage.setItem("selectedCoin", forexCoin.name);
+        }
+      }
+    };
+
     return (
       <div className={styles.coinSelectorWrapper} ref={ref}>
        
@@ -67,13 +90,13 @@ const CoinSelector = forwardRef(
         {isOpen && (
           <div className={styles.coinPopup}>
             <div className={styles.coinTabs}>
-              {["Live", "OTC"].map((tab) => (
+              {["Live", "OTC", "Forex"].map((tab) => (
                 <button
                   key={tab}
                   className={`${styles.coinTab} ${
                     activeTab === tab ? styles.active : ""
                   }`}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => handleTabClick(tab)}
                 >
                   {tab}
                 </button>

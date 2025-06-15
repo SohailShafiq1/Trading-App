@@ -82,6 +82,12 @@ const Coins = () => {
             }),
       };
 
+      // Handle Forex coin addition
+      if (newCoin.type === "Forex") {
+        coinData.firstName = forexFirst;
+        coinData.lastName = forexLast;
+      }
+
       const response = await axios.post(`${BACKEND_URL}/api/coins`, coinData);
       setCoins(response.data);
       setNewCoin({
@@ -309,6 +315,24 @@ const Coins = () => {
     Number(tradePercentage.buyPercentage) === 0 &&
     Number(tradePercentage.sellPercentage) === 0;
 
+  const forexPairs = [
+    "EUR USD",
+    "EUR JPY",
+    "EUR CAD",
+    "USD CAD",
+    "AUD USD",
+    "AUD NZD",
+    "USD JPY",
+    "GBP USD",
+    "USD CHF",
+    "EUR AUD",
+    "AUD CHF",
+  ];
+
+  const [coinType, setCoinType] = useState("Live");
+  const [forexFirst, setForexFirst] = useState("");
+  const [forexLast, setForexLast] = useState("");
+
   return (
     <div className={s.container}>
       {/* Show trade percentage at the top */}
@@ -382,9 +406,14 @@ const Coins = () => {
       {isLoading && <div className={s.loading}>Loading...</div>}
 
       <form className={s.form} onSubmit={addCoin}>
-        <select name="type" value={newCoin.type} onChange={handleInputChange}>
+        <select
+          name="type"
+          value={newCoin.type}
+          onChange={handleInputChange}
+        >
           <option value="Live">Live</option>
           <option value="OTC">OTC</option>
+          <option value="Forex">Forex</option>
         </select>
 
         {newCoin.type === "Live" ? (
@@ -396,6 +425,35 @@ const Coins = () => {
             onChange={handleInputChange}
             required
           />
+        ) : newCoin.type === "Forex" ? (
+          <div>
+            <input
+              list="forexFirstList"
+              placeholder="First Currency (e.g. EUR)"
+              value={forexFirst}
+              onChange={(e) => setForexFirst(e.target.value)}
+            />
+            <datalist id="forexFirstList">
+              {[...new Set(forexPairs.map((pair) => pair.split(" ")[0]))].map(
+                (cur) => (
+                  <option key={cur} value={cur} />
+                )
+              )}
+            </datalist>
+            <input
+              list="forexLastList"
+              placeholder="Second Currency (e.g. USD)"
+              value={forexLast}
+              onChange={(e) => setForexLast(e.target.value)}
+            />
+            <datalist id="forexLastList">
+              {[...new Set(forexPairs.map((pair) => pair.split(" ")[1]))].map(
+                (cur) => (
+                  <option key={cur} value={cur} />
+                )
+              )}
+            </datalist>
+          </div>
         ) : (
           <>
             <input

@@ -1,4 +1,5 @@
 import Coin from "../models/Coin.js";
+import axios from "axios";
 
 export const getAllCoins = async (_, res) => {
   try {
@@ -62,13 +63,20 @@ export const createCoin = async (req, res) => {
             name,
             trend: undefined, // Live coins shouldn't have trends
           }
-        : {
+        : type === "OTC"
+        ? {
             firstName,
             lastName,
             startingPrice,
-            name: `${firstName}-${lastName}`,
+            name: `${firstName}/${lastName}`,
             trend: trend || "Normal", // Default trend for OTC coins
             selectedInterval: "30s",
+          }
+        : {
+            // Forex
+            firstName,
+            lastName,
+            name: `${firstName}${lastName}`.toUpperCase(),
           }),
     };
 
@@ -234,5 +242,26 @@ export const getCoinTypeByName = async (req, res) => {
     res.json({ type: coin.type });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch coin type" });
+  }
+};
+
+// Fetch live Forex price from external API
+export const getLiveForexPrice = async (req, res) => {
+  try {
+    const { pair } = req.params; // e.g., EURUSD
+    // Use Twelve Data free demo endpoint (replace with your API key for production)
+    const apiKey = process.env.TWELVE_DATA_API_KEY || "demo";
+    const url = `https://api.twelvedata.com/price?symbol=${pair}&apikey=${apiKey}`;
+    const response = await axios.get(url);
+    if (response.data && response.data.price) {
+      res.json({ price: Number(response.data.price) });
+    } else {
+      res.status(404).json({ message: "Forex pair not found or API error" });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch live forex price",
+      error: err.message,
+    });
   }
 };

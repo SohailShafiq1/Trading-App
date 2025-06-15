@@ -19,24 +19,24 @@ const coinSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["Live", "OTC"],
+      enum: ["Live", "OTC", "Forex"], // Add Forex
     },
     name: {
       type: String,
       required: function () {
-        return this.type === "Live";
+        return this.type === "Live" || this.type === "Forex";
       },
     },
     firstName: {
       type: String,
       required: function () {
-        return this.type === "OTC";
+        return this.type === "OTC" || this.type === "Forex";
       },
     },
     lastName: {
       type: String,
       required: function () {
-        return this.type === "OTC";
+        return this.type === "OTC" || this.type === "Forex";
       },
     },
     startingPrice: {
