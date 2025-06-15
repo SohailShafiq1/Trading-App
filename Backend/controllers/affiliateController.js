@@ -56,6 +56,17 @@ export const PrizeArray = [
   },
 ];
 
+// Backend LEVELS array matching frontend
+const AFFILIATE_LEVELS = [
+  { name: "Level 1", depositMin: 0, depositMax: 14 },
+  { name: "Level 2", depositMin: 15, depositMax: 60 },
+  { name: "Level 3", depositMin: 61, depositMax: 120 },
+  { name: "Level 4", depositMin: 121, depositMax: 210 },
+  { name: "Level 5", depositMin: 211, depositMax: 420 },
+  { name: "Level 6", depositMin: 421, depositMax: 720 },
+  { name: "Level 7", depositMin: 721, depositMax: Infinity },
+];
+
 export const registerAffiliate = async (req, res) => {
   try {
     const { email, password, country, currency = "USD" } = req.body;
@@ -273,24 +284,27 @@ export const completeLevel = async (req, res) => {
     if (!affiliate)
       return res.status(404).json({ error: "Affiliate not found" });
 
-    const currentLevel = affiliate.level || 1;
+    const currentLevel = affiliate.affiliateLevel || 1;
     const prize = PrizeArray.find((l) => l.id === currentLevel);
     if (!prize) return res.status(400).json({ error: "Invalid level" });
 
     // Check if time has expired
     const timeElapsed =
       Date.now() - new Date(affiliate.levelStartTime).getTime();
-    const timeLimitMs = prize.timeLimit * 24 * 60 * 60 * 1000;
+    // For testing: 1 minute instead of a month
+    const timeLimitMs = 1 * 60 * 1000;
 
     if (timeElapsed > timeLimitMs) {
-      // Time expired - reset to level 1
-      affiliate.level = 1;
+      // Time expired - reset to level 1 and reset totalTeamDeposit
+      affiliate.affiliateLevel = 1;
       affiliate.levelStartTime = Date.now();
+      affiliate.totalTeamDeposit = 0; // reset deposit count
       await affiliate.save();
 
       return res.status(400).json({
         success: false,
-        message: "Time expired! You've been reset to Level 1",
+        message:
+          "Time expired! You've been reset to Level 1 and deposits reset",
         timeExpired: true,
       });
     }
@@ -311,14 +325,14 @@ export const completeLevel = async (req, res) => {
       });
     }
 
-    // Update level logic
+    // Update affiliateLevel logic
     if (currentLevel === PrizeArray.length) {
       // User completed the last level, reset to level 1
-      affiliate.level = 1;
+      affiliate.affiliateLevel = 1;
       affiliate.levelStartTime = Date.now();
     } else {
       // Move to next level
-      affiliate.level = currentLevel + 1;
+      affiliate.affiliateLevel = currentLevel + 1;
       affiliate.levelStartTime = Date.now();
     }
     if (!affiliate.prize) affiliate.prize = [];
@@ -333,7 +347,7 @@ export const completeLevel = async (req, res) => {
 
     res.json({
       success: true,
-      newLevel: affiliate.level,
+      newLevel: affiliate.affiliateLevel,
       reset: currentLevel === PrizeArray.length, // Optionally tell frontend if reset happened
     });
   } catch (err) {
@@ -349,31 +363,32 @@ export const checkLevelStatus = async (req, res) => {
     if (!affiliate)
       return res.status(404).json({ error: "Affiliate not found" });
 
-    const currentLevel = affiliate.level || 1;
+    const currentLevel = affiliate.affiliateLevel || 1;
     const prize = PrizeArray.find((l) => l.id === currentLevel);
     if (!prize) return res.status(400).json({ error: "Invalid level" });
 
     const timeElapsed =
       Date.now() - new Date(affiliate.levelStartTime).getTime();
-    const timeLimitMs = prize.timeLimit * 24 * 60 * 60 * 1000;
+    // For testing: 1 minute instead of a month
+    const timeLimitMs = 1 * 60 * 1000;
     const timeLeft = Math.max(0, timeLimitMs - timeElapsed);
 
     // Check if time has expired
     if (timeElapsed > timeLimitMs) {
       // Time expired - reset to level 1
-      affiliate.level = 1;
+      affiliate.affiliateLevel = 1;
       affiliate.levelStartTime = Date.now();
       await affiliate.save();
 
       return res.json({
-        level: 1,
+        affiliateLevel: 1,
         timeExpired: true,
         timeLeft: PrizeArray[0].timeLimit * 24 * 60 * 60 * 1000,
       });
     }
 
     res.json({
-      level: affiliate.level,
+      affiliateLevel: affiliate.affiliateLevel,
       timeLeft,
       conditions: prize.conditions,
       currentDeposit: affiliate.totalDeposit,
@@ -483,19 +498,36 @@ export const getTeamTotalDeposits = async (req, res) => {
     // Find all users in the affiliate's team
     const teamUsers = await User.find({ email: { $in: affiliate.team } });
 
-    // Count all successful deposit transactions for all team users
+    // Count all successful deposit transactions for all team users AFTER last reset
     let totalDeposits = 0;
+    const resetTime = affiliate.levelStartTime || new Date(0);
     teamUsers.forEach((user) => {
       if (Array.isArray(user.transactions)) {
         totalDeposits += user.transactions.filter(
-          (t) => t.type === "deposit" && t.status === "success"
+          (t) => t.type === "deposit" && t.status === "success" && new Date(t.createdAt) > new Date(resetTime)
         ).length;
       }
     });
 
+    // Save the totalDeposits to the affiliate's totalTeamDeposit field
+    affiliate.totalTeamDeposit = totalDeposits;
+
+    // Calculate affiliateLevel using backend AFFILIATE_LEVELS
+    let backendLevel = 1;
+    for (let i = AFFILIATE_LEVELS.length - 1; i >= 0; i--) {
+      if (totalDeposits >= AFFILIATE_LEVELS[i].depositMin) {
+        backendLevel = i + 1;
+        break;
+      }
+    }
+    affiliate.affiliateLevel = backendLevel;
+
+    await affiliate.save();
+
     return res.status(200).json({
       success: true,
-      totalDeposits,
+      totalTeamDeposit: affiliate.totalTeamDeposit,
+      affiliateLevel: affiliate.affiliateLevel,
     });
   } catch (err) {
     console.error("Error calculating team total deposits:", err);

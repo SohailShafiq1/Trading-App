@@ -73,7 +73,8 @@ const AffiliateLevel = () => {
           const res = await axios.get(
             `${BACKEND_URL}/api/affiliate/team-deposit-count/${affiliate.email}`
           );
-          setTeamDepositCount(res.data.totalDeposits);
+          setTeamDepositCount(res.data.totalTeamDeposit);
+          console.log("Team Deposit Count:", res.data.totalTeamDeposit);
         } catch (err) {
           setTeamDepositCount(0);
         }
