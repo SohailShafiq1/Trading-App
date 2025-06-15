@@ -236,7 +236,7 @@ const BinaryChart = () => {
     let isMounted = true;
     const fetchForexPrice = async () => {
       try {
-        const apiKey = "d26b112fa4dd46858146b3ff1bdd4c16"; // Your API key
+        const apiKey = "947e8dde5aad425da8950b509decf8ca"; // Your API key
         let symbol = selectedCoin.includes("/")
           ? selectedCoin
           : selectedCoin.replace(/(\w{3})(\w{3})/, "$1/$2");
