@@ -1807,7 +1807,7 @@ const LiveCandleChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "150%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
@@ -1859,7 +1859,7 @@ const LiveCandleChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "150%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
