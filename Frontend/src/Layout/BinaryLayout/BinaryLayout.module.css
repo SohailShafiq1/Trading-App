@@ -220,7 +220,7 @@
 }
 
 .logo {
-  height: 150px;
+  height: 50px;
   min-width: 120px;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -781,6 +781,7 @@
   }
   .logo {
     min-width: 100px;
+    height: 40px;
   }
   .liveAcc {
     height: 50px;

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiArrowDownRight } from "react-icons/fi";
-import { AiOutlineClose,AiOutlineRocket } from "react-icons/ai"; // For close icon
+import { AiOutlineClose, AiOutlineRocket } from "react-icons/ai"; // For close icon
 import styles from "./BinaryChart.module.css";
 import TradingViewChart from "./TradingViewChart";
 import LiveCandleChart from "./LiveCandleChart";
+import ForexTradingChart from "./ForexTradingChart";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
@@ -24,6 +25,8 @@ const BinaryChart = () => {
     if (!coinData) return 0;
     if (trade.coinType === "Live") {
       return coinData.currentPrice ?? livePrice;
+    } else if (trade.coinType === "Forex") {
+      return coinData.currentPrice ?? forexPrice;
     } else {
       return coinData.currentPrice ?? otcPrice;
     }
@@ -65,6 +68,7 @@ const BinaryChart = () => {
   const [allInClicked, setAllInClicked] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(true);
   const [latestBonus, setLatestBonus] = useState(null);
+  const [forexPrice, setForexPrice] = useState(0);
 
   const navigate = useNavigate();
 
@@ -226,6 +230,41 @@ const BinaryChart = () => {
     };
   }, [selectedCoin, selectedCoinType]);
 
+  // Fetch and update forex price
+  useEffect(() => {
+    if (!selectedCoin || selectedCoinType !== "Forex") return;
+    let isMounted = true;
+    const fetchForexPrice = async () => {
+      try {
+        const apiKey = "d26b112fa4dd46858146b3ff1bdd4c16"; // Your API key
+        let symbol = selectedCoin.includes("/")
+          ? selectedCoin
+          : selectedCoin.replace(/(\w{3})(\w{3})/, "$1/$2");
+        const url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (isMounted && data && data.price) {
+          setForexPrice(parseFloat(data.price));
+          setPriceLoaded(true);
+          setIsLoading(false);
+        } else if (isMounted) {
+          setIsLoading(false);
+          setPriceLoaded(false);
+          console.error("Twelve Data price error or no data:", data);
+        }
+      } catch (err) {
+        if (isMounted) setIsLoading(false);
+        console.error("Failed to fetch forex price:", err);
+      }
+    };
+    fetchForexPrice();
+    const interval = setInterval(fetchForexPrice, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedCoin, selectedCoinType]);
+
   // Update trade timers
   useEffect(() => {
     const interval = setInterval(() => {
@@ -250,7 +289,8 @@ const BinaryChart = () => {
                 (tradeInvestment / trade.entryPrice);
             }
             const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-            const lockedReward = Math.round((basePayout + centsChange) * 100) / 100;
+            const lockedReward =
+              Math.round((basePayout + centsChange) * 100) / 100;
             const lockedStatus = centsChange >= 0 ? "win" : "loss";
             return {
               ...trade,
@@ -797,34 +837,35 @@ const BinaryChart = () => {
 
   return (
     <>
-   {showBonusPopup &&
-  latestBonus &&
-  user &&
-  Array.isArray(user.usedBonuses) &&
-  !user.usedBonuses.includes(latestBonus._id) && (
-    <div
-      className={styles.bonusPopupWrapper}
-      onClick={() => navigate("/binarychart/bankinglayout/deposit")}
-    >
-      <div className={styles.bonusPopupContent}>
-        <AiOutlineRocket className={styles.bonusIcon} />
-        <span className={styles.bonusText}>
-          Get a <b>{latestBonus.percent}% bonus</b> on your first deposit of <b>${latestBonus.min}</b> or more!
-        </span>
-        <span className={styles.bonusBadge}>{latestBonus.percent}%</span>
-        <button
-          className={styles.closeBtn}
-          onClick={e => {
-            e.stopPropagation();
-            setShowBonusPopup(false);
-          }}
-          aria-label="Close"
-        >
-          <AiOutlineClose />
-        </button>
-      </div>
-    </div>
-)}
+      {showBonusPopup &&
+        latestBonus &&
+        user &&
+        Array.isArray(user.usedBonuses) &&
+        !user.usedBonuses.includes(latestBonus._id) && (
+          <div
+            className={styles.bonusPopupWrapper}
+            onClick={() => navigate("/binarychart/bankinglayout/deposit")}
+          >
+            <div className={styles.bonusPopupContent}>
+              <AiOutlineRocket className={styles.bonusIcon} />
+              <span className={styles.bonusText}>
+                Get a <b>{latestBonus.percent}% bonus</b> on your first deposit
+                of <b>${latestBonus.min}</b> or more!
+              </span>
+              <span className={styles.bonusBadge}>{latestBonus.percent}%</span>
+              <button
+                className={styles.closeBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowBonusPopup(false);
+                }}
+                aria-label="Close"
+              >
+                <AiOutlineClose />
+              </button>
+            </div>
+          </div>
+        )}
 
       <div className={styles.container}>
         <div className={styles.Cbox}>
@@ -874,47 +915,61 @@ const BinaryChart = () => {
                       />
                     </div>
                   )}
+                  {selectedCoinType === "Forex" && (
+                    <ForexTradingChart
+                      coinName={selectedCoin}
+                      setSelectedCoin={setSelectedCoin}
+                      coins={coins}
+                      profit={
+                        coins.find((c) => c.name === selectedCoin)
+                          ?.profitPercentage
+                      }
+                      type={selectedCoinType}
+                      trades={trades}
+                      handleCloseTrade={handleCloseTrade}
+                    />
+                  )}
                 </>
               )
             )}
           </div>
 
           <div className={styles.control}>
-           <h1 className={styles.selectedCoinTitle}>
-  {selectedCoin
-    ? `${selectedCoin} Trading`
-    : "Select Coin Trading"}
-  {selectedCoin && (
-    <>
-      {" "}
-      <span style={{
-        fontSize: "1rem",
-        color: "#10A055",
-        background: "#eafbee",
-        borderRadius: "1rem",
-        padding: "2px 10px",
-        marginLeft: 8,
-        fontWeight: 600,
-        display: "inline-block",
-        verticalAlign: "middle"
-      }}>
-        {coins.find((c) => c.name === selectedCoin)?.profitPercentage ?? 0}% 
-      </span>
-    </>
-  )}
-</h1>
+            <h1 className={styles.selectedCoinTitle}>
+              {selectedCoin ? `${selectedCoin} Trading` : "Select Coin Trading"}
+              {selectedCoin && (
+                <>
+                  {" "}
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      color: "#10A055",
+                      background: "#eafbee",
+                      borderRadius: "1rem",
+                      padding: "2px 10px",
+                      marginLeft: 8,
+                      fontWeight: 600,
+                      display: "inline-block",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {coins.find((c) => c.name === selectedCoin)
+                      ?.profitPercentage ?? 0}
+                    %
+                  </span>
+                </>
+              )}
+            </h1>
             <p className={styles.selectedCoinPrice}>
               Current Price:{" "}
-              {selectedCoinType === "OTC"
-                ? !isNaN(otcPrice)
-                  ? otcPrice.toFixed(2)
-                  : "Loading..."
-                : selectedCoinType === "Live"
+              {selectedCoinType === "OTC" && !isNaN(otcPrice)
+                ? otcPrice.toFixed(2)
+                : selectedCoinType === "Live" && !isNaN(livePrice)
                 ? livePrice
-                : "N/A"}
-                
+                : selectedCoinType === "Forex" && !isNaN(forexPrice)
+                ? forexPrice.toFixed(4)
+                : "Loading..."}
             </p>
-
             <div className={styles.controlStuff}>
               <div className={styles.controlBox}>
                 <button
