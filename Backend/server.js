@@ -35,11 +35,8 @@ const app = express();
 
 // Configure CORS
 const allowedOrigins = [
-
-  
-  "https://wealthx-broker.com",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
+  "https://wealthx-broker.com"
+];
 
 app.use(
   cors({
