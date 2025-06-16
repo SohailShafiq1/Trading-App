@@ -267,7 +267,7 @@ const BinaryChart = () => {
       }
     };
     fetchForexPrice();
-    const interval = setInterval(fetchForexPrice, 5000);
+    const interval = setInterval(fetchForexPrice, 1000); // fetch every second
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -421,8 +421,16 @@ const BinaryChart = () => {
     setIsProcessingTrade(true);
 
     try {
-      const currentPrice = selectedCoinType === "OTC" ? otcPrice : livePrice;
-      const tradePrice = parseFloat(currentPrice);
+      let tradePrice;
+      if (selectedCoinType === "OTC") {
+        tradePrice = parseFloat(otcPrice);
+      } else if (selectedCoinType === "Live") {
+        tradePrice = parseFloat(livePrice);
+      } else if (selectedCoinType === "Forex") {
+        tradePrice = parseFloat(forexPrice);
+      } else {
+        tradePrice = 0;
+      }
       // When creating a new trade
       const tradeId = `${Date.now()}-${Math.random()
         .toString(36)
