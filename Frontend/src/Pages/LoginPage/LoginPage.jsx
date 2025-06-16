@@ -5,6 +5,7 @@ import styles from "./LoginPage.module.css";
 import { jwtDecode as jwt_decode } from "jwt-decode";
 import { NavLink } from "react-router-dom";
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 
 const LoginPage = () => {
   const { login, googleLogin, resetPassword, user } = useAuth();
@@ -35,7 +36,7 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/check-admin`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/check-admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

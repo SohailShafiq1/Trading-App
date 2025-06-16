@@ -3,6 +3,7 @@ import styles from "./BinaryLayout.module.css";
 import { AiOutlineClose } from "react-icons/ai";
 import axios from "axios";
 import { useAuth } from "../../Context/AuthContext"; // adjust path if needed
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 
 const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -15,11 +16,13 @@ const LeaderboardPopup = ({ onClose }) => {
     const fetchLeaders = async () => {
       try {
         // Fetch admin leaderboard entries
-        const adminRes = await axios.get("http://localhost:5000/api/admin/leaderboard");
+        const adminRes = await axios.get(
+          `${BACKEND_URL}/api/admin/leaderboard`
+        );
         const adminEntries = adminRes.data;
 
         // Fetch all users (with email, userId, etc.)
-        const usersRes = await axios.get("http://localhost:5000/api/admin/all-users");
+        const usersRes = await axios.get(`${BACKEND_URL}/api/admin/all-users`);
         const users = usersRes.data;
 
         // For each user, fetch their profit for today and trades info
@@ -27,14 +30,17 @@ const LeaderboardPopup = ({ onClose }) => {
           users.map(async (u) => {
             try {
               const userDetailRes = await axios.get(
-                `http://localhost:5000/api/users/email/${u.email}`
+                `${BACKEND_URL}/api/users/email/${u.email}`
               );
               const userDetail = userDetailRes.data;
               const todayProfit =
-                userDetail.dailyProfits?.find((p) => p.date === todayStr)?.profit || 0;
+                userDetail.dailyProfits?.find((p) => p.date === todayStr)
+                  ?.profit || 0;
               const trades = userDetail.trades || [];
               const tradesCount = trades.length;
-              const profitableTrades = trades.filter((t) => t.result === "win").length;
+              const profitableTrades = trades.filter(
+                (t) => t.result === "win"
+              ).length;
               return {
                 ...u,
                 username: userDetail.username || u.firstName || u.email,
@@ -111,7 +117,9 @@ const LeaderboardPopup = ({ onClose }) => {
               </strong>
               <div>Your Position: {userIndex + 1}</div>
             </div>
-            <span>${Number(leaders[userIndex].todayProfit).toLocaleString()}</span>
+            <span>
+              ${Number(leaders[userIndex].todayProfit).toLocaleString()}
+            </span>
           </div>
         )}
 
@@ -155,14 +163,17 @@ const LeaderboardPopup = ({ onClose }) => {
           </div>
           <div className={styles.userStats}>
             <div>
-              <div>{selectedUser.tradesCount ?? selectedUser.trades?.length ?? 0}</div>
+              <div>
+                {selectedUser.tradesCount ?? selectedUser.trades?.length ?? 0}
+              </div>
               <div>Trades count</div>
             </div>
             <div>
               <div>
                 {selectedUser.profitableTrades ??
                   (selectedUser.trades
-                    ? selectedUser.trades.filter((t) => t.result === "win").length
+                    ? selectedUser.trades.filter((t) => t.result === "win")
+                        .length
                     : 0)}
               </div>
               <div>Profitable trades</div>

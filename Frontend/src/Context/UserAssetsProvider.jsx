@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 
 const UserAssetsContext = createContext();
 
@@ -12,7 +13,7 @@ export const UserAssetsProvider = ({ children }) => {
     const fetchAssets = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${user.email}`
+          `${BACKEND_URL}/api/users/email/${user.email}`
         );
         setUserAssets(response.data.assets);
       } catch (err) {

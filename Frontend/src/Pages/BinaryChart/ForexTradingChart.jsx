@@ -325,8 +325,9 @@ const ForexTradingChart = ({
       trendLineSeriesRef.current.setData(trendLinePoints);
     }
     if (
-      trendLinePoints.length > 2 ||
-      activeDrawingTool !== DRAWING_TOOLS.TREND_LINE
+      (trendLinePoints.length > 2 ||
+        activeDrawingTool !== DRAWING_TOOLS.TREND_LINE) &&
+      trendLinePoints.length > 0
     ) {
       setTrendLinePoints([]);
       if (trendLineSeriesRef.current) {
@@ -545,7 +546,7 @@ const ForexTradingChart = ({
   const renderTradeBoxesAndLines = () => {
     if (!chartRef.current || !seriesRef.current || !containerRef.current)
       return null;
-    // Group trades by interval bucket
+    // Group trades by interval bucket (like TradingViewChart)
     const normalizedInterval = normalizeInterval(interval);
     const intervalSec = intervalToSeconds[normalizedInterval] || 60;
     let chartTimes = [];

@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }) => {
         },
       });
       setUser(res.data.user);
-      console.log("User fetched successfully:", res.data.user);
     } catch {
       logout();
     } finally {
@@ -65,7 +64,6 @@ export const AuthProvider = ({ children }) => {
       password,
     });
     localStorage.setItem("token", res.data.token);
-    localStorage.setItem("selectedCoin", "BTC");
     setUser(res.data.user);
   };
 
