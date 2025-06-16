@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }) => {
         },
       });
       setUser(res.data.user);
-      console.log("User fetched successfully:", res.data.user);
     } catch {
       logout();
     } finally {

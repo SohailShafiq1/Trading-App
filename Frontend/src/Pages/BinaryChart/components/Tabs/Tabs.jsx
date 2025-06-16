@@ -33,7 +33,6 @@ const Tabs = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/users/tradeCount/${user.email}`
         );
         setTotalTrades(res.data.totalTrades);
-        console.log(res.data.totalTrades);
       } catch (err) {
         console.error("Error Fetching trades", err);
       }
