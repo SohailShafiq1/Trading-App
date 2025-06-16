@@ -5,7 +5,6 @@ import { HiOutlineVolumeUp } from "react-icons/hi";
 import { AiTwotoneBell } from "react-icons/ai";
 import axios from "axios";
 import styles from "./Tabs.module.css";
-import User from "../../../../../../Backend/models/User";
 import { useAuth } from "../../../../Context/AuthContext";
 import { useAccountType } from "../../../../Context/AccountTypeContext";
 import { NavLink } from "react-router-dom";
