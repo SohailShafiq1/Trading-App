@@ -62,7 +62,7 @@ const DepositPage = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/bonuses")
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`)
       .then((res) => setBonusOptions(res.data));
   }, []);
 
@@ -76,7 +76,7 @@ const DepositPage = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/users/is-verified/${user._id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${user._id}`
         );
         setIsVerified(response.data.verified);
       } catch (err) {
@@ -91,7 +91,7 @@ const DepositPage = () => {
   }, [user?._id]);
 
   const fetchBonuses = async () => {
-    const res = await axios.get("http://localhost:5000/api/bonuses");
+    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`);
     setBonusOptions(res.data);
   };
 
@@ -140,14 +140,17 @@ const DepositPage = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/users/deposit", {
-        email,
-        amount,
-        txId,
-        fromAddress,
-        bonusPercent: selectedBonus?.percent,
-        bonusId: selectedBonus?._id, // Send bonus ID
-      });
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/deposit`,
+        {
+          email,
+          amount,
+          txId,
+          fromAddress,
+          bonusPercent: selectedBonus?.percent,
+          bonusId: selectedBonus?._id, // Send bonus ID
+        }
+      );
 
       setMessage(res.data.message);
       setAmount("");
@@ -378,7 +381,7 @@ const DepositPage = () => {
                   onClick={async () => {
                     try {
                       const res = await axios.post(
-                        "http://localhost:5000/api/users/deposit",
+                        `${import.meta.env.VITE_BACKEND_URL}/api/users/deposit`,
                         {
                           email,
                           amount,
@@ -393,8 +396,7 @@ const DepositPage = () => {
                       setShowModal(false);
                       setShowContinue(false);
                       toast.success("Deposit request submitted successfully!");
-      window.location.reload(); // Reload to update user data
-                      
+                      window.location.reload(); // Reload to update user data
                     } catch (err) {
                       setMessage("Deposit failed. Try again.");
                       toast.error("Deposit failed. Please try again.");

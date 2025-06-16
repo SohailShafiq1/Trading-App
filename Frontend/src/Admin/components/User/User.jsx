@@ -457,7 +457,7 @@ const User = () => {
                 <br />
                 {selectedUser.cnicPicture && (
                   <img
-                    src={`http://localhost:5000/${selectedUser.cnicPicture}`}
+                    src={`${import.meta.env.VITE_BACKEND_URL}/${selectedUser.cnicPicture}`}
                     alt="CNIC"
                     style={{
                       width: 120,
@@ -481,7 +481,7 @@ const User = () => {
                 <br />
                 {selectedUser.cnicBackPicture && (
                   <img
-                    src={`http://localhost:5000/${selectedUser.cnicBackPicture}`}
+                    src={`${import.meta.env.VITE_BACKEND_URL}/${selectedUser.cnicBackPicture}`}
                     alt="CNIC Back"
                     style={{
                       width: 120,
@@ -503,7 +503,7 @@ const User = () => {
                 <br />
                 {selectedUser.passportImage ? (
                   <img
-                    src={`http://localhost:5000/${selectedUser.passportImage.replace(
+                    src={`${import.meta.env.VITE_BACKEND_URL}/${selectedUser.passportImage.replace(
                       /^\//,
                       ""
                     )}`}

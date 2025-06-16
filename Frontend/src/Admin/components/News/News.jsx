@@ -18,7 +18,7 @@ const News = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/news`);
         setNewsList(res.data.news || []);
         toast.success("News fetched successfully!");
       } catch (err) {
@@ -32,7 +32,7 @@ const News = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/news`);
         setNewsList(res.data.news || []);
       } catch (err) {
         // Optionally handle error
@@ -50,7 +50,7 @@ const News = () => {
     try {
       setIsLoading(true);
       await axios.post(
-        "http://localhost:5000/api/news",
+        `${import.meta.env.VITE_BACKEND_URL}/api/news`,
         { title, content },
         {
           headers: {
@@ -59,7 +59,7 @@ const News = () => {
         }
       );
       // Re-fetch news after adding
-      const res = await axios.get("http://localhost:5000/api/news");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/news`);
       setNewsList(res.data.news || []);
       setTitle("");
       setContent("");
@@ -85,7 +85,7 @@ const News = () => {
     if (!newsToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/news/${newsToDelete._id}`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/news/${newsToDelete._id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

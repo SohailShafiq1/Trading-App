@@ -17,7 +17,7 @@ const SupportCentre = () => {
       setLoading(true); // Start loader
       try {
         const res = await fetch(
-          "http://localhost:5000/api/admin/support-requests"
+          `${import.meta.env.VITE_BACKEND_URL}/api/admin/support-requests`
         );
         const data = await res.json();
         setRequests(data);
@@ -34,7 +34,7 @@ const SupportCentre = () => {
     setSelected(req);
     try {
       await fetch(
-        `http://localhost:5000/api/admin/support-reviewed/${req._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/support-reviewed/${req._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -54,7 +54,7 @@ const SupportCentre = () => {
     setCompleting(true);
     try {
       await fetch(
-        `http://localhost:5000/api/admin/support-completed/${selected._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/support-completed/${selected._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

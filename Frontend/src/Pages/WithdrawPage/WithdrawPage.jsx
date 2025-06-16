@@ -32,7 +32,7 @@ const WithdrawPage = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/api/users/is-verified/${user._id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${user._id}`
         );
         const data = await response.json();
         setIsVerified(data.verified);
@@ -107,7 +107,7 @@ const WithdrawPage = () => {
     const toastId = toast.loading("Processing your withdrawal request...");
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/withdraw", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/withdraw`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

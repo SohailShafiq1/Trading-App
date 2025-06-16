@@ -81,7 +81,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/email/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${user.email}`
         );
         setFirstName(res.data.firstName || "");
         setLastName(res.data.lastName || "");
@@ -104,7 +104,7 @@ const Profile = () => {
           setPassportPreview(
             res.data.passportImage.startsWith("http")
               ? res.data.passportImage
-              : `http://localhost:5000/${
+              : `${import.meta.env.VITE_BACKEND_URL}/${
                   res.data.passportImage.startsWith("/") ? "" : "/"
                 }${res.data.passportImage}`
           );
@@ -121,7 +121,7 @@ const Profile = () => {
 
   const logoutNotification = () => {
     axios
-      .post("http://localhost:5000/api/users/notifications/create", {
+      .post(`${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/create`, {
         email: user.email,
         notification: {
           type: "Logout",
@@ -303,7 +303,7 @@ const Profile = () => {
       }
 
       await axios.put(
-        "http://localhost:5000/api/users/update-profile",
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`,
         formData,
         {
           headers: {
@@ -315,7 +315,7 @@ const Profile = () => {
       alert("Profile updated!");
       // Fetch updated profile
       const res = await axios.get(
-        `http://localhost:5000/api/users/email/${email}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${email}`
       );
       setFirstName(res.data.firstName || "");
       setLastName(res.data.lastName || "");
@@ -354,7 +354,7 @@ const Profile = () => {
     }
 
     try {
-      await axios.delete("http://localhost:5000/api/auth/delete-account", {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/auth/delete-account`, {
         data: {
           email: user.email, // Pass current user's email
           password: deletePassword,
@@ -377,7 +377,7 @@ const Profile = () => {
 
   const handleDeleteProfileImage = async () => {
     if (!window.confirm("Delete your profile image?")) return;
-    await axios.put("http://localhost:5000/api/users/update-profile", {
+    await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`, {
       email,
       profilePicture: "",
     });
@@ -387,7 +387,7 @@ const Profile = () => {
 
   const handleDeleteCnicImage = async () => {
     if (!window.confirm("Delete your CNIC image and CNIC back image?")) return;
-    await axios.put("http://localhost:5000/api/users/update-profile", {
+    await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`, {
       email,
       cnicPicture: "",
       cnicBackPicture: "", // <-- Also clear CNIC back image
@@ -424,7 +424,7 @@ const Profile = () => {
                     src={
                       profilePicture.startsWith("http")
                         ? profilePicture
-                        : `http://localhost:5000${profilePicture}`
+                        : `${import.meta.env.VITE_BACKEND_URL}${profilePicture}`
                     }
                     alt="Profile"
                     className={s.avatarImg}
@@ -579,7 +579,7 @@ const Profile = () => {
                       src={
                         cnicPicture.startsWith("http")
                           ? cnicPicture
-                          : `http://localhost:5000${
+                          : `${import.meta.env.VITE_BACKEND_URL}${
                               cnicPicture.startsWith("/") ? "" : "/"
                             }${cnicPicture}`
                       }
@@ -630,7 +630,7 @@ const Profile = () => {
                     style={{ flexDirection: "column" }}
                   >
                     <img
-                      src={`http://localhost:5000/${cnicBackPicture}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL}/${cnicBackPicture}`}
                       alt="Back"
                       className={s.cnicImgStyled}
                     />
@@ -697,7 +697,7 @@ const Profile = () => {
                       src={
                         passportImage.startsWith("http")
                           ? passportImage
-                          : `http://localhost:5000${
+                          : `${import.meta.env.VITE_BACKEND_URL}${
                               passportImage.startsWith("/") ? "" : "/"
                             }${passportImage}`
                       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import styles from "../HomePage.module.css";
 const s = styles;
 
@@ -11,7 +11,9 @@ const Testimonials = () => {
     const fetchTestimonials = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/testimonials");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/testimonials`
+        );
         const data = await res.json();
         setTestimonials(data.reverse()); // Show latest first
       } catch (err) {
@@ -36,8 +38,12 @@ const Testimonials = () => {
           visibleTestimonials.map((item, idx) => (
             <div key={item._id || idx} className={s.testimonialCard}>
               <h3>{item.name}</h3>
-              <p className={s.meta}><strong>Registered:</strong> {item.registered}</p>
-              <p className={s.meta}><strong>Earned:</strong> {item.earned}</p>
+              <p className={s.meta}>
+                <strong>Registered:</strong> {item.registered}
+              </p>
+              <p className={s.meta}>
+                <strong>Earned:</strong> {item.earned}
+              </p>
               <div className={s.stars}>
                 {Array.from({ length: item.rating }, (_, i) => (
                   <span key={i}>⭐</span>
@@ -49,14 +55,14 @@ const Testimonials = () => {
         )}
       </div>
       {!showAll && testimonials.length > 6 && (
-        <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <div style={{ textAlign: "center", marginTop: 24 }}>
           <button className={s.button} onClick={() => setShowAll(true)}>
             Show All Reviews
           </button>
         </div>
       )}
       {showAll && testimonials.length > 6 && (
-        <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <div style={{ textAlign: "center", marginTop: 24 }}>
           <button className={s.button} onClick={() => setShowAll(false)}>
             Show Less
           </button>

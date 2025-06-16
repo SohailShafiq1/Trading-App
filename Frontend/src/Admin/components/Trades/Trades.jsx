@@ -23,9 +23,9 @@ const Trades = () => {
     const fetchData = async () => {
       try {
         const [tradesRes, depositsRes, withdrawalsRes] = await Promise.all([
-          fetch("http://localhost:5000/api/admin/all-trades"),
-          fetch("http://localhost:5000/api/admin/deposits"),
-          fetch("http://localhost:5000/api/admin/withdraw-requests"), // <-- Add this line
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/all-trades`),
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/deposits`),
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/withdraw-requests`),
         ]);
         const tradesData = await tradesRes.json();
         const depositsData = await depositsRes.json();

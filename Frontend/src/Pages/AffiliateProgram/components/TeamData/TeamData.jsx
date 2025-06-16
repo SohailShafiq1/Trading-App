@@ -13,7 +13,7 @@ const TeamData = ({ activeTable }) => {
     const fetchTeam = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/affiliate/team/${affiliate.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/affiliate/team/${affiliate.email}`
         );
         const data = await res.json();
         if (data.success) {

@@ -15,8 +15,8 @@ const Withdraw = () => {
     try {
       const url =
         filter === "all"
-          ? "http://localhost:5000/api/admin/withdraw-requests"
-          : `http://localhost:5000/api/admin/withdraw-requests?status=${filter}`;
+          ? `${import.meta.env.VITE_BACKEND_URL}/api/admin/withdraw-requests`
+          : `${import.meta.env.VITE_BACKEND_URL}/api/admin/withdraw-requests?status=${filter}`;
 
       const response = await fetch(url);
       const data = await response.json();
@@ -36,7 +36,7 @@ const Withdraw = () => {
   const fetchAutoLimit = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/settings/withdraw-limit"
+        `${import.meta.env.VITE_BACKEND_URL}/api/settings/withdraw-limit`
       );
       const data = await res.json();
       setAutoLimit(data.limit);
@@ -49,7 +49,7 @@ const Withdraw = () => {
   const saveAutoLimit = async () => {
     setSaving(true);
     try {
-      await fetch("http://localhost:5000/api/settings/withdraw-limit", {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/settings/withdraw-limit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: Number(autoLimit) }),
@@ -72,7 +72,7 @@ const Withdraw = () => {
   const handleAccept = async (withdrawalId) => {
     try {
       await fetch(
-        `http://localhost:5000/api/admin/withdraw-accept/${withdrawalId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/withdraw-accept/${withdrawalId}`,
         { method: "PUT" }
       );
       fetchWithdrawRequests(); // Refresh the list
@@ -84,7 +84,7 @@ const Withdraw = () => {
   const handleReject = async (withdrawalId) => {
     try {
       await fetch(
-        `http://localhost:5000/api/admin/withdraw-decline/${withdrawalId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/withdraw-decline/${withdrawalId}`,
         { method: "PUT" }
       );
       fetchWithdrawRequests(); // Refresh the list

@@ -15,7 +15,9 @@ const CoinSelector = forwardRef(
     ref
   ) => {
     const [search, setSearch] = useState("");
-    const [activeTab, setActiveTab] = useState("Live");
+    // Only show Forex coins, but label the tab as 'Live'
+    const allowedTabs = ["Live", "OTC"];
+    const [activeTab, setActiveTab] = useState(allowedTabs[0]);
     const [coins, setCoins] = useState([]);
 
     useEffect(() => {
@@ -23,7 +25,7 @@ const CoinSelector = forwardRef(
         setCoins(propCoins);
       } else {
         axios
-          .get("http://localhost:5000/api/coins")
+          .get(`${import.meta.env.VITE_BACKEND_URL}/api/coins`)
           .then((res) => setCoins(res.data))
           .catch(() => setCoins([]));
       }
@@ -47,7 +49,8 @@ const CoinSelector = forwardRef(
 
     const filteredCoins = coins.filter(
       (coin) =>
-        coin.type === activeTab &&
+        ((activeTab === "Live" && coin.type === "Forex") ||
+          (activeTab === "OTC" && coin.type === "OTC")) &&
         (coin.name.toLowerCase().includes(search.toLowerCase()) ||
           ((coin.firstName || "") + " " + (coin.lastName || ""))
             .toLowerCase()
@@ -70,13 +73,13 @@ const CoinSelector = forwardRef(
         {isOpen && (
           <div className={styles.coinPopup}>
             <div className={styles.coinTabs}>
-              {["Live", "OTC", "Forex"].map((tab) => (
+              {allowedTabs.map((tab) => (
                 <button
                   key={tab}
                   className={`${styles.coinTab} ${
                     activeTab === tab ? styles.active : ""
                   }`}
-                  onClick={() => handleTabClick(tab)}
+                  onClick={() => setActiveTab(tab)}
                 >
                   {tab}
                 </button>

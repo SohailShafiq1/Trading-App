@@ -30,7 +30,7 @@ const Tabs = () => {
     const fetchTradeCount = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/tradeCount/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/tradeCount/${user.email}`
         );
         setTotalTrades(res.data.totalTrades);
         console.log(res.data.totalTrades);
@@ -44,7 +44,7 @@ const Tabs = () => {
     const fetchNotifications = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/notifications/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/${user.email}`
         );
         setNotifications(res.data.notifications || []);
         setUnreadNotifications(res.data.unreadCount || 0);
@@ -56,7 +56,7 @@ const Tabs = () => {
     const fetchNews = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/news?email=${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/news?email=${user.email}`
         );
         // Sort news by createdAt (latest first)
         const sortedNews = (res.data.news || [])
@@ -79,12 +79,12 @@ const Tabs = () => {
       // Mark notifications as read
       axios
         .put(
-          `http://localhost:5000/api/users/notifications/mark-all-read/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/mark-all-read/${user.email}`
         )
         .then(() => setUnreadNotifications(0));
       // Mark news as read
       axios
-        .put(`http://localhost:5000/api/news/mark-all-read/${user.email}`)
+        .put(`${import.meta.env.VITE_BACKEND_URL}/api/news/mark-all-read/${user.email}`)
         .then(() => setUnreadNews(0));
     }
   }, [showPopup, user.email]);
@@ -160,14 +160,14 @@ const Tabs = () => {
     const interval = setInterval(() => {
       // Fetch notifications
       axios
-        .get(`http://localhost:5000/api/users/notifications/${user.email}`)
+        .get(`${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/${user.email}`)
         .then((res) => {
           setNotifications(res.data.notifications || []);
           setUnreadNotifications(res.data.unreadCount || 0);
         });
       // Fetch news
       axios
-        .get(`http://localhost:5000/api/news?email=${user.email}`)
+        .get(`${import.meta.env.VITE_BACKEND_URL}/api/news?email=${user.email}`)
         .then((res) => {
           const sortedNews = (res.data.news || [])
             .slice()

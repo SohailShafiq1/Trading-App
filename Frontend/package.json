@@ -12,6 +12,7 @@
   "dependencies": {
     "apexcharts": "^4.7.0",
     "axios": "^1.9.0",
+    "cross-env": "^7.0.3",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
     "jwt-decode": "^4.0.0",

@@ -12,7 +12,7 @@ const Bonuses = () => {
   const [editId, setEditId] = useState(null);
 
   const fetchBonuses = async () => {
-    const res = await axios.get("http://localhost:5000/api/bonuses");
+    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`);
     setBonuses(res.data);
   };
 
@@ -23,13 +23,13 @@ const Bonuses = () => {
   const handleAddOrUpdate = async (e) => {
     e.preventDefault();
     if (editId) {
-      await axios.put(`http://localhost:5000/api/bonuses/${editId}`, {
+      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses/${editId}`, {
         min,
         percent,
       });
       setEditId(null);
     } else {
-      await axios.post("http://localhost:5000/api/bonuses", { min, percent });
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`, { min, percent });
     }
     setMin("");
     setPercent("");
@@ -38,7 +38,7 @@ const Bonuses = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this bonus?")) {
-      await axios.delete(`http://localhost:5000/api/bonuses/${id}`);
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses/${id}`);
       fetchBonuses();
     }
   };

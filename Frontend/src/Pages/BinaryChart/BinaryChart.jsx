@@ -36,7 +36,7 @@ const BinaryChart = () => {
   const socket = useRef(null);
 
   useEffect(() => {
-    socket.current = io("http://localhost:5000");
+    socket.current = io(import.meta.env.VITE_BACKEND_URL);
     return () => {
       socket.current.disconnect();
     };
@@ -76,7 +76,9 @@ const BinaryChart = () => {
   useEffect(() => {
     const fetchLatestBonus = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/bonuses");
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/bonuses`
+        );
         if (Array.isArray(res.data) && res.data.length > 0) {
           // Get the last (latest) bonus
           const latest = res.data[res.data.length - 1];
@@ -102,7 +104,9 @@ const BinaryChart = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/users/is-verified/${user._id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${
+            user._id
+          }`
         );
         setIsVerified(response.data.verified);
       } catch (err) {
@@ -139,10 +143,13 @@ const BinaryChart = () => {
     if (isDemo) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/users/update-assets`, {
-        email: user.email,
-        assets: newAssets,
-      });
+      await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/update-assets`,
+        {
+          email: user.email,
+          assets: newAssets,
+        }
+      );
     } catch (err) {
       console.error("Error updating user assets:", err);
       toast.error("Failed to update assets");
@@ -154,7 +161,9 @@ const BinaryChart = () => {
   useEffect(() => {
     const fetchCoins = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/coins");
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/coins`
+        );
         setCoins(response.data);
       } catch (err) {
         console.error("Error fetching coins:", err);
@@ -313,7 +322,7 @@ const BinaryChart = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/users/trade",
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/trade`,
         {
           email: user.email,
           trade,
@@ -332,7 +341,7 @@ const BinaryChart = () => {
 
     try {
       await axios.put(
-        "http://localhost:5000/api/users/trade/result",
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/trade/result`,
         tradeData
       );
     } catch (err) {
@@ -677,7 +686,7 @@ const BinaryChart = () => {
     const fetchAndRecoverTrades = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/users/trades/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/trades/${user.email}`
         );
         const now = Date.now();
         const recoveredTrades = await Promise.all(
@@ -761,7 +770,9 @@ const BinaryChart = () => {
         endPrice = parseFloat(data.price);
       } else {
         const response = await axios.get(
-          `http://localhost:5000/api/coins/price/${trade.coinName}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${
+            trade.coinName
+          }`
         );
         endPrice =
           typeof response.data === "object"

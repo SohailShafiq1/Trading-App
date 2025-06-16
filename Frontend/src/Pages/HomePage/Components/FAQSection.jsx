@@ -7,7 +7,7 @@ const FAQSection = () => {
   const [activeIndex, setActiveIndex] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/faqs")
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faqs`)
       .then((res) => res.json())
       .then((data) => setFaqs(data))
       .catch(() => setFaqs([]));
@@ -23,7 +23,8 @@ const FAQSection = () => {
       <p className={s.faqSubtitle}>
         See the most common questions of new traders answered here.
       </p>
-      <div className={s.faqList}>Dial. 
+      <div className={s.faqList}>
+        Dial.
         {faqs.map((faq, index) => (
           <div key={faq._id || index} className={s.faqItem}>
             <div className={s.faqQuestion} onClick={() => toggleFAQ(index)}>

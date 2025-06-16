@@ -109,8 +109,8 @@ const ForexTradingChart = ({
   // Fetch candle data from Twelve Data
   const fetchCandles = async () => {
     try {
-      const apiKey = "947e8dde5aad425da8950b509decf8ca"; // Your API key
-      // Use coinName from prop, format as EUR/USD for API
+      const apiKey = import.meta.env.VITE_API_KEY;
+
       let symbol = coinName.includes("/")
         ? coinName
         : coinName.replace(/(\w{3})(\w{3})/, "$1/$2");

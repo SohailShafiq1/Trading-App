@@ -46,7 +46,7 @@ const Support = () => {
     });
 
     try {
-      await axios.post("http://localhost:5000/api/users/support", formData, {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/support`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -79,7 +79,7 @@ const Support = () => {
       if (!user?.email) return;
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/support?email=${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/support?email=${user.email}`
         );
         setRequests(res.data || []);
       } catch (err) {}

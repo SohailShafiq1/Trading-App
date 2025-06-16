@@ -22,7 +22,9 @@ const Deposit = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/deposits");
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/deposits`
+      );
       setDeposits(res.data);
     } catch (err) {
       console.error("Error fetching deposits:", err);
@@ -36,18 +38,18 @@ const Deposit = () => {
     setActionLoading(id);
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/deposit-status/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/deposit-status/${id}`,
         { status: action }
       );
-      
-      setDeposits(prevDeposits =>
-        prevDeposits.map(dep =>
-          dep._id === id ? response.data.deposit : dep
-        )
+
+      setDeposits((prevDeposits) =>
+        prevDeposits.map((dep) => (dep._id === id ? response.data.deposit : dep))
       );
     } catch (err) {
       console.error("Error updating deposit status:", err);
-      setError(`Failed to ${action === "verified" ? "approve" : "reject"} deposit`);
+      setError(
+        `Failed to ${action === "verified" ? "approve" : "reject"} deposit`
+      );
     } finally {
       setActionLoading(null);
     }

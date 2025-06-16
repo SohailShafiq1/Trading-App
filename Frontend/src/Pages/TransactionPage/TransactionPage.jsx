@@ -16,7 +16,7 @@ const TransactionPage = () => {
       try {
         // Fetch transactions
         const txRes = await fetch(
-          `http://localhost:5000/api/users/transactions/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/transactions/${user.email}`
         );
         if (!txRes.ok) throw new Error("Failed to fetch transactions");
         const txData = await txRes.json();
@@ -24,7 +24,7 @@ const TransactionPage = () => {
 
         // Fetch withdrawals
         const wdRes = await fetch(
-          `http://localhost:5000/api/users/withdrawals/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/withdrawals/${user.email}`
         );
         if (!wdRes.ok) throw new Error("Failed to fetch withdrawals");
         const wdData = await wdRes.json();

@@ -29,7 +29,7 @@ const LeaderPage = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/leaderboard"
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/leaderboard`
       );
       setEntries(res.data);
     } catch {
@@ -43,7 +43,7 @@ const LeaderPage = () => {
     try {
       // Get all users (with email, userId, etc.)
       const usersRes = await axios.get(
-        "http://localhost:5000/api/admin/all-users"
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/all-users`
       );
       const users = usersRes.data;
 
@@ -53,7 +53,7 @@ const LeaderPage = () => {
         users.map(async (user) => {
           try {
             const userDetailRes = await axios.get(
-              `http://localhost:5000/api/users/email/${user.email}`
+              `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${user.email}`
             );
             const userDetail = userDetailRes.data;
             const todayProfit =
@@ -101,7 +101,7 @@ const LeaderPage = () => {
   // Handle delete
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this entry?")) {
-      await axios.delete(`http://localhost:5000/api/admin/leaderboard/${id}`);
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/leaderboard/${id}`);
       fetchEntries();
     }
   };
@@ -124,7 +124,7 @@ const LeaderPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (editId) {
-      await axios.put(`http://localhost:5000/api/admin/leaderboard/${editId}`, {
+      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/admin/leaderboard/${editId}`, {
         ...form,
         todayProfit: Number(form.todayProfit),
         tradesCount: Number(form.tradesCount),
@@ -132,7 +132,7 @@ const LeaderPage = () => {
       });
       setEditId(null);
     } else {
-      await axios.post("http://localhost:5000/api/admin/leaderboard", {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/admin/leaderboard`, {
         ...form,
         todayProfit: Number(form.todayProfit),
         tradesCount: Number(form.tradesCount),

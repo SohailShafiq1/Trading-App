@@ -111,12 +111,12 @@ const PrizePool = () => {
         
         // First update team totals
         await fetch(
-          `http://localhost:5000/api/affiliate/update-team-totals/${affiliate.email}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/affiliate/update-team-totals/${affiliate.email}`,
           { credentials: "include" }
         );
 
         // Then get updated affiliate data
-        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/affiliate/me`, {
           credentials: "include",
         });
         
@@ -146,7 +146,7 @@ const PrizePool = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/affiliate/check-level-status/${affiliate.email}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/affiliate/check-level-status/${affiliate.email}`,
         { credentials: "include" }
       );
       const data = await response.json();
@@ -154,7 +154,7 @@ const PrizePool = () => {
       if (data.timeExpired) {
         setTimeExpired(true);
         // Refresh affiliate data if level was reset
-        const res = await fetch(`http://localhost:5000/api/affiliate/me`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/affiliate/me`, {
           credentials: "include",
         });
         const updated = await res.json();
