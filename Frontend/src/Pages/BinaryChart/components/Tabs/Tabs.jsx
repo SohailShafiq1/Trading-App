@@ -5,7 +5,6 @@ import { HiOutlineVolumeUp } from "react-icons/hi";
 import { AiTwotoneBell } from "react-icons/ai";
 import axios from "axios";
 import styles from "./Tabs.module.css";
-import User from "../../../../../../Backend/models/User";
 import { useAuth } from "../../../../Context/AuthContext";
 import { useAccountType } from "../../../../Context/AccountTypeContext";
 import { NavLink } from "react-router-dom";
@@ -30,7 +29,9 @@ const Tabs = () => {
     const fetchTradeCount = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/tradeCount/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/tradeCount/${
+            user.email
+          }`
         );
         setTotalTrades(res.data.totalTrades);
       } catch (err) {
@@ -43,7 +44,9 @@ const Tabs = () => {
     const fetchNotifications = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/${
+            user.email
+          }`
         );
         setNotifications(res.data.notifications || []);
         setUnreadNotifications(res.data.unreadCount || 0);
@@ -78,12 +81,18 @@ const Tabs = () => {
       // Mark notifications as read
       axios
         .put(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/mark-all-read/${user.email}`
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/users/notifications/mark-all-read/${user.email}`
         )
         .then(() => setUnreadNotifications(0));
       // Mark news as read
       axios
-        .put(`${import.meta.env.VITE_BACKEND_URL}/api/news/mark-all-read/${user.email}`)
+        .put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/news/mark-all-read/${
+            user.email
+          }`
+        )
         .then(() => setUnreadNews(0));
     }
   }, [showPopup, user.email]);
@@ -159,7 +168,11 @@ const Tabs = () => {
     const interval = setInterval(() => {
       // Fetch notifications
       axios
-        .get(`${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/${user.email}`)
+        .get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/${
+            user.email
+          }`
+        )
         .then((res) => {
           setNotifications(res.data.notifications || []);
           setUnreadNotifications(res.data.unreadCount || 0);
