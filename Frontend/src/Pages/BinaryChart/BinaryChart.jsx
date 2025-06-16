@@ -519,7 +519,7 @@ const BinaryChart = () => {
             endPrice = parseFloat(data.price);
           } else {
             const response = await axios.get(
-              `http://localhost:5000/api/coins/price/${selectedCoin}`
+              `${BACKEND_URL}/api/coins/price/${selectedCoin}`
             );
             endPrice =
               typeof response.data === "object"

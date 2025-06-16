@@ -14,8 +14,8 @@ import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai"; // Add close icon
-const socket = io("http://localhost:5000");
-const BACKEND_URL = "http://localhost:5000";
+const socket = io(import.meta.env.VITE_BACKEND_URL);
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 const intervalToSeconds = {
   "30s": 30,
   "1m": 60,
