@@ -846,6 +846,18 @@ const BinaryChart = () => {
     }
   };
 
+  // Set selected coin to a forex coin if not already selected
+  useEffect(() => {
+    if (!selectedCoin && coins.length > 0) {
+      const forexCoin = coins.find(
+        (c) => c.type === "forex" || c.type === "Forex"
+      );
+      if (forexCoin) {
+        setSelectedCoin(forexCoin.name);
+      }
+    }
+  }, [coins, selectedCoin]);
+
   return (
     <>
       {showBonusPopup &&

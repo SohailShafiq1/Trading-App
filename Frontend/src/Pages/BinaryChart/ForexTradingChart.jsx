@@ -98,13 +98,23 @@ const ForexTradingChart = ({
   const [currentPrice, setCurrentPrice] = useState(null);
   const [theme, setTheme] = useState(THEMES.LIGHT);
   const [candleStyle, setCandleStyle] = useState(CANDLE_STYLES.CANDLE);
-  const [indicator, setIndicator] = useState(INDICATORS.NONE);
-  const [drawingTool, setDrawingTool] = useState(DRAWING_TOOLS.NONE);
+  // Use single value for indicator and drawing tool
+  const [activeIndicator, setActiveIndicator] = useState(null);
+  const [activeDrawingTool, setActiveDrawingTool] = useState(null);
   const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
   const [showDrawingPopup, setShowDrawingPopup] = useState(false);
   const [showThemePopup, setShowThemePopup] = useState(false);
   const [showStylePopup, setShowStylePopup] = useState(false);
   const buttonRefs = useRef([]);
+
+  // Drawing tool state for trend line
+  const [trendLinePoints, setTrendLinePoints] = useState([]);
+  const trendLineSeriesRef = useRef(null);
+
+  // New refs for indicator chart
+  const indicatorContainerRef = useRef();
+  const indicatorChartRef = useRef(null);
+  const indicatorSeriesRef = useRef([]);
 
   // Fetch candle data from Twelve Data
   const fetchCandles = async () => {
@@ -138,6 +148,7 @@ const ForexTradingChart = ({
     }
   };
 
+  // Main chart setup
   useEffect(() => {
     const chart = createChart(containerRef.current, {
       layout: {
@@ -169,6 +180,48 @@ const ForexTradingChart = ({
     return () => chart.remove();
   }, []);
 
+  // Indicator chart setup (for RSI/MACD)
+  useEffect(() => {
+    // Only run if indicator panel is needed and container is mounted
+    if (!indicatorContainerRef.current) return;
+    // Only create chart if it doesn't exist and indicator is RSI or MACD
+    if (
+      !indicatorChartRef.current &&
+      (activeIndicator === INDICATORS.RSI ||
+        activeIndicator === INDICATORS.MACD)
+    ) {
+      const chart = createChart(indicatorContainerRef.current, {
+        layout: {
+          background: { color: theme.background },
+          textColor: theme.textColor,
+        },
+        grid: {
+          vertLines: { color: theme.gridColor },
+          horzLines: { color: theme.gridColor },
+        },
+        width: indicatorContainerRef.current.clientWidth,
+        height: 200,
+        timeScale: {
+          borderColor: theme.gridColor,
+        },
+      });
+      indicatorChartRef.current = chart;
+    }
+    // Clean up on unmount or when indicator type changes away from RSI/MACD
+    return () => {
+      if (
+        indicatorChartRef.current &&
+        !(
+          activeIndicator === INDICATORS.RSI ||
+          activeIndicator === INDICATORS.MACD
+        )
+      ) {
+        indicatorChartRef.current.remove();
+        indicatorChartRef.current = null;
+      }
+    };
+  }, [activeIndicator, theme]);
+
   useEffect(() => {
     fetchCandles();
   }, [coinName, interval]);
@@ -190,6 +243,244 @@ const ForexTradingChart = ({
     });
     seriesRef.current.setData(candles);
   }, [candles, theme]);
+
+  // Add indicator
+  const selectIndicator = (ind) => {
+    setActiveIndicator(ind);
+  };
+  // Add drawing tool
+  const selectDrawingTool = (tool) => {
+    setActiveDrawingTool(tool);
+  };
+
+  // Drawing tool mouse logic
+  useEffect(() => {
+    if (!containerRef.current || activeDrawingTool !== DRAWING_TOOLS.TREND_LINE)
+      return;
+    const handleClick = (e) => {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      // Convert x to time
+      const timeScale = chartRef.current.timeScale();
+      const logical = chartRef.current.coordinateToLogical(x);
+      const time = timeScale.coordinateToTime(x);
+      // Convert y to price
+      const priceScale = seriesRef.current.priceScale();
+      const price = priceScale.coordinateToPrice(y);
+      if (trendLinePoints.length === 0) {
+        setTrendLinePoints([{ time, price }]);
+      } else if (trendLinePoints.length === 1) {
+        setTrendLinePoints((prev) => [...prev, { time, price }]);
+      }
+    };
+    containerRef.current.addEventListener("click", handleClick);
+    return () => containerRef.current.removeEventListener("click", handleClick);
+  }, [activeDrawingTool, trendLinePoints]);
+
+  // Render trend line
+  useEffect(() => {
+    if (!chartRef.current) return;
+    if (trendLineSeriesRef.current) {
+      chartRef.current.removeSeries(trendLineSeriesRef.current);
+      trendLineSeriesRef.current = null;
+    }
+    if (trendLinePoints.length === 2) {
+      trendLineSeriesRef.current = chartRef.current.addLineSeries({
+        color: "red",
+        lineWidth: 2,
+      });
+      trendLineSeriesRef.current.setData(trendLinePoints);
+    }
+    if (
+      trendLinePoints.length > 2 ||
+      activeDrawingTool !== DRAWING_TOOLS.TREND_LINE
+    ) {
+      setTrendLinePoints([]);
+      if (trendLineSeriesRef.current) {
+        chartRef.current.removeSeries(trendLineSeriesRef.current);
+        trendLineSeriesRef.current = null;
+      }
+    }
+  }, [trendLinePoints, activeDrawingTool]);
+
+  // Indicator calculation utilities from LiveCandleChart
+  const calculateSMA = (data, period) => {
+    if (!data || data.length < period) return [];
+    const sma = [];
+    for (let i = period - 1; i < data.length; i++) {
+      const sum = data
+        .slice(i - period + 1, i + 1)
+        .reduce((acc, val) => acc + val.close, 0);
+      sma.push({ time: data[i].time, value: sum / period });
+    }
+    return sma;
+  };
+  const calculateEMA = (data, period) => {
+    if (!data || data.length < period) return [];
+    const ema = [];
+    const k = 2 / (period + 1);
+    let emaPrev =
+      data.slice(0, period).reduce((acc, val) => acc + val.close, 0) / period;
+    ema.push({ time: data[period - 1].time, value: emaPrev });
+    for (let i = period; i < data.length; i++) {
+      emaPrev = data[i].close * k + emaPrev * (1 - k);
+      ema.push({ time: data[i].time, value: emaPrev });
+    }
+    return ema;
+  };
+  const calculateRSI = (data, period = 14) => {
+    if (!data || data.length <= period) return [];
+    const rsi = [];
+    let gains = 0;
+    let losses = 0;
+    for (let i = 1; i <= period; i++) {
+      const change = data[i].close - data[i - 1].close;
+      if (change > 0) gains += change;
+      else losses -= change;
+    }
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+    const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
+    rsi.push({ time: data[period].time, value: 100 - 100 / (1 + rs) });
+    for (let i = period + 1; i < data.length; i++) {
+      const change = data[i].close - data[i - 1].close;
+      let currentGain = 0;
+      let currentLoss = 0;
+      if (change > 0) currentGain = change;
+      else currentLoss = -change;
+      avgGain = (avgGain * (period - 1) + currentGain) / period;
+      avgLoss = (avgLoss * (period - 1) + currentLoss) / period;
+      const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
+      rsi.push({ time: data[i].time, value: 100 - 100 / (1 + rs) });
+    }
+    return rsi;
+  };
+  const calculateMACD = (
+    data,
+    fastPeriod = 12,
+    slowPeriod = 26,
+    signalPeriod = 9
+  ) => {
+    if (!data || data.length < slowPeriod + signalPeriod)
+      return { macd: [], signal: [] };
+    const emaFast = calculateEMA(data, fastPeriod);
+    const emaSlow = calculateEMA(data, slowPeriod);
+    const macdLine = [];
+    for (let i = slowPeriod - fastPeriod; i < emaSlow.length; i++) {
+      macdLine.push({
+        time: emaSlow[i].time,
+        value: emaFast[i + (slowPeriod - fastPeriod)].value - emaSlow[i].value,
+      });
+    }
+    const signalLine = calculateEMA(
+      macdLine.map((d) => ({ close: d.value, time: d.time })),
+      signalPeriod
+    );
+    return {
+      macd: macdLine.slice(signalPeriod - 1),
+      signal: signalLine,
+    };
+  };
+  const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
+    if (!data || data.length < period)
+      return { upper: [], middle: [], lower: [] };
+    const sma = calculateSMA(data, period);
+    const bands = { upper: [], middle: sma, lower: [] };
+    for (let i = period - 1; i < data.length; i++) {
+      const slice = data.slice(i - period + 1, i + 1);
+      const sum = slice.reduce(
+        (acc, val) => acc + Math.pow(val.close - sma[i - period + 1].value, 2),
+        0
+      );
+      const stdDev = Math.sqrt(sum / period);
+      bands.upper.push({
+        time: data[i].time,
+        value: sma[i - period + 1].value + multiplier * stdDev,
+      });
+      bands.lower.push({
+        time: data[i].time,
+        value: sma[i - period + 1].value - multiplier * stdDev,
+      });
+    }
+    return bands;
+  };
+
+  // Helper to filter and warn about bad data
+  function filterValidData(arr) {
+    const filtered = (arr || []).filter(
+      (d) =>
+        d && d.time !== undefined && d.value !== undefined && !isNaN(d.value)
+    );
+    if (filtered.length !== (arr || []).length) {
+      console.warn(
+        "Some indicator data points were invalid and filtered out:",
+        (arr || []).length - filtered.length
+      );
+    }
+    return filtered;
+  }
+
+  // Render indicator in the chart (fix RSI/MACD overlay)
+  useEffect(() => {
+    if (!chartRef.current || !seriesRef.current || candles.length === 0) return;
+    // Remove overlays from main chart
+    if (chartRef.current._indicatorSeries) {
+      chartRef.current._indicatorSeries.forEach((s) =>
+        chartRef.current.removeSeries(s)
+      );
+    }
+    chartRef.current._indicatorSeries = [];
+    // Remove indicator chart series
+    if (indicatorChartRef.current && indicatorSeriesRef.current.length) {
+      indicatorSeriesRef.current.forEach((s) =>
+        indicatorChartRef.current.removeSeries(s)
+      );
+      indicatorSeriesRef.current = [];
+    }
+    // Overlays on main chart
+    if (activeIndicator === INDICATORS.SMA) {
+      const sma = filterValidData(calculateSMA(candles, 20));
+      const smaSeries = chartRef.current.addLineSeries({ color: "orange" });
+      smaSeries.setData(sma);
+      chartRef.current._indicatorSeries.push(smaSeries);
+    } else if (activeIndicator === INDICATORS.EMA) {
+      const ema = filterValidData(calculateEMA(candles, 20));
+      const emaSeries = chartRef.current.addLineSeries({ color: "blue" });
+      emaSeries.setData(ema);
+      chartRef.current._indicatorSeries.push(emaSeries);
+    } else if (activeIndicator === INDICATORS.BB) {
+      const bb = calculateBollingerBands(candles, 20, 2);
+      const upperSeries = chartRef.current.addLineSeries({ color: "gray" });
+      upperSeries.setData(filterValidData(bb.upper));
+      chartRef.current._indicatorSeries.push(upperSeries);
+      const lowerSeries = chartRef.current.addLineSeries({ color: "gray" });
+      lowerSeries.setData(filterValidData(bb.lower));
+      chartRef.current._indicatorSeries.push(lowerSeries);
+    }
+    // RSI/MACD in indicator chart
+    if (indicatorChartRef.current) {
+      if (activeIndicator === INDICATORS.RSI) {
+        const rsi = filterValidData(calculateRSI(candles, 14));
+        const rsiSeries = indicatorChartRef.current.addLineSeries({
+          color: "purple",
+        });
+        rsiSeries.setData(rsi);
+        indicatorSeriesRef.current = [rsiSeries];
+      } else if (activeIndicator === INDICATORS.MACD) {
+        const { macd, signal } = calculateMACD(candles, 12, 26, 9);
+        const macdSeries = indicatorChartRef.current.addLineSeries({
+          color: "green",
+        });
+        macdSeries.setData(filterValidData(macd));
+        const signalSeries = indicatorChartRef.current.addLineSeries({
+          color: "red",
+        });
+        signalSeries.setData(filterValidData(signal));
+        indicatorSeriesRef.current = [macdSeries, signalSeries];
+      }
+    }
+  }, [activeIndicator, candles]);
 
   return (
     <div
@@ -335,12 +626,15 @@ const ForexTradingChart = ({
                   <div
                     key={ind}
                     onClick={() => {
-                      setIndicator(ind);
-                      setShowIndicatorPopup(false);
+                      if (activeIndicator === ind) {
+                        selectIndicator(null);
+                      } else {
+                        selectIndicator(ind);
+                      }
                     }}
                     style={{ padding: "5px 10px", cursor: "pointer" }}
                   >
-                    {ind}
+                    {ind} {activeIndicator === ind ? "✓" : ""}
                   </div>
                 ))}
               </div>
@@ -368,7 +662,7 @@ const ForexTradingChart = ({
               <div
                 style={{
                   position: "absolute",
-                  top: "100%",
+                  top: "150%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
@@ -384,8 +678,11 @@ const ForexTradingChart = ({
                   <div
                     key={tool}
                     onClick={() => {
-                      setDrawingTool(tool);
-                      setShowDrawingPopup(false);
+                      if (activeDrawingTool === tool) {
+                        selectDrawingTool(null);
+                      } else {
+                        selectDrawingTool(tool);
+                      }
                     }}
                     style={{
                       padding: "5px 10px",
@@ -393,7 +690,7 @@ const ForexTradingChart = ({
                       cursor: "pointer",
                     }}
                   >
-                    {tool}
+                    {tool} {activeDrawingTool === tool ? "✓" : ""}
                   </div>
                 ))}
               </div>
@@ -550,6 +847,13 @@ const ForexTradingChart = ({
         </div>
       </div>
       <div ref={containerRef} style={{ width: "100%", height: 600 }} />
+      {(activeIndicator === INDICATORS.RSI ||
+        activeIndicator === INDICATORS.MACD) && (
+        <div
+          ref={indicatorContainerRef}
+          style={{ width: "100%", height: 200, marginTop: 10 }}
+        />
+      )}
     </div>
   );
 };
