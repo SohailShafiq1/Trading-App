@@ -8,18 +8,18 @@ import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../Context/AuthContext";
 import { useAccountType } from "../../Context/AccountTypeContext"; // Import the account type context
 
-import bitcoin from "../../../assets/bitcoin.png";
-import ethereum from "../../../assets/ethereum.png";
-import ltc from "../../../assets/ltc.png";
-import solana from "../../../assets/solana.png";
-import ripple from "../../../assets/ripple.png";
-import dogecoin from "../../../assets/dogecoin.png";
-import uniswap from "../../../assets/uniswap.png";
-import polygon from "../../../assets/polygon.png";
-import TRC20 from "../../../assets/TRC20.png";
-import BEP20 from "../../../assets/BEP20.png";
-import ERC20 from "../../../assets/ERC20.png";
-import USDpolygon from "../../../assets/USDPolygon.png";
+import bitcoin from "./assets/bitcoin.png";
+import ethereum from "./assets/ethereum.png";
+import ltc from "./assets/ltc.png";
+import solana from "./assets/solana.png";
+import ripple from "./assets/ripple.png";
+import dogecoin from "./assets/dogecoin.png";
+import uniswap from "./assets/uniswap.png";
+import polygon from "./assets/polygon.png";
+import TRC20 from "./assets/TRC20.png";
+import BEP20 from "./assets/BEP20.png";
+import ERC20 from "./assets/ERC20.png";
+import USDpolygon from "./assets/USDPolygon.png";
 
 const s = styles;
 const ADMIN_WALLET = "TLckAV3ZZ7Z6GG9ibVMmg3krMaEQDmrG6u";
