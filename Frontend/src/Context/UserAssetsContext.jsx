@@ -13,7 +13,7 @@ export const UserAssetsProvider = ({ children }) => {
       try {
         if (user && user.email) {
           const response = await axios.get(
-            `http://localhost:5000/api/users/email/${user.email}`
+            `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${user.email}`
           );
           const fetchedAssets = response.data.assets;
           if (fetchedAssets !== userAssets) {

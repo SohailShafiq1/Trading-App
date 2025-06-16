@@ -12,7 +12,7 @@ export const UserAssetsProvider = ({ children }) => {
     const fetchAssets = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/users/email/${user.email}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${user.email}`
         );
         setUserAssets(response.data.assets);
       } catch (err) {

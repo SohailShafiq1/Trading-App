@@ -35,7 +35,7 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/auth/check-admin", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/check-admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
