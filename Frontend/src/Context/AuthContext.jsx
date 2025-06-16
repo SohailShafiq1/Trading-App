@@ -65,7 +65,6 @@ export const AuthProvider = ({ children }) => {
       password,
     });
     localStorage.setItem("token", res.data.token);
-    localStorage.setItem("selectedCoin", "BTC");
     setUser(res.data.user);
   };
 
