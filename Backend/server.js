@@ -34,7 +34,11 @@ dotenv.config();
 const app = express();
 
 // Configure CORS
-const allowedOrigins = ["https://wealthx-broker.com"];
+const allowedOrigins = [
+  "https://wealthx-broker.com",
+  "https://api.wealthx-broker.com" // ✅ add this
+];
+
 
 app.use(cors({
   origin: allowedOrigins,
