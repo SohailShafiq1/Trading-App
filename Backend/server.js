@@ -34,18 +34,17 @@ dotenv.config();
 const app = express();
 
 // Configure CORS
-const allowedOrigins = [
-  "https://wealthx-broker.com/"
-];
+const allowedOrigins = ["https://wealthx-broker.com"];
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // ✅ Include OPTIONS
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+// ✅ Handle preflight requests globally
+app.options("*", cors());
 
 // Middlewares
 app.use(morgan("dev"));

@@ -14,7 +14,11 @@ import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai"; // Add close icon
-const socket = io(import.meta.env.VITE_BACKEND_URL);
+const socket = io(import.meta.env.VITE_BACKEND_URL, {
+  withCredentials: true,
+  transports: ["websocket"], // 👈 force WebSocket only
+});
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 const intervalToSeconds = {
   "30s": 30,
@@ -28,7 +32,7 @@ const intervalToSeconds = {
   "4h": 14400,
   "1d": 86400,
 };
-const CANDLE_STYLES = {
+const CANDLE_STYLES = {  
   CANDLE: "Candlestick",
   BAR: "Bar",
   LINE: "Line",

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./PrizePool.module.css";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
-import io from "socket.io-client";
+import {io} from "socket.io-client";
 
 const PrizeArray = [
   {
@@ -61,14 +61,20 @@ const PrizePool = () => {
 
   // Initialize socket connection
   useEffect(() => {
-    const newSocket = io(BACKEND_URL, {
-      withCredentials: true,
-    });
+    const newSocket =  io(import.meta.env.VITE_BACKEND_URL, {
+  withCredentials: true,
+  transports: ["websocket"], // 👈 force WebSocket only
+});
     setSocket(newSocket);
 
-    return () => {
-      newSocket.disconnect();
-    };
+  newSocket.on("connect", () => {
+    console.log("✅ WebSocket Connected:", newSocket.id);
+  });
+  newSocket.on("connect_error", (err) => {
+    console.error("❌ WebSocket Connection Failed:", err.message);
+  });
+
+  return () => newSocket.disconnect();
   }, []);
 
   // Register affiliate with socket when email is available
