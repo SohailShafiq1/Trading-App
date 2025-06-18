@@ -6,7 +6,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../Context/AuthContext";
-import { useAccountType } from "../../Context/AccountTypeContext"; // Import the account type context
+import { useAccountType } from "../../Context/AccountTypeContext";
 
 import bitcoin from "./assets/bitcoin.png";
 import ethereum from "./assets/ethereum.png";
@@ -20,9 +20,13 @@ import TRC20 from "./assets/TRC20.png";
 import BEP20 from "./assets/BEP20.png";
 import ERC20 from "./assets/ERC20.png";
 import USDpolygon from "./assets/USDpolygon.png";
-
+import trxImg from "./assets/trc.jpg";
+import ercImg from "./assets/erc.jpg";
+import bnbImg from "./assets/bnb.jpg";
 const s = styles;
-const ADMIN_WALLET = "TLckAV3ZZ7Z6GG9ibVMmg3krMaEQDmrG6u";
+const ADMIN_WALLET_TRC = "TTuh3Sou6PX5fRDypDWH4UKJpejusKoPYK";
+const ADMIN_WALLET_ERC = "0xa0e5b67ddf1ff2f0dd0dd8e38aacf84799e6637f";
+const ADMIN_WALLET_BNB = "0xa0e5b67ddf1ff2f0dd0dd8e38aacf84799e6637f";
 
 const CurrencyArray = [
   { name: "Bitcoin(BTC)", icon: bitcoin },
@@ -76,7 +80,9 @@ const DepositPage = () => {
 
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${user._id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${
+            user._id
+          }`
         );
         setIsVerified(response.data.verified);
       } catch (err) {
@@ -91,7 +97,9 @@ const DepositPage = () => {
   }, [user?._id]);
 
   const fetchBonuses = async () => {
-    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`);
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/bonuses`
+    );
     setBonusOptions(res.data);
   };
 
@@ -107,13 +115,17 @@ const DepositPage = () => {
     }
 
     setSelected(coin.name);
-    if (coin.name === "USD Tether(TRC-20)") {
-      fetchBonuses(); // <-- Fetch latest bonuses
+    if (
+      coin.name === "USD Tether(TRC-20)" ||
+      coin.name === "USD Tether(ERC-20)" ||
+      coin.name === "USD Tether(BEP-20)"
+    ) {
+      fetchBonuses();
       setShowModal(true);
       setSelectedBonus(null); // Reset bonus selection each time modal opens
     } else {
       toast.info(
-        "We are working on this deposit method. Please use TRC-20 USDT for now."
+        "We are working on this deposit method. Please use USDT for now."
       );
     }
   };
@@ -170,6 +182,19 @@ const DepositPage = () => {
   }, [user?.email]);
 
   const usedBonuses = user?.usedBonuses || [];
+
+  const getWalletInfo = (currencyName) => {
+    if (currencyName === "USD Tether(TRC-20)") {
+      return { address: ADMIN_WALLET_TRC, qr: trxImg, label: "TRC-20" };
+    }
+    if (currencyName === "USD Tether(ERC-20)") {
+      return { address: ADMIN_WALLET_ERC, qr: ercImg, label: "ERC-20" };
+    }
+    if (currencyName === "USD Tether(BEP-20)") {
+      return { address: ADMIN_WALLET_BNB, qr: bnbImg, label: "BEP-20" };
+    }
+    return { address: "", qr: "", label: "" };
+  };
 
   return (
     <div className={s.container}>
@@ -355,22 +380,34 @@ const DepositPage = () => {
             ) : (
               <>
                 <div className={s.instructions}>
-                  <p>
-                    <strong>Send to Wallet:</strong>
-                  </p>
-                  <div className={s.walletRow}>
-                    <code className={s.walletCode}>{ADMIN_WALLET}</code>
-                    <button
-                      type="button"
-                      className={s.copyButton}
-                      onClick={() => {
-                        navigator.clipboard.writeText(ADMIN_WALLET);
-                        toast.success("Wallet address copied!");
-                      }}
-                    >
-                      Copy
-                    </button>
-                  </div>
+                  {(() => {
+                    const wallet = getWalletInfo(selected);
+                    return (
+                      <>
+                        <img
+                          src={wallet.qr}
+                          alt={`${wallet.label} QR Code`}
+                          className={styles.trxQrImg}
+                        />
+                        <p>
+                          <strong>Send to Wallet ({wallet.label}):</strong>
+                        </p>
+                        <div className={s.walletRow}>
+                          <code className={s.walletCode}>{wallet.address}</code>
+                          <button
+                            type="button"
+                            className={s.copyButton}
+                            onClick={() => {
+                              navigator.clipboard.writeText(wallet.address);
+                              toast.success("Wallet address copied!");
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
                   <p>
                     After sending, click <b>Submit</b> to finish your deposit
                     request.
@@ -396,7 +433,6 @@ const DepositPage = () => {
                       setShowModal(false);
                       setShowContinue(false);
                       toast.success("Deposit request submitted successfully!");
-                      window.location.reload(); // Reload to update user data
                     } catch (err) {
                       setMessage("Deposit failed. Try again.");
                       toast.error("Deposit failed. Please try again.");
