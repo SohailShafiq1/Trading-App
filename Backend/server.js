@@ -25,7 +25,7 @@ import testimonialRoutes from "./routes/testimonialRoutes.js";
 import candleService from "./services/candleGenerator.js";
 import { checkTrc20Deposits } from "./utils/tronWatcher.js";
 import AffiliateTimers from "./utils/affiliateTimers.js";
-import './utils/affiliateCron.js'; // Start affiliate cron job
+import "./utils/affiliateCron.js"; // Start affiliate cron job
 
 // Load environment variables
 dotenv.config();
@@ -34,25 +34,39 @@ dotenv.config();
 const app = express();
 
 // Configure CORS
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowed = [
-      process.env.FRONTEND_URI,
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-    ];
-    if (!origin || allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     const allowed = [
+//       process.env.FRONTEND_URI,
+//       "http://localhost:5173",
+//       "http://127.0.0.1:5173",
+//     ];
+//     if (!origin || allowed.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// }));
 
+// Configure CORS
+const allowedOrigins = [
+  "https://wealthx-broker.com",
+  "https://api.wealthx-broker.com", // ✅ add this
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // ✅ Include OPTIONS
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 // ✅ Handle preflight requests globally
-app.options("*", cors());
+// app.options("*", cors());
 
 // Middlewares
 app.use(morgan("dev"));
@@ -64,7 +78,7 @@ app.use("/bucket", express.static(path.join(process.cwd(), "bucket")));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(
   "/uploads/support",
-  express.static(path.join(process.cwd(), "uploads", "support"))
+  express.static(path.join(process.cwd(), "uploads", "support")),
 );
 // Request logging middleware
 app.use((req, res, next) => {
