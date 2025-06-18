@@ -1127,7 +1127,6 @@ const BinaryChart = () => {
             <button
               className={styles.allInBtn}
               style={{
-                marginTop: "8px",
                 width: "100%",
                 background: allInClicked ? "#FF1600" : "#10A055",
                 color: "#fff",

@@ -156,7 +156,7 @@ const ForexTradingChart = ({
       let symbol = coinName.includes("/")
         ? coinName
         : coinName.replace(/(\w{3})(\w{3})/, "$1/$2");
-      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=100&apikey=${apiKey}`;
+      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=5000&apikey=${apiKey}`;
       const response = await fetch(url);
       const data = await response.json();
       if (data && data.values) {
