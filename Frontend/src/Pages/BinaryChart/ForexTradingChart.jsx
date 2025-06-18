@@ -24,7 +24,7 @@ const THEMES = {
     name: "Light",
     background: "#ffffff",
     textColor: "#333333",
-    gridColor: "#3A3A3A",
+    gridColor: "rgba(60,60,60,0.10)", // lighter, more transparent
     upColor: "#26a69a",
     downColor: "#ef5350",
     borderVisible: true,
@@ -34,7 +34,7 @@ const THEMES = {
     name: "Dark",
     background: "#121212",
     textColor: "#d1d4dc",
-    gridColor: "#444444",
+    gridColor: "rgba(200,200,200,0.08)", // lighter, more transparent
     upColor: "#00e676",
     downColor: "#ff1744",
     borderVisible: true,
@@ -44,7 +44,7 @@ const THEMES = {
     name: "Blue",
     background: "#0e1a2f",
     textColor: "#ffffff",
-    gridColor: "#1e2a3f",
+    gridColor: "rgba(30,42,63,0.12)", // lighter, more transparent
     upColor: "#4caf50",
     downColor: "#f44336",
     borderVisible: true,
