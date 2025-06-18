@@ -6,7 +6,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../Context/AuthContext";
-import { useAccountType } from "../../Context/AccountTypeContext"; // Import the account type context
+import { useAccountType } from "../../Context/AccountTypeContext";
 
 import bitcoin from "./assets/bitcoin.png";
 import ethereum from "./assets/ethereum.png";
@@ -20,9 +20,11 @@ import TRC20 from "./assets/TRC20.png";
 import BEP20 from "./assets/BEP20.png";
 import ERC20 from "./assets/ERC20.png";
 import USDpolygon from "./assets/USDpolygon.png";
-
+import trxImg from "./assets/trc.jpg";
 const s = styles;
-const ADMIN_WALLET = "TLckAV3ZZ7Z6GG9ibVMmg3krMaEQDmrG6u";
+const ADMIN_WALLET_TRC = "TTuh3Sou6PX5fRDypDWH4UKJpejusKoPYK";
+const ADMIN_WALLET_ERC = "TTuh3Sou6PX5fRDypDWH4UKJpejusKoPYK";
+const ADMIN_WALLET_BNB = "TTuh3Sou6PX5fRDypDWH4UKJpejusKoPYK";
 
 const CurrencyArray = [
   { name: "Bitcoin(BTC)", icon: bitcoin },
@@ -76,7 +78,9 @@ const DepositPage = () => {
 
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${user._id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${
+            user._id
+          }`
         );
         setIsVerified(response.data.verified);
       } catch (err) {
@@ -91,7 +95,9 @@ const DepositPage = () => {
   }, [user?._id]);
 
   const fetchBonuses = async () => {
-    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`);
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/bonuses`
+    );
     setBonusOptions(res.data);
   };
 
@@ -355,16 +361,22 @@ const DepositPage = () => {
             ) : (
               <>
                 <div className={s.instructions}>
+                  <img
+                    src={trxImg}
+                    alt="TRX QR Code"
+                    className={styles.trxQrImg}
+                  />
+
                   <p>
                     <strong>Send to Wallet:</strong>
                   </p>
                   <div className={s.walletRow}>
-                    <code className={s.walletCode}>{ADMIN_WALLET}</code>
+                    <code className={s.walletCode}>{ADMIN_WALLET_TRC}</code>
                     <button
                       type="button"
                       className={s.copyButton}
                       onClick={() => {
-                        navigator.clipboard.writeText(ADMIN_WALLET);
+                        navigator.clipboard.writeText(ADMIN_WALLET_TRC);
                         toast.success("Wallet address copied!");
                       }}
                     >
