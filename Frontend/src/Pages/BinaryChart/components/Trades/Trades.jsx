@@ -18,47 +18,49 @@ const Trades = ({
 }) => {
   useEffect(() => {
     const interval = setInterval(() => {
-      setUserTrades((prevTrades) =>
-        prevTrades.map((trade) => {
-          if (trade.remainingTime > 1) {
-            return { ...trade, remainingTime: trade.remainingTime - 1 };
-          } else if (trade.remainingTime === 1) {
-            // Timer will hit 0 now, lock status and reward
-            const endPrice = getPriceForTrade(trade) ?? 0;
-            const coinData = coins.find(
-              (c) => c.name === trade.coinName || c.name === trade.coin
-            );
-            const profitPercentage = coinData?.profitPercentage || 0;
-            const tradeInvestment = trade.investment ?? trade.price ?? 0;
-            let centsChange = 0;
-            if (trade.type === "Buy") {
-              centsChange =
-                (endPrice - trade.entryPrice) *
-                (tradeInvestment / trade.entryPrice);
+      if (typeof setUserTrades === 'function') {
+        setUserTrades((prevTrades) =>
+          prevTrades.map((trade) => {
+            if (trade.remainingTime > 1) {
+              return { ...trade, remainingTime: trade.remainingTime - 1 };
+            } else if (trade.remainingTime === 1) {
+              // Timer will hit 0 now, lock status and reward
+              const endPrice = getPriceForTrade(trade) ?? 0;
+              const coinData = coins.find(
+                (c) => c.name === trade.coinName || c.name === trade.coin
+              );
+              const profitPercentage = coinData?.profitPercentage || 0;
+              const tradeInvestment = trade.investment ?? trade.price ?? 0;
+              let centsChange = 0;
+              if (trade.type === "Buy") {
+                centsChange =
+                  (endPrice - trade.entryPrice) *
+                  (tradeInvestment / trade.entryPrice);
+              } else {
+                centsChange =
+                  (trade.entryPrice - endPrice) *
+                  (tradeInvestment / trade.entryPrice);
+              }
+              const basePayout = tradeInvestment * (1 + profitPercentage / 100);
+              const isWin = centsChange >= 0;
+              // If win: basePayout + centsChange, if loss: only centsChange (base payout is zero)
+              const lockedReward = isWin
+                ? Math.round((basePayout + centsChange) * 100) / 100
+                : Math.round(centsChange * 100) / 100;
+              const lockedStatus = isWin ? "win" : "loss";
+              return {
+                ...trade,
+                remainingTime: 0,
+                lockedStatus,
+                lockedReward,
+              };
             } else {
-              centsChange =
-                (trade.entryPrice - endPrice) *
-                (tradeInvestment / trade.entryPrice);
+              // After timer 0, do not recalculate anything, just keep locked values
+              return trade;
             }
-            const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-            const isWin = centsChange >= 0;
-            // If win: basePayout + centsChange, if loss: only centsChange (base payout is zero)
-            const lockedReward = isWin
-              ? Math.round((basePayout + centsChange) * 100) / 100
-              : Math.round(centsChange * 100) / 100;
-            const lockedStatus = isWin ? "win" : "loss";
-            return {
-              ...trade,
-              remainingTime: 0,
-              lockedStatus,
-              lockedReward,
-            };
-          } else {
-            // After timer 0, do not recalculate anything, just keep locked values
-            return trade;
-          }
-        })
-      );
+          })
+        );
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [coins, getPriceForTrade, setUserTrades]);

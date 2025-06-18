@@ -35,8 +35,11 @@ const app = express();
 
 // Configure CORS
 const allowedOrigins = [
-  "http://localhost:5173",
+
+   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "https://wealthx1.netlify.app",
+  "https://wealthx-broker.com",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 

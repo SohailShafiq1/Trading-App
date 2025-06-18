@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext"; // Assuming you have an AuthContext to get the logged-in user
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 const UserAssetsContext = createContext();
 
 export const UserAssetsProvider = ({ children }) => {
@@ -13,7 +13,7 @@ export const UserAssetsProvider = ({ children }) => {
       try {
         if (user && user.email) {
           const response = await axios.get(
-            `http://localhost:5000/api/users/email/${user.email}`
+            `${BACKEND_URL}/api/users/email/${user.email}`
           );
           const fetchedAssets = response.data.assets;
           if (fetchedAssets !== userAssets) {

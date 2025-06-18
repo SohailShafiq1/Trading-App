@@ -2,7 +2,7 @@ import { MdUndo } from "react-icons/md";
 import styles from "./AffiliateLayout.module.css";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 const s = styles;
-import logo from "../../../assets/Logo.png";
+import logo from "../RegisterLayout/logo.png";
 
 const AffiliateLayout = () => {
   const navigate = useNavigate();

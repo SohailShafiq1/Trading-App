@@ -1,4 +1,4 @@
-import { GiPodiumWinner } from "react-icons/gi"; 
+import { GiPodiumWinner } from "react-icons/gi";
 import { AiOutlineBank } from "react-icons/ai";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import {
@@ -15,7 +15,7 @@ import { MdUndo } from "react-icons/md";
 import React, { useState, useRef, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import logo from "../../../assets/Logo.png";
+import logo from "../../../assets/logo.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import { useAccountType } from "../../Context/AccountTypeContext";
@@ -50,7 +50,7 @@ const BinaryLayout = () => {
   const desktopTips = [
     {
       id: "back-btn",
-      text: "This button takes you back to the previous page",
+      text: "This button shows the leaderboard and top traders",
     },
     {
       id: "trade-btn",
@@ -386,27 +386,24 @@ const BinaryLayout = () => {
           </div>
 
           <div className={s.navBar}>
-          
-
             <div ref={(el) => (buttonRefs.current[1] = el)}>
               <NavLink id="trade-btn" to="/binarychart" className={s.btn}>
                 <IoMdImage className={s.icons} />
                 Trade
               </NavLink>
             </div>
-  <div ref={(el) => (buttonRefs.current[0] = el)}>
-              
+            <div ref={(el) => (buttonRefs.current[0] = el)}>
               <div
-                    className={s.btn}
-                   
-                    onClick={() => {
-                      setShowLeaderboard(true);
-                      setPopupVisible(false);
-                    }}
-                  >
-                    <GiPodiumWinner className={s.icons} />
-                    Top
-                  </div>
+                className={s.btn}
+                id="back-btn"
+                onClick={() => {
+                  setShowLeaderboard(true);
+                  setPopupVisible(false);
+                }}
+              >
+                <GiPodiumWinner className={s.icons} />
+                Top
+              </div>
             </div>
             <div ref={(el) => (buttonRefs.current[2] = el)}>
               <NavLink
