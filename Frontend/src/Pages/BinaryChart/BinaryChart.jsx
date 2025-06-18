@@ -900,14 +900,7 @@ const BinaryChart = () => {
 
       <div className={styles.container}>
         <div className={styles.Cbox}>
-          <div
-            className={styles.chart}
-            style={
-              selectedCoinType === "OTC"
-                ? { marginBottom: "6rem" }
-                : { marginBottom: 0 }
-            }
-          >
+          <div className={styles.chart}>
             {isLoading ? (
               <div className={styles.loadingContainer}>
                 <div className={styles.loadingSpinner}></div>
@@ -1127,7 +1120,6 @@ const BinaryChart = () => {
             <button
               className={styles.allInBtn}
               style={{
-                marginTop: "8px",
                 width: "100%",
                 background: allInClicked ? "#FF1600" : "#10A055",
                 color: "#fff",

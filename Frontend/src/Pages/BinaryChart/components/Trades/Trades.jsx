@@ -149,7 +149,7 @@ const Trades = ({
               key={tradeId}
               style={{
                 color: "black",
-                padding: "2px", // Add padding for better readability
+                padding: "2px", 
               }}
             >
               {/* First Row: Coin Name and Trade Duration */}
