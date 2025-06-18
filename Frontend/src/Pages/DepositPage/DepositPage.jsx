@@ -396,7 +396,6 @@ const DepositPage = () => {
                       setShowModal(false);
                       setShowContinue(false);
                       toast.success("Deposit request submitted successfully!");
-                      window.location.reload(); // Reload to update user data
                     } catch (err) {
                       setMessage("Deposit failed. Try again.");
                       toast.error("Deposit failed. Please try again.");
