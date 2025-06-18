@@ -75,7 +75,7 @@ const UserSchema = new mongoose.Schema(
     },
     assets: {
       type: Number,
-      default: 10000,
+      default: 0,
       min: 0,
     },
     verified: {
