@@ -171,7 +171,7 @@ body {
   align-items: center;
   justify-content: space-between;
   border-radius: 8px;
-  padding: 0.5rem;
+  padding: 0.2rem;
   border: 2px solid #1f1f1f;
   border-radius: 30px;
 }
@@ -225,9 +225,8 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
-  padding: 1rem 1rem;
-  border-radius: 90px;
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -259,7 +258,7 @@ body {
 .buyBox p,
 .SellBox p {
   color: white;
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 500;
   margin: 0;
 }
