@@ -902,11 +902,11 @@ const BinaryChart = () => {
         <div className={styles.Cbox}>
           <div
             className={styles.chart}
-            style={
-              selectedCoinType === "OTC"
-                ? { marginBottom: "6rem" }
-                : { marginBottom: 0 }
-            }
+            // style={
+            //   selectedCoinType === "OTC"
+            //     ? { marginBottom: "6rem" }
+            //     : { marginBottom: 0 }
+            // }
           >
             {isLoading ? (
               <div className={styles.loadingContainer}>
@@ -1154,14 +1154,16 @@ const BinaryChart = () => {
             >
               {allInClicked ? "Clear All" : "All In"}
             </button>
-            <Trades
-              trades={[...trades].reverse()}
-              formatTime={formatTime}
-              handleCloseTrade={handleCloseTrade}
-              coins={coins}
-              livePrice={livePrice}
-              otcPrice={otcPrice}
-            />
+            {window.innerWidth > 768 && (
+              <Trades
+                trades={[...trades].reverse()}
+                formatTime={formatTime}
+                handleCloseTrade={handleCloseTrade}
+                coins={coins}
+                livePrice={livePrice}
+                otcPrice={otcPrice}
+              />
+            )}
           </div>
         </div>
       </div>

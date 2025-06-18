@@ -32,7 +32,7 @@ const intervalToSeconds = {
   "4h": 14400,
   "1d": 86400,
 };
-const CANDLE_STYLES = {  
+const CANDLE_STYLES = {
   CANDLE: "Candlestick",
   BAR: "Bar",
   LINE: "Line",
@@ -293,6 +293,8 @@ const LiveCandleChart = ({
   const drawingsRef = useRef([]);
   const [autoZoom, setAutoZoom] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
+  const [tradePopup, setTradePopup] = useState(false);
+
   countdownRef.current = countdown;
   const lastCandleRef = useRef(null);
   const lastUpdateRef = useRef(0);
@@ -677,7 +679,7 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 600,
+      height: window.innerWidth < 768 ? 480 : 500,
     });
     chartRef.current = chart;
     seriesRef.current = chart.addCandlestickSeries({
@@ -1786,6 +1788,31 @@ const LiveCandleChart = ({
               </p>
             </div>
           </div>
+          {window.innerWidth < 768 && (
+            <button
+              className="show-trades-btn"
+              style={{
+                marginRight: 8,
+                background: "#10A055",
+                color: "#fff",
+                border: "none",
+                width: "100px",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                fontWeight: 600,
+                fontSize: "1rem",
+                cursor: "pointer",
+                top: "120px",
+                left: 0,
+                zIndex: 10001,
+                position: "absolute",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              }}
+              onClick={() => setTradePopup(true)}
+            >
+              Trades
+            </button>
+          )}
 
           <div style={{ position: "relative", display: "flex" }}>
             <button
