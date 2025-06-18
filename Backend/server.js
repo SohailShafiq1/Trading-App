@@ -34,39 +34,28 @@ dotenv.config();
 const app = express();
 
 // Configure CORS
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     const allowed = [
-//       process.env.FRONTEND_URI,
-//       "http://localhost:5173",
-//       "http://127.0.0.1:5173",
-//     ];
-//     if (!origin || allowed.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-// }));
-
-// Configure CORS
 const allowedOrigins = [
   "https://wealthx-broker.com",
-  "https://api.wealthx-broker.com", // ✅ add this
+  "https://api.wealthx-broker.com",
+  "https://wealthx1.netlify.app",
+  "http://localhost:5173", // Added for local dev
+  // Add more origins as needed
 ];
 
 app.use(
   cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // ✅ Include OPTIONS
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  })
 );
-
-// ✅ Handle preflight requests globally
-// app.options("*", cors());
 
 // Middlewares
 app.use(morgan("dev"));
@@ -78,7 +67,7 @@ app.use("/bucket", express.static(path.join(process.cwd(), "bucket")));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(
   "/uploads/support",
-  express.static(path.join(process.cwd(), "uploads", "support")),
+  express.static(path.join(process.cwd(), "uploads", "support"))
 );
 // Request logging middleware
 app.use((req, res, next) => {
@@ -126,7 +115,13 @@ const httpServer = createServer(app);
 // Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
