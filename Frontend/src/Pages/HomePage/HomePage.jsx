@@ -5,6 +5,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext"; // if needed
 import FAQSection from "./Components/FAQSection";
 import Testimonials from "./Components/Testimonials";
+import WealthXVideo from "../../../assets/video.mp4";
 const s = styles;
 
 const HomePage = () => {
@@ -23,11 +24,11 @@ const HomePage = () => {
           <NavLink to={"/register"}>Create a free account</NavLink>
         </div>
         <div className={s.homeImage}>
-          <img className={s.Image} src={HomeContent} alt="homeImage" />
+          <video className={s.Image} src={WealthXVideo} autoPlay loop muted playsInline poster={HomeContent} />
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Features Section */} 
       <div className={s.featuresSection}>
         <h2 className={s.featuresTitle}>What Our Platform Offers</h2>
         {/* <p className={s.featuresSubtitle}>
