@@ -909,12 +909,7 @@
 }
 
 @media (max-width: 880px) {
-   .container {
-    max-width: 100vw !important; /* Force full width */
-    padding: 0 10px !important;
-    margin: 0 !important;
-  }
-
+  
   .accountPopup {
     right: 0;
     left: 0;
