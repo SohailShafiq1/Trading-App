@@ -63,7 +63,9 @@
     font-size: 23px;
     margin-bottom: 1rem;
   }
-
+  .featuresGrid {
+    max-width: 360px;
+  }
   .homeParagraph {
     font-size: 16px;
     margin-bottom: 2rem;
@@ -118,6 +120,7 @@
 @media (max-width: 600px) {
   .featuresGrid {
     grid-template-columns: 1fr;
+    max-width: 360px;
   }
 }
 .demoBanner {

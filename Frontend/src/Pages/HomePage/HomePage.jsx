@@ -29,49 +29,34 @@ const HomePage = () => {
 
       {/* Features Section */}
       <div className={s.featuresSection}>
-        <h2 className={s.featuresTitle}>Features of the platform</h2>
+        <h2 className={s.featuresTitle}>What Our Platform Offers</h2>
         {/* <p className={s.featuresSubtitle}>
           We regularly improve our platform to make your trading comfortable and safe.
         </p> */}
         <div className={s.featuresGrid}>
           {[
             {
-              title: "User-friendly interface",
-              desc: "You have access to all the trading instruments you need, and their speed is impressive.",
-              link: "Sign up",
+              title: "1 Intuitive Design",
+              desc: "Access a full range of trading tools, all optimized for speed and efficiency.",
             },
             {
-              title: "Integrated signals",
-              desc: "Signals with 87% accuracy rate will help you to build a profitable strategy.",
-              link: "Try it",
+              title: "2 Technical Indicators",
+              desc: "Use your demo account to test the top trading indicators we’ve carefully selected for you.",
             },
             {
-              title: "Trading indicators",
-              desc: "We have collected the most useful trading indicators for you. Test them on a demo account.",
-              link: "Explore",
+              title: "3. 24/7 Customer Support",
+              desc: "Our expert support team is always available to help you whenever you need it.",
             },
             {
-              title: "Support 24/7",
-              desc: "Our highly trained support staff is ready to assist you at any time.",
-              link: "Submit a request",
-            },
-            {
-              title: "Bonus programs",
-              desc: "Participate in tournaments and giveaways for traders to get bonuses.",
-              link: "Get a bonus",
-            },
-            {
-              title: "Deposits and withdrawals",
-              desc: "Various deposit options and fast withdrawal of funds. The minimum deposit is only 10 USD.",
-              link: "Start trading",
-            },
+              title: "4 Add or Withdraw Funds",
+              desc: "Enjoy fast withdrawals and flexible deposit options with a minimum deposit of only $10.",
+            }
+            
           ].map((item, index) => (
             <div key={index} className={s.featureCard}>
               <h3>{item.title}</h3>
               <p>{item.desc}</p>
-              <NavLink to={"/register"} className={s.featureLink}>
-                {item.link} →
-              </NavLink>
+             
             </div>
           ))}
         </div>
@@ -124,17 +109,7 @@ const HomePage = () => {
     </div>
   </div>
 
-  <div className={s.footerRight}>
-    
-    <div className={s.footerSocials}>
-      <p>Follow us on social media</p>
-      <div className={s.socialIcons}>
-        <a href="#"><span>📘</span></a>
-        <a href="#"><span>📷</span></a>
-        <a href="#"><span>✈️</span></a>
-      </div>
-    </div>
-  </div>
+ 
 </div>
 
       </div>

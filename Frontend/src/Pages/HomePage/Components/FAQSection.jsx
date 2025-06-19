@@ -24,7 +24,6 @@ const FAQSection = () => {
         See the most common questions of new traders answered here.
       </p>
       <div className={s.faqList}>
-        Dial.
         {faqs.map((faq, index) => (
           <div key={faq._id || index} className={s.faqItem}>
             <div className={s.faqQuestion} onClick={() => toggleFAQ(index)}>
