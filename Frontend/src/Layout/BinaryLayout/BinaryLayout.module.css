@@ -771,6 +771,7 @@
 }
 @media (max-width: 880px) {
   .container {
+    width: 100%;
     height: 70px;
   }
   .footer {
