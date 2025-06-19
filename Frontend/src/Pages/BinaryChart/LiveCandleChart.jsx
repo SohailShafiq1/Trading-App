@@ -14,6 +14,7 @@ import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai"; // Add close icon
+import Trades from "./components/Trades/Trades";
 const socket = io(import.meta.env.VITE_BACKEND_URL, {
   withCredentials: true,
   transports: ["websocket"], // 👈 force WebSocket only
@@ -1813,7 +1814,61 @@ const LiveCandleChart = ({
               Trades
             </button>
           )}
-
+          {tradePopup && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                background: "rgba(0,0,0,0.4)",
+                zIndex: 10002,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={() => setTradePopup(false)}
+            >
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 10,
+                  padding: 24,
+                  minWidth: 320,
+                  maxWidth: 400,
+                  width: "90vw",
+                  maxHeight: "80vh",
+                  overflowY: "auto",
+                  position: "relative",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    background: "transparent",
+                    border: "none",
+                    fontSize: 24,
+                    cursor: "pointer",
+                    color: "#222",
+                    zIndex: 2,
+                  }}
+                  onClick={() => setTradePopup(false)}
+                >
+                  <AiOutlineClose />
+                </button>
+                <Trades
+                  trades={trades}
+                  coins={coins}
+                  handleCloseTrade={handleCloseTrade}
+                  // Add other props as needed
+                />
+              </div>
+            </div>
+          )}
           <div style={{ position: "relative", display: "flex" }}>
             <button
               className="chartBtns"
