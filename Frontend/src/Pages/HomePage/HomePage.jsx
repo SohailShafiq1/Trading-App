@@ -13,11 +13,11 @@ const HomePage = () => {
     <>
       <div className={s.homeContainer}>
         <p className={s.homeDescription}>
-          Smart and Innovative <br />
-          Platform for Investments
+          Your Gateway to Smarter,<br />Faster, More Profitable Trades 
+          
         </p>
         <div className={s.homeParagraph}>
-          Sign up and get 10,000 USD to your demo account to learn how to trade
+         Register now and receive $10,000 in your demo account to start learning how to trade.
         </div>
         <div className={s.homeButton}>
           <NavLink to={"/register"}>Create a free account</NavLink>
@@ -30,9 +30,9 @@ const HomePage = () => {
       {/* Features Section */}
       <div className={s.featuresSection}>
         <h2 className={s.featuresTitle}>Features of the platform</h2>
-        <p className={s.featuresSubtitle}>
+        {/* <p className={s.featuresSubtitle}>
           We regularly improve our platform to make your trading comfortable and safe.
-        </p>
+        </p> */}
         <div className={s.featuresGrid}>
           {[
             {

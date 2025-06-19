@@ -39,6 +39,7 @@ import UserTrade from "./Admin/components/UserTrade/UserTrade";
 import Support from "./Pages/Support/Support";
 import Leaderboard from "./Admin/components/LeaderPage/LeaderPage";
 import Content from "./Admin/components/Contents/Content";
+import Amount from "./Admin/AdminPaymentInfo";
 const s = styles;
 
 const App = () => {
@@ -107,6 +108,7 @@ const App = () => {
                     <Route path="/admin/usertrade" element={<UserTrade />} />
                     <Route path="/admin/leaderboard" element={<Leaderboard />} />
                     <Route path="/admin/content" element={<Content />} />
+                    <Route path="/admin/amount" element={<Amount />} />
                   </Route>
 
                   <Route

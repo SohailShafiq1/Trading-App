@@ -42,6 +42,9 @@ const AdminHome = () => {
     <NavLink to="/admin/content" className={s.link}>
           Content Management
         </NavLink>
+        <NavLink to="/admin/amount" className={s.link}>
+          Amount
+        </NavLink>
       </div>
     </div>
   );
