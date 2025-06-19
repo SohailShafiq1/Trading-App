@@ -410,6 +410,10 @@ body {
 
 /*Mobile Design New */
 @media (max-width: 768px) {
+   .container {
+    max-width: 100%; /* Remove fixed max-width on mobile */
+    padding: 0 15px; /* Add padding to avoid content touching edges */
+  }
   .selectedCoinTitle {
     display: none;
   }
