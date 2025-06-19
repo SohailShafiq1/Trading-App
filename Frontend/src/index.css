@@ -1,64 +1,14 @@
-/* ===== YOUR EXISTING CODE ===== */
 body {
   margin: 0;
   height: 100%;
   background-color: black;
   font-family: "Inter", sans-serif;
 }
-
 #tv-attr-logo {
   display: none;
 }
-
 @media (max-width: 768px) {
   canvas {
     position: static;
   }
-}
-
-/* ===== NEW ADDITIONS FOR iOS/SAFARI FIXES ===== */
-/* 1. Reset Safari's tap highlight and font scaling */
-html {
-  -webkit-text-size-adjust: 100%; /* Prevent font inflation */
-  -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
-}
-
-/* 2. Fix flexbox/grid rendering in Safari */
-body, .flex-container, .grid-container {
-  display: -webkit-box; /* Old Safari fallback */
-  display: -webkit-flex; /* Safari prefix */
-  display: flex;
-  -webkit-flex-direction: column; /* Ensure column layout */
-  flex-direction: column;
-}
-
-/* 3. Fix 100vh issue on iOS */
-body {
-  height: 100dvh; /* Modern standard */
-  height: -webkit-fill-available; /* Safari fallback */
-  min-height: 100vh; /* Ultimate fallback */
-}
-
-/* 4. Remove default iOS button/input styles */
-button, input, textarea, select {
-  -webkit-appearance: none;
-  border-radius: 0;
-}
-
-/* 5. Prevent horizontal overflow on mobile */
-@media (max-width: 768px) {
-  body {
-    overflow-x: hidden;
-    width: 100%;
-  }
-  /* Ensure canvas or other elements don't cause overflow */
-  canvas, img, video {
-    max-width: 100%;
-    height: auto;
-  }
-}
-
-/* 6. Smooth scrolling for iOS */
-body {
-  -webkit-overflow-scrolling: touch;
 }
