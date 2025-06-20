@@ -295,17 +295,13 @@ export const completeLevel = async (req, res) => {
     const timeLimitMs = 1 * 60 * 1000;
 
     if (timeElapsed > timeLimitMs) {
-      // Time expired - reset to level 1 and reset totalTeamDeposit
-      affiliate.affiliateLevel = 1;
+      // Time expired - keep user at current level, just reset timer
       affiliate.levelStartTime = Date.now();
-      affiliate.totalTeamDeposit = 0; // reset deposit count
       await affiliate.save();
-
-      return res.status(400).json({
-        success: false,
-        message:
-          "Time expired! You've been reset to Level 1 and deposits reset",
+      return res.json({
+        affiliateLevel: affiliate.affiliateLevel,
         timeExpired: true,
+        timeLeft: PrizeArray[currentLevel - 1].timeLimit * 24 * 60 * 60 * 1000,
       });
     }
 
@@ -344,6 +340,13 @@ export const completeLevel = async (req, res) => {
       .reduce((a, b) => a + b, 0);
 
     await affiliate.save();
+
+    // Add affiliate's totalProfit to the user's assets
+    const user = await User.findById(affiliate.user);
+    if (user) {
+      user.assets += affiliate.totalProfit;
+      await user.save();
+    }
 
     res.json({
       success: true,

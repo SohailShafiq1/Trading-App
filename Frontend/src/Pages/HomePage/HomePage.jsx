@@ -1,3 +1,4 @@
+import { FaTelegram } from "react-icons/fa"; 
 import React from "react";
 import styles from "./HomePage.module.css";
 import HomeContent from "../../../assets/HomeContect.png";
@@ -37,19 +38,19 @@ const HomePage = () => {
         <div className={s.featuresGrid}>
           {[
             {
-              title: "1 Intuitive Design",
+              title: "Intuitive Design",
               desc: "Access a full range of trading tools, all optimized for speed and efficiency.",
             },
             {
-              title: "2 Technical Indicators",
+              title: "Technical Indicators",
               desc: "Use your demo account to test the top trading indicators we’ve carefully selected for you.",
             },
             {
-              title: "3. 24/7 Customer Support",
+              title: "24/7 Customer Support",
               desc: "Our expert support team is always available to help you whenever you need it.",
             },
             {
-              title: "4 Add or Withdraw Funds",
+              title: "Add or Withdraw Funds",
               desc: "Enjoy fast withdrawals and flexible deposit options with a minimum deposit of only $10.",
             }
             
@@ -109,7 +110,19 @@ const HomePage = () => {
       </p>
     </div>
   </div>
-
+<div className={s.footerRight}> 
+    
+    <div className={s.footerSocials}>
+      <h3>Follow us on Telegram
+        <a href="https://t.me/wealthx_bk" target="_blank" rel="noopener noreferrer" style={{ marginLeft: '0.7rem', verticalAlign: 'middle' }}>
+          <FaTelegram style={{ fontSize: '2.5rem', verticalAlign: 'middle' }} />
+        </a>
+      </h3>
+      <div className={s.socialIcons}>
+      
+      </div>
+    </div>  
+  </div>
  
 </div>
 

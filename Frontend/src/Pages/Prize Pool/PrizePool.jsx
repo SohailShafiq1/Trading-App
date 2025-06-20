@@ -324,8 +324,7 @@ const PrizePool = () => {
           <h1 className={styles.Header}>Prize Pool</h1>
           <p className={styles.description}>
             Hit all targets within the time limit to claim your reward. First 5
-            levels have 5 days each, last 2 levels have 3 days each. If you
-            don't complete a level in time, you'll be reset to Level 1.
+            levels have 5 days each, last 2 levels have 3 days each. 
           </p>
 
           <div className={styles.timerContainer}>
