@@ -1067,3 +1067,28 @@
     font-size: 11px;
   }
 }
+/* === iOS Navbar Fix === */
+.navBar {
+  flex-wrap: wrap;
+  overflow: visible; /* prevent clipping on iOS */
+}
+
+/* Fallback spacing if 'gap' not supported */
+.navBar .btn + .btn {
+  margin-left: 0.8rem;
+}
+@supports (gap: 0.8rem) {
+  .navBar .btn + .btn {
+    margin-left: 0;
+  }
+}
+
+/* Allow buttons to shrink on smaller screens instead of overflowing */
+.btn {
+  flex: 0 1 150px;
+}
+
+/* Add padding for iOS safe area (notch) if using sticky/fixed navbar */
+.container {
+  padding-top: env(safe-area-inset-top);
+}
