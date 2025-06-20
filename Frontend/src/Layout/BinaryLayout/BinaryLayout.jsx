@@ -462,6 +462,16 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
+                    style={{ background: "#2C2D35" }}
+                    onClick={() => {
+                      navigate("/binarychart/profile");
+                      setPopupVisible(false);
+                    }}
+                  >
+                    Account
+                  </div>
+                  <div
+                    className={s.popupItem}
                     style={{ background: "#64B243" }}
                     onClick={() => {
                       navigate("/affiliate/login");
