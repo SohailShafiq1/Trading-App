@@ -442,13 +442,23 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#3F474C" }}
+                    style={{ background: "#2C2D35" }}
                     onClick={() => {
-                      setShowLeaderboard(true);
+                      navigate("/binarychart/bankinglayout/deposit");
                       setPopupVisible(false);
                     }}
                   >
-                    Top
+                    Deposit
+                  </div>
+                  <div
+                    className={s.popupItem}
+                    style={{ background: "#2C2D35" }}
+                    onClick={() => {
+                      navigate("/binarychart/bankinglayout/withdraw");
+                      setPopupVisible(false);
+                    }}
+                  >
+                    Withdraw
                   </div>
                   <div
                     className={s.popupItem}
