@@ -83,12 +83,13 @@ export const AffiliateAuthProvider = ({ children }) => {
         localStorage.setItem("affiliate_token", token);
         await fetchAffiliate(token); // Refetch full affiliate details
       } else {
-        console.error("No token in response:", res.data);
+        throw new Error("No token in response");
       }
 
       console.log("Login successful:", res.data);
     } catch (error) {
       console.error("Login failed:", error);
+      throw error; // <-- Add this line!
     } finally {
       setLoading(false);
     }

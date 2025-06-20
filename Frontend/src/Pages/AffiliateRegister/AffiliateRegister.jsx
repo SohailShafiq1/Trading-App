@@ -13,6 +13,8 @@ const AffiliateRegister = () => {
     currency: "USD",
   });
   const [error, setError] = useState("");
+  const [successPopup, setSuccessPopup] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
 
   const currencyOptions = ["USD", "EUR", "GBP", "JPY"];
 
@@ -40,10 +42,8 @@ const AffiliateRegister = () => {
       );
 
       if (response.data.success) {
-        alert(
-          `Registration successful! Your referral code: ${response.data.data.referralCode}`
-        );
-        navigate("/affiliate/login");
+        setReferralCode(response.data.data.referralCode);
+        setSuccessPopup(true);
       }
     } catch (err) {
       console.error("Registration error:", err);
@@ -142,6 +142,28 @@ const AffiliateRegister = () => {
           </button>
         </form>
       </div>
+      {successPopup && (
+        <div className={styles.popupOverlay}>
+          <div className={styles.popupBox}>
+            <div className={styles.popupIcon}>
+              <span role="img" aria-label="success" style={{fontSize: '2.5rem', color: '#27ae60'}}>✅</span>
+            </div>
+            <div className={styles.popupTitle}>Successfully Registered!</div>
+            <div className={styles.popupMsg}>
+              Your referral code: <b>{referralCode}</b>
+            </div>
+            <button
+              onClick={() => {
+                setSuccessPopup(false);
+                navigate("/affiliate/login");
+              }}
+              className={styles.closePopupBtn}
+            >
+              Continue to Login
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

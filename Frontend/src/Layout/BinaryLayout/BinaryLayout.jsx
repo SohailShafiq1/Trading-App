@@ -454,7 +454,7 @@ const BinaryLayout = () => {
                     className={s.popupItem}
                     style={{ background: "#64B243" }}
                     onClick={() => {
-                      navigate("/affiliate");
+                      navigate("/affiliate/login");
                       setPopupVisible(false);
                     }}
                   >
@@ -770,7 +770,7 @@ const BinaryLayout = () => {
               <div
                 className={s.mobilePopupItem}
                 onClick={() => {
-                  navigate("/affiliate");
+                  navigate("/affiliate/login");
                   setMobileMorePopup(false);
                 }}
               >
