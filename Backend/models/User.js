@@ -73,6 +73,10 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    access: {
+      type: [String], // e.g. ['user', 'withdraw', 'coins', ...]
+      default: [],
+    },
     assets: {
       type: Number,
       default: 0,

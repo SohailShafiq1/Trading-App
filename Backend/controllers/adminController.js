@@ -232,7 +232,7 @@ export const getAllSupportRequests = async (req, res) => {
         lastName: 1,
         email: 1,
         complaints: 1,
-        userId: 1, 
+        userId: 1,
       }
     );
 
@@ -244,7 +244,7 @@ export const getAllSupportRequests = async (req, res) => {
           userName:
             `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
             user.email,
-          userId:  user.userId,
+          userId: user.userId,
           userEmail: user.email,
           _id: c._id,
           subject: c.subject,
@@ -295,7 +295,11 @@ export const markSupportReviewed = async (req, res) => {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: "Your Support Request Has Been Reviewed",
-        text: `Dear ${user.firstName || "User"},\n\nOur team has reviewed your support request regarding "${complaint.subject}". We will resolve your query as soon as possible.\n\nThank you for your patience!\n\nBest regards,\nSupport Team`,
+        text: `Dear ${
+          user.firstName || "User"
+        },\n\nOur team has reviewed your support request regarding "${
+          complaint.subject
+        }". We will resolve your query as soon as possible.\n\nThank you for your patience!\n\nBest regards,\nSupport Team`,
       };
 
       await transporter.sendMail(mailOptions);
@@ -335,7 +339,11 @@ export const markSupportCompleted = async (req, res) => {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: "Your Support Request Has Been Completed",
-        text: `Dear ${user.firstName || "User"},\n\nWe are pleased to inform you that your support request regarding "${complaint.subject}" has been resolved \n\nIf you have any further questions, feel free to contact us.\n\nBest regards,\nSupport Team`,
+        text: `Dear ${
+          user.firstName || "User"
+        },\n\nWe are pleased to inform you that your support request regarding "${
+          complaint.subject
+        }" has been resolved \n\nIf you have any further questions, feel free to contact us.\n\nBest regards,\nSupport Team`,
       };
 
       await transporter.sendMail(mailOptions);
@@ -355,10 +363,19 @@ export const getAllUsers = async (req, res) => {
     console.log("GET /api/admin/all-users HIT");
     const users = await User.find(
       { email: { $exists: true, $ne: "" } },
-      { _id: 1, email: 1, firstName: 1, lastName: 1, userId: 1 }
+      {
+        _id: 1,
+        email: 1,
+        firstName: 1,
+        lastName: 1,
+        userId: 1,
+        country: 1,
+        createdAt: 1,
+        isAdmin: 1, // Include isAdmin for frontend filtering
+      }
     );
     console.log("USERS FOUND:", users.length);
-    res.json(users);
+    res.json({ users });
   } catch (err) {
     console.error("ERROR FETCHING USERS:", err);
     res.status(500).json({ error: "Failed to fetch users" });
@@ -374,5 +391,71 @@ export const getAllAdminTrades = async (req, res) => {
     res.json(trades);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch admin trades" });
+  }
+};
+// Get all admins (not super admins)
+export const getAllAdmins = async (req, res) => {
+  try {
+    const admins = await User.find({
+      isAdmin: true,
+    })
+      .select("email isAdmin createdAt access")
+      .sort({ createdAt: -1 });
+    res.json({ admins });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch admins" });
+  }
+};
+// Make user admin
+export const makeUserAdmin = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "User ID required" });
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isAdmin: true },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to make user admin" });
+  }
+};
+
+// Remove admin access
+export const removeAdmin = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "User ID required" });
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isAdmin: false },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to remove admin access" });
+  }
+};
+// Set admin access (super admin only)
+export const setAdminAccess = async (req, res) => {
+  try {
+    const { userId, access } = req.body;
+    if (!userId || !Array.isArray(access)) {
+      return res
+        .status(400)
+        .json({ error: "userId and access array required" });
+    }
+    const user = await User.findById(userId);
+    if (!user || !user.isAdmin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+    user.access = access;
+    await user.save();
+    res.json({ success: true, access: user.access });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to set admin access" });
   }
 };

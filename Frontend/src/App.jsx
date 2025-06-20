@@ -40,6 +40,7 @@ import Support from "./Pages/Support/Support";
 import Leaderboard from "./Admin/components/LeaderPage/LeaderPage";
 import Content from "./Admin/components/Contents/Content";
 import Amount from "./Admin/AdminPaymentInfo";
+import Admin from "./Admin/components/Admins/Admins";
 const s = styles;
 
 const App = () => {
@@ -109,6 +110,7 @@ const App = () => {
                     <Route path="/admin/leaderboard" element={<Leaderboard />} />
                     <Route path="/admin/content" element={<Content />} />
                     <Route path="/admin/amount" element={<Amount />} />
+                    <Route path="/admin/admins" element={<Admin />} />
                   </Route>
 
                   <Route
