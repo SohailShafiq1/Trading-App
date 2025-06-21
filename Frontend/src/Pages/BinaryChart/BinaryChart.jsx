@@ -15,7 +15,7 @@ import Trades from "./components/Trades/Trades";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
-import track from "./assets/trade.mp3";
+import track from "./assets/tradeopen.mp3";
 import { useNavigate } from "react-router-dom";
 import ForexChart from "./ForexChart";
 

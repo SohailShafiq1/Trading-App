@@ -1,47 +1,61 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import styles from "../../AdminLayout.module.css";
 const s = styles;
+
+const SECTION_OPTIONS = [
+  { key: "user", label: "User", path: "/admin/user" },
+  { key: "withdraw", label: "Withdraw", path: "/admin/withdraw" },
+  { key: "coins", label: "Coins", path: "/admin/coins" },
+  { key: "deposits", label: "Deposits", path: "/admin/deposits" },
+  { key: "bonuses", label: "Bonuses", path: "/admin/bonuses" },
+  { key: "affiliate", label: "Affiliate", path: "/admin/affiliate" },
+  { key: "trades", label: "Stats", path: "/admin/trades" },
+  { key: "news", label: "News", path: "/admin/news" },
+  { key: "support", label: "Support", path: "/admin/support" },
+  {
+    key: "usertrade",
+    label: "Trade of User account",
+    path: "/admin/usertrade",
+  },
+  { key: "leaderboard", label: "Leader board", path: "/admin/leaderboard" },
+  { key: "content", label: "Content Management", path: "/admin/content" },
+  { key: "amount", label: "Amount", path: "/admin/amount" },
+  { key: "admins", label: "Admins", path: "/admin/admins" },
+];
+
 const AdminHome = () => {
+  const [access, setAccess] = useState(null);
+  useEffect(() => {
+    // Assume token in localStorage, and backend returns user info with access array
+    const fetchMe = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/me`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await res.json();
+        setAccess(data.user?.access || []);
+      } catch {
+        setAccess([]);
+      }
+    };
+    fetchMe();
+  }, []);
   return (
     <div>
       <div className={s.linkContainer}>
-        <NavLink to="/admin/user" className={s.link}>
-          User
-        </NavLink>
-        <NavLink to="/admin/withdraw" className={s.link}>
-          Withdraw
-        </NavLink>
-        <NavLink to="/admin/coins" className={s.link}>
-          Coins
-        </NavLink>
-        <NavLink to="/admin/deposits" className={s.link}>
-          Deposits
-        </NavLink>
-        <NavLink to="/admin/bonuses" className={s.link}>
-          Bonuses
-        </NavLink>
-        <NavLink to="/admin/affiliate" className={s.link}>
-          Affiliate
-        </NavLink>
-        <NavLink to="/admin/trades" className={s.link}>
-          Stats
-        </NavLink>
-        <NavLink to="/admin/news" className={s.link}>
-          News
-        </NavLink>
-        <NavLink to="/admin/support" className={s.link}>
-          Support
-        </NavLink>
-         <NavLink to="/admin/usertrade" className={s.link}>
-          Trade of User account
-        </NavLink>
-           <NavLink to="/admin/leaderboard" className={s.link}>
-          Leader board
-        </NavLink>
-    <NavLink to="/admin/content" className={s.link}>
-          Content Management
-        </NavLink>
+        {SECTION_OPTIONS.filter(
+          (opt) => !access || access.includes(opt.key) || access.length === 0 // show all if no access set (e.g. super admin)
+        ).map((opt) => (
+          <NavLink key={opt.key} to={opt.path} className={s.link}>
+            {opt.label}
+          </NavLink>
+        ))}
       </div>
     </div>
   );

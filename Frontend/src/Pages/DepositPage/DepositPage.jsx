@@ -29,13 +29,14 @@ const ADMIN_WALLET_ERC = "0xa0e5b67ddf1ff2f0dd0dd8e38aacf84799e6637f";
 const ADMIN_WALLET_BNB = "0xa0e5b67ddf1ff2f0dd0dd8e38aacf84799e6637f";
 
 const CurrencyArray = [
+  { name: "USD Tether(TRC-20)", icon: TRC20 },
+  { name: "USD Tether(ERC-20)", icon: ERC20 },
+  { name: "BNB Smart Chain", icon: BEP20 },
+
   { name: "Bitcoin(BTC)", icon: bitcoin },
   { name: "Ethereum(ETH)", icon: ethereum },
-  { name: "USD Tether(TRC-20)", icon: TRC20 },
   { name: "Litecoin(LTC)", icon: ltc },
-  { name: "USD Tether(ERC-20)", icon: ERC20 },
   { name: "Solana", icon: solana },
-  { name: "USD Tether(BEP-20)", icon: BEP20 },
   { name: "Ripple", icon: ripple },
   { name: "DogeCoin", icon: dogecoin },
   { name: "USD Coin(Polygon)", icon: USDpolygon },
@@ -61,6 +62,7 @@ const DepositPage = () => {
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [selectedBonus, setSelectedBonus] = useState(null);
   const [amountLocked, setAmountLocked] = useState(false); // <-- Added state for amount locked
+  const [showMethodPopup, setShowMethodPopup] = useState(false);
 
   const [bonusOptions, setBonusOptions] = useState([]);
 
@@ -68,6 +70,11 @@ const DepositPage = () => {
     axios
       .get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`)
       .then((res) => setBonusOptions(res.data));
+  }, []);
+
+  // Show professional popup on mount
+  useEffect(() => {
+    setShowMethodPopup(true);
   }, []);
 
   // Check verification status
@@ -124,9 +131,7 @@ const DepositPage = () => {
       setShowModal(true);
       setSelectedBonus(null); // Reset bonus selection each time modal opens
     } else {
-      toast.info(
-        "We are working on this deposit method. Please use USDT for now."
-      );
+      setShowMethodPopup(true);
     }
   };
 
@@ -481,6 +486,34 @@ const DepositPage = () => {
             <button
               className={s.closeBonusBtn}
               onClick={() => setShowBonusPopup(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showMethodPopup && (
+        <div className={s.popupOverlay}>
+          <div className={s.popupBox}>
+            <div className={s.popupIcon}>
+              <span
+                role="img"
+                aria-label="info"
+                style={{ fontSize: "2.5rem", color: "#3498db" }}
+              >
+                💸
+              </span>
+            </div>
+            <div className={s.popupTitle}>Choose a Deposit Method</div>
+            <div className={s.popupMsg}>
+              Please use <b>USD Tether (TRC-20)</b>, <b>USD Tether (ERC-20)</b>,
+              or <b>BNB Smart Chain</b> to deposit.
+              <br /> We are currently working on other methods.
+            </div>
+            <button
+              className={s.closePopupBtn}
+              onClick={() => setShowMethodPopup(false)}
             >
               Close
             </button>

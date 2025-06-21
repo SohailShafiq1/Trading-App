@@ -14,6 +14,8 @@ const AffiliateLogin = () => {
     password: "",
   });
 
+  const [popup, setPopup] = useState({ show: false, message: "" });
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -27,7 +29,13 @@ const AffiliateLogin = () => {
       });
       navigate("/affiliate");
     } catch (err) {
-      alert(err?.response?.data?.msg || "Login failed.");
+      let msg = err?.response?.data?.message || err?.response?.data?.msg || "Login failed.";
+      if (msg.toLowerCase().includes("not found")) {
+        msg = "Email not found. Please check your email or register.";
+      } else if (msg.toLowerCase().includes("invalid credentials") || msg.toLowerCase().includes("password")) {
+        msg = "Incorrect password. Please try again.";
+      }
+      setPopup({ show: true, message: msg });
     }
   };
 
@@ -74,6 +82,26 @@ const AffiliateLogin = () => {
 
           <div id="googleBtn" className={styles.googleSignin}></div>
         </form>
+        {popup.show && (
+          <div className={styles.popupOverlay}>
+            <div className={styles.popupBox}>
+              <div className={styles.popupIcon}>
+                {popup.message.includes("Email") ? (
+                  <span role="img" aria-label="email" style={{fontSize: '2.5rem', color: '#e74c3c'}}>📧</span>
+                ) : (
+                  <span role="img" aria-label="lock" style={{fontSize: '2.5rem', color: '#e67e22'}}>🔒</span>
+                )}
+              </div>
+              <div className={styles.popupTitle}>
+                {popup.message.includes("Email") ? "Email Error" : "Password Error"}
+              </div>
+              <div className={styles.popupMsg}>{popup.message}</div>
+              <button onClick={() => setPopup({ show: false, message: "" })} className={styles.closePopupBtn}>
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

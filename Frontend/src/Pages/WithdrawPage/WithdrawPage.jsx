@@ -21,6 +21,8 @@ const WithdrawPage = () => {
   const [popupMessage, setPopupMessage] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(true);
+  const [showMethodPopup, setShowMethodPopup] = useState(false);
+  const [showUnavailablePopup, setShowUnavailablePopup] = useState(false);
 
   // Check verification status
   useEffect(() => {
@@ -161,6 +163,11 @@ const WithdrawPage = () => {
   const bonus = typeof user?.totalBonus === "number" ? user.totalBonus : 0;
   const totalBalance = (userAssets || 0) + bonus;
 
+  // Show professional popup on mount
+  useEffect(() => {
+    setShowMethodPopup(true);
+  }, []);
+
   return (
     <div className={s.container}>
       <div className={s.Box}>
@@ -243,7 +250,16 @@ const WithdrawPage = () => {
               <label>Payment Method</label>
               <select
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "USD Tether") {
+                    setPaymentMethod(value);
+                    setShowUnavailablePopup(false);
+                  } else {
+                    setShowUnavailablePopup(true);
+                    setPaymentMethod("USD Tether");
+                  }
+                }}
                 disabled={isDemo || !isVerified}
               >
                 <option>USD Tether</option>
@@ -268,13 +284,33 @@ const WithdrawPage = () => {
             <label>Network</label>
             <select
               value={network}
-              onChange={(e) => setNetwork(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (["TRC-20", "ERC-20", "BEP-20"].includes(value)) {
+                  setNetwork(value);
+                  setShowUnavailablePopup(false);
+                } else if (value) {
+                  setShowUnavailablePopup(true);
+                  setNetwork("");
+                } else {
+                  setNetwork("");
+                }
+              }}
               disabled={isDemo || !isVerified}
             >
               <option value="">Select Network</option>
-              <option>Ethereum</option>
-              <option>Binance Smart Chain</option>
-              <option>Polygon</option>
+              <option value="TRC-20">TRC-20 </option>
+              <option value="ERC-20">ERC-20 </option>
+              <option value="BEP-20">BNB Smart Chain </option>
+              <option value="BTC">Bitcoin </option>
+              <option value="ETH">Ethereum </option>
+              <option value="LTC">Litecoin </option>
+              <option value="SOL">Solana </option>
+              <option value="XRP">Ripple </option>
+              <option value="DOGE">DogeCoin </option>
+              <option value="USDC_POLYGON">Polygon </option>
+              <option value="UNI">Uniswap  </option>
+              <option value="MATIC">Polygon  </option>
             </select>
           </div>
 
@@ -301,6 +337,44 @@ const WithdrawPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Professional popup for unavailable methods */}
+      {showUnavailablePopup && (
+        <div className={s.popupOverlay}>
+          <div className={s.popupBox}>
+            <div className={s.popupIcon}>
+              <span role="img" aria-label="warning" style={{fontSize: '2.5rem', color: '#e67e22'}}>🚧</span>
+            </div>
+            <div className={s.popupTitle}>Coming Soon</div>
+            <div className={s.popupMsg}>
+              We are currently working on this withdrawal method.<br />
+              Please choose from <b>TRC-20</b>, <b>ERC-20</b>, or <b>BEP-20</b>.
+            </div>
+            <button className={s.closePopupBtn} onClick={() => setShowUnavailablePopup(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Professional popup for method selection */}
+      {showMethodPopup && (
+        <div className={s.popupOverlay}>
+          <div className={s.popupBox}>
+            <div className={s.popupIcon}>
+              <span role="img" aria-label="info" style={{fontSize: '2.5rem', color: '#3498db'}}>💸</span>
+            </div>
+            <div className={s.popupTitle}>Choose a Withdrawal Network</div>
+            <div className={s.popupMsg}>
+              Please select one of the following networks to withdraw your funds:<br />
+              <b>TRC-20</b>, <b>ERC-20</b>, <b>BNB Smart Chain</b>
+            </div>
+            <button className={s.closePopupBtn} onClick={() => setShowMethodPopup(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <ToastContainer
         position="top-center"

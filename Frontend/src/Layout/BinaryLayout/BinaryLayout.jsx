@@ -442,19 +442,39 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#3F474C" }}
+                    style={{ background: "#2C2D35" }}
                     onClick={() => {
-                      setShowLeaderboard(true);
+                      navigate("/binarychart/bankinglayout/deposit");
                       setPopupVisible(false);
                     }}
                   >
-                    Top
+                    Deposit
+                  </div>
+                  <div
+                    className={s.popupItem}
+                    style={{ background: "#2C2D35" }}
+                    onClick={() => {
+                      navigate("/binarychart/bankinglayout/withdraw");
+                      setPopupVisible(false);
+                    }}
+                  >
+                    Withdraw
+                  </div>
+                  <div
+                    className={s.popupItem}
+                    style={{ background: "#2C2D35" }}
+                    onClick={() => {
+                      navigate("/binarychart/profile");
+                      setPopupVisible(false);
+                    }}
+                  >
+                    Account
                   </div>
                   <div
                     className={s.popupItem}
                     style={{ background: "#64B243" }}
                     onClick={() => {
-                      navigate("/affiliate");
+                      navigate("/affiliate/login");
                       setPopupVisible(false);
                     }}
                   >
@@ -770,7 +790,7 @@ const BinaryLayout = () => {
               <div
                 className={s.mobilePopupItem}
                 onClick={() => {
-                  navigate("/affiliate");
+                  navigate("/affiliate/login");
                   setMobileMorePopup(false);
                 }}
               >

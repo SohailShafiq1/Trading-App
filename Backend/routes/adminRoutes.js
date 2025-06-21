@@ -15,6 +15,10 @@ import {
   markSupportCompleted,
   getAllUsers,
   getAllAdminTrades,
+  getAllAdmins,
+  makeUserAdmin,
+  removeAdmin,
+  setAdminAccess,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -34,4 +38,9 @@ router.put("/support-completed/:id", markSupportCompleted);
 router.get("/all-trades", getAllTrades);
 router.get("/all-users", getAllUsers);
 router.get("/admin-trades", getAllAdminTrades);
+router.get("/all-admins", getAllAdmins);
+router.post("/make-admin", makeUserAdmin);
+router.post("/remove-admin", removeAdmin);
+router.post("/set-admin-access", setAdminAccess);
+
 export default router;

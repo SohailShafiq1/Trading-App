@@ -101,62 +101,12 @@ export const createDeposit = async (req, res) => {
       bonusPercent: bonusPercent || 0,
       bonusAmount,
       bonusId: bonusId || null,
-      status: "verified", // <-- Now deposits are auto-approved
+      status: "pending", // Always pending!
     });
 
     await deposit.save();
 
-    // CREDIT USER IMMEDIATELY IF VERIFIED
-    if (deposit.status === "verified") {
-      // Only credit if not already credited for this deposit
-      const existingTransaction = user.transactions.find(
-        (t) => t.orderId === deposit._id.toString() && t.type === "deposit"
-      );
-      if (!existingTransaction) {
-        user.assets += Number(deposit.amount);
-        user.depositCount = (user.depositCount || 0) + 1;
-
-        user.transactions.push({
-          orderId: deposit._id.toString(),
-          type: "deposit",
-          amount: deposit.amount,
-          paymentMethod: deposit.network || "USDT (TRC-20)",
-          status: "success",
-          date: new Date(),
-        });
-
-        // Apply bonus if exists
-        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
-          user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
-          user.assets += deposit.bonusAmount; // Add bonus to assets
-
-          // Track bonus percent if not already tracked
-          if (
-            deposit.bonusPercent &&
-            !user.usedBonuses.includes(deposit.bonusId)
-          ) {
-            user.usedBonuses.push(deposit.bonusId);
-          }
-        }
-        if (deposit.bonusAmount && deposit.bonusAmount > 0) {
-          user.notifications.push({
-            type: "Deposit",
-            read: false,
-            message: `Deposit of $${deposit.amount} + $${deposit.bonusAmount} bonus has been credited to your account.`,
-            date: new Date(),
-          });
-        } else {
-          user.notifications.push({
-            type: "Deposit",
-            read: false,
-            message: `Deposit of $${deposit.amount} has been credited to your account.`,
-            date: new Date(),
-          });
-        }
-
-        await user.save();
-      }
-    }
+    // Do NOT credit user here. Only admin approval should do that.
 
     if (bonusId && bonusPercent > 0 && !user.usedBonuses.includes(bonusId)) {
       user.usedBonuses.push(bonusId);
@@ -164,7 +114,7 @@ export const createDeposit = async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Deposit submitted and approved.",
+      message: "Deposit submitted and pending admin approval.",
       deposit,
       user: {
         usedBonuses: user.usedBonuses,

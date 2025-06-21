@@ -19,7 +19,7 @@ const Withdraw = () => {
           : `${import.meta.env.VITE_BACKEND_URL}/api/admin/withdraw-requests?status=${filter}`;
 
       const response = await fetch(url);
-      const data = await response.json();
+      const data = await response.json();                                                                                                                                                                                                                                                                                                                                                                                
 
       // Sort by newest first
       const sortedRequests = data.sort(
@@ -139,6 +139,9 @@ const Withdraw = () => {
           <tr>
             <th>Email</th>
             <th>Amount</th>
+            <th>Method</th>
+            <th>Network</th>
+            <th>Purse/Wallet</th>
             <th>Status</th>
             <th>Date</th>
             <th>Actions</th>
@@ -149,6 +152,9 @@ const Withdraw = () => {
             <tr key={request.withdrawalId}>
               <td>{request.email}</td>
               <td>${request.amount}</td>
+              <td>{request.method || '-'}</td>
+              <td>{request.network || '-'}</td>
+              <td>{request.purse || request.wallet || '-'}</td>
               <td>
                 <span
                   style={{

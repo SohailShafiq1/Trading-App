@@ -12,6 +12,7 @@ import { FiMaximize2 } from "react-icons/fi";
 import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import Trades from "./components/Trades/Trades";
 
 const CANDLE_STYLES = {
   CANDLE: "Candlestick",
@@ -149,6 +150,9 @@ const ForexTradingChart = ({
   const indicatorContainerRef = useRef();
   const indicatorChartRef = useRef(null);
   const indicatorSeriesRef = useRef([]);
+
+  // Trade popup state
+  const [tradePopup, setTradePopup] = useState(false);
 
   // Fetch candle data from Twelve Data
   const fetchCandles = async () => {
@@ -1270,6 +1274,86 @@ const ForexTradingChart = ({
           ref={indicatorContainerRef}
           style={{ width: "100%", height: 200, marginTop: 10 }}
         />
+      )}
+      {window.innerWidth < 768 && (
+        <button
+          className="show-trades-btn"
+          style={{
+            marginRight: 8,
+            background: "#10A055",
+            color: "#fff",
+            border: "none",
+            width: "100px",
+            borderRadius: "6px",
+            padding: "8px 16px",
+            fontWeight: 600,
+            fontSize: "1rem",
+            cursor: "pointer",
+            top: "120px",
+            left: 0,
+            zIndex: 10001,
+            position: "absolute",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+          onClick={() => setTradePopup(true)}
+        >
+          Trades
+        </button>
+      )}
+      {tradePopup && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 10002,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setTradePopup(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 10,
+              padding: 24,
+              minWidth: 320,
+              maxWidth: 400,
+              width: "90vw",
+              maxHeight: "80vh",
+              overflowY: "auto",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              style={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                background: "transparent",
+                border: "none",
+                fontSize: 24,
+                cursor: "pointer",
+                color: "#222",
+                zIndex: 2,
+              }}
+              onClick={() => setTradePopup(false)}
+            >
+              <AiOutlineClose />
+            </button>
+            <Trades
+              trades={trades}
+              coins={coins}
+              handleCloseTrade={handleCloseTrade}
+              // Add other props as needed
+            />
+          </div>
+        </div>
       )}
     </div>
   );

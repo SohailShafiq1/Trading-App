@@ -1,0 +1,341 @@
+.container {
+  max-width: 700px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(44, 45, 53, 0.1);
+  padding: 2.5rem 2rem 2rem 2rem;
+}
+
+h2 {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #222;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f9f9f9;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(44, 45, 53, 0.07);
+}
+
+.table th,
+.table td {
+  padding: 1rem 0.7rem;
+  text-align: left;
+}
+
+.table th {
+  background: #f1f5f9;
+  color: #333;
+  font-size: 1.08rem;
+  font-weight: 600;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.table tr:nth-child(even) {
+  background: #f6f8fa;
+}
+
+.table tr:nth-child(odd) {
+  background: #fff;
+}
+
+.table td {
+  color: #222;
+  font-size: 1.01rem;
+}
+
+.error {
+  color: #e53935;
+  text-align: center;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+
+.toggleBtns {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+.toggleBtn {
+  background: #f1f5f9;
+  color: #333;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.7rem 2.2rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.toggleBtn:hover {
+  background: #e0e7ef;
+  color: #222;
+  border: 1.5px solid #66b544;
+}
+.activeBtn {
+  background: linear-gradient(90deg, #66b544, #1a391d);
+  color: #fff;
+  border: 1.5px solid #66b544;
+  font-weight: 700;
+}
+
+.actionBtnGroup {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.actionBtn {
+  min-width: 90px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  background: #0078d4;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  margin: 0;
+}
+.actionBtn:hover {
+  background: #005fa3;
+}
+
+.searchBar {
+  border: 2px solid #2563eb;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 1.08rem;
+  width: 100%;
+  max-width: 420px;
+  margin: 24px 0 28px 0;
+  outline: none;
+  background: #f8fafc;
+  color: #22223b;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.searchBar:focus {
+  border-color: #1d4ed8;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+}
+
+.accessEditBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f6f8fa;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 16px 12px;
+  margin-bottom: 4px;
+  min-width: 220px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.07);
+}
+.accessOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.98rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+.accessEditBox button {
+  margin-top: 8px;
+  min-width: 80px;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.accessModalBox {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 32px 28px 24px 28px;
+  min-width: 340px;
+  max-width: 95vw;
+  width: 420px;
+  animation: fadeIn 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.accessOptionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+  margin: 18px 0 24px 0;
+  width: 100%;
+}
+.accessOptionLabel {
+  display: flex;
+  align-items: center;
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: #333;
+  background: #f7f7fa;
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.accessOptionLabel input[type="checkbox"] {
+  margin-right: 10px;
+  accent-color: #0078d4;
+  width: 18px;
+  height: 18px;
+}
+.accessOptionLabel:hover {
+  background: #e6f0fa;
+}
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 10px;
+}
+.actionBtn {
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.actionBtn:disabled {
+  background: #b3d3f7;
+  color: #fff;
+  cursor: not-allowed;
+}
+.actionBtn:not(:disabled):hover {
+  background: #005fa3;
+}
+
+.accessBadgesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 2px;
+}
+.accessBadge {
+  background: linear-gradient(90deg, #e0e7ff 0%, #f0f7ff 100%);
+  color: #2d3a4a;
+  font-size: 0.97rem;
+  font-weight: 500;
+  border-radius: 16px;
+  padding: 4px 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid #dbeafe;
+  letter-spacing: 0.01em;
+  transition: background 0.18s, color 0.18s;
+  display: inline-block;
+  margin-right: 2px;
+  margin-bottom: 2px;
+}
+.accessBadge:last-child {
+  margin-right: 0;
+}
+
+.adminActionBtns {
+  display: flex;
+  flex-direction: row;
+  gap: 0.7rem;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 0.3rem;
+}
+
+.adminActionBtns .actionBtn {
+  min-width: 110px;
+  padding: 8px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.loaderSpinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+  border-top: 3px solid #0078d4;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem 0.3rem;
+  }
+  .table th,
+  .table td {
+    padding: 0.6rem 0.3rem;
+    font-size: 0.97rem;
+  }
+  h2 {
+    font-size: 1.3rem;
+  }
+  .searchBar {
+    font-size: 1rem;
+    padding: 10px 12px;
+    max-width: 100%;
+  }
+  .adminActionBtns {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  .adminActionBtns .actionBtn {
+    width: 100%;
+    min-width: 0;
+  }
+}
