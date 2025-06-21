@@ -126,7 +126,8 @@ const ForexTradingChart = ({
   const seriesRef = useRef(null);
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const coinSelectorRef = useRef();
-  const [interval, setInterval] = useState("30min");
+  // Set default interval to 1min
+  const [interval, setInterval] = useState("1min");
   const [candles, setCandles] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [theme, setTheme] = useState(THEMES.LIGHT);
@@ -160,14 +161,24 @@ const ForexTradingChart = ({
       const response = await fetch(url);
       const data = await response.json();
       if (data && data.values) {
-        const formattedCandles = data.values.reverse().map((candle) => ({
-          time: Math.floor(new Date(candle.datetime).getTime() / 1000),
-          open: parseFloat(candle.open),
-          high: parseFloat(candle.high),
-          low: parseFloat(candle.low),
-          close: parseFloat(candle.close),
-          volume: parseFloat(candle.volume),
-        }));
+        // --- Floor candle time to nearest interval for all supported intervals ---
+        const normalizedInterval = normalizeInterval(interval);
+        const intervalSec = intervalToSeconds[normalizedInterval] || 60;
+        const formattedCandles = data.values.reverse().map((candle) => {
+          const origTime = Math.floor(
+            new Date(candle.datetime).getTime() / 1000
+          );
+          // Floor to nearest interval
+          const flooredTime = Math.floor(origTime / intervalSec) * intervalSec;
+          return {
+            time: flooredTime,
+            open: parseFloat(candle.open),
+            high: parseFloat(candle.high),
+            low: parseFloat(candle.low),
+            close: parseFloat(candle.close),
+            volume: parseFloat(candle.volume),
+          };
+        });
         setCandles(formattedCandles);
         if (formattedCandles.length > 0) {
           setCurrentPrice(formattedCandles[formattedCandles.length - 1].close);
@@ -180,8 +191,15 @@ const ForexTradingChart = ({
     }
   };
 
-  // Main chart setup
+  // Main chart setup (recreate chart on theme or interval change, like ForexChart.jsx)
   useEffect(() => {
+    if (!containerRef.current) return;
+    // Remove previous chart if it exists
+    if (chartRef.current) {
+      chartRef.current.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    }
     const chart = createChart(containerRef.current, {
       layout: {
         background: { color: theme.background },
@@ -191,13 +209,25 @@ const ForexTradingChart = ({
         vertLines: { color: theme.gridColor },
         horzLines: { color: theme.gridColor },
       },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-      },
+      crosshair: { mode: CrosshairMode.Normal },
       width: containerRef.current.clientWidth,
       height: 600,
       timeScale: {
         borderColor: theme.gridColor,
+        timeVisible: true,
+        secondsVisible: false,
+        tickMarkFormatter: (time) => {
+          const date = new Date(time * 1000);
+          if (interval === "1day") {
+            return `${date.getFullYear()}-${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+          }
+          return `${date.getHours().toString().padStart(2, "0")}:${date
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
+        },
       },
     });
     chartRef.current = chart;
@@ -209,8 +239,23 @@ const ForexTradingChart = ({
       wickUpColor: theme.upColor,
       wickDownColor: theme.downColor,
     });
-    return () => chart.remove();
-  }, []);
+    // Set initial data
+    if (candles.length > 0) {
+      seriesRef.current.setData(candles);
+    }
+    return () => {
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    };
+  }, [theme, interval]);
+
+  // Update chart data when candles change
+  useEffect(() => {
+    if (seriesRef.current) {
+      seriesRef.current.setData(candles);
+    }
+  }, [candles]);
 
   // Indicator chart setup (for RSI/MACD)
   useEffect(() => {
@@ -257,24 +302,6 @@ const ForexTradingChart = ({
   useEffect(() => {
     fetchCandles();
   }, [coinName, interval]);
-
-  useEffect(() => {
-    if (!chartRef.current || !seriesRef.current) return;
-    chartRef.current.applyOptions({
-      layout: {
-        background: { color: theme.background },
-        textColor: theme.textColor,
-      },
-      grid: {
-        vertLines: { color: theme.gridColor },
-        horzLines: { color: theme.gridColor },
-      },
-      timeScale: {
-        borderColor: theme.gridColor,
-      },
-    });
-    seriesRef.current.setData(candles);
-  }, [candles, theme]);
 
   // Add indicator
   const selectIndicator = (ind) => {

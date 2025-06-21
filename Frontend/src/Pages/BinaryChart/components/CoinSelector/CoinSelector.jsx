@@ -106,8 +106,11 @@ const CoinSelector = forwardRef(
                   onClick={() => handleSelect(coin)}
                 >
                   <span>
-                    {coin.type === "OTC"
-                      ? `${coin.firstName} (${coin.name})`
+                    {(coin.type === "OTC" || coin.type === "Forex") &&
+                    (coin.firstName || coin.lastName)
+                      ? `${coin.firstName || ""}${
+                          coin.lastName ? "/" + coin.lastName : ""
+                        }`
                       : coin.name}
                   </span>
                   <span>

@@ -4,21 +4,50 @@ let io = null;
 const INTERVAL_MS = 30000;
 const lastPrices = {};
 const scenarioCounters = {};
+const lastDirections = {};
 
 const round = (val) => parseFloat(val.toFixed(4));
 
 const generatePrice = (open, trend, lastTick = open, coinName = "") => {
-  const delta = Math.random() * 0.9 + 0.9;
   const base = lastTick;
   const counter = scenarioCounters[coinName] ?? 0;
+  let direction = 1;
+  let delta;
 
+  if (trend === "Random") {
+    // --- Enhanced random walk for 'Random' trend only ---
+    delta = (Math.random() * 0.9 + 0.9) * (Math.random() < 0.15 ? 2.5 : 1); // 15% chance for a big move
+    // Use memory for last direction, 70% chance to continue
+    if (lastDirections[coinName] === undefined)
+      lastDirections[coinName] = Math.random() < 0.5 ? 1 : -1;
+    if (Math.random() < 0.7) {
+      direction = lastDirections[coinName];
+    } else {
+      direction = -lastDirections[coinName];
+    }
+    lastDirections[coinName] = direction;
+    // 10% chance to force a streak (2-4 in a row)
+    if (Math.random() < 0.1) {
+      direction = lastDirections[coinName];
+      lastDirections[coinName + "_streak"] =
+        (lastDirections[coinName + "_streak"] || 0) + 1;
+      if (lastDirections[coinName + "_streak"] > 3)
+        lastDirections[coinName + "_streak"] = 0;
+    } else {
+      lastDirections[coinName + "_streak"] = 0;
+    }
+    // Add more variability to the move size
+    delta *= Math.random() * 0.7 + 0.7;
+    return round(Math.max(0.01, base + direction * delta));
+  }
+
+  // --- All other trends: original logic ---
+  delta = Math.random() * 0.9 + 0.9;
   switch (trend) {
     case "Up":
       return round(Math.max(open, base + delta));
     case "Down":
       return round(Math.min(open, base - delta));
-    case "Random":
-      return round(base + (Math.random() < 0.5 ? -delta : delta));
     case "Scenario1": {
       const cycle = counter % 4;
       scenarioCounters[coinName] = counter + 1;
@@ -67,14 +96,34 @@ const updateCandles = async () => {
       const lastTick = lastPrices[coin.name];
       const close = generatePrice(open, coin.trend, lastTick, coin.name);
 
-      const wiggle = Math.random() * 0.05;
-      // Make wicks visually much bigger
-      const minWick = 0.15; // Increased for much bigger wicks
+      // --- Realistic wick logic: more variability ---
+      let prev1 = coin.candles.filter((c) => c.interval === "30s").at(-1);
+      let prev2 = coin.candles.filter((c) => c.interval === "30s").at(-2);
+      let consecutiveUp = false,
+        consecutiveDown = false;
+      if (prev1 && prev2) {
+        consecutiveUp = prev1.close > prev1.open && prev2.close > prev2.open;
+        consecutiveDown = prev1.close < prev1.open && prev2.close < prev2.open;
+      }
+      // Make wicks more likely/visible after consecutive moves, but add randomness
+      let minWick = 0.01 + Math.random() * 0.02;
+      let wiggle = Math.random() * 0.03;
+      if (consecutiveUp || consecutiveDown) {
+        minWick = 0.03 + Math.random() * 0.04; // bigger wick
+        wiggle = Math.random() * 0.04 + 0.01;
+      }
+      // 10% chance for a very large wick
+      if (Math.random() < 0.1) {
+        minWick *= 2 + Math.random();
+        wiggle *= 2 + Math.random();
+      }
       let high = Math.max(open, close) + wiggle + minWick;
       let low = Math.max(0.01, Math.min(open, close) - wiggle - minWick);
       // Enforce minimum wick size
-      if (high - Math.max(open, close) < minWick) high = Math.max(open, close) + minWick;
-      if (Math.min(open, close) - low < minWick) low = Math.max(0.01, Math.min(open, close) - minWick);
+      if (high - Math.max(open, close) < minWick)
+        high = Math.max(open, close) + minWick;
+      if (Math.min(open, close) - low < minWick)
+        low = Math.max(0.01, Math.min(open, close) - minWick);
       high = round(high);
       low = round(low);
 

@@ -17,6 +17,7 @@ import { useAccountType } from "../../Context/AccountTypeContext";
 import { io } from "socket.io-client";
 import track from "./assets/trade.mp3";
 import { useNavigate } from "react-router-dom";
+import ForexChart from "./ForexChart";
 
 const BinaryChart = () => {
   // getPriceForTrade MUST be the first function in the component
@@ -1166,7 +1167,6 @@ const BinaryChart = () => {
           </div>
         </div>
       </div>
-
       {showPopup && (
         <div className={styles.popup} style={{ backgroundColor: popupColor }}>
           <p>{popupMessage}</p>
