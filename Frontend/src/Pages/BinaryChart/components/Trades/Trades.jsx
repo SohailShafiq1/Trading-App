@@ -18,7 +18,7 @@ const Trades = ({
 }) => {
   useEffect(() => {
     const interval = setInterval(() => {
-      if (typeof setUserTrades === 'function') {
+      if (typeof setUserTrades === "function") {
         setUserTrades((prevTrades) =>
           prevTrades.map((trade) => {
             if (trade.remainingTime > 1) {
@@ -149,7 +149,7 @@ const Trades = ({
               key={tradeId}
               style={{
                 color: "black",
-                padding: "2px", 
+                padding: "2px",
               }}
             >
               {/* First Row: Coin Name and Trade Duration */}
@@ -160,10 +160,15 @@ const Trades = ({
                   justifyContent: "space-around",
                 }}
               >
-                <strong>{trade.coinName}</strong>
+                <strong>
+                  {coins.find((c) => c.name === trade.coinName)?.firstName}/
+                  {coins.find((c) => c.name === trade.coinName)?.lastName}
+                </strong>
                 <span>
                   {trade.type === "Buy" ? (
-                    <span style={{ color: "#10A055", fontWeight: 600 }}>Buy</span>
+                    <span style={{ color: "#10A055", fontWeight: 600 }}>
+                      Buy
+                    </span>
                   ) : (
                     <span style={{ color: "#FF0000", fontWeight: 600 }}>
                       Sell

@@ -978,7 +978,8 @@ const ForexTradingChart = ({
           <div className="webCoinInfoT" style={{ position: "absolute" }}>
             <div className="coininfoBox">
               <p className="nameProfitWeb">
-                {coinName}({type})
+                {coins.find((c) => c.name === coinName)?.firstName}/
+                {coins.find((c) => c.name === coinName)?.lastName}({type})
               </p>
               <p className="nameProfitWeb">
                 &nbsp;&nbsp;{profit}

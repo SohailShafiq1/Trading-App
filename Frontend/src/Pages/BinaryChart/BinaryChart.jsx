@@ -912,7 +912,11 @@ const BinaryChart = () => {
             {isLoading ? (
               <div className={styles.loadingContainer}>
                 <div className={styles.loadingSpinner}></div>
-                <p>Loading market data for {selectedCoin}...</p>
+                <p>
+                  Loading market data for{" "}
+                  {coins.find((c) => c.name === selectedCoin)?.firstName}/
+                  {coins.find((c) => c.name === selectedCoin)?.lastName}...
+                </p>
               </div>
             ) : (
               selectedCoin && (
@@ -968,7 +972,11 @@ const BinaryChart = () => {
 
           <div className={styles.control}>
             <h1 className={styles.selectedCoinTitle}>
-              {selectedCoin ? `${selectedCoin} Trading` : "Select Coin Trading"}
+              {selectedCoin
+                ? `${coins.find((c) => c.name === selectedCoin)?.firstName}/${
+                    coins.find((c) => c.name === selectedCoin)?.lastName
+                  }  Trading`
+                : "Select Coin Trading"}
               {selectedCoin && (
                 <>
                   {" "}

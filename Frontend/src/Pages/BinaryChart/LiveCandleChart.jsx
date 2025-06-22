@@ -1777,7 +1777,8 @@ const LiveCandleChart = ({
           <div className="webCoinInfo" style={{ position: "absolute" }}>
             <div className="coininfoBox">
               <p className="nameProfitWeb">
-                {coinName}
+                {coins.find((c) => c.name === coinName)?.firstName}/
+                {coins.find((c) => c.name === coinName)?.lastName}
                 {"("}
                 {type}
                 {")"}
