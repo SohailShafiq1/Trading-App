@@ -5,7 +5,7 @@
   align-items: center;
   width: 100%;
   height: 100%;
-  margin-bottom: 5rem;
+  color: black;
 }
 
 .Header {
@@ -44,6 +44,7 @@
   text-decoration: none;
   border-radius: 6px;
   transition: background-color 0.2s ease;
+  margin-bottom: 1.5rem;
 }
 
 .tabs a:hover,
@@ -55,18 +56,11 @@
   background: linear-gradient(90deg, #66b544, #1a391d);
   color: white;
 }
-.activeTab:hover {
-  background-color: #22c55e;
-}
-.checkBox {
-  width: 20px;
-  height: 20px;
-  color: #1e1f25;
-}
+
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 1rem;
 }
 
 .input {
@@ -76,20 +70,25 @@
   color: black;
   border: 1px solid #334155;
 }
+.input:nth-child(1) {
+  margin-bottom: 1rem;
+}
 
 .input:focus {
   outline: 2px solid #22c55e;
 }
 
 .checkboxGroup {
-  font-size: 13px;
   display: flex;
   gap: 8px;
   align-items: flex-start;
   line-height: 1.4;
+  font-size: 13px;
 }
 
 .checkboxGroup input {
+  width: 18px;
+  height: 18px;
   margin-top: 2px;
 }
 
@@ -129,9 +128,44 @@
 
 @media (max-width: 768px) {
   .Header {
+    margin-top: 3rem;
     font-size: 30px;
   }
   .Form {
     width: 70%;
+  }
+  .form {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .Header {
+    font-size: 20px;
+    margin-bottom: 1.2rem;
+  }
+  .Form {
+    width: 98vw;
+    padding: 6px;
+    border-radius: 6px;
+  }
+  .tabs a,
+  .registerTab {
+    font-size: 12px;
+    padding: 6px 0;
+    border-radius: 4px;
+  }
+  .form {
+    gap: 6px;
+  }
+  .input {
+    padding: 7px;
+    font-size: 13px;
+  }
+  .registerBtn,
+  .googleBtn {
+    padding: 7px;
+    font-size: 13px;
+    border-radius: 4px;
   }
 }

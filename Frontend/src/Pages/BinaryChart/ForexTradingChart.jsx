@@ -7,7 +7,7 @@ import {
   AiOutlineClose,
 } from "react-icons/ai";
 import { BsBarChartFill } from "react-icons/bs";
-import { BiPencil } from "react-icons/bi";
+import { BiLineChart, BiPencil } from "react-icons/bi";
 import { FiMaximize2 } from "react-icons/fi";
 import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
@@ -153,6 +153,7 @@ const ForexTradingChart = ({
 
   // Trade popup state
   const [tradePopup, setTradePopup] = useState(false);
+  const [chartHeight, setChartHeight] = useState(600);
 
   // Fetch candle data from Twelve Data
   const fetchCandles = async () => {
@@ -195,6 +196,28 @@ const ForexTradingChart = ({
     }
   };
 
+  // Chart height update effect
+  useEffect(() => {
+    const updateChartHeight = () => {
+      let height;
+      if (window.innerWidth > 1600) {
+        height = 600;
+      } else if (window.innerWidth > 1400) {
+        height = 500;
+      } else if (window.innerWidth <= 1399 && window.innerWidth > 1300) {
+        height = 400;
+      } else if (window.innerWidth <= 1299 && window.innerWidth > 768) {
+        height = 350;
+      } else {
+        height = 480;
+      }
+      setChartHeight(height);
+    };
+    updateChartHeight();
+    window.addEventListener("resize", updateChartHeight);
+    return () => window.removeEventListener("resize", updateChartHeight);
+  }, []);
+
   // Main chart setup (recreate chart on theme or interval change, like ForexChart.jsx)
   useEffect(() => {
     if (!containerRef.current) return;
@@ -215,7 +238,7 @@ const ForexTradingChart = ({
       },
       crosshair: { mode: CrosshairMode.Normal },
       width: containerRef.current.clientWidth,
-      height: 600,
+      height: chartHeight, // Responsive height
       timeScale: {
         borderColor: theme.gridColor,
         timeVisible: true,
@@ -252,7 +275,7 @@ const ForexTradingChart = ({
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [theme, interval]);
+  }, [theme, interval, chartHeight]);
 
   // Update chart data when candles change
   useEffect(() => {
@@ -281,7 +304,7 @@ const ForexTradingChart = ({
           horzLines: { color: theme.gridColor },
         },
         width: indicatorContainerRef.current.clientWidth,
-        height: 200,
+        height: 100,
         timeScale: {
           borderColor: theme.gridColor,
         },
@@ -889,6 +912,63 @@ const ForexTradingChart = ({
     return <>{rendered}</>;
   };
 
+  // --- Popup close on outside click ---
+  useEffect(() => {
+    if (!showIndicatorPopup && !showDrawingPopup && !showThemePopup && !showStylePopup) return;
+    function handlePopupClickOutside(event) {
+      // Check for all popup refs (none are using refs, so check by class or id)
+      // We'll use the button refs and the popups' parent containers
+      const popups = [
+        document.getElementById('indicator-btn'),
+        document.getElementById('drawing-btn'),
+        document.getElementById('theme-btn'),
+        document.getElementById('style-btn'),
+      ];
+      let clickedInside = false;
+      for (const el of popups) {
+        if (el && el.contains(event.target)) {
+          clickedInside = true;
+          break;
+        }
+      }
+      // Also check if the popup itself was clicked
+      const popupDivs = document.querySelectorAll('.popup-green-border');
+      for (const div of popupDivs) {
+        if (div.contains(event.target)) {
+          clickedInside = true;
+          break;
+        }
+      }
+      if (!clickedInside) {
+        setShowIndicatorPopup(false);
+        setShowDrawingPopup(false);
+        setShowThemePopup(false);
+        setShowStylePopup(false);
+      }
+    }
+    document.addEventListener('mousedown', handlePopupClickOutside);
+    return () => document.removeEventListener('mousedown', handlePopupClickOutside);
+  }, [showIndicatorPopup, showDrawingPopup, showThemePopup, showStylePopup]);
+
+  // --- Coin selector close on outside click ---
+  useEffect(() => {
+    if (!showCoinSelector) return;
+    function handleCoinSelectorClickOutside(event) {
+      // Check if click is inside the coin selector popup or its button
+      const popup = coinSelectorRef.current;
+      const button = buttonRefs.current[0];
+      if (
+        (popup && popup.contains(event.target)) ||
+        (button && button.contains(event.target))
+      ) {
+        return;
+      }
+      setShowCoinSelector(false);
+    }
+    document.addEventListener('mousedown', handleCoinSelectorClickOutside);
+    return () => document.removeEventListener('mousedown', handleCoinSelectorClickOutside);
+  }, [showCoinSelector]);
+
   return (
     <div
       className="liveCHART"
@@ -958,7 +1038,7 @@ const ForexTradingChart = ({
                   top: "110%",
                   left: 0,
                   zIndex: 200,
-                  minWidth: 260,
+                  width: "100%",
                 }}
               >
                 <CoinSelector
@@ -1012,17 +1092,18 @@ const ForexTradingChart = ({
                 background: "#E0E0E0",
               }}
             >
-              <FiMaximize2 />
+              <BiLineChart />
             </button>
             {showIndicatorPopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
                   top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -1068,13 +1149,14 @@ const ForexTradingChart = ({
             </button>
             {showDrawingPopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
-                  top: "150%",
+                  top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -1153,13 +1235,14 @@ const ForexTradingChart = ({
             </button>
             {showThemePopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
                   top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -1220,13 +1303,14 @@ const ForexTradingChart = ({
             </button>
             {showStylePopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
                   top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -1262,7 +1346,6 @@ const ForexTradingChart = ({
         }}
         style={{
           width: "100%",
-          height: "600px",
           overflow: "hidden",
           position: "relative",
         }}
@@ -1290,9 +1373,9 @@ const ForexTradingChart = ({
             fontWeight: 600,
             fontSize: "1rem",
             cursor: "pointer",
-            top: "120px",
+            top: "102px",
             left: 0,
-            zIndex: 10001,
+            zIndex: 2,
             position: "absolute",
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
           }}
@@ -1310,7 +1393,7 @@ const ForexTradingChart = ({
             width: "100vw",
             height: "100vh",
             background: "rgba(0,0,0,0.4)",
-            zIndex: 10002,
+            zIndex: 2,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

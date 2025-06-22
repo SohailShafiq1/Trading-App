@@ -79,12 +79,12 @@
   display: flex;
   flex-direction: row;
   border: 2px solid #10a055;
-  top: 67px;
+  top: 50px;
   justify-content: space-between;
   align-items: center;
   padding: 0 10px;
   background: rgb(224, 224, 224);
-  z-index: 10001;
+  z-index: 2;
   width: fit-content;
 }
 .webCoinInfoT {
@@ -96,7 +96,7 @@
   align-items: center;
   padding: 0 10px;
   background: rgb(224, 224, 224);
-  z-index: 10001;
+  z-index: 2;
   width: fit-content;
 }
 .coininfoBox {
@@ -120,7 +120,6 @@
   }
   .coinSelectorMobile button {
     background: rgb(224, 224, 224);
-    width: 150px;
     border: 2px solid #10a055;
   }
   .coinSelectorMobile button:hover {
@@ -137,7 +136,7 @@
   }
   .coinSelectorMobile2 {
     position: absolute;
-    top: 67px;
+    top: 50px;
     z-index: 100;
     left: 0;
   }

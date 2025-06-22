@@ -3,7 +3,7 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { AiOutlineBgColors } from "react-icons/ai";
 import { BsBarChartFill } from "react-icons/bs";
 import { AiOutlinePlusSquare } from "react-icons/ai";
-import { BiPencil } from "react-icons/bi";
+import { BiLineChart, BiPencil } from "react-icons/bi";
 import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
 import React, { useEffect, useRef, useState } from "react";
 import "./LiveCandleChart.css";
@@ -652,6 +652,18 @@ const LiveCandleChart = ({
     }
   };
   useEffect(() => {
+    let chartHeight;
+    if (window.innerWidth > 1600) {
+      chartHeight = 600;
+    } else if (window.innerWidth > 1400) {
+      chartHeight = 500;
+    } else if (window.innerWidth <= 1399 && window.innerWidth > 1300) {
+      chartHeight = 400;
+    } else if (window.innerWidth <= 1299 && window.innerWidth > 768) {
+      chartHeight = 350;
+    } else {
+      chartHeight = 480;
+    }
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { color: theme.background },
@@ -680,7 +692,7 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
       },
       width: chartContainerRef.current.clientWidth,
-      height: window.innerWidth < 768 ? 480 : 500,
+      height: chartHeight,
     });
     chartRef.current = chart;
     seriesRef.current = chart.addCandlestickSeries({
@@ -1804,9 +1816,9 @@ const LiveCandleChart = ({
                 fontWeight: 600,
                 fontSize: "1rem",
                 cursor: "pointer",
-                top: "120px",
+                top: "103px",
                 left: 0,
-                zIndex: 10001,
+                zIndex: 2,
                 position: "absolute",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
               }}
@@ -1824,7 +1836,7 @@ const LiveCandleChart = ({
                 width: "100vw",
                 height: "100vh",
                 background: "rgba(0,0,0,0.4)",
-                zIndex: 10002,
+                zIndex: 2,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1887,18 +1899,19 @@ const LiveCandleChart = ({
                 background: "#E0E0E0",
               }}
             >
-              <FiMaximize2 />
+              <BiLineChart />
             </button>
 
             {showIndicatorPopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
-                  top: "150%",
+                  top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -1944,13 +1957,14 @@ const LiveCandleChart = ({
             </button>
             {showDrawingPopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
-                  top: "150%",
+                  top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -2032,13 +2046,14 @@ const LiveCandleChart = ({
             </button>
             {showThemePopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
                   top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -2102,13 +2117,14 @@ const LiveCandleChart = ({
             </button>
             {showStylePopup && (
               <div
+                className="popup-green-border"
                 style={{
                   position: "absolute",
                   top: "100%",
                   left: 0,
                   zIndex: 100,
                   background: "#E0E0E0",
-                  border: `1px solid ${theme.gridColor}`,
+                  border: "2px solid #10A055",
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
@@ -2144,7 +2160,7 @@ const LiveCandleChart = ({
         <div
           ref={chartContainerRef}
           className="chartMain"
-          style={{ width: "100%", height: "500px", position: "relative" }}
+          style={{ width: "100%", position: "relative" }}
         />
         <div
           id="candle-countdown"
@@ -2152,7 +2168,7 @@ const LiveCandleChart = ({
             position: "absolute",
             transform: "translate(-50%, -50%)",
             color: theme.textColor,
-            background: "rgba(0, 0, 0, 0.2)",
+            background: "rgba(0, 0,  0, 0.2)",
             borderRadius: 4,
             pointerEvents: "none",
             zIndex: 2,

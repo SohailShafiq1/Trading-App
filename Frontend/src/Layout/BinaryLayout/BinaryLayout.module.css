@@ -249,6 +249,7 @@
   position: relative;
   width: 150px;
   height: 60px;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -832,7 +833,9 @@
     width: 110px;
   }
   .liveAcc {
-    width: 100px;
+    width: fit-content;
+    min-width: fit-content;
+    font-size: 13px;
   }
 }
 @media (max-width: 1200px) {
@@ -841,7 +844,6 @@
     font-size: 1.4rem;
   }
   .liveAcc {
-    width: 120px;
   }
   .liveAcc p {
     font-size: 1rem;
