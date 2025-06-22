@@ -6,6 +6,9 @@ const lastPrices = {};
 const scenarioCounters = {};
 const lastDirections = {};
 
+// Track burst state for each coin
+const burstState = {};
+
 const round = (val) => parseFloat(val.toFixed(4));
 
 const generatePrice = (open, trend, lastTick = open, coinName = "") => {
@@ -15,9 +18,57 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
   let delta;
 
   if (trend === "Random") {
-    // --- Enhanced random walk for 'Random' trend only ---
-    delta = (Math.random() * 0.9 + 0.9) * (Math.random() < 0.15 ? 2.5 : 1); // 15% chance for a big move
-    // Use memory for last direction, 70% chance to continue
+    // --- Realistic burst logic ---
+    if (!burstState[coinName]) {
+      burstState[coinName] = {
+        nextBurst: Math.floor(Math.random() * 21) + 30, // 30-50 candles
+        burstActive: false,
+        burstDirection: 1,
+        burstLeft: 0,
+        burstMagnitude: 0.0,
+        candleCount: 0,
+        burstTarget: 0.0,
+        burstAccum: 0.0,
+        burstLen: 0,
+      };
+    }
+    const state = burstState[coinName];
+    state.candleCount++;
+    // Start burst if time
+    if (!state.burstActive && state.candleCount >= state.nextBurst) {
+      state.burstActive = true;
+      state.burstDirection = Math.random() < 0.5 ? 1 : -1;
+      state.burstLen = Math.floor(Math.random() * 6) + 5; // 5-10 candles
+      state.burstLeft = state.burstLen;
+      state.burstTarget = (Math.random() * 10 + 8) * state.burstDirection; // total burst move: 8-18 up or down
+      state.burstAccum = 0.0;
+      state.candleCount = 0;
+      state.nextBurst = Math.floor(Math.random() * 21) + 30;
+    }
+    // If in burst, apply realistic burst
+    if (state.burstActive && state.burstLeft > 0) {
+      // For all but last burst candle, random move, but keep track
+      let move;
+      if (state.burstLeft === 1) {
+        // Last burst candle: force to hit target
+        move = state.burstTarget - state.burstAccum;
+      } else {
+        // Larger random move, but not always in burst direction
+        move = (Math.random() * 2.2 - 1.1) + (state.burstTarget / state.burstLen) * 0.7;
+        // Clamp so we don't overshoot
+        if (Math.abs(state.burstAccum + move) > Math.abs(state.burstTarget)) {
+          move = state.burstTarget - state.burstAccum;
+        }
+      }
+      state.burstAccum += move;
+      state.burstLeft--;
+      if (state.burstLeft === 0) {
+        state.burstActive = false;
+      }
+      return round(Math.max(0.01, base + move));
+    }
+    // --- Normal random walk for 'Random' trend ---
+    const bodyDelta = (Math.random() < 0.8 ? (Math.random() * 0.35 + 0.08) : (Math.random() * 0.7 + 0.15));
     if (lastDirections[coinName] === undefined)
       lastDirections[coinName] = Math.random() < 0.5 ? 1 : -1;
     if (Math.random() < 0.7) {
@@ -26,7 +77,6 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
       direction = -lastDirections[coinName];
     }
     lastDirections[coinName] = direction;
-    // 10% chance to force a streak (2-4 in a row)
     if (Math.random() < 0.1) {
       direction = lastDirections[coinName];
       lastDirections[coinName + "_streak"] =
@@ -36,8 +86,7 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
     } else {
       lastDirections[coinName + "_streak"] = 0;
     }
-    // Add more variability to the move size
-    delta *= Math.random() * 0.7 + 0.7;
+    delta = bodyDelta * (Math.random() * 0.5 + 0.75);
     return round(Math.max(0.01, base + direction * delta));
   }
 
@@ -105,17 +154,29 @@ const updateCandles = async () => {
         consecutiveUp = prev1.close > prev1.open && prev2.close > prev2.open;
         consecutiveDown = prev1.close < prev1.open && prev2.close < prev2.open;
       }
-      // Make wicks more likely/visible after consecutive moves, but add randomness
-      let minWick = 0.01 + Math.random() * 0.02;
-      let wiggle = Math.random() * 0.03;
-      if (consecutiveUp || consecutiveDown) {
-        minWick = 0.03 + Math.random() * 0.04; // bigger wick
-        wiggle = Math.random() * 0.04 + 0.01;
-      }
-      // 10% chance for a very large wick
-      if (Math.random() < 0.1) {
-        minWick *= 2 + Math.random();
-        wiggle *= 2 + Math.random();
+      // --- Enhanced wick logic for Random trend ---
+      let minWick, wiggle;
+      if (coin.trend === "Random") {
+        // Large wicks for random, but small body
+        minWick = 0.08 + Math.random() * 0.08; // bigger minimum wick
+        wiggle = 0.05 + Math.random() * 0.08;
+        // 15% chance for a very large wick
+        if (Math.random() < 0.15) {
+          minWick *= 2 + Math.random();
+          wiggle *= 2 + Math.random();
+        }
+      } else {
+        minWick = 0.01 + Math.random() * 0.02;
+        wiggle = Math.random() * 0.03;
+        if (consecutiveUp || consecutiveDown) {
+          minWick = 0.03 + Math.random() * 0.04; // bigger wick
+          wiggle = Math.random() * 0.04 + 0.01;
+        }
+        // 10% chance for a very large wick
+        if (Math.random() < 0.1) {
+          minWick *= 2 + Math.random();
+          wiggle *= 2 + Math.random();
+        }
       }
       let high = Math.max(open, close) + wiggle + minWick;
       let low = Math.max(0.01, Math.min(open, close) - wiggle - minWick);
