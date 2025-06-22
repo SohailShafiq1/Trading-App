@@ -1,3 +1,14 @@
+/* THEME VARIABLES */
+:root {
+  --popup-bg: var(--theme-popup-bg, #2c2d35);
+  --popup-text: var(--theme-popup-text, #fff);
+  --menu-hover-bg: var(--theme-menu-hover-bg, #f0f0f0);
+  --menu-bg: var(--theme-menu-bg, #e3e3e3);
+  --menu-item-text: var(--theme-menu-item-text, #111);
+  --menu-item-hover-bg: var(--theme-menu-item-hover-bg, #f0f0f0);
+  --logout-color: var(--theme-logout-color, #e74c3c);
+}
+
 .superContainer {
   width: 100%;
   height: 100%;
@@ -98,14 +109,15 @@
   position: absolute;
   top: 105px;
   right: 370px;
-  background-color: white;
-  border: 1px solid #64b243;
+  background-color: var(--popup-bg);
+  color: var(--popup-text);
+  border: 1px solid var(--theme-logout-color, #64b243);
   z-index: 1001;
   overflow: hidden;
 }
 
 .accountSection {
-  background: #e3e3e3;
+  background: var(--menu-bg);
   padding: 15px 10px;
   display: flex;
   flex-direction: column;
@@ -118,14 +130,15 @@
   align-items: center;
   cursor: pointer;
   padding: 8px;
+  background: transparent;
+  color: var(--theme-menu-item-text, #111);
+  transition: background 0.2s, color 0.2s;
 }
 
-.accountItem:hover {
-  background: #d9d9d9;
-}
-
+.accountItem:hover,
 .active {
-  background: #d0d0d0;
+  background: var(--theme-menu-hover-bg, #d0d0d0);
+  color: var(--theme-menu-item-text, #111);
 }
 
 .radioCircle {
@@ -154,7 +167,7 @@
 
 .label {
   font-size: 12px;
-  color: #555;
+  color: var(--theme-menu-item-text, #555);
   margin: 0;
   text-transform: uppercase;
 }
@@ -163,7 +176,7 @@
   font-size: 16px;
   font-weight: bold;
   margin: 0;
-  color: #111;
+  color: var(--theme-menu-item-text, #111);
 }
 
 .menuSection {
@@ -193,7 +206,7 @@
   display: none;
   position: absolute;
   top: 100px;
-  background-color: white;
+  background-color: var(--popup-bg);
   border: 1px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -254,22 +267,18 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  color: black;
+  color: var(--btn-text, black);
   text-decoration: none;
   padding: 0.8rem 1rem;
   transition: all 0.3s ease;
-  background-color: #e0e0e0;
+  background-color: var(--btn-bg, #e0e0e0);
   flex-shrink: 0;
   font-size: 1.4rem;
 }
 
 .btn:hover {
-  background: #b1afaf;
-}
-
-.btn.active {
-  color: #ffffff;
-  background: rgba(16, 160, 85, 0.15);
+  background: var(--btn-hover-bg, #b1afaf);
+  color: var(--btn-hover-text, #fff);
 }
 
 .icons {
@@ -286,7 +295,8 @@
 }
 
 .liveAcc {
-  background: #e3e3e3;
+  background: var(--btn-bg, #e0e0e0);
+  color: var(--btn-text, #111);
   padding: 16px;
   border-radius: 6px;
   min-width: 220px;
@@ -330,7 +340,6 @@
 .liveLabel {
   font-size: 1.2em;
   font-weight: 500;
-  color: #333;
   letter-spacing: 1px;
 }
 
@@ -338,7 +347,6 @@
   width: 100%;
   font-size: 1.5em;
   font-weight: 500;
-  color: #111;
   margin-top: 2px;
 }
 
@@ -557,7 +565,8 @@
 }
 
 .mobilePopupContent {
-  background-color: white;
+  background-color: var(--popup-bg);
+  color: var(--popup-text);
   width: 90%;
   max-width: 400px;
   border-radius: 10px;
@@ -572,6 +581,7 @@
   padding: 15px 20px;
   background-color: #f5f5f5;
   border-bottom: 1px solid #ddd;
+  color: var(--menu-item-text);
 }
 
 .mobilePopupHeader h3 {
@@ -597,6 +607,7 @@
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background 0.2s;
+  color: var(--menu-item-text);
 }
 
 .mobilePopupItem:last-child {
@@ -604,7 +615,7 @@
 }
 
 .mobilePopupItem:hover {
-  background-color: #f9f9f9;
+  background: var(--menu-item-hover-bg);
 }
 
 /* Mobile Account Popup Styles */

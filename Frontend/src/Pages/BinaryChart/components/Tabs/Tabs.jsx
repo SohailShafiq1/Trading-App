@@ -194,10 +194,23 @@ const Tabs = () => {
   }, [user.email]);
 
   return (
-    <div className={styles.tabs}>
+    <div
+      className={styles.tabs}
+      style={{
+        background: theme.background,
+        color: theme.textColor,
+        "--tab-hover-bg": theme.tabHover || "#f0f0f0",
+        "--tab-btn-hover-bg": theme.tabBtnHover || "#e0e0e0",
+        "--tab-btn-hover-color": theme.tabBtnHoverColor || "#10A055",
+        "--setting-btn-hover-bg": theme.settingBtnHover || "#dcdcdc",
+        "--setting-btn-hover-color": theme.settingBtnHoverColor || "#10A055",
+        "--active-tab-btn-hover-bg": theme.activeTabBtnHover || "#333",
+        "--active-tab-btn-hover-color": theme.activeTabBtnHoverColor || "#10A055",
+      }}
+    >
       {/* Notifications Tab */}
       <div className={styles.tab} style={{ position: "relative" }}>
-        <button className={styles.tabBTN}>
+        <button className={styles.tabBTN} style={{ color: theme.textColor }}>
           <AiTwotoneBell
             onClick={() => {
               setShowPopup(!showPopup);
@@ -218,12 +231,28 @@ const Tabs = () => {
           </span>
         )}
         {showPopup && (
-          <div className={styles.popup} ref={popupRef}>
+          <div
+            className={styles.popup}
+            ref={popupRef}
+            style={{
+              background: theme.popup,
+              color: theme.textColor,
+              border: theme.name === "Black" ? "1px solid #333" : undefined,
+            }}
+          >
             <div className={styles.popupHeader}>
               <button
                 className={`${styles.tabButton} ${
                   activeTab === "Notifications" ? styles.activeTabButton : ""
                 }`}
+                style={{
+                  background:
+                    activeTab === "Notifications" ? theme.box : theme.popup,
+                  color:
+                    activeTab === "Notifications"
+                      ? theme.textColor
+                      : theme.textColor,
+                }}
                 onClick={() => setActiveTab("Notifications")}
               >
                 Notifications
@@ -232,6 +261,11 @@ const Tabs = () => {
                 className={`${styles.tabButton} ${
                   activeTab === "News" ? styles.activeTabButton : ""
                 }`}
+                style={{
+                  background: activeTab === "News" ? theme.box : theme.popup,
+                  color:
+                    activeTab === "News" ? theme.textColor : theme.textColor,
+                }}
                 onClick={() => setActiveTab("News")}
               >
                 News
@@ -241,11 +275,11 @@ const Tabs = () => {
           </div>
         )}
       </div>
-
       {/* Mute/Unmute Tab */}
       <div className={styles.tab}>
         <button
           className={styles.tabBTN}
+          style={{ color: theme.textColor }}
           onClick={() => {
             setShowSettingsPopup(false);
             setShowPopup(false);
@@ -255,11 +289,11 @@ const Tabs = () => {
           {mute ? <BiVolumeMute /> : <HiOutlineVolumeUp />}
         </button>
       </div>
-
       {/* Settings Tab */}
       <div className={styles.tab} style={{ position: "relative" }}>
         <button
           className={styles.tabBTN}
+          style={{ color: theme.textColor }}
           onClick={() => {
             setShowSettingsPopup(!showSettingsPopup);
             setShowPopup(false);
@@ -268,7 +302,15 @@ const Tabs = () => {
           <AiOutlineSetting />
         </button>
         {showSettingsPopup && (
-          <div className={styles.settingsPopup} ref={settingsRef}>
+          <div
+            className={styles.settingsPopup}
+            ref={settingsRef}
+            style={{
+              background: theme.popup,
+              color: theme.textColor,
+              border: theme.name === "Black" ? "1px solid #333" : undefined,
+            }}
+          >
             {/* Theme Switcher */}
             <div
               style={{
@@ -283,6 +325,7 @@ const Tabs = () => {
                   fontWeight: 600,
                   fontSize: 14,
                   marginBottom: 2,
+                  color: theme.textColor,
                 }}
               >
                 Theme:
@@ -290,7 +333,7 @@ const Tabs = () => {
               <div style={{ display: "flex", gap: 8 }}>
                 <button
                   style={{
-                    background: theme.name === "Black" ? "#111" : "#eee",
+                    background: theme.name === "Black" ? "#1F1F1F" : "#eee",
                     color: theme.name === "Black" ? "#fff" : "#222",
                     border:
                       theme.name === "Black"
@@ -324,8 +367,8 @@ const Tabs = () => {
                 </button>
                 <button
                   style={{
-                    background: theme.name === "Grey" ? "#e5e5e5" : "#eee",
-                    color: theme.name === "Grey" ? "#222" : "#222",
+                    background: theme.name === "Grey" ? "#979797" : "#eee",
+                    color: theme.name === "Grey" ? "#fff" : "#222",
                     border:
                       theme.name === "Grey"
                         ? "2px solid #10A055"
@@ -344,23 +387,39 @@ const Tabs = () => {
             <NavLink
               to={"/binarychart/bankinglayout/deposit"}
               className={styles.settingButton}
+              style={{
+                background: theme.settingButton,
+                color: theme.textColor,
+              }}
             >
               Deposit
             </NavLink>
             <NavLink
               to={"/binarychart/bankinglayout/withdraw"}
               className={styles.settingButton}
+              style={{
+                background: theme.settingButton,
+                color: theme.textColor,
+              }}
             >
               Withdrawal
             </NavLink>
             <NavLink
               to={"/binarychart/bankinglayout/transactions"}
               className={styles.settingButton}
+              style={{
+                background: theme.settingButton,
+                color: theme.textColor,
+              }}
             >
               Transactions
             </NavLink>
             <NavLink
               className={styles.settingButton}
+              style={{
+                background: theme.settingButton,
+                color: theme.textColor,
+              }}
               onClick={() => setShowTradePopup(!showTradePopup)}
             >
               Trades
@@ -368,19 +427,32 @@ const Tabs = () => {
             <NavLink
               to={"/binarychart/profile"}
               className={styles.settingButton}
+              style={{
+                background: theme.settingButton,
+                color: theme.textColor,
+              }}
             >
               Account
             </NavLink>
           </div>
         )}
         {showTradePopup && (
-          <div className={styles.tradePopup} ref={tradePopupRef}>
-            <h3>Total Trades</h3>
+          <div
+            className={styles.tradePopup}
+            ref={tradePopupRef}
+            style={{
+              background: theme.tradePopup,
+              color: theme.textColor,
+              border: theme.name === "Black" ? "1px solid #333" : undefined,
+            }}
+          >
+            <h3 style={{ color: theme.textColor }}>Total Trades</h3>
             <p>
               <strong>{totalTrades}</strong>
             </p>
             <button
               className={styles.closeButton}
+              style={{ background: "#ff4d4d", color: "#fff" }}
               onClick={() => setShowTradePopup(false)}
             >
               Close

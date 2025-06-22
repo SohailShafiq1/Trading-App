@@ -13,12 +13,31 @@
   position: relative;
 }
 .tabBTN {
-  background: none;
+  background: none !important;
   color: #9197a4;
   font-size: 1.4rem;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, color 0.2s;
 }
-.tab :hover {
-  background: #ffffff;
+.tabBTN:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  background: none !important;
+}
+.tabBTN:active {
+  color: var(--tab-btn-hover-color, #10A055) !important;
+  background: var(--tab-btn-hover-bg, #e0e0e0) !important;
+}
+.tabBTN:hover {
+  background: var(--tab-btn-hover-bg, #e0e0e0) !important;
+  color: var(--tab-btn-hover-color, #10A055) !important;
+}
+.tab:hover {
+  background: var(--tab-hover-bg, #f0f0f0) !important;
 }
 
 .notificationBadge {
@@ -85,7 +104,8 @@
 }
 
 .settingButton:hover {
-  background-color: #dcdcdc;
+  background-color: var(--setting-btn-hover-bg, #dcdcdc) !important;
+  color: var(--setting-btn-hover-color, #10a055) !important;
 }
 
 .tradePopup {
@@ -149,7 +169,8 @@
 }
 
 .tabButton:hover {
-  background: darkgray;
+  background: var(--tab-btn-hover-bg, darkgray) !important;
+  color: var(--tab-btn-hover-color, #10a055) !important;
 }
 
 .activeTabButton {
@@ -159,7 +180,8 @@
 }
 
 .activeTabButton:hover {
-  background: #333;
+  background: var(--active-tab-btn-hover-bg, #333) !important;
+  color: var(--active-tab-btn-hover-color, #10a055) !important;
 }
 
 .popupContent {

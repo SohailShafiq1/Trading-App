@@ -22,10 +22,13 @@ import { useAccountType } from "../../Context/AccountTypeContext";
 import { useAffiliateAuth } from "../../Context/AffiliateAuthContext";
 import LeaderboardPopup from "./LeaderboardPopup";
 import axios from "axios";
+import { useTheme } from "../../Context/ThemeContext";
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const s = styles;
 
 const BinaryLayout = () => {
+  const { theme } = useTheme();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSwitchPopup, setShowSwitchPopup] = useState(false);
   const [switchPopupMsg, setSwitchPopupMsg] = useState("");
@@ -262,13 +265,32 @@ const BinaryLayout = () => {
 
   return (
     <>
-      <div className={s.superContainer}>
-        <div className={s.container}>
+      <div
+        className={s.superContainer}
+        style={{
+          background: theme.background,
+          color: theme.textColor,
+          "--theme-popup-bg": theme.popupBg || theme.box,
+          "--theme-popup-text": theme.popupText || theme.textColor,
+          "--theme-menu-bg": theme.menuBg || theme.box,
+          "--theme-menu-item-text": theme.menuText || theme.textColor,
+          "--theme-menu-hover-bg": theme.menuHoverBg || theme.hover,
+          "--theme-menu-item-hover-bg": theme.menuHoverBg || theme.hover,
+          "--theme-logout-color": theme.logoutColor || "#e74c3c",
+        }}
+      >
+        <div
+          className={s.container}
+          style={{ background: theme.background, color: theme.textColor }}
+        >
           <div className={s.logo}>
             <img
               src={logo}
               onClick={() => navigate("/binarychart")}
               alt="WealthX Logo"
+              style={{
+                filter: theme.name === "Black" ? "brightness(2)" : "none",
+              }}
             />
           </div>
           <div className={s.accountWrapper} ref={accountRef}>
@@ -276,7 +298,11 @@ const BinaryLayout = () => {
               ref={(el) => (buttonRefs.current[4] = el)}
               className={s.liveAccMobile}
               onClick={() => setMobileAccountPopupVisible((v) => !v)}
-              style={{ cursor: "pointer" }}
+              style={{
+                cursor: "pointer",
+                background: theme.box,
+                color: theme.textColor,
+              }}
             >
               {!isDemo ? (
                 <div className={s.liveAccountFlexMobile}>
@@ -387,7 +413,12 @@ const BinaryLayout = () => {
 
           <div className={s.navBar}>
             <div ref={(el) => (buttonRefs.current[1] = el)}>
-              <NavLink id="trade-btn" to="/binarychart" className={s.btn}>
+              <NavLink
+                id="trade-btn"
+                to="/binarychart"
+                className={s.btn}
+                style={{ background: theme.box, color: theme.textColor }}
+              >
                 <IoMdImage className={s.icons} />
                 Trade
               </NavLink>
@@ -396,6 +427,7 @@ const BinaryLayout = () => {
               <div
                 className={s.btn}
                 id="back-btn"
+                style={{ background: theme.box, color: theme.textColor }}
                 onClick={() => {
                   setShowLeaderboard(true);
                   setPopupVisible(false);
@@ -410,6 +442,7 @@ const BinaryLayout = () => {
                 id="profile-btn"
                 className={s.btn}
                 to="/binarychart/profile"
+                style={{ background: theme.box, color: theme.textColor }}
               >
                 <CgProfile className={s.icons} />
                 Profile
@@ -422,6 +455,7 @@ const BinaryLayout = () => {
                   id="more-btn"
                   className={s.btn}
                   onClick={() => setPopupVisible((v) => !v)}
+                  style={{ background: theme.box, color: theme.textColor }}
                 >
                   <CgMoreAlt className={s.icons} />
                   More
@@ -432,7 +466,6 @@ const BinaryLayout = () => {
                 <div className={s.popup}>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#2C2D35" }}
                     onClick={() => {
                       navigate("/binarychart/support");
                       setPopupVisible(false);
@@ -442,7 +475,6 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#2C2D35" }}
                     onClick={() => {
                       navigate("/binarychart/bankinglayout/deposit");
                       setPopupVisible(false);
@@ -452,7 +484,6 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#2C2D35" }}
                     onClick={() => {
                       navigate("/binarychart/bankinglayout/withdraw");
                       setPopupVisible(false);
@@ -462,7 +493,6 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#2C2D35" }}
                     onClick={() => {
                       navigate("/binarychart/profile");
                       setPopupVisible(false);
@@ -472,7 +502,10 @@ const BinaryLayout = () => {
                   </div>
                   <div
                     className={s.popupItem}
-                    style={{ background: "#64B243" }}
+                    style={{
+                      background: "var(--theme-menu-hover-bg, #64B243)",
+                      color: "#fff",
+                    }}
                     onClick={() => {
                       navigate("/affiliate/login");
                       setPopupVisible(false);
@@ -490,7 +523,11 @@ const BinaryLayout = () => {
                 ref={(el) => (buttonRefs.current[4] = el)}
                 className={s.liveAcc}
                 onClick={() => setAccountPopupVisible((v) => !v)}
-                style={{ cursor: "pointer" }}
+                style={{
+                  cursor: "pointer",
+                  background: theme.box,
+                  color: theme.textColor,
+                }}
               >
                 {!isDemo ? (
                   <div className={s.liveAccountFlex}>
@@ -551,10 +588,17 @@ const BinaryLayout = () => {
               </div>
 
               {accountPopupVisible && (
-                <div className={s.accountPopup}>
-                  <div className={s.accountSection}>
+                <div
+                  className={s.accountPopup}
+                  style={{ background: theme.box, color: theme.textColor }}
+                >
+                  <div
+                    className={s.accountSection}
+                    style={{ background: theme.box, color: theme.textColor }}
+                  >
                     <div
                       className={`${s.accountItem} ${!isDemo ? s.active : ""}`}
+                      style={{ background: theme.box, color: theme.textColor }}
                       onClick={() => {
                         setIsDemo(false);
                         setAccountPopupVisible(false);
@@ -573,6 +617,7 @@ const BinaryLayout = () => {
                     </div>
 
                     <div
+                      style={{ background: theme.box, color: theme.textColor }}
                       className={`${s.accountItem} ${isDemo ? s.active : ""}`}
                       onClick={() => {
                         setIsDemo(true);
@@ -594,7 +639,10 @@ const BinaryLayout = () => {
                     </div>
                   </div>
 
-                  <div className={s.menuSection}>
+                  <div
+                    className={s.menuSection}
+                    style={{ background: theme.box, color: theme.textColor }}
+                  >
                     <div
                       onClick={() =>
                         navigate("/binarychart/bankinglayout/deposit")
@@ -647,6 +695,7 @@ const BinaryLayout = () => {
                   id="withdraw-btn"
                   className={s.withdraw}
                   to={"/binarychart/bankinglayout/withdraw"}
+                  style={{ background: theme.box, color: theme.textColor }}
                 >
                   Withdraw
                 </NavLink>
