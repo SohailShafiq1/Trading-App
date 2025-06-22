@@ -8,6 +8,7 @@ import styles from "./Tabs.module.css";
 import { useAuth } from "../../../../Context/AuthContext";
 import { useAccountType } from "../../../../Context/AccountTypeContext";
 import { NavLink } from "react-router-dom";
+import { useTheme } from "../../../../Context/ThemeContext";
 
 const Tabs = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -24,6 +25,7 @@ const Tabs = () => {
   const tradePopupRef = useRef(null);
   const { user } = useAuth();
   const { mute, isMute } = useAccountType();
+  const { theme, setTheme, THEMES } = useTheme();
 
   useEffect(() => {
     const fetchTradeCount = async () => {
@@ -267,6 +269,78 @@ const Tabs = () => {
         </button>
         {showSettingsPopup && (
           <div className={styles.settingsPopup} ref={settingsRef}>
+            {/* Theme Switcher */}
+            <div
+              style={{
+                marginBottom: 12,
+                display: "flex",
+                gap: 8,
+                flexDirection: "column",
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 600,
+                  fontSize: 14,
+                  marginBottom: 2,
+                }}
+              >
+                Theme:
+              </span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  style={{
+                    background: theme.name === "Black" ? "#111" : "#eee",
+                    color: theme.name === "Black" ? "#fff" : "#222",
+                    border:
+                      theme.name === "Black"
+                        ? "2px solid #10A055"
+                        : "1px solid #ccc",
+                    borderRadius: 6,
+                    padding: "4px 12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setTheme(THEMES.BLACK)}
+                >
+                  Black
+                </button>
+                <button
+                  style={{
+                    background: theme.name === "White" ? "#fff" : "#eee",
+                    color: theme.name === "White" ? "#222" : "#222",
+                    border:
+                      theme.name === "White"
+                        ? "2px solid #10A055"
+                        : "1px solid #ccc",
+                    borderRadius: 6,
+                    padding: "4px 12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setTheme(THEMES.WHITE)}
+                >
+                  White
+                </button>
+                <button
+                  style={{
+                    background: theme.name === "Grey" ? "#e5e5e5" : "#eee",
+                    color: theme.name === "Grey" ? "#222" : "#222",
+                    border:
+                      theme.name === "Grey"
+                        ? "2px solid #10A055"
+                        : "1px solid #ccc",
+                    borderRadius: 6,
+                    padding: "4px 12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setTheme(THEMES.GREY)}
+                >
+                  Grey
+                </button>
+              </div>
+            </div>
             <NavLink
               to={"/binarychart/bankinglayout/deposit"}
               className={styles.settingButton}
