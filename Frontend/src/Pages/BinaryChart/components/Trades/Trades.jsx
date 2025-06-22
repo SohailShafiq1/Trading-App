@@ -239,10 +239,10 @@ const Trades = ({
                 >
                   Trade: ${trade.price}
                 </span>
-                <span style={{ fontSize: "0.9em", color: "#888" }}>
+                <span style={{ fontSize: "0.9em", color: "#888", display: "none" }}>
                   Open: ${trade.entryPrice}
                 </span>
-                <span style={{ fontSize: "0.9em", color: "#388e3c", fontWeight: 600 }}>
+                <span style={{ fontSize: "0.9em", color: "#388e3c", fontWeight: 600, display: "none" }}>
                   Current: ${currentPrice}
                 </span>
                 <span
