@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { type } from "os";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -174,15 +175,10 @@ const UserSchema = new mongoose.Schema(
         },
         coinType: {
           type: String,
-          enum: ["Live", "OTC"],
-          required: true,
         },
         coinId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Coin",
-          required: true,
+          type: String,
         },
-
         investment: {
           type: Number,
           required: true,
