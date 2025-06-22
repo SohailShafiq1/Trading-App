@@ -667,7 +667,7 @@ const BinaryLayout = () => {
         </div>
       </div>
 
-      <div style={{ marginBottom: "5rem" }}>
+      <div>
         <Outlet />
       </div>
 

@@ -172,6 +172,17 @@ const UserSchema = new mongoose.Schema(
           required: true,
           uppercase: true,
         },
+        coinType: {
+          type: String,
+          enum: ["Live", "OTC"],
+          required: true,
+        },
+        coinId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Coin",
+          required: true,
+        },
+
         investment: {
           type: Number,
           required: true,

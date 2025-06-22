@@ -443,6 +443,7 @@ const BinaryChart = () => {
         type: tradeType,
         coin: selectedCoin,
         coinType: selectedCoinType,
+        coinId: coins.find((c) => c.name === selectedCoin)?._id,
         investment,
         entryPrice: tradePrice,
         startedAt,
