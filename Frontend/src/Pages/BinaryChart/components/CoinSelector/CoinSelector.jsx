@@ -15,9 +15,6 @@ const CoinSelector = forwardRef(
     ref
   ) => {
     const [search, setSearch] = useState("");
-    // Only show Forex coins, but label the tab as 'Live'
-    const allowedTabs = ["Live", "OTC"];
-    const [activeTab, setActiveTab] = useState(allowedTabs[0]);
     const [coins, setCoins] = useState([]);
 
     useEffect(() => {
@@ -47,45 +44,16 @@ const CoinSelector = forwardRef(
       }
     }, [selectedCoin]);
 
-    const filteredCoins = coins.filter(
-      (coin) =>
-        ((activeTab === "Live" && coin.type === "Forex") ||
-          (activeTab === "OTC" && coin.type === "OTC")) &&
-        (coin.name.toLowerCase().includes(search.toLowerCase()) ||
-          ((coin.firstName || "") + " " + (coin.lastName || ""))
-            .toLowerCase()
-            .includes(search.toLowerCase()))
-    );
-
     const handleSelect = (coin) => {
       setSelectedCoin(coin.name);
       setIsOpen(false);
       localStorage.setItem("selectedCoin", coin.name);
     };
 
-    const handleTabClick = (tab) => {
-      setActiveTab(tab);
-      // Removed auto-select logic for Forex
-    };
-
     return (
       <div className={styles.coinSelectorWrapper} ref={ref}>
         {isOpen && (
           <div className={styles.coinPopup}>
-            <div className={styles.coinTabs}>
-              {allowedTabs.map((tab) => (
-                <button
-                  key={tab}
-                  className={`${styles.coinTab} ${
-                    activeTab === tab ? styles.active : ""
-                  }`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
             <input
               type="text"
               className={styles.coinSearch}
@@ -99,28 +67,46 @@ const CoinSelector = forwardRef(
                 <span>Name</span>
                 <span>Profit</span>
               </div>
-              {filteredCoins.map((coin) => (
-                <div
-                  key={coin._id}
-                  className={styles.coinRow}
-                  onClick={() => handleSelect(coin)}
-                >
-                  <span>
-                    {(coin.type === "OTC" || coin.type === "Forex") &&
-                    (coin.firstName || coin.lastName)
-                      ? `${coin.firstName || ""}${
-                          coin.lastName ? "/" + coin.lastName : ""
-                        }`
-                      : coin.name}
-                  </span>
-                  <span>
-                    {coin.profitPercentage !== undefined
-                      ? coin.profitPercentage
-                      : "--"}
-                    %
-                  </span>
-                </div>
-              ))}
+              {coins
+                .filter((coin) =>
+                  coin.name.toLowerCase().includes(search.toLowerCase()) ||
+                  ((coin.firstName || "") + " " + (coin.lastName || ""))
+                    .toLowerCase()
+                    .includes(search.toLowerCase())
+                )
+                .map((coin) => (
+                  <div
+                    key={coin._id}
+                    className={styles.coinRow}
+                    onClick={() => handleSelect(coin)}
+                  >
+                    <span>
+                      {(coin.type === "OTC" || coin.type === "Forex") &&
+                      (coin.firstName || coin.lastName)
+                        ? `${coin.firstName || ""}${
+                            coin.lastName ? "/" + coin.lastName : ""
+                          }`
+                        : coin.name}
+                      <span
+                        style={{
+                          fontSize: "0.95em",
+                          color: "#10a055",
+                          marginLeft: 8,
+                          fontWeight: 700,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        {coin.type === "OTC" ? "(OTC)" : "(Live)"}
+                      </span>
+                    </span>
+                    <span>
+                      {coin.profitPercentage !== undefined
+                        ? coin.profitPercentage
+                        : "--"}
+                      %
+                    </span>
+                  </div>
+                ))}
             </div>
           </div>
         )}
