@@ -13,3 +13,13 @@ body {
     position: static;
   }
 }
+/* Hide number input spinners */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Safari & Chrome */
+  margin: 0; /* Optional */
+}
