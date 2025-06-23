@@ -119,7 +119,7 @@ const ForexTradingChart = ({
   coins,
   profit,
   type,
-  trades = [],
+  trades,
   handleCloseTrade,
 }) => {
   const containerRef = useRef();
@@ -1064,7 +1064,8 @@ const ForexTradingChart = ({
                 }}
               >
                 <p className="nameProfit">
-                  {coinName}({type})
+                  {coins.find((c) => c.name === coinName)?.firstName}/
+                  {coins.find((c) => c.name === coinName)?.lastName}({type})
                 </p>
                 <p className="nameProfit">
                   &nbsp;&nbsp;{profit}
@@ -1112,6 +1113,7 @@ const ForexTradingChart = ({
               </p>
             </div>
           </div>
+
           {/* Indicator selector */}
           <div
             style={{ position: "relative" }}
@@ -1425,7 +1427,7 @@ const ForexTradingChart = ({
             background: "#10A055",
             color: "#fff",
             border: "none",
-            width: "100px",
+            width: "fit-content",
             borderRadius: "6px",
             padding: "8px 16px",
             fontWeight: 600,

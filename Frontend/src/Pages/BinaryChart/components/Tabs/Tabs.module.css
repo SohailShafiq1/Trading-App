@@ -2,11 +2,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.2rem;
 }
 
 .tab {
-  padding: 0.5rem 0.3rem;
   cursor: pointer;
   color: #9197a4;
   transition: background-color 0.3s ease;
@@ -16,11 +14,12 @@
   background: none !important;
   color: #9197a4;
   font-size: 1.4rem;
-  border: none !important;
-  outline: none !important;
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.2s, color 0.2s;
+  border-radius: 0%;
+  border: 1px solid;
+  border-image: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent) 1;
 }
 .tabBTN:focus {
   outline: none !important;
@@ -29,12 +28,12 @@
   background: none !important;
 }
 .tabBTN:active {
-  color: var(--tab-btn-hover-color, #10A055) !important;
+  color: var(--tab-btn-hover-color, #10a055) !important;
   background: var(--tab-btn-hover-bg, #e0e0e0) !important;
 }
 .tabBTN:hover {
   background: var(--tab-btn-hover-bg, #e0e0e0) !important;
-  color: var(--tab-btn-hover-color, #10A055) !important;
+  color: var(--tab-btn-hover-color, #10a055) !important;
 }
 .tab:hover {
   background: var(--tab-hover-bg, #f0f0f0) !important;
@@ -228,6 +227,28 @@
   color: #444;
   line-height: 1.6;
   white-space: normal;
+}
+
+.utcTimeWrapper {
+  position: absolute;
+  top: 60px;
+  margin-top: 4px;
+  display: flex;
+  justify-content: center;
+
+  z-index: 2;
+  pointer-events: none;
+}
+.utcTimeWrapper span {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: 900;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.utcTimeWrapper :global(*) {
+  pointer-events: auto;
 }
 
 @media (max-width: 768px) {

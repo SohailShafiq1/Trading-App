@@ -1783,7 +1783,8 @@ const LiveCandleChart = ({
                 }}
               >
                 <p className="nameProfit">
-                  {coinName}
+                  {coins.find((c) => c.name === coinName)?.firstName}/
+                  {coins.find((c) => c.name === coinName)?.lastName}
                   {"("}
                   {type}
                   {")"}
@@ -1839,8 +1840,10 @@ const LiveCandleChart = ({
               </p>
             </div>
           </div>
+
           {window.innerWidth < 768 && (
             <button
+              onClick={() => setTradePopup(true)}
               className="show-trades-btn"
               style={{
                 marginRight: 8,
@@ -1859,7 +1862,6 @@ const LiveCandleChart = ({
                 position: "absolute",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
               }}
-              onClick={() => setTradePopup(true)}
             >
               Trades
             </button>

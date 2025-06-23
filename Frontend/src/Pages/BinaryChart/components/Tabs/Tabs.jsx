@@ -205,7 +205,8 @@ const Tabs = () => {
         "--setting-btn-hover-bg": theme.settingBtnHover || "#dcdcdc",
         "--setting-btn-hover-color": theme.settingBtnHoverColor || "#10A055",
         "--active-tab-btn-hover-bg": theme.activeTabBtnHover || "#333",
-        "--active-tab-btn-hover-color": theme.activeTabBtnHoverColor || "#10A055",
+        "--active-tab-btn-hover-color":
+          theme.activeTabBtnHoverColor || "#10A055",
       }}
     >
       {/* Notifications Tab */}
@@ -459,6 +460,16 @@ const Tabs = () => {
             </button>
           </div>
         )}
+      </div>
+      {/* UTC Time Display */}
+      <div
+        className={styles.utcTimeWrapper}
+        style={{ color: theme.textColor, background: theme.box }}
+      >
+        {/* Inline UTC time, not a separate component */}
+        <span style={{ letterSpacing: 1 }}>
+          UTC: {new Date().toUTCString().slice(17, 25)}
+        </span>
       </div>
     </div>
   );
