@@ -199,19 +199,48 @@ const ForexTradingChart = ({
   // Chart height update effect
   useEffect(() => {
     const updateChartHeight = () => {
-      let height;
-      if (window.innerWidth > 1600) {
-        height = 600;
-      } else if (window.innerWidth > 1400) {
-        height = 500;
-      } else if (window.innerWidth <= 1399 && window.innerWidth > 1300) {
-        height = 400;
-      } else if (window.innerWidth <= 1299 && window.innerWidth > 768) {
-        height = 350;
-      } else {
-        height = 480;
+      let chartHeight;
+      const width = window.innerWidth;
+      // Large desktops
+      if (width > 1600) {
+        chartHeight = 600;
+      } else if (width > 1400) {
+        chartHeight = 500;
+      } else if (width > 1300) {
+        chartHeight = 400;
+      } else if (width > 1024) {
+        chartHeight = 350;
       }
-      setChartHeight(height);
+      // iPad Pro 12.9" (1024x1366), iPad Air 11" (834x1194), landscape
+      else if (width > 900) {
+        chartHeight = 320;
+      }
+      // iPad Mini (768x1024), iPad portrait, Galaxy Tab S8 (800x1280)
+      else if (width > 800) {
+        chartHeight = 300;
+      }
+      // iPhone 15 Pro Max, 14 Pro Max, 13 Pro Max, Galaxy S24 Ultra, S23 Ultra, S22 Ultra, Z Fold
+      // Heights: 2796, 2778, 2778, 3120, 3088, 3088, 2176
+      else if (window.innerHeight > 1200) {
+        chartHeight = 480;
+      }
+      // iPhone 15/14/13/12/11 Pro, Pro Max, Plus, Galaxy S24/S23/S22/S21/S20, Note, Pixel 8/7/6 Pro
+      // Heights: 2556, 2532, 2532, 2400, 2340, 2400, 2400, 2268, 2992, 3120, 3120
+      else if (window.innerHeight > 1100) {
+        chartHeight = 480;
+      }
+      // iPhone 15/14/13/12/11, SE, Mini, Galaxy S24/S23/S22/S21/S20 FE, Pixel 8/7/6, Z Flip
+      // Heights: 2340, 2266, 2340, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400
+      else if (window.innerHeight > 900) {
+        chartHeight = 460;
+      }
+      // Smallest phones (iPhone SE, older Androids, height < 900)
+      else if (window.innerHeight > 700) {
+        chartHeight = 420;
+      } else {
+        chartHeight = 300; // Default for very small screens
+      }
+      setChartHeight(chartHeight);
     };
     updateChartHeight();
     window.addEventListener("resize", updateChartHeight);
@@ -914,15 +943,21 @@ const ForexTradingChart = ({
 
   // --- Popup close on outside click ---
   useEffect(() => {
-    if (!showIndicatorPopup && !showDrawingPopup && !showThemePopup && !showStylePopup) return;
+    if (
+      !showIndicatorPopup &&
+      !showDrawingPopup &&
+      !showThemePopup &&
+      !showStylePopup
+    )
+      return;
     function handlePopupClickOutside(event) {
       // Check for all popup refs (none are using refs, so check by class or id)
       // We'll use the button refs and the popups' parent containers
       const popups = [
-        document.getElementById('indicator-btn'),
-        document.getElementById('drawing-btn'),
-        document.getElementById('theme-btn'),
-        document.getElementById('style-btn'),
+        document.getElementById("indicator-btn"),
+        document.getElementById("drawing-btn"),
+        document.getElementById("theme-btn"),
+        document.getElementById("style-btn"),
       ];
       let clickedInside = false;
       for (const el of popups) {
@@ -932,7 +967,7 @@ const ForexTradingChart = ({
         }
       }
       // Also check if the popup itself was clicked
-      const popupDivs = document.querySelectorAll('.popup-green-border');
+      const popupDivs = document.querySelectorAll(".popup-green-border");
       for (const div of popupDivs) {
         if (div.contains(event.target)) {
           clickedInside = true;
@@ -946,8 +981,9 @@ const ForexTradingChart = ({
         setShowStylePopup(false);
       }
     }
-    document.addEventListener('mousedown', handlePopupClickOutside);
-    return () => document.removeEventListener('mousedown', handlePopupClickOutside);
+    document.addEventListener("mousedown", handlePopupClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handlePopupClickOutside);
   }, [showIndicatorPopup, showDrawingPopup, showThemePopup, showStylePopup]);
 
   // --- Coin selector close on outside click ---
@@ -965,8 +1001,9 @@ const ForexTradingChart = ({
       }
       setShowCoinSelector(false);
     }
-    document.addEventListener('mousedown', handleCoinSelectorClickOutside);
-    return () => document.removeEventListener('mousedown', handleCoinSelectorClickOutside);
+    document.addEventListener("mousedown", handleCoinSelectorClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleCoinSelectorClickOutside);
   }, [showCoinSelector]);
 
   return (
@@ -1067,75 +1104,19 @@ const ForexTradingChart = ({
               </p>
             </div>
           </div>
-          {/* Drawing tools button */}
+          {/* Drawing tool selector */}
           <div
-            style={{
-              position: "relative",
-              display: "flex",
-              flexDirection: "row",
-            }}
+            style={{ position: "relative" }}
             ref={(el) => (buttonRefs.current[1] = el)}
           >
-            <button
-              className="chartBtns"
-              onClick={() => {
-                setShowIndicatorPopup(!showIndicatorPopup);
-                setShowStylePopup(false);
-                setShowThemePopup(false);
-                setShowDrawingPopup(false);
-              }}
-              style={{
-                color: "black",
-                cursor: "pointer",
-                height: 50,
-                fontSize: "1.5rem",
-                background: "#E0E0E0",
-              }}
-            >
-              <BiLineChart />
-            </button>
-            {showIndicatorPopup && (
-              <div
-                className="popup-green-border"
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
-                  borderRadius: 4,
-                  padding: 10,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                }}
-              >
-                {Object.values(INDICATORS).map((ind) => (
-                  <div
-                    key={ind}
-                    onClick={() => {
-                      if (activeIndicator === ind) {
-                        selectIndicator(null);
-                      } else {
-                        selectIndicator(ind);
-                      }
-                    }}
-                    style={{ padding: "5px 10px", cursor: "pointer" }}
-                  >
-                    {ind} {activeIndicator === ind ? "✓" : ""}
-                  </div>
-                ))}
-              </div>
-            )}
             <button
               id="drawing-btn"
               className="chartBtns"
               onClick={() => {
-                setShowIndicatorPopup(false);
-                setShowStylePopup(false);
-                setShowThemePopup(false);
                 setShowDrawingPopup(!showDrawingPopup);
+                setShowIndicatorPopup(false);
+                setShowThemePopup(false);
+                setShowStylePopup(false);
               }}
               style={{
                 color: "black",

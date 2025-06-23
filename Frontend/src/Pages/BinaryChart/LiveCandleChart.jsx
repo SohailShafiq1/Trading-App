@@ -653,16 +653,45 @@ const LiveCandleChart = ({
   };
   useEffect(() => {
     let chartHeight;
-    if (window.innerWidth > 1600) {
+    const width = window.innerWidth;
+    // Large desktops
+    if (width > 1600) {
       chartHeight = 600;
-    } else if (window.innerWidth > 1400) {
+    } else if (width > 1400) {
       chartHeight = 500;
-    } else if (window.innerWidth <= 1399 && window.innerWidth > 1300) {
+    } else if (width > 1300) {
       chartHeight = 400;
-    } else if (window.innerWidth <= 1299 && window.innerWidth > 768) {
+    } else if (width > 1024) {
       chartHeight = 350;
-    } else {
+    }
+    // iPad Pro 12.9" (1024x1366), iPad Air 11" (834x1194), landscape
+    else if (width > 900) {
+      chartHeight = 320;
+    }
+    // iPad Mini (768x1024), iPad portrait, Galaxy Tab S8 (800x1280)
+    else if (width > 800) {
+      chartHeight = 300;
+    }
+    // iPhone 15 Pro Max, 14 Pro Max, 13 Pro Max, Galaxy S24 Ultra, S23 Ultra, S22 Ultra, Z Fold
+    // Heights: 2796, 2778, 2778, 3120, 3088, 3088, 2176
+    else if (window.innerHeight > 1200) {
       chartHeight = 480;
+    }
+    // iPhone 15/14/13/12/11 Pro, Pro Max, Plus, Galaxy S24/S23/S22/S21/S20, Note, Pixel 8/7/6 Pro
+    // Heights: 2556, 2532, 2532, 2400, 2340, 2400, 2400, 2268, 2992, 3120, 3120
+    else if (window.innerHeight > 1100) {
+      chartHeight = 480;
+    }
+    // iPhone 15/14/13/12/11, SE, Mini, Galaxy S24/S23/S22/S21/S20 FE, Pixel 8/7/6, Z Flip
+    // Heights: 2340, 2266, 2340, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400
+    else if (window.innerHeight > 900) {
+      chartHeight = 440;
+    }
+    // Smallest phones (iPhone SE, older Androids, height < 900)
+    else if (window.innerHeight > 700) {
+      chartHeight = 380;
+    } else {
+      chartHeight = 300; // Default for very small screens
     }
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -2098,6 +2127,7 @@ const LiveCandleChart = ({
           </div>
           <div style={{ position: "relative" }}>
             <button
+              class
               className="chartBtns"
               onClick={() => {
                 setShowStylePopup(!showStylePopup);

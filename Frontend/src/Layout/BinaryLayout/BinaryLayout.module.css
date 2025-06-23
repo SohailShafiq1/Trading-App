@@ -15,6 +15,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--theme-bg, #f0f0f0);
 }
 .container {
   width: 100%;
@@ -26,6 +30,7 @@
   padding: 0 2rem;
   box-sizing: border-box;
   background: #ffffff;
+  
 }
 /* Tutorial Popup Styles */
 .tutorialPopup {
