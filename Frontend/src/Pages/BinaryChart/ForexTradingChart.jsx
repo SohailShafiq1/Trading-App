@@ -202,7 +202,13 @@ const ForexTradingChart = ({
       let chartHeight;
       const width = window.innerWidth;
       // Large desktops
-      if (width > 1600) {
+      if (width > 1920) {
+        chartHeight = 750;
+      } else if (width > 1800) {
+        chartHeight = 700;
+      } else if (width > 1700) {
+        chartHeight = 650;
+      } else if (width > 1600) {
         chartHeight = 600;
       } else if (width > 1400) {
         chartHeight = 500;
@@ -227,16 +233,18 @@ const ForexTradingChart = ({
       // iPhone 15/14/13/12/11 Pro, Pro Max, Plus, Galaxy S24/S23/S22/S21/S20, Note, Pixel 8/7/6 Pro
       // Heights: 2556, 2532, 2532, 2400, 2340, 2400, 2400, 2268, 2992, 3120, 3120
       else if (window.innerHeight > 1100) {
-        chartHeight = 480;
+        chartHeight = 510;
       }
       // iPhone 15/14/13/12/11, SE, Mini, Galaxy S24/S23/S22/S21/S20 FE, Pixel 8/7/6, Z Flip
       // Heights: 2340, 2266, 2340, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400
       else if (window.innerHeight > 900) {
-        chartHeight = 460;
+        chartHeight = 490;
       }
       // Smallest phones (iPhone SE, older Androids, height < 900)
-      else if (window.innerHeight > 700) {
-        chartHeight = 420;
+      else if (window.innerHeight > 800) {
+        chartHeight = 460;
+      } else if (window.innerHeight > 700) {
+        chartHeight = 350;
       } else {
         chartHeight = 300; // Default for very small screens
       }
@@ -1103,6 +1111,75 @@ const ForexTradingChart = ({
                 {"% "}
               </p>
             </div>
+          </div>
+          {/* Indicator selector */}
+          <div
+            style={{ position: "relative" }}
+            ref={(el) => (buttonRefs.current[5] = el)}
+          >
+            <button
+              id="indicator-btn"
+              className="chartBtns"
+              onClick={() => {
+                setShowIndicatorPopup(!showIndicatorPopup);
+                setShowDrawingPopup(false);
+                setShowThemePopup(false);
+                setShowStylePopup(false);
+              }}
+              style={{
+                color: "black",
+                cursor: "pointer",
+                height: 50,
+                fontSize: "1.5rem",
+                background: "#E0E0E0",
+              }}
+            >
+              {/* You can use a beaker or similar icon for indicator, or fallback to text */}
+              <BiLineChart />
+            </button>
+            {showIndicatorPopup && (
+              <div
+                className="popup-green-border"
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  zIndex: 100,
+                  background: "#E0E0E0",
+                  border: "2px solid #10A055",
+                  borderRadius: 4,
+                  padding: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                {Object.values(INDICATORS).map((indicator) => (
+                  <div
+                    key={indicator}
+                    onClick={() => {
+                      setActiveIndicator(
+                        indicator === INDICATORS.NONE ? null : indicator
+                      );
+                      setShowIndicatorPopup(false);
+                    }}
+                    style={{
+                      padding: "5px 10px",
+                      color: theme.textColor,
+                      cursor: "pointer",
+                      fontWeight: activeIndicator === indicator ? 700 : 400,
+                      background:
+                        activeIndicator === indicator
+                          ? "#e6f7ee"
+                          : "transparent",
+                      borderRadius: 4,
+                    }}
+                  >
+                    {indicator} {activeIndicator === indicator ? "✓" : ""}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           {/* Drawing tool selector */}
           <div

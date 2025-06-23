@@ -576,7 +576,7 @@ body {
   }
 }
 
-@media (max-width: 1400px) {
+@media (min-width: 767px) {
   .tradeHistory ul {
     max-height: 50px; /* Reduced height for medium screens */
   }
@@ -589,5 +589,26 @@ body {
 @media (max-width: 1300px) {
   .buySelling {
     flex-direction: row;
+  }
+}
+
+@media (min-width: 1524px) {
+  .tradeHistory ul {
+    max-height: 150px; /* Reduced height for smaller screens */
+  }
+}
+@media (min-width: 1600px) {
+  .tradeHistory ul {
+    max-height: 200px; /* Reduced height for larger screens */
+  }
+}
+@media (min-width: 1740px) {
+  .tradeHistory ul {
+    max-height: 340px; /* Reduced height for medium screens */
+  }
+}
+@media (min-width: 1940px) {
+  .tradeHistory ul {
+    max-height: 380px; /* Reduced height for medium screens */
   }
 }

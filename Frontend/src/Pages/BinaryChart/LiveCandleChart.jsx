@@ -655,7 +655,13 @@ const LiveCandleChart = ({
     let chartHeight;
     const width = window.innerWidth;
     // Large desktops
-    if (width > 1600) {
+    if (width > 1920) {
+      chartHeight = 750;
+    } else if (width > 1800) {
+      chartHeight = 700;
+    } else if (width > 1700) {
+      chartHeight = 650;
+    } else if (width > 1600) {
       chartHeight = 600;
     } else if (width > 1400) {
       chartHeight = 500;
@@ -680,16 +686,18 @@ const LiveCandleChart = ({
     // iPhone 15/14/13/12/11 Pro, Pro Max, Plus, Galaxy S24/S23/S22/S21/S20, Note, Pixel 8/7/6 Pro
     // Heights: 2556, 2532, 2532, 2400, 2340, 2400, 2400, 2268, 2992, 3120, 3120
     else if (window.innerHeight > 1100) {
-      chartHeight = 480;
+      chartHeight = 510;
     }
     // iPhone 15/14/13/12/11, SE, Mini, Galaxy S24/S23/S22/S21/S20 FE, Pixel 8/7/6, Z Flip
     // Heights: 2340, 2266, 2340, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400
     else if (window.innerHeight > 900) {
-      chartHeight = 440;
+      chartHeight = 490;
     }
     // Smallest phones (iPhone SE, older Androids, height < 900)
-    else if (window.innerHeight > 700) {
-      chartHeight = 380;
+    else if (window.innerHeight > 800) {
+      chartHeight = 460;
+    } else if (window.innerHeight > 700) {
+      chartHeight = 350;
     } else {
       chartHeight = 300; // Default for very small screens
     }
