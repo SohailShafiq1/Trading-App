@@ -263,6 +263,30 @@ const BinaryLayout = () => {
     };
   }
 
+  // Hide footer on mobile keyboard open
+  useEffect(() => {
+    const hideFooter = () => {
+      document.querySelector(".footer")?.classList.add("footer--hidden");
+    };
+    const showFooter = () => {
+      document.querySelector(".footer")?.classList.remove("footer--hidden");
+    };
+    const onFocusIn = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+        hideFooter();
+    };
+    const onFocusOut = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+        showFooter();
+    };
+    window.addEventListener("focusin", onFocusIn);
+    window.addEventListener("focusout", onFocusOut);
+    return () => {
+      window.removeEventListener("focusin", onFocusIn);
+      window.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
+
   return (
     <>
       <div
