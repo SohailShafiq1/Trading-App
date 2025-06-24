@@ -266,10 +266,10 @@ const BinaryLayout = () => {
   // Hide footer on mobile keyboard open
   useEffect(() => {
     const hideFooter = () => {
-      document.querySelector(".footer")?.classList.add("footer--hidden");
+      document.querySelector("#footer")?.classList.add("footer--hidden");
     };
     const showFooter = () => {
-      document.querySelector(".footer")?.classList.remove("footer--hidden");
+      document.querySelector("#footer")?.classList.remove("footer--hidden");
     };
     const onFocusIn = (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
@@ -778,6 +778,7 @@ const BinaryLayout = () => {
 
       {/* Mobile Footer */}
       <div
+        id="footer"
         className={s.footer}
         ref={(el) => isMobileView && (mobileButtonRefs.current[0] = el)}
       >
