@@ -19,7 +19,12 @@ const Trades = ({
 }) => {
   // State to hold real-time OTC prices by coinId
   const [currentOtcPrices, setCurrentOtcPrices] = useState({});
+  const [localTimers, setLocalTimers] = useState({}); // { [tradeId]: secondsLeft }
+  const [lockedResults, setLockedResults] = useState({}); // { [tradeId]: {lockedStatus, lockedReward, canBeClosed} }
   const socketRef = useRef(null);
+
+  // Helper to get unique trade ID
+  const getTradeId = (trade) => trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
 
   // Subscribe to OTC price updates for all OTC coins
   useEffect(() => {
@@ -44,148 +49,117 @@ const Trades = ({
     };
   }, [coins]);
 
+  // Sync localTimers with trades (add new trades instantly, remove missing ones)
+  useEffect(() => {
+    setLocalTimers((prev) => {
+      const next = { ...prev };
+      trades.forEach((trade) => {
+        const tradeId = getTradeId(trade);
+        if (next[tradeId] === undefined) {
+          next[tradeId] = trade.remainingTime;
+        }
+      });
+      // Remove timers for trades that no longer exist
+      Object.keys(next).forEach((tradeId) => {
+        if (!trades.find((t) => getTradeId(t) === tradeId)) {
+          delete next[tradeId];
+        }
+      });
+      return next;
+    });
+  }, [trades]);
+
+  // Per-trade timer interval for smooth countdown
   useEffect(() => {
     const interval = setInterval(() => {
-      if (typeof setUserTrades === "function") {
-        setUserTrades((prevTrades) =>
-          prevTrades.map((trade) => {
-            if (trade.remainingTime > 1) {
-              return { ...trade, remainingTime: trade.remainingTime - 1 };
-            } else if (trade.remainingTime === 1) {
-              // Timer will hit 0 now, lock status and reward
-              let endPrice = 0;
-              if (trade.coinType === "OTC" || trade.coinType === "otc") {
-                endPrice = currentOtcPrices[trade.coinId] ?? 0;
-              } else if (typeof getPriceForTrade === "function") {
-                endPrice = getPriceForTrade(trade) ?? 0;
-              } else {
-                endPrice =
-                  trade.coinType === "Live"
-                    ? parseFloat(livePrice)
-                    : parseFloat(otcPrice);
-              }
-              const coinData = coins.find(
-                (c) => c._id === trade.coinId || c.name === trade.coinName || c.name === trade.coin
-              );
-              const profitPercentage = coinData?.profitPercentage || 0;
-              const tradeInvestment = trade.investment ?? trade.price ?? 0;
-              let centsChange = 0;
-              if (trade.type === "Buy") {
-                centsChange =
-                  (endPrice - trade.entryPrice) *
-                  (tradeInvestment / trade.entryPrice);
-              } else {
-                centsChange =
-                  (trade.entryPrice - endPrice) *
-                  (tradeInvestment / trade.entryPrice);
-              }
-              const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-              const isWin = centsChange >= 0;
-              const lockedReward = isWin
-                ? Math.round((basePayout + centsChange) * 100) / 100
-                : Math.round(centsChange * 100) / 100;
-              const lockedStatus = isWin ? "win" : "loss";
-              return {
-                ...trade,
-                remainingTime: 0,
-                lockedStatus,
-                lockedReward,
-              };
-            } else {
-              // After timer 0, do not recalculate anything, just keep locked values
-              return trade;
-            }
-          })
-        );
-      }
+      setLocalTimers((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((tradeId) => {
+          if (updated[tradeId] > 0) {
+            updated[tradeId] = updated[tradeId] - 1;
+          }
+        });
+        return updated;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [coins, getPriceForTrade, setUserTrades, currentOtcPrices, livePrice, otcPrice]);
+  }, []);
+
+  // Lock result and payout instantly at expiry
+  useEffect(() => {
+    trades.forEach((trade) => {
+      const tradeId = getTradeId(trade);
+      if (
+        localTimers[tradeId] === 0 &&
+        !lockedResults[tradeId] &&
+        trade.status === "running"
+      ) {
+        // Calculate locked result
+        let endPrice = 0;
+        if (trade.coinType === "OTC" || trade.coinType === "otc") {
+          endPrice = currentOtcPrices[trade.coinId] ?? 0;
+        } else if (typeof getPriceForTrade === "function") {
+          endPrice = getPriceForTrade(trade) ?? 0;
+        } else {
+          endPrice =
+            trade.coinType === "Live"
+              ? parseFloat(livePrice)
+              : parseFloat(otcPrice);
+        }
+        const coinData = coins.find(
+          (c) => c._id === trade.coinId || c.name === trade.coinName || c.name === trade.coin
+        );
+        const profitPercentage = coinData?.profitPercentage || 0;
+        const tradeInvestment = trade.investment ?? trade.price ?? 0;
+        let centsChange = 0;
+        if (trade.type === "Buy") {
+          centsChange =
+            (endPrice - trade.entryPrice) *
+            (tradeInvestment / trade.entryPrice);
+        } else {
+          centsChange =
+            (trade.entryPrice - endPrice) *
+            (tradeInvestment / trade.entryPrice);
+        }
+        const basePayout = tradeInvestment * (1 + profitPercentage / 100);
+        const isWin = centsChange >= 0;
+        const lockedReward = isWin
+          ? Math.round((basePayout + centsChange) * 100) / 100
+          : Math.round(centsChange * 100) / 100;
+        setLockedResults((prev) => ({
+          ...prev,
+          [tradeId]: {
+            lockedStatus: isWin ? "win" : "loss",
+            lockedReward,
+            canBeClosed: isWin,
+          },
+        }));
+        // Optionally, update backend here if needed
+      }
+    });
+    // eslint-disable-next-line
+  }, [localTimers, trades, currentOtcPrices, livePrice, otcPrice, getPriceForTrade, coins]);
 
   return (
     <div className={s.tradeHistory}>
       <p>Trades</p>
       <ul>
         {trades.map((trade) => {
-          let displayReward = trade.lockedReward ?? trade.reward;
-          let displayStatus = trade.lockedStatus ?? trade.status;
-          const tradeInvestment = trade.investment ?? trade.price ?? 0;
-          const tradeId =
-            trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+          const tradeId = getTradeId(trade);
+          // Use locked result if available
+          const locked = lockedResults[tradeId] || {};
+          let displayReward = locked.lockedReward ?? trade.lockedReward ?? trade.reward;
+          let displayStatus = locked.lockedStatus ?? trade.lockedStatus ?? trade.status;
+          const canBeClosed = locked.canBeClosed ?? trade.canBeClosed;
           const coinData = coins.find((c) => c._id === trade.coinId || c.name === trade.coinName);
-          const profitPercentage = coinData?.profitPercentage || 0;
-          const isOtc = trade.coinType === "OTC" || trade.coinType === "otc";
-          // Calculate basePayout (investment + profit percentage)
-          const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-          // Get current price for this coin
+          // Show trade open price and current price
+          const openPrice = trade.entryPrice;
           let currentPrice = 0;
-          if (isOtc) {
-            currentPrice = currentOtcPrices[trade.coinId] ?? coinData?.currentPrice ?? 0;
-          } else {
-            currentPrice = coinData?.currentPrice ?? 0;
+          if (trade.coinId && currentOtcPrices[trade.coinId] !== undefined) {
+            currentPrice = currentOtcPrices[trade.coinId];
+          } else if (typeof getPriceForTrade === "function") {
+            currentPrice = getPriceForTrade(trade) ?? 0;
           }
-          // Only show floating PnL for trades that are still running and have time left
-          if (trade.status === "running" && trade.remainingTime > 0) {
-            let endPrice = 0;
-            if (isOtc) {
-              endPrice = currentOtcPrices[trade.coinId] ?? 0;
-            } else if (typeof getPriceForTrade === "function") {
-              endPrice = getPriceForTrade(trade) ?? 0;
-            } else {
-              endPrice =
-                trade.coinType === "Live"
-                  ? parseFloat(livePrice)
-                  : parseFloat(otcPrice);
-            }
-            let centsChange = 0;
-            if (trade.type === "Buy") {
-              centsChange =
-                (endPrice - trade.entryPrice) *
-                (tradeInvestment / trade.entryPrice);
-            } else {
-              centsChange =
-                (trade.entryPrice - endPrice) *
-                (tradeInvestment / trade.entryPrice);
-            }
-            let rawReward = basePayout + centsChange;
-            displayReward = round2(rawReward).toFixed(2);
-            displayStatus = centsChange >= 0 ? "win" : "loss";
-          } else if (trade.status === "running" && trade.remainingTime === 0) {
-            let endPrice = 0;
-            if (isOtc) {
-              endPrice = currentOtcPrices[trade.coinId] ?? 0;
-            } else if (typeof getPriceForTrade === "function") {
-              endPrice = getPriceForTrade(trade) ?? 0;
-            } else {
-              endPrice =
-                trade.coinType === "Live"
-                  ? parseFloat(livePrice)
-                  : parseFloat(otcPrice);
-            }
-            let centsChange = 0;
-            if (trade.type === "Buy") {
-              centsChange =
-                (endPrice - trade.entryPrice) *
-                (tradeInvestment / trade.entryPrice);
-            } else {
-              centsChange =
-                (trade.entryPrice - endPrice) *
-                (tradeInvestment / trade.entryPrice);
-            }
-            const rawReward = basePayout + centsChange;
-            displayReward = round2(rawReward).toFixed(2);
-            displayStatus = centsChange >= 0 ? "win" : "loss";
-          } else if (trade.status === "win" || trade.status === "loss") {
-            displayReward =
-              typeof trade.reward === "number"
-                ? trade.reward.toFixed(2)
-                : trade.reward;
-            displayStatus =
-              trade.status === "running" && trade.result
-                ? trade.result
-                : trade.status;
-          }
-
           return (
             <li
               key={tradeId}
@@ -218,7 +192,7 @@ const Trades = ({
                 </span>{" "}
               </div>
 
-              {/* Second Row: Trade Amount, Open Price, and Current Price */}
+              {/* Second Row: Trade Amount and Result */}
               <div
                 style={{
                   display: "flex",
@@ -239,12 +213,6 @@ const Trades = ({
                 >
                   Trade: ${trade.price}
                 </span>
-                <span style={{ fontSize: "0.9em", color: "#888", display: "none" }}>
-                  Open: ${trade.entryPrice}
-                </span>
-                <span style={{ fontSize: "0.9em", color: "#388e3c", fontWeight: 600, display: "none" }}>
-                  Current: ${currentPrice}
-                </span>
                 <span
                   style={{
                     color:
@@ -255,20 +223,30 @@ const Trades = ({
                         : "black",
                   }}
                 >
-                  {trade.status === "running" && trade.remainingTime > 0
-                    ? `Time Left: ${trade.remainingTime}s`
+                  {displayStatus === "running" && localTimers[tradeId] > 0
+                    ? `Time Left: ${localTimers[tradeId]}s`
                     : `Payout: $${displayReward}`}
                 </span>
               </div>
-              {trade.status === "running" && trade.remainingTime === 0 && (
-                <div className={styles.tradeRow}>
+              {/* Third Row: Open Price and Current Price */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                  gap: 8,
+                  marginTop: 4,
+                  fontSize: "0.95em",
+                }}
+              >
+                <span>Open Price: ${openPrice}</span>
+                <span>Current Price: ${currentPrice}</span>
+              </div>
+              {/* New Close Trade button: only for win trades, only if not already closed */}
+              {locked.lockedStatus === "win" && displayStatus === "running" && localTimers[tradeId] === 0 && canBeClosed && (
+                <div style={{ marginTop: 8, textAlign: "center" }}>
                   <button
-                    onClick={() =>
-                      handleCloseTrade({
-                        ...trade,
-                        frontendReward: displayReward,
-                      })
-                    }
+                    onClick={() => handleCloseTrade(trade)}
                     className={styles.closeTradeBtn}
                   >
                     Close Trade
@@ -297,21 +275,6 @@ const Trades = ({
       </ul>
     </div>
   );
-};
-
-function round2(num) {
-  return Math.round((num + Number.EPSILON) * 100) / 100;
-}
-
-const handleCoinClick = (coin) => {
-  setSelected(coin.name);
-  if (coin.name === "USD Tether(TRC-20)") {
-    setShowModal(true);
-  } else {
-    toast.info(
-      "We are working on this deposit method. Please use TRC-20 USDT for now."
-    );
-  }
 };
 
 export default Trades;

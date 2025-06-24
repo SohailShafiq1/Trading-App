@@ -333,11 +333,24 @@ export const updateTradeResult = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const tradeIndex = user.trades.findIndex(
-      (t) =>
-        t.startedAt &&
-        new Date(t.startedAt).getTime() === new Date(startedAt).getTime()
-    );
+    // Debug: Print all startedAt values and types for this user
+    console.log("[DEBUG] updateTradeResult: Incoming startedAt:", startedAt, typeof startedAt);
+    user.trades.forEach((t, idx) => {
+      console.log(
+        `[DEBUG] Trade #${idx}: startedAt=`,
+        t.startedAt,
+        typeof t.startedAt,
+        t.startedAt instanceof Date ? t.startedAt.getTime() : t.startedAt
+      );
+    });
+
+    // Robust matching: handle both Date and number types
+    const tradeIndex = user.trades.findIndex((t) => {
+      if (!t.startedAt) return false;
+      let tTime = t.startedAt instanceof Date ? t.startedAt.getTime() : Number(t.startedAt);
+      let sTime = typeof startedAt === "string" || typeof startedAt === "number" ? Number(startedAt) : new Date(startedAt).getTime();
+      return tTime === sTime;
+    });
 
     if (tradeIndex === -1) {
       return res.status(404).json({ error: "Trade not found" });

@@ -2109,6 +2109,7 @@ const LiveCandleChart = ({
                     }}
                     style={{
                       padding: "5px 10px",
+                     
                       borderRadius: 4,
                       color: t.textColor,
                       cursor: "pointer",

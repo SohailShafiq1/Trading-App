@@ -276,10 +276,12 @@ const BinaryChart = () => {
   }, [selectedCoin, selectedCoinType]);
 
   // Update trade timers
+  /*
   useEffect(() => {
     const interval = setInterval(() => {
       setTrades((prevTrades) =>
         prevTrades.map((trade) => {
+          // When timer hits 0, lock status and reward, and keep them fixed after that
           if (trade.remainingTime > 1) {
             return { ...trade, remainingTime: trade.remainingTime - 1 };
           } else if (trade.remainingTime === 1) {
@@ -288,25 +290,32 @@ const BinaryChart = () => {
             const coinData = coins.find((c) => c.name === trade.coinName);
             const profitPercentage = coinData?.profitPercentage || 0;
             const tradeInvestment = trade.investment ?? trade.price ?? 0;
-            let centsChange = 0;
+            let isWin = false;
             if (trade.type === "Buy") {
-              centsChange =
-                (endPrice - trade.entryPrice) *
-                (tradeInvestment / trade.entryPrice);
+              isWin = endPrice > trade.entryPrice;
             } else {
-              centsChange =
-                (trade.entryPrice - endPrice) *
-                (tradeInvestment / trade.entryPrice);
+              isWin = endPrice < trade.entryPrice;
             }
             const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-            const lockedReward =
-              Math.round((basePayout + centsChange) * 100) / 100;
-            const lockedStatus = centsChange >= 0 ? "win" : "loss";
+            const lockedReward = isWin ? basePayout : 0;
+            const lockedStatus = isWin ? "win" : "loss";
+            // Optionally update backend if not demo
+            if (!isDemo && trade.status === "running") {
+              updateTradeResultInDB({
+                email: user.email,
+                startedAt: trade.startedAt,
+                result: lockedStatus,
+                reward: lockedReward,
+                exitPrice: endPrice,
+              });
+            }
             return {
               ...trade,
               remainingTime: 0,
               lockedStatus,
               lockedReward,
+              status: lockedStatus,
+              reward: lockedReward,
             };
           } else {
             // After timer 0, do not recalculate anything, just keep locked values
@@ -316,7 +325,75 @@ const BinaryChart = () => {
       );
     }, 1000);
     return () => clearInterval(interval);
-  }, [coins, getPriceForTrade]);
+  }, [coins, getPriceForTrade, isDemo, user?.email]);
+  */
+
+  // Set timeout for trade completion (auto-close logic)
+  useEffect(() => {
+    // For each running trade, set a timeout to auto-close at expiry
+    trades.forEach((trade) => {
+      if (trade.status === "running" && typeof trade.remainingTime === "number" && trade.remainingTime > 0) {
+        const timeoutId = setTimeout(async () => {
+          try {
+            let endPrice = getPriceForTrade(trade) ?? 0;
+            const coinData = coins.find((c) => c.name === trade.coinName);
+            const profitPercentage = coinData?.profitPercentage || 0;
+            const tradeInvestment = trade.investment ?? trade.price ?? 0;
+            let isWin = false;
+            if (trade.type === "Buy") {
+              isWin = endPrice > trade.entryPrice;
+            } else {
+              isWin = endPrice < trade.entryPrice;
+            }
+            const reward = isWin
+              ? (tradeInvestment * (1 + profitPercentage / 100)).toFixed(2)
+              : -tradeInvestment;
+            const lockedStatus = isWin ? "win" : "loss";
+            // Update backend if not demo
+            if (!isDemo) {
+              await updateTradeResultInDB({
+                email: user.email,
+                // Always send startedAt as a timestamp (number)
+                startedAt: new Date(trade.startedAt).getTime(),
+                result: lockedStatus,
+                reward: parseFloat(reward),
+                exitPrice: endPrice,
+              });
+            }
+            // Update local state
+            setTrades((prev) =>
+              prev.map((t) =>
+                t.id === trade.id
+                  ? {
+                      ...t,
+                      status: lockedStatus,
+                      reward: parseFloat(reward),
+                      remainingTime: 0,
+                      lockedStatus,
+                      lockedReward: parseFloat(reward),
+                    }
+                  : t
+              )
+            );
+            setPopupMessage(
+              isWin
+                ? `Trade Win! You got $${reward}`
+                : `Trade Loss! You lost $${Math.abs(reward)}`
+            );
+            setPopupColor(isWin ? "#10A055" : "#FF1600");
+            setShowPopup(true);
+            setTimeout(() => setShowPopup(false), 3000);
+          } catch (err) {
+            console.error("Failed to auto-close trade:", err);
+            toast.error("Failed to determine trade result");
+          }
+        }, trade.remainingTime * 1000);
+        // Clean up timeout if trade is removed or component unmounts
+        return () => clearTimeout(timeoutId);
+      }
+      return undefined;
+    });
+  }, [trades, coins, isDemo, user?.email]);
 
   const saveTradeToDB = async (trade) => {
     if (isDemo) return { status: "demo" };
@@ -339,15 +416,29 @@ const BinaryChart = () => {
 
   const updateTradeResultInDB = async (tradeData) => {
     if (isDemo) return;
-
     try {
+      // Debug log for payload
+      console.log("[DEBUG] updateTradeResultInDB payload:", tradeData);
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/users/trade/result`,
         tradeData
       );
     } catch (err) {
-      console.error("Failed to update trade result:", err);
-      toast.error("Failed to update trade result");
+      // Log error details for debugging
+      if (err.response) {
+        console.error("[DEBUG] Backend error:", err.response.data);
+        // Suppress toast for 'Trade already closed' error
+        if (err.response.data?.error === "Trade already closed") {
+          // Optionally update local state here if needed
+          return;
+        }
+        toast.error(
+          `Failed to update trade result: ${err.response.data.error || err.message}`
+        );
+      } else {
+        console.error("[DEBUG] Network or unknown error:", err);
+        toast.error("Failed to update trade result (network or unknown error)");
+      }
       throw err;
     }
   };
@@ -835,7 +926,8 @@ const BinaryChart = () => {
       if (!isDemo) {
         await updateTradeResultInDB({
           email: user.email,
-          startedAt: trade.startedAt,
+          // Always send startedAt as a timestamp (number)
+          startedAt: new Date(trade.startedAt).getTime(),
           result: isWin ? "win" : "loss",
           reward: parseFloat(reward),
           exitPrice: endPrice,
