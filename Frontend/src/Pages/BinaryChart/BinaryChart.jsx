@@ -1072,8 +1072,9 @@ const BinaryChart = () => {
                   className={styles.value}
                   value={investment}
                   onChange={(e) =>
-                    setInvestment(Math.max(parseInt(e.target.value) || 1, 1))
+                    setInvestment(Math.max(parseInt(e.target.value) ))
                   }
+                  
                   min="1"
                   disabled={
                     isLoading || isProcessingTrade || (!isDemo && !isVerified)
