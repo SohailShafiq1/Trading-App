@@ -1,5 +1,5 @@
 import { RiArrowDropDownLine } from "react-icons/ri";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import {
   AiOutlinePlus,
@@ -95,24 +95,24 @@ const intervalToSeconds = {
 const normalizeInterval = (interval) => {
   switch (interval) {
     case "1min":
-      return "1m";
+      return "1min";
     case "5min":
-      return "5m";
+      return "5min";
     case "15min":
-      return "15m";
+      return "15min";
     case "30min":
-      return "30m";
+      return "30min";
     case "1h":
       return "1h";
     case "4h":
       return "4h";
     case "1day":
-      return "1d";
+      return "1day";
     default:
       return interval;
   }
 };
-
+  
 const ForexTradingChart = ({
   coinName,
   setSelectedCoin,
@@ -155,35 +155,26 @@ const ForexTradingChart = ({
   const [tradePopup, setTradePopup] = useState(false);
   const [chartHeight, setChartHeight] = useState(600);
 
-  // Fetch candle data from Twelve Data
-  const fetchCandles = async () => {
+  // --- NEW fetchCandles with useCallback and polling useEffect ---
+  const fetchCandles = useCallback(async () => {
     try {
       const apiKey = import.meta.env.VITE_API_KEY;
       let symbol = coinName.includes("/")
         ? coinName
         : coinName.replace(/(\w{3})(\w{3})/, "$1/$2");
-      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=5000&apikey=${apiKey}`;
+      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=5000&apikey=${apiKey}&ts=${Date.now()}`;
       const response = await fetch(url);
       const data = await response.json();
+      console.log("APi data:", data);
       if (data && data.values) {
-        // --- Floor candle time to nearest interval for all supported intervals ---
-        const normalizedInterval = normalizeInterval(interval);
-        const intervalSec = intervalToSeconds[normalizedInterval] || 60;
-        const formattedCandles = data.values.reverse().map((candle) => {
-          const origTime = Math.floor(
-            new Date(candle.datetime).getTime() / 1000
-          );
-          // Floor to nearest interval
-          const flooredTime = Math.floor(origTime / intervalSec) * intervalSec;
-          return {
-            time: flooredTime,
-            open: parseFloat(candle.open),
-            high: parseFloat(candle.high),
-            low: parseFloat(candle.low),
-            close: parseFloat(candle.close),
-            volume: parseFloat(candle.volume),
-          };
-        });
+        const formattedCandles = data.values.reverse().map((candle) => ({
+          time: Math.floor(new Date(candle.datetime).getTime() / 1000),
+          open: parseFloat(candle.open),
+          high: parseFloat(candle.high),
+          low: parseFloat(candle.low),
+          close: parseFloat(candle.close),
+          volume: parseFloat(candle.volume || "0"),
+        }));
         setCandles(formattedCandles);
         if (formattedCandles.length > 0) {
           setCurrentPrice(formattedCandles[formattedCandles.length - 1].close);
@@ -194,7 +185,27 @@ const ForexTradingChart = ({
     } catch (error) {
       console.error("Error fetching candle data:", error);
     }
-  };
+  }, [coinName, interval]);
+
+  useEffect(() => {
+    fetchCandles(); // Initial fetch on mount or when dependencies change
+    const intervalMapping = {
+      "1min": 60000,
+      "5min": 300000,
+      "15min": 900000,
+      "30min": 1800000,
+      "1h": 3600000,
+      "4h": 14400000,
+      "1day": 86400000,
+    };
+    const delay = intervalMapping[interval] || 60000;
+    const intervalId = setInterval(() => {
+      // Optionally add debug log:
+      // console.log("Polling fetchCandles called");
+      fetchCandles();
+    }, delay);
+    return () => clearInterval(intervalId); // Cleanup on unmount or dependency change
+  }, [fetchCandles, interval]);
 
   // Chart height update effect
   useEffect(() => {
@@ -362,10 +373,6 @@ const ForexTradingChart = ({
       }
     };
   }, [activeIndicator, theme]);
-
-  useEffect(() => {
-    fetchCandles();
-  }, [coinName, interval]);
 
   // Add indicator
   const selectIndicator = (ind) => {
