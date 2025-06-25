@@ -414,6 +414,22 @@ body {
     max-width: 100%; /* Remove fixed max-width on mobile */
     padding: 0 15px; /* Add padding to avoid content touching edges */
   }
+  .timestampPopup {
+    left: 30%;
+    bottom: 30%;
+    right: 0;
+    max-width: fit-content;
+    min-width: fit-content;
+    padding: 1rem;
+    grid-template-rows: repeat(2, minmax(20px, 1fr));
+    grid-template-columns: repeat(3, minmax(20px, 1fr));
+    gap: 1rem;
+  }
+  .timestampOption {
+    font-size: 0.9rem; /* Slightly smaller font size for mobile */
+    padding: 0.2rem 0.1rem; /* Adjust padding for better fit */
+    width: fit-content;
+  }
   .selectedCoinTitle {
     display: none;
   }

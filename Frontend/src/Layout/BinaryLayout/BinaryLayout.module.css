@@ -1084,3 +1084,6 @@
     font-size: 11px;
   }
 }
+.footer--hidden {
+  display: none !important;
+}
