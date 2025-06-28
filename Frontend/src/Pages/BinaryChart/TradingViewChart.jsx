@@ -1,7 +1,13 @@
 import { RiArrowDropDownLine } from "react-icons/ri";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { createChart, CrosshairMode } from "lightweight-charts";
+import {
+  createChart,
+  CrosshairMode,
+  CandlestickSeries,
+  BarSeries,
+  LineSeries,
+} from "lightweight-charts";
 import {
   AiOutlinePlus,
   AiOutlineBgColors,
@@ -266,9 +272,10 @@ const TradingViewChart = ({
       chartRef.current.removeSeries(seriesRef.current);
     }
 
+    // Create new series based on style - using v5 API
     switch (candleStyle) {
       case CANDLE_STYLES.CANDLE:
-        seriesRef.current = chartRef.current.addCandlestickSeries({
+        seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
           upColor: theme.upColor,
           downColor: theme.downColor,
           borderUpColor: theme.upColor,
@@ -278,19 +285,19 @@ const TradingViewChart = ({
         });
         break;
       case CANDLE_STYLES.BAR:
-        seriesRef.current = chartRef.current.addBarSeries({
+        seriesRef.current = chartRef.current.addSeries(BarSeries, {
           upColor: theme.upColor,
           downColor: theme.downColor,
         });
         break;
       case CANDLE_STYLES.LINE:
-        seriesRef.current = chartRef.current.addLineSeries({
+        seriesRef.current = chartRef.current.addSeries(LineSeries, {
           color: theme.upColor,
           lineWidth: 2,
         });
         break;
       case CANDLE_STYLES.HOLLOW:
-        seriesRef.current = chartRef.current.addCandlestickSeries({
+        seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
           upColor: "transparent",
           downColor: "transparent",
           borderUpColor: theme.upColor,
@@ -299,6 +306,15 @@ const TradingViewChart = ({
           wickDownColor: theme.downColor,
         });
         break;
+      default:
+        seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
+          upColor: theme.upColor,
+          downColor: theme.downColor,
+          borderUpColor: theme.upColor,
+          borderDownColor: theme.downColor,
+          wickUpColor: theme.upColor,
+          wickDownColor: theme.downColor,
+        });
     }
 
     if (candles.length > 0) {
@@ -342,7 +358,7 @@ const TradingViewChart = ({
           })
           .filter(Boolean);
 
-        smaSeriesRef.current = chartRef.current.addLineSeries({
+        smaSeriesRef.current = chartRef.current.addSeries(LineSeries, {
           color: "#2962FF",
           lineWidth: 2,
         });
@@ -377,7 +393,7 @@ const TradingViewChart = ({
     });
 
     chartRef.current = chart;
-    seriesRef.current = chart.addCandlestickSeries({
+    seriesRef.current = chart.addSeries(CandlestickSeries, {
       upColor: theme.upColor,
       downColor: theme.downColor,
       borderUpColor: theme.upColor,
@@ -456,7 +472,11 @@ const TradingViewChart = ({
   }, [showCoinSelector]);
 
   // --- TRADE BOXES DYNAMIC SIZE AND POSITION ---
-  const [tradeBoxSize, setTradeBoxSize] = useState({ width: 44, height: 16, font: 9 });
+  const [tradeBoxSize, setTradeBoxSize] = useState({
+    width: 44,
+    height: 16,
+    font: 9,
+  });
   const [tradeHover, setTradeHover] = useState({});
   useEffect(() => {
     if (!chartRef.current) return;
@@ -483,7 +503,8 @@ const TradingViewChart = ({
 
   // --- TRADE BOXES AND LINES RENDERING ---
   const renderTradeBoxesAndLines = () => {
-    if (!chartRef.current || !seriesRef.current || !containerRef.current) return null;
+    if (!chartRef.current || !seriesRef.current || !containerRef.current)
+      return null;
     // Group trades by interval bucket
     const intervalSec = intervalToSeconds[interval] || 60;
     let chartTimes = [];
@@ -549,9 +570,15 @@ const TradingViewChart = ({
           return aTime - bTime;
         });
         const gap = 28;
-        const totalWidth = tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
-        const x = chartRef.current?.timeScale().timeToCoordinate(Number(mappedTime));
-        const containerRect = containerRef.current.getBoundingClientRect() || { width: 600, height: 500 };
+        const totalWidth =
+          tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
+        const x = chartRef.current
+          ?.timeScale()
+          .timeToCoordinate(Number(mappedTime));
+        const containerRect = containerRef.current.getBoundingClientRect() || {
+          width: 600,
+          height: 500,
+        };
         let startLeft =
           x != null && !isNaN(x)
             ? Math.max(
@@ -563,19 +590,25 @@ const TradingViewChart = ({
                 )
               )
             : containerRect.width - totalWidth - 10;
-        const latestBoxRight = startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
+        const latestBoxRight =
+          startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
         if (x != null && latestBoxRight > x + boxWidth / 2) {
           startLeft -= latestBoxRight - (x + boxWidth / 2);
         }
         // Render trade boxes
         tradesArr.forEach((trade, idx) => {
-          const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+          const tradeId =
+            trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
           const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
           const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
           const left = startLeft + idx * (boxWidth + gap);
-          const top = y != null && !isNaN(y)
-            ? Math.max(boxHeight / 2, Math.min(y, containerRect.height - boxHeight / 2))
-            : 40;
+          const top =
+            y != null && !isNaN(y)
+              ? Math.max(
+                  boxHeight / 2,
+                  Math.min(y, containerRect.height - boxHeight / 2)
+                )
+              : 40;
           const isBuy = trade.type === "Buy";
           const boxColor = isBuy ? "#10A055" : "#FF0000";
           const borderColor = isBuy ? "#0d7a3a" : "#b80000";
@@ -611,8 +644,12 @@ const TradingViewChart = ({
                 pointerEvents: "auto",
                 opacity: 1,
               }}
-              onMouseEnter={() => setTradeHover((h) => ({ ...h, [tradeId]: true }))}
-              onMouseLeave={() => setTradeHover((h) => ({ ...h, [tradeId]: false }))}
+              onMouseEnter={() =>
+                setTradeHover((h) => ({ ...h, [tradeId]: true }))
+              }
+              onMouseLeave={() =>
+                setTradeHover((h) => ({ ...h, [tradeId]: false }))
+              }
             >
               <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
                 {isBuy ? "B" : "S"}
@@ -620,7 +657,9 @@ const TradingViewChart = ({
               <span style={{ fontWeight: 600, fontSize: fontSize }}>
                 ${trade.investment ?? trade.price ?? trade.coinPrice}
               </span>
-              <span style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}>
+              <span
+                style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
+              >
                 {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
               </span>
               {tradeHover[tradeId] && (
@@ -640,7 +679,11 @@ const TradingViewChart = ({
                     boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
                   }}
                 >
-                  Payout: ${((trade.investment ?? trade.price ?? trade.coinPrice) * (profit ? 1 + profit / 100 : 1)).toFixed(2)}
+                  Payout: $
+                  {(
+                    (trade.investment ?? trade.price ?? trade.coinPrice) *
+                    (profit ? 1 + profit / 100 : 1)
+                  ).toFixed(2)}
                 </div>
               )}
               {trade.remainingTime === 0 && tradeId && handleCloseTrade && (
@@ -674,41 +717,89 @@ const TradingViewChart = ({
           );
         });
         // --- Add lines for each trade after the latest trade ---
-        if (tradesArr.length > 0 && chartRef.current && seriesRef.current && containerRef.current) {
+        if (
+          tradesArr.length > 0 &&
+          chartRef.current &&
+          seriesRef.current &&
+          containerRef.current
+        ) {
           const lastTrade = tradesArr[tradesArr.length - 1];
-          const lastTradePrice = lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
-          const yLast = seriesRef.current.priceToCoordinate(Number(lastTradePrice));
-          const leftLast = startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth / 2;
-          const topLast = yLast != null && !isNaN(yLast) ? Math.max(boxHeight / 2, Math.min(yLast, containerRect.height - boxHeight / 2)) : 40;
+          const lastTradePrice =
+            lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
+          const yLast = seriesRef.current.priceToCoordinate(
+            Number(lastTradePrice)
+          );
+          const leftLast =
+            startLeft +
+            (tradesArr.length - 1) * (boxWidth + gap) +
+            boxWidth / 2;
+          const topLast =
+            yLast != null && !isNaN(yLast)
+              ? Math.max(
+                  boxHeight / 2,
+                  Math.min(yLast, containerRect.height - boxHeight / 2)
+                )
+              : 40;
           tradesArr.forEach((trade, idx) => {
-            if (typeof trade.remainingTime === 'number' && trade.remainingTime <= 0) return;
+            if (
+              typeof trade.remainingTime === "number" &&
+              trade.remainingTime <= 0
+            )
+              return;
             let durationSec = 60;
-            if (typeof trade.duration === 'number') {
+            if (typeof trade.duration === "number") {
               durationSec = trade.duration;
-            } else if (typeof trade.remainingTime === 'number' && typeof trade.startedAt !== 'undefined') {
+            } else if (
+              typeof trade.remainingTime === "number" &&
+              typeof trade.startedAt !== "undefined"
+            ) {
               const now = Math.floor(Date.now() / 1000);
-              const started = typeof trade.startedAt === 'number' ? (trade.startedAt > 1e12 ? Math.floor(trade.startedAt / 1000) : trade.startedAt) : Math.floor(new Date(trade.startedAt).getTime() / 1000);
-              durationSec = (trade.remainingTime + (now - started));
+              const started =
+                typeof trade.startedAt === "number"
+                  ? trade.startedAt > 1e12
+                    ? Math.floor(trade.startedAt / 1000)
+                    : trade.startedAt
+                  : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+              durationSec = trade.remainingTime + (now - started);
             }
-            let tradeStartSec = typeof trade.startedAt === 'number' ? (trade.startedAt > 1e12 ? Math.floor(trade.startedAt / 1000) : trade.startedAt) : Math.floor(new Date(trade.startedAt).getTime() / 1000);
+            let tradeStartSec =
+              typeof trade.startedAt === "number"
+                ? trade.startedAt > 1e12
+                  ? Math.floor(trade.startedAt / 1000)
+                  : trade.startedAt
+                : Math.floor(new Date(trade.startedAt).getTime() / 1000);
             let tradeEndSec = tradeStartSec + durationSec;
-            let x0 = chartRef.current.timeScale().timeToCoordinate(tradeStartSec);
+            let x0 = chartRef.current
+              .timeScale()
+              .timeToCoordinate(tradeStartSec);
             let x1 = chartRef.current.timeScale().timeToCoordinate(tradeEndSec);
             let lineLength = 80;
             if (x0 != null && x1 != null && !isNaN(x0) && !isNaN(x1)) {
               lineLength = Math.max(20, Math.abs(x1 - x0));
             }
             let percentLeft = 1;
-            if (typeof trade.remainingTime === 'number' && durationSec > 0) {
-              percentLeft = Math.max(0, Math.min(1, trade.remainingTime / durationSec));
+            if (typeof trade.remainingTime === "number" && durationSec > 0) {
+              percentLeft = Math.max(
+                0,
+                Math.min(1, trade.remainingTime / durationSec)
+              );
             }
             let visibleLength = lineLength * percentLeft;
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
             // Clamp lineLeft and visibleLength to stay within chart container
-            let clampedLineLeft = Math.max(0, Math.min(leftLast + boxWidth / 2 + 16, containerRect.width - 20));
-            let clampedVisibleLength = Math.max(0, Math.min(visibleLength, containerRect.width - clampedLineLeft - 8));
-            let clampedLineTop = Math.max(0, Math.min(topLast + (idx * 16) + 10, containerRect.height - 8));
+            let clampedLineLeft = Math.max(
+              0,
+              Math.min(leftLast + boxWidth / 2 + 16, containerRect.width - 20)
+            );
+            let clampedVisibleLength = Math.max(
+              0,
+              Math.min(visibleLength, containerRect.width - clampedLineLeft - 8)
+            );
+            let clampedLineTop = Math.max(
+              0,
+              Math.min(topLast + idx * 16 + 10, containerRect.height - 8)
+            );
             rendered.push(
               <svg
                 key={`afterline-${mappedTime}-${trade.id || trade._id || idx}`}
@@ -722,7 +813,14 @@ const TradingViewChart = ({
                   zIndex: 20,
                 }}
               >
-                <circle cx={clampedLineLeft} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <circle
+                  cx={clampedLineLeft}
+                  cy={clampedLineTop}
+                  r={4}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                />
                 <line
                   x1={clampedLineLeft}
                   y1={clampedLineTop}
@@ -731,7 +829,14 @@ const TradingViewChart = ({
                   stroke={color}
                   strokeWidth={4}
                 />
-                <circle cx={clampedLineLeft + clampedVisibleLength} cy={clampedLineTop} r={4} fill={color} stroke="#fff" strokeWidth={1.5} />
+                <circle
+                  cx={clampedLineLeft + clampedVisibleLength}
+                  cy={clampedLineTop}
+                  r={4}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                />
               </svg>
             );
           });
@@ -1231,7 +1336,12 @@ const TradingViewChart = ({
           containerRef.current = el;
           buttonRefs.current[5] = el;
         }}
-        style={{ width: "100%", height: "600px", overflow: "hidden", position: "relative" }}
+        style={{
+          width: "100%",
+          height: "600px",
+          overflow: "hidden",
+          position: "relative",
+        }}
       >
         {renderTradeBoxesAndLines()}
       </div>

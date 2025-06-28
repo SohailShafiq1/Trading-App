@@ -1,6 +1,12 @@
 import { RiArrowDropDownLine } from "react-icons/ri";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { createChart, CrosshairMode } from "lightweight-charts";
+import {
+  createChart,
+  CrosshairMode,
+  CandlestickSeries,
+  BarSeries,
+  LineSeries,
+} from "lightweight-charts";
 import {
   AiOutlinePlus,
   AiOutlineBgColors,
@@ -112,7 +118,7 @@ const normalizeInterval = (interval) => {
       return interval;
   }
 };
-  
+
 const ForexTradingChart = ({
   coinName,
   setSelectedCoin,
@@ -306,7 +312,7 @@ const ForexTradingChart = ({
       },
     });
     chartRef.current = chart;
-    seriesRef.current = chart.addCandlestickSeries({
+    seriesRef.current = chart.addSeries(CandlestickSeries, {
       upColor: theme.upColor,
       downColor: theme.downColor,
       borderUpColor: theme.upColor,
@@ -416,7 +422,7 @@ const ForexTradingChart = ({
       trendLineSeriesRef.current = null;
     }
     if (trendLinePoints.length === 2) {
-      trendLineSeriesRef.current = chartRef.current.addLineSeries({
+      trendLineSeriesRef.current = chartRef.current.addSeries(LineSeries, {
         color: "red",
         lineWidth: 2,
       });
@@ -569,20 +575,28 @@ const ForexTradingChart = ({
     // Overlays on main chart
     if (activeIndicator === INDICATORS.SMA) {
       const sma = filterValidData(calculateSMA(candles, 20));
-      const smaSeries = chartRef.current.addLineSeries({ color: "orange" });
+      const smaSeries = chartRef.current.addSeries(LineSeries, {
+        color: "orange",
+      });
       smaSeries.setData(sma);
       chartRef.current._indicatorSeries.push(smaSeries);
     } else if (activeIndicator === INDICATORS.EMA) {
       const ema = filterValidData(calculateEMA(candles, 20));
-      const emaSeries = chartRef.current.addLineSeries({ color: "blue" });
+      const emaSeries = chartRef.current.addSeries(LineSeries, {
+        color: "blue",
+      });
       emaSeries.setData(ema);
       chartRef.current._indicatorSeries.push(emaSeries);
     } else if (activeIndicator === INDICATORS.BB) {
       const bb = calculateBollingerBands(candles, 20, 2);
-      const upperSeries = chartRef.current.addLineSeries({ color: "gray" });
+      const upperSeries = chartRef.current.addSeries(LineSeries, {
+        color: "gray",
+      });
       upperSeries.setData(filterValidData(bb.upper));
       chartRef.current._indicatorSeries.push(upperSeries);
-      const lowerSeries = chartRef.current.addLineSeries({ color: "gray" });
+      const lowerSeries = chartRef.current.addSeries(LineSeries, {
+        color: "gray",
+      });
       lowerSeries.setData(filterValidData(bb.lower));
       chartRef.current._indicatorSeries.push(lowerSeries);
     }
@@ -590,18 +604,18 @@ const ForexTradingChart = ({
     if (indicatorChartRef.current) {
       if (activeIndicator === INDICATORS.RSI) {
         const rsi = filterValidData(calculateRSI(candles, 14));
-        const rsiSeries = indicatorChartRef.current.addLineSeries({
+        const rsiSeries = indicatorChartRef.current.addSeries(LineSeries, {
           color: "purple",
         });
         rsiSeries.setData(rsi);
         indicatorSeriesRef.current = [rsiSeries];
       } else if (activeIndicator === INDICATORS.MACD) {
         const { macd, signal } = calculateMACD(candles, 12, 26, 9);
-        const macdSeries = indicatorChartRef.current.addLineSeries({
+        const macdSeries = indicatorChartRef.current.addSeries(LineSeries, {
           color: "green",
         });
         macdSeries.setData(filterValidData(macd));
-        const signalSeries = indicatorChartRef.current.addLineSeries({
+        const signalSeries = indicatorChartRef.current.addSeries(LineSeries, {
           color: "red",
         });
         signalSeries.setData(filterValidData(signal));
