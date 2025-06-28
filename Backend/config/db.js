@@ -10,9 +10,12 @@ const clientOptions = {
 let isConnected = false;
 
 export const connectDB = async () => {
-  if (isConnected) return; // reuse if already open
+  if (isConnected) return;                 // reuse if already open
   const env = process.env.DB_ENV || "atlas";
-  const mongoUri = process.env.MONGODB_URI_LOCAL;
+  const mongoUri =
+    env === "local"
+      ? process.env.MONGODB_URI_LOCAL
+      : process.env.MONGODB_URI;
 
   if (!mongoUri)
     throw new Error(
