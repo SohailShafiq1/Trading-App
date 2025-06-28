@@ -829,32 +829,39 @@ const LiveCandleChart = ({
           }
         }
 
-        // Set initial view to show only the latest candle centered like professional platforms
+        // Set initial view to show the latest candle centered in the middle of the chart
         if (firstLoad && chartRef.current && grouped.length > 0) {
-          const lastCandle = grouped[grouped.length - 1];
-          const intervalSec = intervalToSeconds[interval];
+          // Use setTimeout to ensure the chart is fully rendered before setting range
+          setTimeout(() => {
+            if (chartRef.current && grouped.length > 0) {
+              const lastCandle = grouped[grouped.length - 1];
+              const intervalSec = intervalToSeconds[interval];
 
-          // Center the latest candle with some padding on both sides
-          const centerTime = lastCandle.time;
-          const paddingCandles = 10; // Show 10 time slots on each side for context
-          const timeSpanPerCandle = intervalSec;
+              // Center the latest candle in the middle with equal padding on both sides
+              const centerTime = lastCandle.time;
+              const paddingCandles = 15; // Show 15 time slots on each side for better context
+              const timeSpanPerCandle = intervalSec;
 
-          // Calculate time range to center the latest candle
-          const fromTime = centerTime - paddingCandles * timeSpanPerCandle;
-          const toTime = centerTime + paddingCandles * timeSpanPerCandle;
+              // Calculate time range to center the latest candle exactly in the middle
+              const fromTime = centerTime - paddingCandles * timeSpanPerCandle;
+              const toTime = centerTime + paddingCandles * timeSpanPerCandle;
 
-          console.log("Centering latest candle only:", {
-            centerTime: new Date(centerTime * 1000),
-            fromTime: new Date(fromTime * 1000),
-            toTime: new Date(toTime * 1000),
-            lastCandle: new Date(lastCandle.time * 1000),
-            paddingCandles,
-          });
+              console.log("Centering latest candle in middle:", {
+                centerTime: new Date(centerTime * 1000),
+                fromTime: new Date(fromTime * 1000),
+                toTime: new Date(toTime * 1000),
+                lastCandle: new Date(lastCandle.time * 1000),
+                paddingCandles,
+                intervalSec
+              });
 
-          chartRef.current.timeScale().setVisibleRange({
-            from: fromTime,
-            to: toTime,
-          });
+              chartRef.current.timeScale().setVisibleRange({
+                from: fromTime,
+                to: toTime,
+              });
+            }
+          }, 150);
+          
           setFirstLoad(false);
         }
 
@@ -1723,8 +1730,20 @@ const LiveCandleChart = ({
             let visibleLength = lineLength * percentLeft;
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
+            
+            // Position line at the actual entry price of this trade (not with equal spacing)
+            const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
+            const yTrade = seriesRef.current.priceToCoordinate(Number(tradePrice));
+            const lineTop = yTrade != null && !isNaN(yTrade)
+              ? Math.max(
+                  boxHeight / 2,
+                  Math.min(yTrade, containerRect.height - boxHeight / 2)
+                )
+              : 40;
+            
+            // Position lines in front of the latest trade horizontally
             const lineLeft = leftLast + boxWidth / 2 + 16;
-            const lineTop = topLast + idx * 16 + 10;
+            
             // Clamp lineLeft and visibleLength to stay within chart container
             let clampedLineLeft = Math.max(
               0,
