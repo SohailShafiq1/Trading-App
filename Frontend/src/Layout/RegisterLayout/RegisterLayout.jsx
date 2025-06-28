@@ -4,6 +4,7 @@ import WealthXLogo from "./logo.png";
 import RegisterLayoutBG from "../../../assets/RegisterLayoutBG.jpeg";
 import { NavLink } from "react-router-dom";
 import { Outlet } from "react-router-dom";
+import candle from "./candle.mp4";
 const s = styles;
 
 const RegisterLayout = () => {
@@ -20,10 +21,12 @@ const RegisterLayout = () => {
   return (
     <>
       <div className={s.container}>
-        {/* Background image visually for reference */}
-        <img
-          src={RegisterLayoutBG}
-          alt="Register Layout Background"
+        {/* Background video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
           style={{
             position: "fixed",
             top: 0,
@@ -35,7 +38,10 @@ const RegisterLayout = () => {
             opacity: 1,
             pointerEvents: "none",
           }}
-        />
+        >
+          <source src={candle} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
         {/* White blur overlay */}
         <div
           style={{
