@@ -52,7 +52,7 @@ const THEMES = {
     name: "Light",
     background: "rgb(255,255,255)",
     textColor: "rgb(51,51,51)",
-    gridColor: "rgba(60,60,60,0.10)", // lighter, more transparent
+    gridColor: "rgba(60,60,60,1)", // lighter, more transparent
     upColor: "rgb(38,166,154)",
     downColor: "rgb(239,83,80)",
     borderVisible: true,
@@ -65,7 +65,7 @@ const THEMES = {
     name: "Dark",
     background: "rgb(18,18,18)",
     textColor: "rgb(209,212,220)",
-    gridColor: "rgba(200,200,200,0.08)", // lighter, more transparent
+    gridColor: "rgba(200,200,200,1)", // lighter, more transparent
     upColor: "rgb(0,230,118)",
     downColor: "rgb(255,23,68)",
     borderVisible: true,
@@ -78,7 +78,7 @@ const THEMES = {
     name: "Blue",
     background: "rgb(14,26,47)",
     textColor: "rgb(255,255,255)",
-    gridColor: "rgba(30,42,63,0.12)", // lighter, more transparent
+    gridColor: "rgba(30,42,63,1)", // lighter, more transparent
     upColor: "rgb(76,175,80)",
     downColor: "rgb(244,67,54)",
     borderVisible: true,
@@ -379,6 +379,7 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
+        rightOffset: 10, // Show future time ticks like professional platforms
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
           return `${date.getHours()}:${date
@@ -386,6 +387,11 @@ const LiveCandleChart = ({
             .toString()
             .padStart(2, "0")}`;
         },
+        // Show future times even when no candles exist
+        rightBarStaysOnScroll: true,
+        shiftVisibleRangeOnNewBar: false,
+        allowShiftVisibleRangeOnWhitespaceClick: false,
+        uniformDistribution: false, // Allow future time slots to show properly
       },
       rightPriceScale: {
         borderColor: theme.gridColor,
@@ -456,6 +462,8 @@ const LiveCandleChart = ({
         });
     }
     const data = groupCandles(candles, interval);
+    // Don't add future markers to candle style data
+
     if (candleStyle === CANDLE_STYLES.LINE) {
       const lineData = data.map((candle) => ({
         time: candle.time,
@@ -466,6 +474,8 @@ const LiveCandleChart = ({
       seriesRef.current.setData(data);
     }
     applyIndicators();
+
+    // Professional platforms: future time ticks are automatic
   };
   const applyIndicators = () => {
     const cleanupIndicator = (ref) => {
@@ -721,9 +731,23 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        rightOffset: 2, // Adjust to ensure space on the right
-        barSpacing: 15, // Adjust bar spacing for zoom level
-        minBarSpacing: 5, // Prevent excessive zoom out
+        rightOffset: 10, // Show future time ticks like professional platforms
+        barSpacing: 6, // Default professional spacing
+        minBarSpacing: 0.5, // Allow zooming out very far
+        rightBarStaysOnScroll: false, // Don't force latest bar to stay visible
+        shiftVisibleRangeOnNewBar: false, // NEVER auto-shift like professional platforms
+        allowShiftVisibleRangeOnWhitespaceClick: true, // Allow clicking to move
+        uniformDistribution: false, // Allow natural time distribution
+        fixLeftEdge: false, // Allow free scrolling
+        fixRightEdge: false, // Allow free scrolling
+        lockVisibleTimeRangeOnResize: false, // Don't lock range on resize
+        tickMarkFormatter: (time) => {
+          const date = new Date(time * 1000);
+          return `${date.getHours()}:${date
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
+        },
       },
       rightPriceScale: {
         borderColor: theme.gridColor,
@@ -742,16 +766,21 @@ const LiveCandleChart = ({
     });
     chart.subscribeClick(handleChartClick);
     chart.timeScale().applyOptions({
-      rightOffset: 2,
+      rightOffset: 10, // Show future time ticks like professional platforms
       fixLeftEdge: false,
       fixRightEdge: false,
       lockVisibleTimeRangeOnResize: false,
       handleScroll: true,
       handleScale: true,
+      rightBarStaysOnScroll: false, // Don't force latest bar visible - user controls view
+      shiftVisibleRangeOnNewBar: false, // NEVER auto-shift like professional platforms
+      allowShiftVisibleRangeOnWhitespaceClick: true, // Allow clicking to navigate
+      uniformDistribution: false, // Natural time distribution
+      minBarSpacing: 0.5, // Allow extreme zoom out
+      barSpacing: 6, // Professional default spacing
     });
 
-    // Set initial visible range to show approximately 10 candles
-    chart.timeScale().setVisibleLogicalRange({ from: -10, to: 0 });
+    // Don't set any initial range - let chart center naturally like professional platforms
 
     chart.timeScale().subscribeVisibleTimeRangeChange(() => {
       updateCountdownPosition();
@@ -796,6 +825,8 @@ const LiveCandleChart = ({
         });
 
         const grouped = groupCandles(historical, interval);
+
+        // Don't add future time markers to main data anymore
         if (seriesRef.current) {
           if (candleStyle === CANDLE_STYLES.LINE) {
             const lineData = grouped.map((candle) => ({
@@ -808,14 +839,54 @@ const LiveCandleChart = ({
           }
         }
 
-        if (firstLoad) {
-          chartRef.current.timeScale().fitContent();
+        // Set initial view to show only latest candles like professional platforms
+        if (firstLoad && chartRef.current && grouped.length > 0) {
+          // Show only last 25 candles initially - professional default
+          const candlesToShow = Math.min(25, grouped.length);
+
+          if (grouped.length >= candlesToShow) {
+            // Get the recent candles to show
+            const recentCandles = grouped.slice(-candlesToShow);
+            const firstCandle = recentCandles[0];
+            const lastCandle = recentCandles[recentCandles.length - 1];
+            const intervalSec = intervalToSeconds[interval];
+
+            // Center the latest candle: calculate equal time space on both sides
+            const candlesOnEachSide = Math.floor((candlesToShow - 1) / 2);
+            const timeSpanPerCandle = intervalSec;
+
+            // Start from latest candle and go back to center it
+            const centerTime = lastCandle.time;
+            const fromTime = centerTime - candlesOnEachSide * timeSpanPerCandle;
+            const toTime = centerTime + candlesOnEachSide * timeSpanPerCandle;
+
+            console.log("Centering latest candle:", {
+              candlesToShow,
+              candlesOnEachSide,
+              centerTime: new Date(centerTime * 1000),
+              fromTime: new Date(fromTime * 1000),
+              toTime: new Date(toTime * 1000),
+              lastCandle: new Date(lastCandle.time * 1000),
+            });
+
+            chartRef.current.timeScale().setVisibleRange({
+              from: fromTime,
+              to: toTime,
+            });
+          } else {
+            // If we have fewer candles, just fit them all
+            chartRef.current.timeScale().fitContent();
+          }
           setFirstLoad(false);
-        } else if (autoZoom) {
-          chartRef.current.timeScale().fitContent();
         }
 
         applyIndicators();
+
+        // Professional trading platform behavior:
+        // - Chart shows future time ticks automatically
+        // - No artificial range adjustments after data updates
+        // - User has complete control over zoom and position
+
         setRenderKey((k) => k + 1);
       } catch (err) {
         console.error("Initial candle fetch failed", err);
@@ -861,6 +932,8 @@ const LiveCandleChart = ({
       }
 
       updated.sort((a, b) => a.time - b.time);
+
+      // Don't add future time markers to live updates
       if (seriesRef.current) {
         if (candleStyle === CANDLE_STYLES.LINE) {
           const lineData = updated.map((candle) => ({
@@ -873,11 +946,8 @@ const LiveCandleChart = ({
         }
       }
 
-      // Only fit content on first load or if autoZoom is toggled, not on every update
-      if (chartRef.current && firstLoad) {
-        chartRef.current.timeScale().fitContent();
-        setFirstLoad(false);
-      }
+      // Professional chart behavior: only update data, never position
+      // Future time ticks are shown automatically by LightWeight Charts
 
       applyIndicators();
     });
@@ -1005,6 +1075,8 @@ const LiveCandleChart = ({
       }
 
       grouped.sort((a, b) => a.time - b.time);
+
+      // Don't add future time markers to socket updates
       if (seriesRef.current) {
         if (candleStyle === CANDLE_STYLES.LINE) {
           const lineData = grouped.map((c) => ({
@@ -1019,6 +1091,8 @@ const LiveCandleChart = ({
       setLiveCandle(newCandle);
       setRenderKey((k) => k + 1);
       applyIndicators();
+
+      // Professional platforms: data updates only, no position changes
     };
 
     socket.on(`price:${coinName}`, handlePrice);
@@ -1034,19 +1108,22 @@ const LiveCandleChart = ({
   useEffect(() => {
     if (chartRef.current) {
       chartRef.current.timeScale().applyOptions({
-        rightOffset: 50, // Reduce the right offset for closer zoom
-        fixLeftEdge: true,
-        fixRightEdge: false, // Allow the last candle to move freely
-        lockVisibleTimeRangeOnResize: false, // Allow resizing without locking the time range
+        rightOffset: 10, // Show future time ticks like professional platforms
+        fixLeftEdge: false,
+        fixRightEdge: false,
+        lockVisibleTimeRangeOnResize: false,
         handleScroll: true,
         handleScale: true,
+        rightBarStaysOnScroll: false, // User controls view completely
+        shiftVisibleRangeOnNewBar: false, // NEVER auto-shift
+        allowShiftVisibleRangeOnWhitespaceClick: true,
+        uniformDistribution: false,
+        minBarSpacing: 0.5, // Allow extreme zoom
+        barSpacing: 6, // Professional spacing
       });
 
-      if (autoZoom) {
-        chartRef.current.timeScale().fitContent();
-      } else {
-        chartRef.current.timeScale().zoomToLogicalRange({ from: 0, to: 100 }); // Increase zoom level
-      }
+      // Never apply auto-zoom or any range adjustments
+      // Chart behaves exactly like professional platforms
     }
   }, [autoZoom]);
 
@@ -1730,6 +1807,28 @@ const LiveCandleChart = ({
         }
       });
     return rendered;
+  };
+
+  // Helper function to generate future time slots for better timescale display
+  // NOTE: Not needed - LightWeight Charts shows future time ticks naturally
+  const generateFutureTimeSlots = (lastCandleTime, interval, count = 10) => {
+    // Future time slots are handled automatically by the chart
+    return [];
+  };
+
+  // Helper function to add future time markers to chart data
+  // NOTE: Not needed - professional charts don't add fake data
+  const addFutureTimeMarkers = (candles, interval, count = 10) => {
+    // Don't add future markers to the main candle data
+    // Professional platforms show future times naturally
+    return candles;
+  };
+
+  // Future time markers are handled automatically by LightWeight Charts
+  // No invisible series or manual interventions needed - just like professional platforms
+  const addFutureTimeMarkersToChart = () => {
+    // Do nothing - professional behavior is built-in
+    return;
   };
 
   // Render the chart component

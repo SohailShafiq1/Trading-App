@@ -194,8 +194,6 @@ const BinaryLayout = () => {
 
   const position = getButtonPosition(currentTipIndex);
 
-  // --- FIX: Ensure all refs and tips are aligned and robust ---
-  // Map tip ids to button refs for both desktop and mobile
   const tipIdToIndex = tips.reduce((acc, tip, idx) => {
     acc[tip.id] = idx;
     return acc;
@@ -326,6 +324,13 @@ const BinaryLayout = () => {
                 cursor: "pointer",
                 background: theme.box,
                 color: theme.textColor,
+                borderRadius: 8,
+                boxShadow:
+                  theme.name === "Black"
+                    ? "0 2px 8px #1118"
+                    : "0 2px 8px #ccc8",
+                padding: 6,
+                transition: "background 0.2s, color 0.2s",
               }}
             >
               {!isDemo ? (
@@ -360,7 +365,6 @@ const BinaryLayout = () => {
                   <div className={s.crownBoxMobile}>
                     <AiOutlineEdit
                       style={{
-                        color: "#666",
                         fontSize: "1rem",
                         verticalAlign: "middle",
                       }}
@@ -385,12 +389,43 @@ const BinaryLayout = () => {
               )}
             </div>
             {mobileAccountPopupVisible && (
-              <div className={s.accountPopupMobile}>
-                <div className={s.accountSectionMobile}>
+              <div
+                className={s.accountPopupMobile}
+                style={{
+                  background: theme.box,
+                  color: theme.textColor,
+                  border: theme.name === "Black" ? "1px solid #333" : undefined,
+                  borderRadius: 10,
+                  boxShadow:
+                    theme.name === "Black"
+                      ? "0 4px 16px #1118"
+                      : "0 4px 16px #ccc8",
+                  padding: 12,
+                  transition: "background 0.2s, color 0.2s",
+                }}
+              >
+                <div
+                  className={s.accountSectionMobile}
+                  style={{ background: theme.box, color: theme.textColor }}
+                >
                   <div
                     className={`${s.accountItemMobile} ${
                       !isDemo ? s.activeMobile : ""
                     }`}
+                    style={{
+                      background: !isDemo
+                        ? theme.menuHoverBg || theme.hover
+                        : theme.box,
+                      color: !isDemo
+                        ? theme.menuText || theme.textColor
+                        : theme.textColor,
+                      border:
+                        !isDemo && theme.name === "Black"
+                          ? "1px solid #333"
+                          : !isDemo
+                          ? "1px solid #000"
+                          : undefined,
+                    }}
                     onClick={() => {
                       setIsDemo(false);
                       setMobileAccountPopupVisible(false);
@@ -412,6 +447,20 @@ const BinaryLayout = () => {
                     className={`${s.accountItemMobile} ${
                       isDemo ? s.activeMobile : ""
                     }`}
+                    style={{
+                      background: isDemo
+                        ? theme.menuHoverBg || theme.hover
+                        : theme.box,
+                      color: isDemo
+                        ? theme.menuText || theme.textColor
+                        : theme.textColor,
+                      border:
+                        isDemo && theme.name === "Black"
+                          ? "1px solid #333"
+                          : isDemo
+                          ? "1px solid #000"
+                          : undefined,
+                    }}
                     onClick={() => {
                       setIsDemo(true);
                       setMobileAccountPopupVisible(false);
@@ -779,7 +828,15 @@ const BinaryLayout = () => {
       {/* Mobile Footer */}
       <div
         id="footer"
-        className={s.footer}
+        className={
+          s.footer +
+          (theme.name ? ` ${s[theme.name.toLowerCase() + "Footer"]}` : "")
+        }
+        style={{
+          background: theme.footerBg || theme.background || undefined,
+          color: theme.footerText || theme.textColor || undefined,
+          borderTop: theme.footerBorder || undefined,
+        }}
         ref={(el) => isMobileView && (mobileButtonRefs.current[0] = el)}
       >
         <div className={s.footBar}>
@@ -788,6 +845,7 @@ const BinaryLayout = () => {
               id="mobile-back-btn"
               className={s.footBtn}
               onClick={() => navigate(-1)}
+              style={{ color: theme.footerText || theme.textColor }}
             >
               <MdUndo className={s.icons} />
             </NavLink>
@@ -797,6 +855,7 @@ const BinaryLayout = () => {
               id="mobile-trade-btn"
               to="/binarychart"
               className={s.footBtn}
+              style={{ color: theme.footerText || theme.textColor }}
             >
               <IoMdImage className={s.icons} />
             </NavLink>
@@ -806,6 +865,7 @@ const BinaryLayout = () => {
               id="mobile-profile-btn"
               className={s.footBtn}
               to="/binarychart/profile"
+              style={{ color: theme.footerText || theme.textColor }}
             >
               <CgProfile className={s.icons} />
             </NavLink>
@@ -814,6 +874,7 @@ const BinaryLayout = () => {
             <NavLink
               className={s.footBtn}
               onClick={() => setMobileAccountPopup(true)}
+              style={{ color: theme.footerText || theme.textColor }}
             >
               <AiOutlineBank className={s.icons} />
             </NavLink>
@@ -822,6 +883,7 @@ const BinaryLayout = () => {
             <NavLink
               className={s.footBtn}
               onClick={() => setMobileMorePopup(true)}
+              style={{ color: theme.footerText || theme.textColor }}
             >
               <CgMoreAlt className={s.icons} />
             </NavLink>
@@ -834,17 +896,37 @@ const BinaryLayout = () => {
         <div className={s.mobilePopup}>
           <div className={s.mobilePopupContent}>
             <div className={s.mobilePopupHeader}>
-              <h3>More Options</h3>
+              <h3
+                style={{
+                  color: theme.menuText || theme.textColor,
+                  margin: 0,
+                }}
+              >
+                More Options
+              </h3>
               <button
                 className={s.mobilePopupClose}
+                style={{
+                  color: theme.menuText || theme.textColor,
+                  background: theme.box,
+                  border: theme.name === "Black" ? "1px solid #333" : undefined,
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 22,
+                  transition: "background 0.2s, color 0.2s",
+                }}
                 onClick={() => setMobileMorePopup(false)}
               >
                 ×
               </button>
             </div>
-            <div className={s.mobilePopupItems}>
+            <div
+              className={s.mobilePopupItems}
+              style={{ color: theme.menuText || theme.textColor }}
+            >
               <div
                 className={s.mobilePopupItem}
+                style={{ color: theme.menuText || theme.textColor }}
                 onClick={() => {
                   navigate("/binarychart/support");
                   setMobileMorePopup(false);
@@ -854,6 +936,7 @@ const BinaryLayout = () => {
               </div>
               <div
                 className={s.mobilePopupItem}
+                style={{ color: theme.menuText || theme.textColor }}
                 onClick={() => {
                   setShowLeaderboard(true);
                   setMobileMorePopup(false);
@@ -863,6 +946,7 @@ const BinaryLayout = () => {
               </div>
               <div
                 className={s.mobilePopupItem}
+                style={{ color: theme.menuText || theme.textColor }}
                 onClick={() => {
                   navigate("/affiliate/login");
                   setMobileMorePopup(false);
@@ -878,23 +962,58 @@ const BinaryLayout = () => {
       {/* Mobile Account Popup */}
       {mobileAccountPopup && (
         <div className={s.mobilePopup}>
-          <div className={s.mobilePopupContent}>
-            <div className={s.mobilePopupHeader}>
-              <h3>Settings</h3>
+          <div
+            className={s.mobilePopupContent}
+            style={{
+              background: theme.box,
+              color: theme.textColor,
+              border: theme.name === "Black" ? "1px solid #333" : undefined,
+            }}
+          >
+            <div
+              className={s.mobilePopupHeader}
+              style={{
+                background: theme.menuHoverBg || theme.hover,
+                color: theme.menuText || theme.textColor,
+                borderBottom: `1px solid ${
+                  theme.menuText || theme.textColor
+                }22`,
+                fontWeight: 600,
+                letterSpacing: 0.2,
+              }}
+            >
+              <h3
+                style={{ color: theme.menuText || theme.textColor, margin: 0 }}
+              >
+                Settings
+              </h3>
               <button
                 className={s.mobilePopupClose}
+                style={{
+                  color: theme.menuText || theme.textColor,
+                  background: theme.box,
+                  border: theme.name === "Black" ? "1px solid #333" : undefined,
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 22,
+                  transition: "background 0.2s, color 0.2s",
+                }}
                 onClick={() => setMobileAccountPopup(false)}
               >
                 ×
               </button>
             </div>
-            <div className={s.mobileMenuSection}>
+            <div
+              className={s.mobileMenuSection}
+              style={{ background: theme.box, color: theme.textColor }}
+            >
               <div
                 onClick={() => {
                   navigate("/binarychart/bankinglayout/deposit");
                   setMobileAccountPopup(false);
                 }}
                 className={s.mobileMenuItem}
+                style={{ color: theme.menuText || theme.textColor }}
               >
                 Deposit
               </div>
@@ -904,6 +1023,7 @@ const BinaryLayout = () => {
                   setMobileAccountPopup(false);
                 }}
                 className={s.mobileMenuItem}
+                style={{ color: theme.menuText || theme.textColor }}
               >
                 Withdrawal
               </div>
@@ -913,6 +1033,7 @@ const BinaryLayout = () => {
                   setMobileAccountPopup(false);
                 }}
                 className={s.mobileMenuItem}
+                style={{ color: theme.menuText || theme.textColor }}
               >
                 Transactions
               </div>
@@ -922,6 +1043,7 @@ const BinaryLayout = () => {
                   setMobileAccountPopup(false);
                 }}
                 className={s.mobileMenuItem}
+                style={{ color: theme.menuText || theme.textColor }}
               >
                 Account
               </div>
@@ -932,6 +1054,7 @@ const BinaryLayout = () => {
                   setMobileAccountPopup(false);
                 }}
                 className={`${s.mobileMenuItem} ${s.mobileLogout}`}
+                style={{ color: theme.logoutColor || "#e74c3c" }}
               >
                 Logout
               </div>
