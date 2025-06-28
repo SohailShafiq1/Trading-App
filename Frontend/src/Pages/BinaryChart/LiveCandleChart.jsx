@@ -1679,11 +1679,13 @@ const LiveCandleChart = ({
               : 40;
           // Draw a line for every trade (including the first)
           tradesArr.forEach((trade, idx) => {
-            if (
-              typeof trade.remainingTime === "number" &&
-              trade.remainingTime <= 0
-            )
+            // Show lines for a short time even after timeout (don't return immediately)
+            const isExpired = typeof trade.remainingTime === "number" && trade.remainingTime <= 0;
+            
+            // Skip only if trade has been expired for more than 5 seconds
+            if (isExpired && trade.expiredAt && (Date.now() - trade.expiredAt) > 5000) {
               return;
+            }
             // Calculate line length in pixels based on trade duration (in seconds)
             let durationSec = 60; // default 1m
             if (typeof trade.duration === "number") {
@@ -1728,8 +1730,17 @@ const LiveCandleChart = ({
               );
             }
             let visibleLength = lineLength * percentLeft;
+            
+            // For expired trades, show a short static line
+            if (isExpired) {
+              visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
+            }
+            
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
+            
+            // Fade out expired trades
+            const opacity = isExpired ? 0.4 : 1;
             
             // Position line at the actual entry price of this trade (not with equal spacing)
             const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
@@ -1777,6 +1788,7 @@ const LiveCandleChart = ({
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
+                  opacity={opacity}
                 />
                 <line
                   x1={clampedLineLeft}
@@ -1785,6 +1797,7 @@ const LiveCandleChart = ({
                   y2={clampedLineTop}
                   stroke={color}
                   strokeWidth={4}
+                  opacity={opacity}
                 />
                 <circle
                   cx={clampedLineLeft + clampedVisibleLength}
@@ -1793,6 +1806,7 @@ const LiveCandleChart = ({
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
+                  opacity={opacity}
                 />
               </svg>
             );

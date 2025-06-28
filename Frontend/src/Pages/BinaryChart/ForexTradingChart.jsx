@@ -698,14 +698,20 @@ const ForexTradingChart = ({
         } else if (trade.startedAt instanceof Date) {
           tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
         }
-        let mappedTime = Math.floor(tradeTimestamp / intervalSec) * intervalSec;
-        if (!chartTimes.includes(mappedTime) && chartTimes.length > 0) {
-          mappedTime = chartTimes.reduce((prev, curr) =>
-            Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime)
-              ? curr
-              : prev
-          );
+        
+        // Instead of bucketing, find the closest existing chart time that is >= trade time
+        let mappedTime = tradeTimestamp;
+        if (chartTimes.length > 0) {
+          // Find the closest chart time that is at or after the trade time
+          const futureOrCurrentTimes = chartTimes.filter(time => time >= tradeTimestamp);
+          if (futureOrCurrentTimes.length > 0) {
+            mappedTime = Math.min(...futureOrCurrentTimes);
+          } else {
+            // If no future times, use the latest available time
+            mappedTime = Math.max(...chartTimes);
+          }
         }
+        
         if (!grouped[mappedTime]) grouped[mappedTime] = [];
         grouped[mappedTime].push(trade);
       });
@@ -756,13 +762,10 @@ const ForexTradingChart = ({
           const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
           const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
           const left = startLeft + idx * (boxWidth + gap);
-          const top =
-            y != null && !isNaN(y)
-              ? Math.max(
-                  boxHeight / 2,
-                  Math.min(y, containerRect.height - boxHeight / 2)
-                )
-              : 40;
+          const top = Math.max(
+            boxHeight / 2,
+            Math.min(y, containerRect.height - boxHeight / 2)
+          );
           const isBuy = trade.type === "Buy";
           const boxColor = isBuy ? "#10A055" : "#FF0000";
           const borderColor = isBuy ? "#0d7a3a" : "#b80000";
@@ -866,11 +869,19 @@ const ForexTradingChart = ({
                 )
               : 40;
           tradesArr.forEach((trade, idx) => {
-            if (
-              typeof trade.remainingTime === "number" &&
-              trade.remainingTime <= 0
-            )
+            // Show lines for a short time even after timeout (don't return immediately)
+            const isExpired = typeof trade.remainingTime === "number" && trade.remainingTime <= 0;
+            
+            // Skip only if trade has been expired for more than 5 seconds
+            if (isExpired && trade.expiredAt && (Date.now() - trade.expiredAt) > 5000) {
               return;
+            }
+            
+            // Validate trade data before processing
+            const lineTradePriceData = trade.entryPrice ?? trade.coinPrice ?? trade.price;
+            if (lineTradePriceData == null || isNaN(Number(lineTradePriceData))) {
+              return; // Skip this trade if price is invalid
+            }
             let durationSec = 60;
             if (typeof trade.duration === "number") {
               durationSec = trade.duration;
@@ -910,12 +921,38 @@ const ForexTradingChart = ({
               );
             }
             let visibleLength = lineLength * percentLeft;
+            
+            // For expired trades, show a short static line
+            if (isExpired) {
+              visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
+            }
+            
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
+            
+            // Fade out expired trades
+            const opacity = isExpired ? 0.4 : 1;
+            
+            // Position line at the actual entry price of this trade (not with equal spacing)
+            const yTrade = seriesRef.current.priceToCoordinate(Number(lineTradePriceData));
+            
+            // Skip if coordinate conversion fails
+            if (yTrade == null || isNaN(yTrade)) {
+              return;
+            }
+            
+            const lineTop = Math.max(
+              boxHeight / 2,
+              Math.min(yTrade, containerRect.height - boxHeight / 2)
+            );
+            
+            // Position lines in front of the latest trade horizontally
+            const lineLeft = leftLast + boxWidth / 2 + 16;
+            
             // Clamp lineLeft and visibleLength to stay within chart container
             let clampedLineLeft = Math.max(
               0,
-              Math.min(leftLast + boxWidth / 2 + 16, containerRect.width - 20)
+              Math.min(lineLeft, containerRect.width - 20)
             );
             let clampedVisibleLength = Math.max(
               0,
@@ -923,7 +960,7 @@ const ForexTradingChart = ({
             );
             let clampedLineTop = Math.max(
               0,
-              Math.min(topLast + idx * 16 + 10, containerRect.height - 8)
+              Math.min(lineTop, containerRect.height - 8)
             );
             rendered.push(
               <svg
@@ -945,6 +982,7 @@ const ForexTradingChart = ({
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
+                  opacity={opacity}
                 />
                 <line
                   x1={clampedLineLeft}
@@ -953,6 +991,7 @@ const ForexTradingChart = ({
                   y2={clampedLineTop}
                   stroke={color}
                   strokeWidth={4}
+                  opacity={opacity}
                 />
                 <circle
                   cx={clampedLineLeft + clampedVisibleLength}
@@ -961,6 +1000,7 @@ const ForexTradingChart = ({
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
+                  opacity={opacity}
                 />
               </svg>
             );
