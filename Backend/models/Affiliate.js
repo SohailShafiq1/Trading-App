@@ -47,7 +47,7 @@ const AffiliateSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    totalDeposit: {
+    totalDeposit: { 
       type: Number,
       default: 0,
     },
@@ -95,6 +95,16 @@ const AffiliateSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
+    withdrawRequests: [
+      {
+        amount: { type: Number, required: true },
+        purse: { type: String, required: true },
+        network: { type: String, required: true },
+        paymentMethod: { type: String, required: true },
+        status: { type: String, default: "pending" },
+        requestedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

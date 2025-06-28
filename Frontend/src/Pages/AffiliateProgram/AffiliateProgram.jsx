@@ -151,9 +151,11 @@ const AffiliateProgram = () => {
         <div className={styles.top}>
           <div className={styles.balance}>
             <p>Your balance</p>
-            <h1>{user?.assets || "$0.00"}</h1>
+            <h1>{affiliate?.totalPrize
+                  ? `$${Number(affiliate.totalPrize).toLocaleString()}`
+                  : "$0.00"}</h1>
             <NavLink
-              to="/binarychart/bankinglayout/withdraw"
+              to="/affiliate/withdraw"
               className={styles.withdrawalLink}
             >
               Go to withdrawal →

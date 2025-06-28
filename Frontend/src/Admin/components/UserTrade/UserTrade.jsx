@@ -195,6 +195,8 @@ const UserTrade = () => {
     }
   };
 
+  // --- BEGIN: Legacy manual close logic (commented for reference) ---
+  /*
   const handleCloseTrade = async (trade) => {
     try {
       let endPrice;
@@ -268,6 +270,8 @@ const UserTrade = () => {
       alert("Failed to close trade");
     }
   };
+  */
+  // --- END: Legacy manual close logic ---
 
   const now = Date.now();
   const mappedUserTrades = userTrades.map((trade) => {
@@ -574,7 +578,7 @@ const UserTrade = () => {
                     secs
                   ).padStart(2, "0")}`;
                 }}
-                handleCloseTrade={handleCloseTrade}
+                // handleCloseTrade={handleCloseTrade}
                 coins={coins}
                 getPriceForTrade={getPriceForTrade}
               />

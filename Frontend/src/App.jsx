@@ -15,6 +15,7 @@ import WithdrawPage from "./Pages/WithdrawPage/WithdrawPage";
 import TransactionsPage from "./Pages/TransactionPage/TransactionPage";
 import AffiliateProgram from "./Pages/AffiliateProgram/AffiliateProgram";
 import PrizePool from "./Pages/Prize Pool/PrizePool";
+import WithdrawAffiliate from "./Pages/AffiliateProgram/components/WithdrawPage/WithdrawPage";
 import ProtectedRoute from "./Route/ProtectedRoute/ProtectedRoute";
 import AdminLayout from "./Admin/AdminLayout";
 import { UserAssetsProvider } from "./Context/UserAssetsContext";
@@ -136,11 +137,11 @@ const App = () => {
                       }
                     >
                       <Route
-                        path="/affiliate/login"
+                        path="login"
                         element={<AffiliateLogin />}
                       />
                       <Route
-                        path="/affiliate/register"
+                        path="register"
                         element={<AffiliateRegister />}
                       />
                       <Route
@@ -152,10 +153,18 @@ const App = () => {
                         }
                       />
                       <Route
-                        path="/affiliate/prizepool"
+                        path="prizepool"
                         element={
                           <AffiliateProtectedRoute>
                             <PrizePool />
+                          </AffiliateProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="withdraw"
+                        element={
+                          <AffiliateProtectedRoute>
+                            <WithdrawAffiliate />
                           </AffiliateProtectedRoute>
                         }
                       />

@@ -8,6 +8,9 @@ const Withdraw = () => {
   const [error, setError] = useState("");
   const [autoLimit, setAutoLimit] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showAffiliateWithdrawals, setShowAffiliateWithdrawals] = useState(false);
+  const [affiliateWithdrawRequests, setAffiliateWithdrawRequests] = useState([]);
+  const [showUserWithdrawals, setShowUserWithdrawals] = useState(true);
   const navigate = useNavigate();
 
   // Fetch requests based on filter
@@ -61,6 +64,19 @@ const Withdraw = () => {
     setSaving(false);
   };
 
+  // Fetch affiliate withdrawal requests
+  const fetchAffiliateWithdrawRequests = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/affiliate-withdraw-requests`);
+      const data = await res.json();
+      // Sort by newest first
+      const sorted = data.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+      setAffiliateWithdrawRequests(sorted.reverse());
+    } catch (err) {
+      setError("Failed to fetch affiliate withdrawals");
+    }
+  };
+
   useEffect(() => {
     fetchWithdrawRequests();
   }, [filter]); // ✅ Refetch when filter changes
@@ -93,10 +109,58 @@ const Withdraw = () => {
     }
   };
 
+  // Add handlers for affiliate approve/reject
+  const handleAffiliateApprove = async (withdrawalId) => {
+    try {
+      await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/affiliate-withdraw-approve/${withdrawalId}`,
+        { method: "PUT" }
+      );
+      fetchAffiliateWithdrawRequests(); // Refresh the list
+    } catch (err) {
+      setError("Failed to approve affiliate withdrawal");
+    }
+  };
+
+  const handleAffiliateReject = async (withdrawalId) => {
+    try {
+      await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/affiliate-withdraw-reject/${withdrawalId}`,
+        { method: "PUT" }
+      );
+      fetchAffiliateWithdrawRequests(); // Refresh the list
+    } catch (err) {
+      setError("Failed to reject affiliate withdrawal");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <button onClick={() => navigate(-1)}>Back</button>
       <h2>Withdrawal Requests</h2>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        <button
+          className={styles.limitButton}
+          onClick={() => {
+            setShowUserWithdrawals(true);
+            setShowAffiliateWithdrawals(false);
+          }}
+          style={{ background: showUserWithdrawals ? '#1976d2' : undefined, color: showUserWithdrawals ? '#fff' : undefined }}
+        >
+          Users Withdraw
+        </button>
+        <button
+          className={styles.limitButton}
+          onClick={() => {
+            setShowAffiliateWithdrawals(true);
+            setShowUserWithdrawals(false);
+            fetchAffiliateWithdrawRequests();
+          }}
+          style={{ background: showAffiliateWithdrawals ? '#1976d2' : undefined, color: showAffiliateWithdrawals ? '#fff' : undefined }}
+        >
+          Affiliate Withdrawals
+        </button>
+      </div>
 
       {/* Auto-approval limit controls */}
       <div className={styles.limitBox}>
@@ -121,83 +185,145 @@ const Withdraw = () => {
         </span>
       </div>
 
-      <select
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className={styles.filterDropdown}
-      >
-        <option value="all">All Requests</option>
-        <option value="pending">Pending</option>
-        <option value="approved">Approved</option>
-        <option value="rejected">Rejected</option>
-      </select>
-
       {error && <p className={styles.error}>{error}</p>}
 
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Amount</th>
-            <th>Method</th>
-            <th>Network</th>
-            <th>Purse/Wallet</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {withdrawRequests.map((request) => (
-            <tr key={request.withdrawalId}>
-              <td>{request.email}</td>
-              <td>${request.amount}</td>
-              <td>{request.method || '-'}</td>
-              <td>{request.network || '-'}</td>
-              <td>{request.purse || request.wallet || '-'}</td>
-              <td>
-                <span
-                  style={{
-                    color:
-                      request.status === "approved" ||
-                      request.status === "autoapproved"
-                        ? "#388e3c"
-                        : request.status === "rejected"
-                        ? "#e53935"
-                        : "#fbc02d",
-                    fontWeight: "bold",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {request.status === "autoapproved"
-                    ? "Auto Approved"
-                    : request.status}
-                </span>
-              </td>
-              <td>{new Date(request.createdAt).toLocaleString()}</td>
-              <td>
-                {/* Only show buttons for pending */}
-                {request.status === "pending" && (
-                  <>
-                    <button
-                      onClick={() => handleAccept(request.withdrawalId)}
-                      className={styles.acceptButton}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleReject(request.withdrawalId)}
-                      className={styles.rejectButton}
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-              </td>
+      {/* Users Withdrawals Table */}
+      {showUserWithdrawals && (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Network</th>
+              <th>Purse/Wallet</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {withdrawRequests.map((request) => (
+              <tr key={request.withdrawalId}>
+                <td>{request.email}</td>
+                <td>${request.amount}</td>
+                <td>{request.method || '-'}</td>
+                <td>{request.network || '-'}</td>
+                <td>{request.purse || request.wallet || '-'}</td>
+                <td>
+                  <span
+                    style={{
+                      color:
+                        request.status === "approved" ||
+                        request.status === "autoapproved"
+                          ? "#388e3c"
+                          : request.status === "rejected"
+                          ? "#e53935"
+                          : "#fbc02d",
+                      fontWeight: "bold",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {request.status === "autoapproved"
+                      ? "Auto Approved"
+                      : request.status}
+                  </span>
+                </td>
+                <td>{new Date(request.createdAt).toLocaleString()}</td>
+                <td>
+                  {/* Only show buttons for pending */}
+                  {request.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleAccept(request.withdrawalId)}
+                        className={styles.acceptButton}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(request.withdrawalId)}
+                        className={styles.rejectButton}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Affiliate Withdrawals Table */}
+      {showAffiliateWithdrawals && (
+        <>
+          <h3 style={{ marginTop: 24 }}>Affiliate Withdrawals</h3>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Network</th>
+                <th>Purse/Wallet</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {affiliateWithdrawRequests.map((request, idx) => (
+                <tr key={request._id || idx}>
+                  <td>{request.email}</td>
+                  <td>${request.amount}</td>
+                  <td>{request.paymentMethod || '-'}</td>
+                  <td>{request.network || '-'}</td>
+                  <td>{request.purse || '-'}</td>
+                  <td>
+                    <span
+                      style={{
+                        color:
+                          request.status === "approved" || request.status === "autoapproved"
+                            ? "#388e3c"
+                            : request.status === "rejected"
+                            ? "#e53935"
+                            : "#fbc02d",
+                        fontWeight: "bold",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {request.status === "autoapproved"
+                        ? "Auto Approved"
+                        : request.status || "pending"}
+                    </span>
+                  </td>
+                  <td>{request.requestedAt ? new Date(request.requestedAt).toLocaleString() : '-'}</td>
+                  <td>
+                    {/* Only show buttons for pending */}
+                    {(!request.status || request.status === "pending") && (
+                      <>
+                        <button
+                          onClick={() => handleAffiliateApprove(request._id)}
+                          className={styles.acceptButton}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleAffiliateReject(request._id)}
+                          className={styles.rejectButton}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };

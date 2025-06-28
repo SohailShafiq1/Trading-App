@@ -540,3 +540,95 @@ export const getTeamTotalDeposits = async (req, res) => {
     });
   }
 };
+
+export const submitAffiliateWithdrawRequest = async (req, res) => {
+  try {
+    const { affiliateId, amount, purse, network, paymentMethod } = req.body;
+    if (!affiliateId || !amount || !purse || !network || !paymentMethod) {
+      return res.status(400).json({ success: false, error: "All fields are required." });
+    }
+    const affiliate = await Affiliate.findById(affiliateId);
+    if (!affiliate) {
+      return res.status(404).json({ success: false, error: "Affiliate not found." });
+    }
+    if (affiliate.totalPrize < amount) {
+      return res.status(400).json({ success: false, error: "Insufficient balance in prize pool." });
+    }
+    affiliate.totalPrize -= amount;
+    affiliate.withdrawRequests.push({ amount, purse, network, paymentMethod });
+    await affiliate.save();
+    return res.status(200).json({ success: true, message: "Withdraw request saved and balance deducted." });
+  } catch (err) {
+    console.error("Withdraw request error:", err);
+    return res.status(500).json({ success: false, error: "Server error." });
+  }
+};
+
+export const getAllAffiliateWithdrawRequests = async (req, res) => {
+  try {
+    const affiliates = await Affiliate.find({}, { email: 1, withdrawRequests: 1 });
+    // Flatten all requests and add email
+    const allRequests = affiliates.flatMap((affiliate) =>
+      (affiliate.withdrawRequests || []).map((w) => ({
+        email: affiliate.email,
+        amount: w.amount,
+        paymentMethod: w.paymentMethod,
+        network: w.network,
+        purse: w.purse,
+        status: w.status,
+        requestedAt: w.requestedAt,
+        _id: w._id,
+      }))
+    );
+    res.status(200).json(allRequests);
+  } catch (err) {
+    console.error("Error fetching affiliate withdrawals:", err);
+    res.status(500).json({ error: "Failed to fetch affiliate withdrawals" });
+  }
+};
+
+export const approveAffiliateWithdrawRequest = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Find the affiliate containing the withdrawal request
+    const affiliate = await Affiliate.findOne({ "withdrawRequests._id": id });
+    if (!affiliate) return res.status(404).json({ error: "Request not found" });
+
+    const request = affiliate.withdrawRequests.id(id);
+    if (!request || request.status !== "pending") {
+      return res.status(400).json({ error: "Invalid or already processed request" });
+    }
+
+    request.status = "approved";
+    request.processedAt = new Date();
+    await affiliate.save();
+    res.status(200).json({ message: "Affiliate withdrawal approved" });
+  } catch (err) {
+    console.error("Error approving affiliate withdrawal:", err);
+    res.status(500).json({ error: "Failed to approve affiliate withdrawal" });
+  }
+};
+
+export const rejectAffiliateWithdrawRequest = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Find the affiliate containing the withdrawal request
+    const affiliate = await Affiliate.findOne({ "withdrawRequests._id": id });
+    if (!affiliate) return res.status(404).json({ error: "Request not found" });
+
+    const request = affiliate.withdrawRequests.id(id);
+    if (!request || request.status !== "pending") {
+      return res.status(400).json({ error: "Invalid or already processed request" });
+    }
+
+    // Refund the amount to totalPrize
+    affiliate.totalPrize += request.amount;
+    request.status = "rejected";
+    request.processedAt = new Date();
+    await affiliate.save();
+    res.status(200).json({ message: "Affiliate withdrawal rejected and amount refunded" });
+  } catch (err) {
+    console.error("Error rejecting affiliate withdrawal:", err);
+    res.status(500).json({ error: "Failed to reject affiliate withdrawal" });
+  }
+};
