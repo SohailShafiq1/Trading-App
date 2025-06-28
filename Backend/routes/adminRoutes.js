@@ -20,6 +20,7 @@ import {
   removeAdmin,
   setAdminAccess,
 } from "../controllers/adminController.js";
+import { getAllAffiliateWithdrawRequests, approveAffiliateWithdrawRequest, rejectAffiliateWithdrawRequest } from "../controllers/affiliateController.js";
 
 const router = express.Router();
 
@@ -42,5 +43,8 @@ router.get("/all-admins", getAllAdmins);
 router.post("/make-admin", makeUserAdmin);
 router.post("/remove-admin", removeAdmin);
 router.post("/set-admin-access", setAdminAccess);
+router.get("/affiliate-withdraw-requests", getAllAffiliateWithdrawRequests);
+router.put("/affiliate-withdraw-approve/:id", approveAffiliateWithdrawRequest);
+router.put("/affiliate-withdraw-reject/:id", rejectAffiliateWithdrawRequest);
 
 export default router;

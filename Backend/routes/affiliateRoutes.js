@@ -10,6 +10,7 @@ import {
   updateTrafficQuestions,
   getAllAffiliates,
   getTeamTotalDeposits,
+  submitAffiliateWithdrawRequest,
 } from "../controllers/affiliateController.js";
 
 const router = express.Router();
@@ -24,4 +25,5 @@ router.get("/traffic-questions-list", getTrafficQuestionsList);
 router.put("/traffic-questions", updateTrafficQuestions);
 router.get("/team-deposit-count/:email", getTeamTotalDeposits);
 router.get("/affiliates", getAllAffiliates);
+router.post("/withdraw", submitAffiliateWithdrawRequest);
 export default router;
