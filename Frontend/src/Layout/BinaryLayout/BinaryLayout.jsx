@@ -11,7 +11,7 @@ import {
 } from "react-icons/ai";
 import { CgMoreAlt, CgProfile } from "react-icons/cg";
 import { IoMdImage } from "react-icons/io";
-import { MdUndo } from "react-icons/md";
+import { MdUndo, MdRefresh } from "react-icons/md";
 import React, { useState, useRef, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -41,6 +41,13 @@ const BinaryLayout = () => {
   const totalBalance = (assets + bonus).toFixed(2);
   const tip1 = user?.tips?.find((tip) => tip.text === "tip1")?.status;
   const navigate = useNavigate();
+
+  // Function to refresh demo assets
+  const refreshDemoAssets = () => {
+    setDemo_assets(10000);
+    localStorage.setItem("demoAssets", 10000);
+    setSwitchPopupMsg("Demo balance reset to $10,000");
+  };
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(tip1);
@@ -473,7 +480,36 @@ const BinaryLayout = () => {
                       {isDemo && <span className={s.radioCheckMobile}>✔</span>}
                     </div>
                     <div className={s.accountTextMobile}>
-                      <p className={s.labelMobile}>DEMO ACCOUNT</p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <p className={s.labelMobile} style={{ margin: 0 }}>
+                          DEMO ACCOUNT
+                        </p>
+                        <MdRefresh
+                          style={{
+                            fontSize: "1rem",
+                            cursor: "pointer",
+                            color: theme.textColor,
+                            transition: "transform 0.2s",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            refreshDemoAssets();
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.transform = "rotate(180deg)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.transform = "rotate(0deg)")
+                          }
+                          title="Reset demo balance to $10,000"
+                        />
+                      </div>
                       <p className={s.amountMobile}>
                         ${demo_assets.toLocaleString()}
                       </p>
@@ -704,7 +740,36 @@ const BinaryLayout = () => {
                         {isDemo && <span className={s.radioCheck}>✔</span>}
                       </div>
                       <div className={s.accountText}>
-                        <p className={s.label}>DEMO ACCOUNT</p>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <p className={s.label} style={{ margin: 0 }}>
+                            DEMO ACCOUNT
+                          </p>
+                          <MdRefresh
+                            style={{
+                              fontSize: "1rem",
+                              cursor: "pointer",
+                              color: theme.textColor,
+                              transition: "transform 0.2s",
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              refreshDemoAssets();
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.transform = "rotate(180deg)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.transform = "rotate(0deg)")
+                            }
+                            title="Reset demo balance to $10,000"
+                          />
+                        </div>
                         <p className={s.amount}>
                           ${demo_assets.toLocaleString()}
                         </p>

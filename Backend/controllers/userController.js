@@ -1086,3 +1086,62 @@ export const getRunningTradePercentage = async (req, res) => {
     });
   }
 };
+
+// Get pending deposits for a user
+export const getPendingDeposits = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // First get the user to find their email
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Find ALL pending deposits for the user using their email
+    const pendingDeposits = await Deposit.find({
+      userEmail: user.email,
+      status: "pending"
+    }).sort({ createdAt: -1 });
+    
+    if (pendingDeposits && pendingDeposits.length > 0) {
+      // Calculate total pending amount
+      const totalPendingAmount = pendingDeposits.reduce((sum, deposit) => sum + deposit.amount, 0);
+      
+      res.json({
+        hasPending: true,
+        deposits: pendingDeposits.map(deposit => ({
+          _id: deposit._id,
+          amount: deposit.amount,
+          status: deposit.status,
+          createdAt: deposit.createdAt,
+          userEmail: deposit.userEmail
+        })),
+        totalPendingAmount,
+        pendingCount: pendingDeposits.length,
+        // Keep the single deposit for backward compatibility
+        deposit: {
+          _id: pendingDeposits[0]._id,
+          amount: pendingDeposits[0].amount,
+          status: pendingDeposits[0].status,
+          createdAt: pendingDeposits[0].createdAt,
+          userEmail: pendingDeposits[0].userEmail
+        }
+      });
+    } else {
+      res.json({
+        hasPending: false,
+        deposits: [],
+        totalPendingAmount: 0,
+        pendingCount: 0,
+        deposit: null
+      });
+    }
+  } catch (err) {
+    console.error("Error getting pending deposits:", err);
+    res.status(500).json({
+      error: "Failed to get pending deposits",
+      details: err.message
+    });
+  }
+};

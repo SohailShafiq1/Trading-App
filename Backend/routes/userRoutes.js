@@ -32,6 +32,7 @@ import {
   getTotalTradeCount,
   getRunningTradePercentage,
   markAllNotificationsRead,
+  getPendingDeposits,
 } from "../controllers/userController.js";
 import multer from "multer";
 import path from "path";
@@ -85,5 +86,6 @@ router.post(
 );
 router.get("/tradeCount/:email", getTotalTradeCount);
 router.get("/trade-Percentage/trades", getRunningTradePercentage);
+router.get("/pending-deposits/:userId", getPendingDeposits);
 
 export default router;

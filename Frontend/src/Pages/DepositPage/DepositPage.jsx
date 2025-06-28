@@ -63,14 +63,51 @@ const DepositPage = () => {
   const [selectedBonus, setSelectedBonus] = useState(null);
   const [amountLocked, setAmountLocked] = useState(false); // <-- Added state for amount locked
   const [showMethodPopup, setShowMethodPopup] = useState(false);
+  const [pendingDeposit, setPendingDeposit] = useState(null);
+  const [pendingDeposits, setPendingDeposits] = useState([]);
+  const [totalPendingAmount, setTotalPendingAmount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [showPendingNotification, setShowPendingNotification] = useState(false);
 
   const [bonusOptions, setBonusOptions] = useState([]);
+
+  // Function to check pending deposits
+  const checkPendingDeposits = async () => {
+    if (!user?._id) return;
+
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/pending-deposits/${user._id}`
+      );
+      
+      if (response.data.hasPending) {
+        setPendingDeposits(response.data.deposits || []);
+        setTotalPendingAmount(response.data.totalPendingAmount || 0);
+        setPendingCount(response.data.pendingCount || 0);
+        setPendingDeposit(response.data.deposit); // Keep for backward compatibility
+        setShowPendingNotification(true);
+      } else {
+        setPendingDeposits([]);
+        setTotalPendingAmount(0);
+        setPendingCount(0);
+        setPendingDeposit(null);
+        setShowPendingNotification(false);
+      }
+    } catch (err) {
+      console.error("Error checking pending deposits:", err);
+    }
+  };
 
   useEffect(() => {
     axios
       .get(`${import.meta.env.VITE_BACKEND_URL}/api/bonuses`)
       .then((res) => setBonusOptions(res.data));
   }, []);
+
+  // Check for pending deposits
+  useEffect(() => {
+    checkPendingDeposits();
+  }, [user?._id]);
 
   // Show professional popup on mount
   useEffect(() => {
@@ -174,7 +211,11 @@ const DepositPage = () => {
       setTxId("");
       setFromAddress("");
       setSelectedBonus(null);
-      toast.success("Deposit request submitted successfully!");
+      
+      // Check for pending deposits after successful submission
+      checkPendingDeposits();
+      
+      toast.success("Deposit submitted successfully! Pending approval.");
     } catch (err) {
       setMessage("Deposit failed. Try again.");
       toast.error("Deposit failed. Please try again.");
@@ -210,6 +251,24 @@ const DepositPage = () => {
         </div>
 
         <div className={s.box}>
+          {pendingDeposits.length > 0 && (
+            <div className={s.pendingWarning}>
+              <div className={s.warningIcon}>⏳</div>
+              <div className={s.warningContent}>
+                <h4>
+                  {pendingCount === 1 
+                    ? "1 Deposit Pending Approval" 
+                    : `${pendingCount} Deposits Pending Approval`
+                  }
+                </h4>
+                <p>
+                  You have {pendingCount === 1 ? 'a deposit' : `${pendingCount} deposits`} 
+                  totaling <strong>${totalPendingAmount.toFixed(2)}</strong> awaiting approval. 
+                  You can still make additional deposits while these are being processed.
+                </p>
+              </div>
+            </div>
+          )}
           {CurrencyArray.map((currency, index) => (
             <div
               className={s.currency}
@@ -249,7 +308,7 @@ const DepositPage = () => {
             >
               ✕
             </button>
-            <h2>{selected} Deposit</h2>
+            <h2 className={s.modalHeader}>{selected} <br /> Deposit</h2>
 
             {!showContinue ? (
               <>
@@ -437,7 +496,11 @@ const DepositPage = () => {
                       setAmount("");
                       setShowModal(false);
                       setShowContinue(false);
-                      toast.success("Deposit request submitted successfully!");
+                      
+                      // Check for pending deposits after successful submission
+                      checkPendingDeposits();
+                      
+                      toast.success("Deposit submitted successfully! Pending approval.");
                     } catch (err) {
                       setMessage("Deposit failed. Try again.");
                       toast.error("Deposit failed. Please try again.");
@@ -449,6 +512,103 @@ const DepositPage = () => {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Pending Deposit Notification */}
+      {showPendingNotification && pendingDeposits.length > 0 && (
+        <div className={s.pendingNotificationOverlay}>
+          <div className={s.pendingNotificationModal}>
+            <div className={s.pendingIcon}>
+              <span role="img" aria-label="pending" style={{ fontSize: "3rem", color: "#f39c12" }}>
+                ⏳
+              </span>
+            </div>
+            <h3 className={s.pendingTitle}>
+              {pendingCount === 1 
+                ? "Deposit Submitted - Pending Approval" 
+                : `${pendingCount} Deposits Pending Approval`
+              }
+            </h3>
+            <div className={s.pendingDetails}>
+              <p>
+                {pendingCount === 1 
+                  ? "Your deposit has been submitted and is awaiting admin approval:" 
+                  : `You have ${pendingCount} deposits awaiting admin approval:`
+                }
+              </p>
+              <div className={s.depositInfo}>
+                {pendingCount === 1 ? (
+                  // Show single deposit details
+                  <>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Amount:</span>
+                      <span className={s.infoValue}>${pendingDeposit.amount}</span>
+                    </div>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Date:</span>
+                      <span className={s.infoValue}>
+                        {new Date(pendingDeposit.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Status:</span>
+                      <span className={s.infoValue} style={{ color: "#f39c12", fontWeight: "bold" }}>
+                        Pending
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  // Show multiple deposits summary
+                  <>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Total Amount:</span>
+                      <span className={s.infoValue}>${totalPendingAmount.toFixed(2)}</span>
+                    </div>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Number of Deposits:</span>
+                      <span className={s.infoValue}>{pendingCount}</span>
+                    </div>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Latest Deposit:</span>
+                      <span className={s.infoValue}>
+                        {new Date(pendingDeposits[0].createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className={s.infoRow}>
+                      <span className={s.infoLabel}>Status:</span>
+                      <span className={s.infoValue} style={{ color: "#f39c12", fontWeight: "bold" }}>
+                        All Pending
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <p className={s.pendingMessage}>
+                {pendingCount === 1 
+                  ? "Your deposit has been successfully submitted and is now pending admin approval. Please wait while our team reviews your deposit. You will receive a notification once it's approved and the funds are added to your account."
+                  : `Your ${pendingCount} deposits have been submitted and are pending admin approval. You can continue making additional deposits while these are being processed. You will receive notifications as each deposit is approved.`
+                }
+              </p>
+            </div>
+            <div className={s.pendingButtonGroup}>
+              <button
+                className={s.refreshPendingBtn}
+                onClick={() => {
+                  checkPendingDeposits();
+                  toast.info("Status refreshed");
+                }}
+              >
+                Refresh Status
+              </button>
+              <button
+                className={s.closePendingBtn}
+                onClick={() => setShowPendingNotification(false)}
+              >
+                I Understand
+              </button>
+            </div>
           </div>
         </div>
       )}

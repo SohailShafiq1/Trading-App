@@ -2,8 +2,6 @@
   margin: 1rem;
   margin-top: 1rem;
   height: 100%;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
 }
 .box {
   margin: 0rem 1rem;
@@ -123,9 +121,11 @@
   }
 }
 .modalOverlay {
-  position: fixed;
-  top: 0;
+  position: absolute;
+  top: 90px;
   left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
@@ -137,7 +137,7 @@
 
 .modal {
   background: #fff;
-  padding: 2rem;
+  padding: 1rem;
   border-radius: 12px;
   max-width: 400px;
   width: 90%;
@@ -244,7 +244,7 @@
 }
 .bonusModal {
   background: #fff;
-  padding: 1rem 1rem; 
+  padding: 1rem 1rem;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(102, 181, 68, 0.18);
   min-width: 240px;
@@ -342,7 +342,11 @@
   align-items: center;
   justify-content: center;
 }
-
+.modalHeader {
+  font-size: 1.5rem;
+  margin: 0 1rem;
+  text-align: center;
+}
 .bonusModal {
   background: #fff;
   border-radius: 16px;
@@ -382,7 +386,7 @@
   border: 4px solid #00c3ff;
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 4px 24px rgba(0,195,255,0.18);
+  box-shadow: 0 4px 24px rgba(0, 195, 255, 0.18);
   padding: 12px;
   display: block;
   margin: 24px auto;
@@ -414,8 +418,14 @@
 }
 
 @keyframes popupIn {
-  from { transform: scale(0.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .popupIcon {
@@ -449,4 +459,224 @@
 }
 .closePopupBtn:hover {
   background: linear-gradient(90deg, #1a391d, #66b544);
+}
+
+/* Pending Deposit Notification Styles */
+.pendingNotificationOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.pendingNotificationModal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  padding: 2.5rem 2rem;
+  min-width: 380px;
+  max-width: 90vw;
+  text-align: center;
+  position: relative;
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.pendingIcon {
+  margin-bottom: 1.5rem;
+}
+
+.pendingTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.pendingDetails {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.pendingDetails > p:first-child {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.depositInfo {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoLabel {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.infoValue {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.pendingMessage {
+  text-align: center;
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pendingButtonGroup {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.refreshPendingBtn {
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.8rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshPendingBtn:hover {
+  background: linear-gradient(90deg, #2980b9, #1f5f8b);
+  transform: translateY(-1px);
+}
+
+.closePendingBtn {
+  background: linear-gradient(90deg, #f39c12, #e67e22);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closePendingBtn:hover {
+  background: linear-gradient(90deg, #e67e22, #d35400);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .pendingNotificationModal {
+    min-width: 320px;
+    margin: 1rem;
+    padding: 2rem 1.5rem;
+  }
+  
+  .pendingTitle {
+    font-size: 1.3rem;
+  }
+  
+  .infoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+  
+  .pendingButtonGroup {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}
+
+/* Pending Warning Styles */
+.pendingWarning {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border: 2px solid #28a745;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.warningIcon {
+  font-size: 2rem;
+  color: #28a745;
+  flex-shrink: 0;
+}
+
+.warningContent h4 {
+  color: #155724;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.warningContent p {
+  color: #155724;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .pendingWarning {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.8rem;
+    padding: 1.2rem;
+  }
+  
+  .warningIcon {
+    font-size: 1.8rem;
+  }
 }
