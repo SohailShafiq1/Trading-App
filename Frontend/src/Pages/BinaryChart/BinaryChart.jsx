@@ -963,14 +963,14 @@ const BinaryChart = () => {
         });
       }
 
-      setPopupMessage(
-        isWin
-          ? `Trade Win! You got $${reward}`
-          : `Trade Loss! You lost $${Math.abs(reward)}`
-      );
-      setPopupColor(isWin ? "#10A055" : "#FF1600");
-      setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 3000);
+      // setPopupMessage(
+      //   isWin
+      //     ? `Trade Win! You got $${reward}`
+      //     : `Trade Loss! You lost $${Math.abs(reward)}`
+      // );
+      // setPopupColor(isWin ? "#10A055" : "#FF1600");
+      // setShowPopup(true);
+      // setTimeout(() => setShowPopup(false), 3000);
     } catch (err) {
       console.error("Failed to close trade:", err);
       toast.error("Failed to close trade");
@@ -1327,11 +1327,6 @@ const BinaryChart = () => {
           </div>
         </div>
       </div>
-      {showPopup && (
-        <div className={styles.popup} style={{ backgroundColor: popupColor }}>
-          <p>{popupMessage}</p>
-        </div>
-      )}
 
       <ToastContainer />
       {/* 3. Add the audio element at the bottom of your JSX */}
