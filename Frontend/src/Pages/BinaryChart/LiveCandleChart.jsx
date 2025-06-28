@@ -8,7 +8,13 @@ import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
 import React, { useEffect, useRef, useState } from "react";
 import "./LiveCandleChart.css";
 import axios from "axios";
-import { createChart, CrosshairMode } from "lightweight-charts";
+import {
+  createChart,
+  CrosshairMode,
+  CandlestickSeries,
+  BarSeries,
+  LineSeries,
+} from "lightweight-charts";
 import { io } from "socket.io-client";
 import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
@@ -57,8 +63,8 @@ const THEMES = {
     downColor: "rgb(239,83,80)",
     borderVisible: true,
     wickVisible: true,
-    wickUpColor: "rgb(0,153,0)",
-    wickDownColor: "rgb(204,0,0)",
+    wickUpColor: "rgb(38,166,154)",
+    wickDownColor: "rgb(239,83,80)",
     wickWidth: 4,
   },
   DARK: {
@@ -70,8 +76,8 @@ const THEMES = {
     downColor: "rgb(255,23,68)",
     borderVisible: true,
     wickVisible: true,
-    wickUpColor: "rgb(0,255,0)",
-    wickDownColor: "rgb(255,34,34)",
+    wickUpColor: "rgb(0,230,118)",
+    wickDownColor: "rgb(255,23,68)",
     wickWidth: 4,
   },
   BLUE: {
@@ -83,8 +89,8 @@ const THEMES = {
     downColor: "rgb(244,67,54)",
     borderVisible: true,
     wickVisible: true,
-    wickUpColor: "rgb(0,255,0)",
-    wickDownColor: "rgb(255,34,34)",
+    wickUpColor: "rgb(76,175,80)",
+    wickDownColor: "rgb(244,67,54)",
     wickWidth: 4,
   },
 };
@@ -366,6 +372,8 @@ const LiveCandleChart = ({
   }, [liveCandle, interval]);
   const applyTheme = () => {
     if (!chartRef.current) return;
+
+    // Apply theme - using v4 compatible API
     chartRef.current.applyOptions({
       layout: {
         background: { color: theme.background },
@@ -379,90 +387,87 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        rightOffset: 10, // Show future time ticks like professional platforms
+        rightOffset: 12,
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
-          return `${date.getHours()}:${date
+          return `${date.getHours().toString().padStart(2, "0")}:${date
             .getMinutes()
             .toString()
             .padStart(2, "0")}`;
         },
-        // Show future times even when no candles exist
-        rightBarStaysOnScroll: true,
-        shiftVisibleRangeOnNewBar: false,
-        allowShiftVisibleRangeOnWhitespaceClick: false,
-        uniformDistribution: false, // Allow future time slots to show properly
       },
       rightPriceScale: {
         borderColor: theme.gridColor,
       },
     });
+
+    // Update series colors
     if (seriesRef.current) {
       seriesRef.current.applyOptions({
         upColor: theme.upColor,
         downColor: theme.downColor,
-        borderVisible: theme.borderVisible,
-        wickVisible: theme.wickVisible,
+        borderUpColor: theme.upColor,
+        borderDownColor: theme.downColor,
         wickUpColor: theme.wickUpColor,
         wickDownColor: theme.wickDownColor,
-        wickWidth: theme.wickWidth,
       });
     }
   };
   const applyCandleStyle = () => {
     if (!chartRef.current) return;
 
+    // Remove existing series
     if (seriesRef.current) {
       chartRef.current.removeSeries(seriesRef.current);
     }
+
+    // Create new series based on style - using v5 API
     switch (candleStyle) {
       case CANDLE_STYLES.CANDLE:
-        seriesRef.current = chartRef.current.addCandlestickSeries({
+        seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
           upColor: theme.upColor,
           downColor: theme.downColor,
           borderUpColor: theme.upColor,
           borderDownColor: theme.downColor,
           wickUpColor: theme.wickUpColor,
           wickDownColor: theme.wickDownColor,
-          wickWidth: theme.wickWidth,
         });
         break;
       case CANDLE_STYLES.BAR:
-        seriesRef.current = chartRef.current.addBarSeries({
+        seriesRef.current = chartRef.current.addSeries(BarSeries, {
           upColor: theme.upColor,
           downColor: theme.downColor,
         });
         break;
       case CANDLE_STYLES.LINE:
-        seriesRef.current = chartRef.current.addLineSeries({
+        seriesRef.current = chartRef.current.addSeries(LineSeries, {
           color: theme.upColor,
           lineWidth: 2,
         });
         break;
       case CANDLE_STYLES.HOLLOW:
-        seriesRef.current = chartRef.current.addCandlestickSeries({
+        seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
           upColor: "transparent",
           downColor: "transparent",
           borderUpColor: theme.upColor,
           borderDownColor: theme.downColor,
           wickUpColor: theme.wickUpColor,
           wickDownColor: theme.wickDownColor,
-          wickWidth: theme.wickWidth,
         });
         break;
       default:
-        seriesRef.current = chartRef.current.addCandlestickSeries({
+        seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
           upColor: theme.upColor,
           downColor: theme.downColor,
           borderUpColor: theme.upColor,
           borderDownColor: theme.downColor,
           wickUpColor: theme.wickUpColor,
           wickDownColor: theme.wickDownColor,
-          wickWidth: theme.wickWidth,
         });
     }
+
+    // Set the data based on candle style
     const data = groupCandles(candles, interval);
-    // Don't add future markers to candle style data
 
     if (candleStyle === CANDLE_STYLES.LINE) {
       const lineData = data.map((candle) => ({
@@ -473,9 +478,9 @@ const LiveCandleChart = ({
     } else {
       seriesRef.current.setData(data);
     }
-    applyIndicators();
 
-    // Professional platforms: future time ticks are automatic
+    // Apply indicators after series is created
+    applyIndicators();
   };
   const applyIndicators = () => {
     const cleanupIndicator = (ref) => {
@@ -511,7 +516,7 @@ const LiveCandleChart = ({
         case INDICATORS.SMA:
           {
             const smaData = calculateSMA(data, 20);
-            smaSeriesRef.current = chartRef.current.addLineSeries({
+            smaSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#2962FF",
               lineWidth: 2,
             });
@@ -521,7 +526,7 @@ const LiveCandleChart = ({
         case INDICATORS.EMA:
           {
             const emaData = calculateEMA(data, 20);
-            emaSeriesRef.current = chartRef.current.addLineSeries({
+            emaSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#FF6D00",
               lineWidth: 2,
             });
@@ -531,7 +536,7 @@ const LiveCandleChart = ({
         case INDICATORS.RSI:
           {
             const rsiData = calculateRSI(data);
-            rsiSeriesRef.current = chartRef.current.addLineSeries({
+            rsiSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#8A2BE2",
               lineWidth: 2,
               priceScaleId: "rsi-scale",
@@ -549,16 +554,19 @@ const LiveCandleChart = ({
         case INDICATORS.MACD:
           {
             const macdData = calculateMACD(data);
-            macdSeriesRef.current = chartRef.current.addLineSeries({
+            macdSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#2962FF",
               lineWidth: 2,
               priceScaleId: "macd",
             });
-            macdSignalSeriesRef.current = chartRef.current.addLineSeries({
-              color: "#FF6D00",
-              lineWidth: 2,
-              priceScaleId: "macd",
-            });
+            macdSignalSeriesRef.current = chartRef.current.addSeries(
+              LineSeries,
+              {
+                color: "#FF6D00",
+                lineWidth: 2,
+                priceScaleId: "macd",
+              }
+            );
             chartRef.current.priceScale("macd").applyOptions({
               scaleMargins: {
                 top: 0.1,
@@ -573,15 +581,15 @@ const LiveCandleChart = ({
         case INDICATORS.BB:
           {
             const bbData = calculateBollingerBands(data);
-            bbUpperSeriesRef.current = chartRef.current.addLineSeries({
+            bbUpperSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#2962FF",
               lineWidth: 1,
             });
-            bbMiddleSeriesRef.current = chartRef.current.addLineSeries({
+            bbMiddleSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#FF6D00",
               lineWidth: 1,
             });
-            bbLowerSeriesRef.current = chartRef.current.addLineSeries({
+            bbLowerSeriesRef.current = chartRef.current.addSeries(LineSeries, {
               color: "#2962FF",
               lineWidth: 1,
             });
@@ -712,10 +720,11 @@ const LiveCandleChart = ({
       chartHeight = 300; // Default for very small screens
     }
     const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: chartHeight,
       layout: {
         background: { color: theme.background },
         textColor: theme.textColor,
-        fontFamily: "Arial",
       },
       grid: {
         vertLines: { color: theme.gridColor },
@@ -724,26 +733,22 @@ const LiveCandleChart = ({
       crosshair: {
         mode: CrosshairMode.Normal,
       },
-      watermark: {
-        visible: false,
-      },
       timeScale: {
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        rightOffset: 10, // Show future time ticks like professional platforms
-        barSpacing: 6, // Default professional spacing
-        minBarSpacing: 0.5, // Allow zooming out very far
-        rightBarStaysOnScroll: false, // Don't force latest bar to stay visible
-        shiftVisibleRangeOnNewBar: false, // NEVER auto-shift like professional platforms
-        allowShiftVisibleRangeOnWhitespaceClick: true, // Allow clicking to move
-        uniformDistribution: false, // Allow natural time distribution
-        fixLeftEdge: false, // Allow free scrolling
-        fixRightEdge: false, // Allow free scrolling
-        lockVisibleTimeRangeOnResize: false, // Don't lock range on resize
+        rightOffset: 12,
+        barSpacing: 8,
+        minBarSpacing: 0.5,
+        fixLeftEdge: false,
+        fixRightEdge: false,
+        lockVisibleTimeRangeOnResize: false,
+        rightBarStaysOnScroll: false,
+        shiftVisibleRangeOnNewBar: false,
+        allowShiftVisibleRangeOnWhitespaceClick: true,
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
-          return `${date.getHours()}:${date
+          return `${date.getHours().toString().padStart(2, "0")}:${date
             .getMinutes()
             .toString()
             .padStart(2, "0")}`;
@@ -752,36 +757,21 @@ const LiveCandleChart = ({
       rightPriceScale: {
         borderColor: theme.gridColor,
       },
-      width: chartContainerRef.current.clientWidth,
-      height: chartHeight,
     });
     chartRef.current = chart;
-    seriesRef.current = chart.addCandlestickSeries({
+
+    // Create candlestick series - using v5 API
+    seriesRef.current = chart.addSeries(CandlestickSeries, {
       upColor: theme.upColor,
       downColor: theme.downColor,
       borderUpColor: theme.upColor,
       borderDownColor: theme.downColor,
-      wickUpColor: theme.upColor,
-      wickDownColor: theme.downColor,
+      wickUpColor: theme.wickUpColor,
+      wickDownColor: theme.wickDownColor,
     });
+
+    // Subscribe to chart events
     chart.subscribeClick(handleChartClick);
-    chart.timeScale().applyOptions({
-      rightOffset: 10, // Show future time ticks like professional platforms
-      fixLeftEdge: false,
-      fixRightEdge: false,
-      lockVisibleTimeRangeOnResize: false,
-      handleScroll: true,
-      handleScale: true,
-      rightBarStaysOnScroll: false, // Don't force latest bar visible - user controls view
-      shiftVisibleRangeOnNewBar: false, // NEVER auto-shift like professional platforms
-      allowShiftVisibleRangeOnWhitespaceClick: true, // Allow clicking to navigate
-      uniformDistribution: false, // Natural time distribution
-      minBarSpacing: 0.5, // Allow extreme zoom out
-      barSpacing: 6, // Professional default spacing
-    });
-
-    // Don't set any initial range - let chart center naturally like professional platforms
-
     chart.timeScale().subscribeVisibleTimeRangeChange(() => {
       updateCountdownPosition();
     });
@@ -839,44 +829,32 @@ const LiveCandleChart = ({
           }
         }
 
-        // Set initial view to show only latest candles like professional platforms
+        // Set initial view to show only the latest candle centered like professional platforms
         if (firstLoad && chartRef.current && grouped.length > 0) {
-          // Show only last 25 candles initially - professional default
-          const candlesToShow = Math.min(25, grouped.length);
+          const lastCandle = grouped[grouped.length - 1];
+          const intervalSec = intervalToSeconds[interval];
 
-          if (grouped.length >= candlesToShow) {
-            // Get the recent candles to show
-            const recentCandles = grouped.slice(-candlesToShow);
-            const firstCandle = recentCandles[0];
-            const lastCandle = recentCandles[recentCandles.length - 1];
-            const intervalSec = intervalToSeconds[interval];
+          // Center the latest candle with some padding on both sides
+          const centerTime = lastCandle.time;
+          const paddingCandles = 10; // Show 10 time slots on each side for context
+          const timeSpanPerCandle = intervalSec;
 
-            // Center the latest candle: calculate equal time space on both sides
-            const candlesOnEachSide = Math.floor((candlesToShow - 1) / 2);
-            const timeSpanPerCandle = intervalSec;
+          // Calculate time range to center the latest candle
+          const fromTime = centerTime - paddingCandles * timeSpanPerCandle;
+          const toTime = centerTime + paddingCandles * timeSpanPerCandle;
 
-            // Start from latest candle and go back to center it
-            const centerTime = lastCandle.time;
-            const fromTime = centerTime - candlesOnEachSide * timeSpanPerCandle;
-            const toTime = centerTime + candlesOnEachSide * timeSpanPerCandle;
+          console.log("Centering latest candle only:", {
+            centerTime: new Date(centerTime * 1000),
+            fromTime: new Date(fromTime * 1000),
+            toTime: new Date(toTime * 1000),
+            lastCandle: new Date(lastCandle.time * 1000),
+            paddingCandles,
+          });
 
-            console.log("Centering latest candle:", {
-              candlesToShow,
-              candlesOnEachSide,
-              centerTime: new Date(centerTime * 1000),
-              fromTime: new Date(fromTime * 1000),
-              toTime: new Date(toTime * 1000),
-              lastCandle: new Date(lastCandle.time * 1000),
-            });
-
-            chartRef.current.timeScale().setVisibleRange({
-              from: fromTime,
-              to: toTime,
-            });
-          } else {
-            // If we have fewer candles, just fit them all
-            chartRef.current.timeScale().fitContent();
-          }
+          chartRef.current.timeScale().setVisibleRange({
+            from: fromTime,
+            to: toTime,
+          });
           setFirstLoad(false);
         }
 
@@ -1107,23 +1085,19 @@ const LiveCandleChart = ({
   // Update timeScale when autoZoom changes
   useEffect(() => {
     if (chartRef.current) {
+      // Professional chart behavior with v5 API
+      // No forced zoom adjustments - user controls the view completely
       chartRef.current.timeScale().applyOptions({
-        rightOffset: 10, // Show future time ticks like professional platforms
+        rightOffset: 12,
         fixLeftEdge: false,
         fixRightEdge: false,
         lockVisibleTimeRangeOnResize: false,
-        handleScroll: true,
-        handleScale: true,
-        rightBarStaysOnScroll: false, // User controls view completely
-        shiftVisibleRangeOnNewBar: false, // NEVER auto-shift
+        rightBarStaysOnScroll: false,
+        shiftVisibleRangeOnNewBar: false,
         allowShiftVisibleRangeOnWhitespaceClick: true,
-        uniformDistribution: false,
-        minBarSpacing: 0.5, // Allow extreme zoom
-        barSpacing: 6, // Professional spacing
+        minBarSpacing: 0.5,
+        barSpacing: 8,
       });
-
-      // Never apply auto-zoom or any range adjustments
-      // Chart behaves exactly like professional platforms
     }
   }, [autoZoom]);
 
@@ -2208,7 +2182,7 @@ const LiveCandleChart = ({
                     }}
                     style={{
                       padding: "5px 10px",
-                     
+
                       borderRadius: 4,
                       color: t.textColor,
                       cursor: "pointer",
@@ -2237,7 +2211,6 @@ const LiveCandleChart = ({
           </div>
           <div style={{ position: "relative" }}>
             <button
-              class
               className="chartBtns"
               onClick={() => {
                 setShowStylePopup(!showStylePopup);
