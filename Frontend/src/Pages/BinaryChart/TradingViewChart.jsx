@@ -20,6 +20,7 @@ import Tabs from "./components/Tabs/Tabs";
 import { useAuth } from "../../Context/AuthContext";
 import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Time interval mapping
@@ -544,12 +545,14 @@ const TradingViewChart = ({
         } else if (trade.startedAt instanceof Date) {
           tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
         }
-        
+
         // Instead of bucketing, find the closest existing chart time that is >= trade time
         let mappedTime = tradeTimestamp;
         if (chartTimes.length > 0) {
           // Find the closest chart time that is at or after the trade time
-          const futureOrCurrentTimes = chartTimes.filter(time => time >= tradeTimestamp);
+          const futureOrCurrentTimes = chartTimes.filter(
+            (time) => time >= tradeTimestamp
+          );
           if (futureOrCurrentTimes.length > 0) {
             mappedTime = Math.min(...futureOrCurrentTimes);
           } else {
@@ -557,7 +560,7 @@ const TradingViewChart = ({
             mappedTime = Math.max(...chartTimes);
           }
         }
-        
+
         if (!grouped[mappedTime]) grouped[mappedTime] = [];
         grouped[mappedTime].push(trade);
       });
@@ -748,10 +751,16 @@ const TradingViewChart = ({
               : 40;
           tradesArr.forEach((trade, idx) => {
             // Show lines for a short time even after timeout (don't return immediately)
-            const isExpired = typeof trade.remainingTime === "number" && trade.remainingTime <= 0;
-            
+            const isExpired =
+              typeof trade.remainingTime === "number" &&
+              trade.remainingTime <= 0;
+
             // Skip only if trade has been expired for more than 5 seconds
-            if (isExpired && trade.expiredAt && (Date.now() - trade.expiredAt) > 5000) {
+            if (
+              isExpired &&
+              trade.expiredAt &&
+              Date.now() - trade.expiredAt > 5000
+            ) {
               return;
             }
             let durationSec = 60;
@@ -793,31 +802,35 @@ const TradingViewChart = ({
               );
             }
             let visibleLength = lineLength * percentLeft;
-            
+
             // For expired trades, show a short static line
             if (isExpired) {
               visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
             }
-            
+
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
-            
+
             // Fade out expired trades
             const opacity = isExpired ? 0.4 : 1;
-            
+
             // Position line at the actual entry price of this trade (not with equal spacing)
-            const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
-            const yTrade = seriesRef.current.priceToCoordinate(Number(tradePrice));
-            const lineTop = yTrade != null && !isNaN(yTrade)
-              ? Math.max(
-                  boxHeight / 2,
-                  Math.min(yTrade, containerRect.height - boxHeight / 2)
-                )
-              : 40;
-            
+            const tradePrice =
+              trade.entryPrice ?? trade.coinPrice ?? trade.price;
+            const yTrade = seriesRef.current.priceToCoordinate(
+              Number(tradePrice)
+            );
+            const lineTop =
+              yTrade != null && !isNaN(yTrade)
+                ? Math.max(
+                    boxHeight / 2,
+                    Math.min(yTrade, containerRect.height - boxHeight / 2)
+                  )
+                : 40;
+
             // Position lines in front of the latest trade horizontally
             const lineLeft = leftLast + boxWidth / 2 + 16;
-            
+
             // Clamp lineLeft and visibleLength to stay within chart container
             let clampedLineLeft = Math.max(
               0,
@@ -1080,6 +1093,22 @@ const TradingViewChart = ({
               </p>
             </div>
           </div>
+
+          <div
+            style={{
+              position: "absolute",
+              top: 100,
+              zIndex: 100,
+              display: window.innerWidth < 768 ? "none" : "flex",
+            }}
+          >
+            <PreviousCoinsSelector
+              setSelectedCoin={setSelectedCoin}
+              coins={coins}
+              currentCoin={coinName}
+            />
+          </div>
+
           {/* Drawing tools button */}
           <div
             style={{

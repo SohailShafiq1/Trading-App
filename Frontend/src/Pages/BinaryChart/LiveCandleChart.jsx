@@ -18,6 +18,7 @@ import {
 import { io } from "socket.io-client";
 import Tabs from "./components/Tabs/Tabs";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai"; // Add close icon
 import Trades from "./components/Trades/Trades";
@@ -852,7 +853,7 @@ const LiveCandleChart = ({
                 toTime: new Date(toTime * 1000),
                 lastCandle: new Date(lastCandle.time * 1000),
                 paddingCandles,
-                intervalSec
+                intervalSec,
               });
 
               chartRef.current.timeScale().setVisibleRange({
@@ -861,7 +862,7 @@ const LiveCandleChart = ({
               });
             }
           }, 150);
-          
+
           setFirstLoad(false);
         }
 
@@ -1680,10 +1681,16 @@ const LiveCandleChart = ({
           // Draw a line for every trade (including the first)
           tradesArr.forEach((trade, idx) => {
             // Show lines for a short time even after timeout (don't return immediately)
-            const isExpired = typeof trade.remainingTime === "number" && trade.remainingTime <= 0;
-            
+            const isExpired =
+              typeof trade.remainingTime === "number" &&
+              trade.remainingTime <= 0;
+
             // Skip only if trade has been expired for more than 5 seconds
-            if (isExpired && trade.expiredAt && (Date.now() - trade.expiredAt) > 5000) {
+            if (
+              isExpired &&
+              trade.expiredAt &&
+              Date.now() - trade.expiredAt > 5000
+            ) {
               return;
             }
             // Calculate line length in pixels based on trade duration (in seconds)
@@ -1730,31 +1737,35 @@ const LiveCandleChart = ({
               );
             }
             let visibleLength = lineLength * percentLeft;
-            
+
             // For expired trades, show a short static line
             if (isExpired) {
               visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
             }
-            
+
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
-            
+
             // Fade out expired trades
             const opacity = isExpired ? 0.4 : 1;
-            
+
             // Position line at the actual entry price of this trade (not with equal spacing)
-            const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
-            const yTrade = seriesRef.current.priceToCoordinate(Number(tradePrice));
-            const lineTop = yTrade != null && !isNaN(yTrade)
-              ? Math.max(
-                  boxHeight / 2,
-                  Math.min(yTrade, containerRect.height - boxHeight / 2)
-                )
-              : 40;
-            
+            const tradePrice =
+              trade.entryPrice ?? trade.coinPrice ?? trade.price;
+            const yTrade = seriesRef.current.priceToCoordinate(
+              Number(tradePrice)
+            );
+            const lineTop =
+              yTrade != null && !isNaN(yTrade)
+                ? Math.max(
+                    boxHeight / 2,
+                    Math.min(yTrade, containerRect.height - boxHeight / 2)
+                  )
+                : 40;
+
             // Position lines in front of the latest trade horizontally
             const lineLeft = leftLast + boxWidth / 2 + 16;
-            
+
             // Clamp lineLeft and visibleLength to stay within chart container
             let clampedLineLeft = Math.max(
               0,
@@ -1945,6 +1956,20 @@ const LiveCandleChart = ({
                 {"% "}
               </p>
             </div>
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: 100,
+              zIndex: 100,
+              display: window.innerWidth < 768 ? "none" : "flex",
+            }}
+          >
+            <PreviousCoinsSelector
+              setSelectedCoin={setSelectedCoin}
+              coins={coins}
+              currentCoin={coinName}
+            />
           </div>
 
           {window.innerWidth < 768 && (
