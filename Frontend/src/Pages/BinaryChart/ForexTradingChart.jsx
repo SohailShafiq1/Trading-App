@@ -297,7 +297,8 @@ const ForexTradingChart = ({
       timeScale: {
         borderColor: theme.gridColor,
         timeVisible: true,
-        secondsVisible: false,
+        secondsVisible: true,
+        rightOffset: window.innerWidth > 800 ? 70 : 15, // Adjust right offset based on screen size
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
           if (interval === "1day") {
@@ -362,6 +363,7 @@ const ForexTradingChart = ({
         height: 100,
         timeScale: {
           borderColor: theme.gridColor,
+          rightOffset: window.innerWidth > 800 ? 70 : 12, // Adjust right offset based on screen size
         },
       });
       indicatorChartRef.current = chart;

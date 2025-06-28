@@ -300,7 +300,6 @@ const LiveCandleChart = ({
   const drawingStartPointRef = useRef(null);
   const drawingsRef = useRef([]);
   const [autoZoom, setAutoZoom] = useState(true);
-  const [firstLoad, setFirstLoad] = useState(true);
   const [tradePopup, setTradePopup] = useState(false);
 
   countdownRef.current = countdown;
@@ -388,7 +387,7 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        rightOffset: 12,
+        rightOffset: window.innerWidth > 800 ? 50 : 15, // Adjust right offset based on screen size
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
           return `${date.getHours().toString().padStart(2, "0")}:${date
@@ -738,11 +737,11 @@ const LiveCandleChart = ({
         borderColor: theme.gridColor,
         timeVisible: true,
         secondsVisible: true,
-        rightOffset: 12,
+        rightOffset: window.innerWidth > 800 ? 50 : 15, // Adjust right offset based on screen size
         barSpacing: 8,
         minBarSpacing: 0.5,
         fixLeftEdge: false,
-        fixRightEdge: false,
+        fixRightEdge: true, // Fix right edge on initial load
         lockVisibleTimeRangeOnResize: false,
         rightBarStaysOnScroll: false,
         shiftVisibleRangeOnNewBar: false,
@@ -828,42 +827,6 @@ const LiveCandleChart = ({
           } else {
             seriesRef.current.setData(grouped);
           }
-        }
-
-        // Set initial view to show the latest candle centered in the middle of the chart
-        if (firstLoad && chartRef.current && grouped.length > 0) {
-          // Use setTimeout to ensure the chart is fully rendered before setting range
-          setTimeout(() => {
-            if (chartRef.current && grouped.length > 0) {
-              const lastCandle = grouped[grouped.length - 1];
-              const intervalSec = intervalToSeconds[interval];
-
-              // Center the latest candle in the middle with equal padding on both sides
-              const centerTime = lastCandle.time;
-              const paddingCandles = 15; // Show 15 time slots on each side for better context
-              const timeSpanPerCandle = intervalSec;
-
-              // Calculate time range to center the latest candle exactly in the middle
-              const fromTime = centerTime - paddingCandles * timeSpanPerCandle;
-              const toTime = centerTime + paddingCandles * timeSpanPerCandle;
-
-              console.log("Centering latest candle in middle:", {
-                centerTime: new Date(centerTime * 1000),
-                fromTime: new Date(fromTime * 1000),
-                toTime: new Date(toTime * 1000),
-                lastCandle: new Date(lastCandle.time * 1000),
-                paddingCandles,
-                intervalSec,
-              });
-
-              chartRef.current.timeScale().setVisibleRange({
-                from: fromTime,
-                to: toTime,
-              });
-            }
-          }, 150);
-
-          setFirstLoad(false);
         }
 
         applyIndicators();
@@ -1096,7 +1059,7 @@ const LiveCandleChart = ({
       // Professional chart behavior with v5 API
       // No forced zoom adjustments - user controls the view completely
       chartRef.current.timeScale().applyOptions({
-        rightOffset: 12,
+        rightOffset: window.innerWidth > 800 ? 50 : 15, // Adjust right offset based on screen size
         fixLeftEdge: false,
         fixRightEdge: false,
         lockVisibleTimeRangeOnResize: false,
