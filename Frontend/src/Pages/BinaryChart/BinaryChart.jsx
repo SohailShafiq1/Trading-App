@@ -245,16 +245,20 @@ const BinaryChart = () => {
         let symbol = selectedCoin.includes("/")
           ? selectedCoin
           : selectedCoin.replace(/(\w{3})(\w{3})/, "$1/$2");
-        
+
         // Check market status first
         const statusUrl = `https://api.twelvedata.com/market_state?symbol=${symbol}&apikey=${apiKey}`;
         const statusResponse = await fetch(statusUrl);
         const statusData = await statusResponse.json();
-        
-        if (isMounted && statusData && statusData.is_market_open !== undefined) {
+
+        if (
+          isMounted &&
+          statusData &&
+          statusData.is_market_open !== undefined
+        ) {
           const isMarketOpen = statusData.is_market_open;
           setForexMarketStatus(isMarketOpen ? "open" : "closed");
-          
+
           if (isMarketOpen) {
             // Market is open, fetch price
             const url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${apiKey}`;
@@ -361,7 +365,11 @@ const BinaryChart = () => {
   useEffect(() => {
     // For each running trade, set a timeout to auto-close at expiry
     trades.forEach((trade) => {
-      if (trade.status === "running" && typeof trade.remainingTime === "number" && trade.remainingTime > 0) {
+      if (
+        trade.status === "running" &&
+        typeof trade.remainingTime === "number" &&
+        trade.remainingTime > 0
+      ) {
         const timeoutId = setTimeout(async () => {
           try {
             let endPrice = getPriceForTrade(trade) ?? 0;
@@ -462,7 +470,9 @@ const BinaryChart = () => {
           return;
         }
         toast.error(
-          `Failed to update trade result: ${err.response.data.error || err.message}`
+          `Failed to update trade result: ${
+            err.response.data.error || err.message
+          }`
         );
       } else {
         console.error("[DEBUG] Network or unknown error:", err);
@@ -520,7 +530,9 @@ const BinaryChart = () => {
     }
 
     if (selectedCoinType === "Forex" && forexMarketStatus === "closed") {
-      toast.error("Forex market is currently closed. Trading will resume when the market opens.");
+      toast.error(
+        "Forex market is currently closed. Trading will resume when the market opens."
+      );
       return;
     }
 
@@ -1034,29 +1046,36 @@ const BinaryChart = () => {
             {selectedCoinType === "Forex" && forexMarketStatus === "closed" ? (
               <div className={styles.marketClosedContainer}>
                 <div className={styles.marketClosedContent}>
-                  <h2 style={{ 
-                    color: "#ff6b6b", 
-                    fontSize: "2rem", 
-                    fontWeight: "bold", 
-                    marginBottom: "1rem",
-                    textAlign: "center"
-                  }}>
+                  <h2
+                    style={{
+                      color: "#ff6b6b",
+                      fontSize: "2rem",
+                      fontWeight: "bold",
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
                     Market Closed
                   </h2>
-                  <p style={{ 
-                    color: "#666", 
-                    fontSize: "1.2rem", 
-                    textAlign: "center",
-                    marginBottom: "1rem"
-                  }}>
+                  <p
+                    style={{
+                      color: "#666",
+                      fontSize: "1.2rem",
+                      textAlign: "center",
+                      marginBottom: "1rem",
+                    }}
+                  >
                     {coins.find((c) => c.name === selectedCoin)?.firstName}/
-                    {coins.find((c) => c.name === selectedCoin)?.lastName} market is currently closed
+                    {coins.find((c) => c.name === selectedCoin)?.lastName}{" "}
+                    market is currently closed
                   </p>
-                  <p style={{ 
-                    color: "#888", 
-                    fontSize: "1rem", 
-                    textAlign: "center"
-                  }}>
+                  <p
+                    style={{
+                      color: "#888",
+                      fontSize: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
                     Trading will resume when the market opens
                   </p>
                 </div>
@@ -1116,9 +1135,11 @@ const BinaryChart = () => {
           <div className={styles.control}>
             <h1 className={styles.selectedCoinTitle}>
               {selectedCoin
-                ? `${coins.find((c) => c.name === selectedCoin)?.firstName}/${
-                    coins.find((c) => c.name === selectedCoin)?.lastName
-                  }  Trading`
+                ? selectedCoinType === "Live"
+                  ? `${selectedCoin} Trading`
+                  : `${coins.find((c) => c.name === selectedCoin)?.firstName}/${
+                      coins.find((c) => c.name === selectedCoin)?.lastName
+                    }  Trading`
                 : "Select Coin Trading"}
               {selectedCoin && (
                 <>
@@ -1161,8 +1182,10 @@ const BinaryChart = () => {
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
                   disabled={
-                    isProcessingTrade || (!isDemo && !isVerified) || 
-                    (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                    isProcessingTrade ||
+                    (!isDemo && !isVerified) ||
+                    (selectedCoinType === "Forex" &&
+                      forexMarketStatus === "closed")
                   }
                 >
                   −
@@ -1177,8 +1200,10 @@ const BinaryChart = () => {
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
                   disabled={
-                    isProcessingTrade || (!isDemo && !isVerified) || 
-                    (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                    isProcessingTrade ||
+                    (!isDemo && !isVerified) ||
+                    (selectedCoinType === "Forex" &&
+                      forexMarketStatus === "closed")
                   }
                 >
                   +
@@ -1208,8 +1233,10 @@ const BinaryChart = () => {
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
                   disabled={
-                    isProcessingTrade || (!isDemo && !isVerified) || 
-                    (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                    isProcessingTrade ||
+                    (!isDemo && !isVerified) ||
+                    (selectedCoinType === "Forex" &&
+                      forexMarketStatus === "closed")
                   }
                 >
                   −
@@ -1219,21 +1246,24 @@ const BinaryChart = () => {
                   className={styles.value}
                   value={investment}
                   onChange={(e) =>
-                    setInvestment(Math.max(parseInt(e.target.value) ))
+                    setInvestment(Math.max(parseInt(e.target.value)))
                   }
-                  
                   min="1"
                   disabled={
-                    isProcessingTrade || (!isDemo && !isVerified) || 
-                    (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                    isProcessingTrade ||
+                    (!isDemo && !isVerified) ||
+                    (selectedCoinType === "Forex" &&
+                      forexMarketStatus === "closed")
                   }
                 />
                 <button
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => prev + 1)}
                   disabled={
-                    isProcessingTrade || (!isDemo && !isVerified) || 
-                    (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                    isProcessingTrade ||
+                    (!isDemo && !isVerified) ||
+                    (selectedCoinType === "Forex" &&
+                      forexMarketStatus === "closed")
                   }
                 >
                   +
@@ -1260,7 +1290,8 @@ const BinaryChart = () => {
                   !priceLoaded ||
                   isProcessingTrade ||
                   (!isDemo && !isVerified) ||
-                  (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                  (selectedCoinType === "Forex" &&
+                    forexMarketStatus === "closed")
                     ? styles.disabled
                     : ""
                 }`}
@@ -1274,7 +1305,8 @@ const BinaryChart = () => {
                   !priceLoaded ||
                   isProcessingTrade ||
                   (!isDemo && !isVerified) ||
-                  (selectedCoinType === "Forex" && forexMarketStatus === "closed")
+                  (selectedCoinType === "Forex" &&
+                    forexMarketStatus === "closed")
                     ? styles.disabled
                     : ""
                 }`}
@@ -1308,7 +1340,8 @@ const BinaryChart = () => {
                 }
               }}
               disabled={
-                isProcessingTrade || (!isDemo && !isVerified) || 
+                isProcessingTrade ||
+                (!isDemo && !isVerified) ||
                 (selectedCoinType === "Forex" && forexMarketStatus === "closed")
               }
             >
