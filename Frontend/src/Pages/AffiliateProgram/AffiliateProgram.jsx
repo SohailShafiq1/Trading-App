@@ -151,13 +151,12 @@ const AffiliateProgram = () => {
         <div className={styles.top}>
           <div className={styles.balance}>
             <p>Your balance</p>
-            <h1>{affiliate?.totalPrize
-                  ? `$${Number(affiliate.totalPrize).toLocaleString()}`
-                  : "$0.00"}</h1>
-            <NavLink
-              to="/affiliate/withdraw"
-              className={styles.withdrawalLink}
-            >
+            <h1>
+              {affiliate?.totalPrize
+                ? `$${Number(affiliate.totalPrize).toLocaleString()}`
+                : "$0.00"}
+            </h1>
+            <NavLink to="/affiliate/withdraw" className={styles.withdrawalLink}>
               Go to withdrawal →
             </NavLink>
             <div className={styles.earning}>
@@ -201,13 +200,13 @@ const AffiliateProgram = () => {
               <div className={styles.copyButton} onClick={handleCopyClick}>
                 <FiCopy /> {isCopied ? "Copied!" : "Copy"}
               </div>
-              <button className={styles.generate}>Generate New</button>
+              {/* <button className={styles.generate}>Generate New</button> */}
             </div>
           </div>
         </div>
 
         <div className={styles.line}>
-            <AffiliateLevel />
+          <AffiliateLevel />
           <div className={styles.statsBox}>
             <HiCursorClick />
             <span>0</span>

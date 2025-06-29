@@ -94,7 +94,7 @@ export const registerAffiliate = async (req, res) => {
     }
 
     const code = crypto.randomBytes(3).toString("hex").toUpperCase();
-    const referralLink = `${process.env.BASE_URL}/signup?ref=${code}`;
+    const referralLink = `${process.env.WEB_URL}/register?ref=${code}`;
 
     const affiliate = new Affiliate({
       email,
@@ -507,7 +507,10 @@ export const getTeamTotalDeposits = async (req, res) => {
     teamUsers.forEach((user) => {
       if (Array.isArray(user.transactions)) {
         totalDeposits += user.transactions.filter(
-          (t) => t.type === "deposit" && t.status === "success" && new Date(t.date) > new Date(resetTime)
+          (t) =>
+            t.type === "deposit" &&
+            t.status === "success" &&
+            new Date(t.date) > new Date(resetTime)
         ).length;
       }
     });
@@ -545,19 +548,28 @@ export const submitAffiliateWithdrawRequest = async (req, res) => {
   try {
     const { affiliateId, amount, purse, network, paymentMethod } = req.body;
     if (!affiliateId || !amount || !purse || !network || !paymentMethod) {
-      return res.status(400).json({ success: false, error: "All fields are required." });
+      return res
+        .status(400)
+        .json({ success: false, error: "All fields are required." });
     }
     const affiliate = await Affiliate.findById(affiliateId);
     if (!affiliate) {
-      return res.status(404).json({ success: false, error: "Affiliate not found." });
+      return res
+        .status(404)
+        .json({ success: false, error: "Affiliate not found." });
     }
     if (affiliate.totalPrize < amount) {
-      return res.status(400).json({ success: false, error: "Insufficient balance in prize pool." });
+      return res
+        .status(400)
+        .json({ success: false, error: "Insufficient balance in prize pool." });
     }
     affiliate.totalPrize -= amount;
     affiliate.withdrawRequests.push({ amount, purse, network, paymentMethod });
     await affiliate.save();
-    return res.status(200).json({ success: true, message: "Withdraw request saved and balance deducted." });
+    return res.status(200).json({
+      success: true,
+      message: "Withdraw request saved and balance deducted.",
+    });
   } catch (err) {
     console.error("Withdraw request error:", err);
     return res.status(500).json({ success: false, error: "Server error." });
@@ -566,7 +578,10 @@ export const submitAffiliateWithdrawRequest = async (req, res) => {
 
 export const getAllAffiliateWithdrawRequests = async (req, res) => {
   try {
-    const affiliates = await Affiliate.find({}, { email: 1, withdrawRequests: 1 });
+    const affiliates = await Affiliate.find(
+      {},
+      { email: 1, withdrawRequests: 1 }
+    );
     // Flatten all requests and add email
     const allRequests = affiliates.flatMap((affiliate) =>
       (affiliate.withdrawRequests || []).map((w) => ({
@@ -596,7 +611,9 @@ export const approveAffiliateWithdrawRequest = async (req, res) => {
 
     const request = affiliate.withdrawRequests.id(id);
     if (!request || request.status !== "pending") {
-      return res.status(400).json({ error: "Invalid or already processed request" });
+      return res
+        .status(400)
+        .json({ error: "Invalid or already processed request" });
     }
 
     request.status = "approved";
@@ -618,7 +635,9 @@ export const rejectAffiliateWithdrawRequest = async (req, res) => {
 
     const request = affiliate.withdrawRequests.id(id);
     if (!request || request.status !== "pending") {
-      return res.status(400).json({ error: "Invalid or already processed request" });
+      return res
+        .status(400)
+        .json({ error: "Invalid or already processed request" });
     }
 
     // Refund the amount to totalPrize
@@ -626,7 +645,9 @@ export const rejectAffiliateWithdrawRequest = async (req, res) => {
     request.status = "rejected";
     request.processedAt = new Date();
     await affiliate.save();
-    res.status(200).json({ message: "Affiliate withdrawal rejected and amount refunded" });
+    res
+      .status(200)
+      .json({ message: "Affiliate withdrawal rejected and amount refunded" });
   } catch (err) {
     console.error("Error rejecting affiliate withdrawal:", err);
     res.status(500).json({ error: "Failed to reject affiliate withdrawal" });

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./RegisterPage.module.css";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 
 const s = styles;
@@ -8,6 +8,7 @@ const s = styles;
 const RegisterPage = () => {
   const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [form, setForm] = useState({
     country: "",
@@ -52,6 +53,17 @@ const RegisterPage = () => {
       );
     }
   };
+
+  // Extract referral code from URL parameter on component mount
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setForm((prev) => ({
+        ...prev,
+        referralCode: refCode,
+      }));
+    }
+  }, [searchParams]);
 
   return (
     <div className={s.container}>
