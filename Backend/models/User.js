@@ -16,9 +16,16 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.authType !== "google";
+      },
       minlength: 6,
       select: false,
+    },
+    authType: {
+      type: String,
+      enum: ["email", "google"],
+      default: "email",
     },
     userId: {
       type: Number,
@@ -65,7 +72,15 @@ const UserSchema = new mongoose.Schema(
       default: "",
       validate: {
         validator: function (url) {
-          return url === "" || url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+          if (url === "") return true;
+          // Allow traditional image URLs ending with extensions
+          if (url.match(/\.(jpeg|jpg|gif|png)$/)) return true;
+          // Allow Google profile picture URLs
+          if (url.includes("googleusercontent.com")) return true;
+          // Allow other common profile picture patterns
+          if (url.startsWith("https://") || url.startsWith("http://"))
+            return true;
+          return false;
         },
         message: "Please provide a valid image URL",
       },

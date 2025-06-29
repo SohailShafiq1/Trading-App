@@ -67,12 +67,39 @@ export const AuthProvider = ({ children }) => {
     setUser(res.data.user);
   };
 
-  const googleLogin = async (token) => {
-    const res = await axios.post(`${BACKEND_URL}/api/auth/google-login`, {
+  const googleLogin = async (token, isRegistration = false, additionalData = {}) => {
+    const payload = {
       token,
-    });
+      isRegistration,
+      ...additionalData
+    };
+    
+    const res = await axios.post(`${BACKEND_URL}/api/auth/google-login`, payload);
     localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
+    return res.data;
+  };
+
+  const resetPassword = async (email) => {
+    await axios.post(`${BACKEND_URL}/api/auth/reset-password`, { email });
+  };
+
+  const updateUserTipStatus = async (tipText) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${BACKEND_URL}/api/users/tip-status`,
+        { tipText },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setUser(res.data.user);
+    } catch (error) {
+      console.error("Failed to update tip status:", error);
+    }
   };
 
   const logout = () => {
@@ -82,7 +109,16 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, register, login, googleLogin, logout, loading }}
+      value={{ 
+        user, 
+        register, 
+        login, 
+        googleLogin, 
+        logout, 
+        loading, 
+        resetPassword, 
+        updateUserTipStatus 
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -88,39 +88,84 @@ const LoginPage = () => {
 
   const handleGoogleSignIn = () => {
     if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: CLIENT_ID,
-        callback: handleCredentialResponse,
-      });
+      try {
+        window.google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleCredentialResponse,
+        });
 
-      window.google.accounts.id.prompt();
+        window.google.accounts.id.prompt();
+      } catch (error) {
+        console.error("Google Sign-In initialization error:", error);
+        alert("Google Sign-In is not properly configured. Please contact support.");
+      }
     } else {
       console.error("Google Identity Services script not loaded.");
+      alert("Google Sign-In is not available. Please try again later.");
     }
   };
 
-  const handleCredentialResponse = (response) => {
-    const token = response.credential;
-    const decoded = jwt_decode(token);
-    console.log("Google decoded user:", decoded);
+  const handleCredentialResponse = async (response) => {
+    try {
+      const token = response.credential;
+      await googleLogin(token, false); // false = this is login, not registration
+      
+      // Check if user is admin
+      const decoded = jwt_decode(token);
+      const res = await fetch(`${BACKEND_URL}/api/auth/check-admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: decoded.email }),
+      });
 
-    googleLogin(token);
+      const data = await res.json();
+      
+      if (data.isAdmin === true) {
+        navigate("/admin");
+      } else {
+        navigate("/binarychart");
+      }
+    } catch (err) {
+      if (err.response?.data?.needsRegistration) {
+        alert("Account not found. Please register first.");
+        navigate("/register");
+      } else {
+        alert(err.response?.data?.message || "Google login failed");
+      }
+    }
   };
 
   useEffect(() => {
-    window.google?.accounts.id.initialize({
-      client_id: CLIENT_ID,
-      callback: handleCredentialResponse,
-    });
+    console.log("=== GOOGLE AUTH DEBUG ===");
+    console.log("Google Client ID:", CLIENT_ID);
+    console.log("Current domain:", window.location.origin);
+    console.log("Current URL:", window.location.href);
+    console.log("Google object available:", !!window.google);
+    
+    if (window.google) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleCredentialResponse,
+        });
 
-    window.google?.accounts.id.renderButton(
-      document.getElementById("googleBtn"),
-      {
-        theme: "outline",
-        width: "100%",
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleBtn"),
+          {
+            theme: "outline",
+            width: "100%",
+          }
+        );
+        console.log("Google button rendered successfully");
+      } catch (error) {
+        console.error("Google initialization error:", error);
       }
-    );
-  }, [handleCredentialResponse]);
+    } else {
+      console.error("Google Identity Services not loaded");
+    }
+  }, []);  // Remove handleCredentialResponse from dependencies since it's now async
 
   return (
     <div className={styles.container}>

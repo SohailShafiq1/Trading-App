@@ -161,7 +161,12 @@ const login = async (req, res) => {
 // Google Login
 const googleLogin = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, isRegistration, country, currency, referralCode } = req.body;
+    
+    console.log("🔍 Google Client ID from env:", process.env.GOOGLE_CLIENT_ID);
+    console.log("🔍 Token received:", token ? "Token present" : "No token");
+    console.log("🔍 Is registration:", isRegistration);
+    
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -171,17 +176,74 @@ const googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
+      // If user doesn't exist and this is not a registration attempt
+      if (!isRegistration) {
+        return res.status(404).json({
+          success: false,
+          message: "Account not found. Please register first.",
+          needsRegistration: true,
+        });
+      }
+
+      // Create new user during registration
+      if (!country || !currency) {
+        return res.status(400).json({
+          success: false,
+          message: "Country and currency are required for registration",
+        });
+      }
+
       user = await User.create({
         email,
         firstName: name?.split(" ")[0] || "",
         lastName: name?.split(" ")[1] || "",
-        profilePicture: picture,
+        profilePicture: picture || "",
         authType: "google",
-        country: "Unknown", // Default country for Google users
-        password:
-          Math.random().toString(36).slice(-16) +
-          Math.random().toString(36).slice(-16), // Random password
+        country,
+        currency,
+        password: Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16),
+        notifications: [
+          {
+            type: "Registration",
+            message: "Welcome to the platform!",
+            read: false,
+            date: new Date(),
+          },
+        ],
       });
+
+      // Handle referral if provided
+      if (referralCode) {
+        try {
+          const affiliate = await Affiliate.findOne({
+            affiliateCode: referralCode,
+          });
+          if (affiliate) {
+            affiliate.team.push(email);
+            await affiliate.save();
+          }
+        } catch (affiliateError) {
+          console.error("Referral processing error:", affiliateError);
+        }
+      }
+    } else {
+      // User exists, check if this is a registration attempt
+      if (isRegistration) {
+        return res.status(409).json({
+          success: false,
+          message: "User already exists with this email. Please login instead.",
+          userExists: true,
+        });
+      }
+
+      // Add login notification for existing users
+      user.notifications.push({
+        type: "Login",
+        read: false,
+        message: "You have successfully logged in with Google.",
+        date: new Date(),
+      });
+      await user.save();
     }
 
     const jwtToken = generateToken(user._id);
@@ -192,13 +254,15 @@ const googleLogin = async (req, res) => {
       success: true,
       token: jwtToken,
       user: userResponse,
-      message: "Google login successful",
+      message: isRegistration ? "Google registration successful" : "Google login successful",
+      isAdmin: user.isAdmin,
     });
   } catch (error) {
     console.error("Google login error:", error);
     res.status(401).json({
       success: false,
       message: "Google authentication failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -274,10 +338,10 @@ const deleteAccount = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Email is required",
       });
     }
 
@@ -290,13 +354,25 @@ const deleteAccount = async (req, res) => {
       });
     }
 
-    // Verify password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid password",
-      });
+    // For Google users, skip password verification
+    if (user.authType === "google") {
+      console.log("🔍 Google user deleting account, skipping password verification");
+    } else {
+      // For email users, verify password
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          message: "Password is required for email-authenticated users",
+        });
+      }
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid password",
+        });
+      }
     }
 
     // Delete user and affiliate in parallel

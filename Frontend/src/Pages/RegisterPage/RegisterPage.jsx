@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./RegisterPage.module.css";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
@@ -9,6 +9,7 @@ const RegisterPage = () => {
   const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const formRef = useRef(); // Create a ref to hold the current form state
 
   const [form, setForm] = useState({
     country: "",
@@ -19,6 +20,11 @@ const RegisterPage = () => {
     confirmTax: false,
     referralCode: "",
   });
+
+  // Update the ref whenever form state changes
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
@@ -64,6 +70,123 @@ const RegisterPage = () => {
       }));
     }
   }, [searchParams]);
+
+  // Google Sign-up handler
+  const handleGoogleSignUp = () => {
+    console.log("🔍 Google Sign-Up button clicked");
+    console.log("🔍 Form country:", form.country);
+    console.log("🔍 Form confirmAge:", form.confirmAge);
+    console.log("🔍 Form confirmTax:", form.confirmTax);
+
+    if (!form.country) {
+      alert("Please select your country before signing up with Google");
+      return;
+    }
+
+    if (!form.confirmAge || !form.confirmTax) {
+      alert("Please confirm age and tax status before signing up with Google");
+      return;
+    }
+  };
+
+  // Initialize Google Sign-In when component mounts
+  useEffect(() => {
+    const initializeGoogle = () => {
+      if (window.google) {
+        try {
+          console.log("🔍 Initializing Google Sign-In...");
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: handleGoogleResponse, // Use the function directly, it will access formRef.current
+          });
+
+          // Render the Google button in the designated div
+          const buttonContainer = document.getElementById(
+            "google-signup-button"
+          );
+          if (buttonContainer) {
+            window.google.accounts.id.renderButton(buttonContainer, {
+              theme: "outline",
+              size: "large",
+              text: "signup_with",
+              width: 280,
+            });
+            console.log("🔍 Google Sign-In button rendered");
+          }
+        } catch (error) {
+          console.error("Google Sign-Up initialization error:", error);
+          // Show fallback button
+          const fallbackBtn = document.getElementById("fallback-google-btn");
+          if (fallbackBtn) {
+            fallbackBtn.style.display = "block";
+          }
+        }
+      } else {
+        console.log("🔍 Google not loaded yet, will retry...");
+        // Show fallback button after a delay
+        setTimeout(() => {
+          if (!window.google) {
+            console.error("Google Identity Services script not loaded.");
+            const fallbackBtn = document.getElementById("fallback-google-btn");
+            if (fallbackBtn) {
+              fallbackBtn.style.display = "block";
+            }
+          } else {
+            initializeGoogle();
+          }
+        }, 2000);
+      }
+    };
+
+    // Try to initialize immediately, or wait for script to load
+    if (document.readyState === "complete") {
+      initializeGoogle();
+    } else {
+      window.addEventListener("load", initializeGoogle);
+      return () => window.removeEventListener("load", initializeGoogle);
+    }
+  }, []); // Only run once on mount
+
+  const handleGoogleResponse = async (response) => {
+    try {
+      console.log("🔍 Google response received");
+
+      // Use the current form state from the ref
+      const currentForm = formRef.current;
+      console.log("🔍 Current form state:", currentForm);
+
+      // Check validation before processing
+      if (!currentForm.country) {
+        alert("Please select your country before signing up with Google");
+        return;
+      }
+
+      if (!currentForm.confirmAge || !currentForm.confirmTax) {
+        alert(
+          "Please confirm age and tax status before signing up with Google"
+        );
+        return;
+      }
+
+      const additionalData = {
+        country: currentForm.country,
+        currency: currentForm.currency,
+        referralCode: currentForm.referralCode,
+      };
+
+      console.log("🔍 Additional data for registration:", additionalData);
+
+      await googleLogin(response.credential, true, additionalData);
+      navigate("/login");
+    } catch (err) {
+      console.error("🔍 Google registration error:", err);
+      alert(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Google registration failed"
+      );
+    }
+  };
 
   return (
     <div className={s.container}>
@@ -364,7 +487,24 @@ const RegisterPage = () => {
             Register
           </button>
 
-          <button type="button" className={s.googleBtn} onClick={googleLogin}>
+          {/* Google Sign-Up Button Container */}
+          <div
+            id="google-signup-button"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "10px",
+            }}
+          ></div>
+
+          {/* Fallback button if Google doesn't load */}
+          <button
+            type="button"
+            className={s.googleBtn}
+            onClick={handleGoogleSignUp}
+            style={{ display: "none" }}
+            id="fallback-google-btn"
+          >
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
               alt="Google"

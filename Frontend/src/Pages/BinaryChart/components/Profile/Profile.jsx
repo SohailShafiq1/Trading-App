@@ -54,6 +54,7 @@ const Profile = () => {
   const [passportNumber, setPassportNumber] = useState("");
   const [passportImage, setPassportImage] = useState("");
   const [passportPreview, setPassportPreview] = useState("");
+  const [authType, setAuthType] = useState("email");
   const fileInputRef = useRef(null);
 
   // Delete account modal state
@@ -98,6 +99,7 @@ const Profile = () => {
         setCnicBackPicture(res.data.cnicBackPicture || "");
         setPassportNumber(res.data.passportNumber || "");
         setPassportImage(res.data.passportImage || "");
+        setAuthType(res.data.authType || "email");
 
         // --- Add this block ---
         if (res.data.passportImage) {
@@ -121,13 +123,16 @@ const Profile = () => {
 
   const logoutNotification = () => {
     axios
-      .post(`${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/create`, {
-        email: user.email,
-        notification: {
-          type: "Logout",
-          message: "You have successfully logged out.",
-        },
-      })
+      .post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/notifications/create`,
+        {
+          email: user.email,
+          notification: {
+            type: "Logout",
+            message: "You have successfully logged out.",
+          },
+        }
+      )
       .catch((err) => {
         console.error("Error creating logout notification:", err);
       });
@@ -348,21 +353,41 @@ const Profile = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      setDeleteError("Please enter your password");
-      return;
+    // For Google users, skip password validation
+    if (authType === "google") {
+      if (
+        !window.confirm(
+          "Are you sure you want to delete your account? This action cannot be undone."
+        )
+      ) {
+        return;
+      }
+    } else {
+      if (!deletePassword) {
+        setDeleteError("Please enter your password");
+        return;
+      }
     }
 
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/auth/delete-account`, {
-        data: {
-          email: user.email, // Pass current user's email
-          password: deletePassword,
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const deleteData = {
+        email: user.email,
+      };
+
+      // Only include password for email-authenticated users
+      if (authType !== "google") {
+        deleteData.password = deletePassword;
+      }
+
+      await axios.delete(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/delete-account`,
+        {
+          data: deleteData,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       alert("Your account has been deleted successfully");
       logout();
@@ -377,21 +402,27 @@ const Profile = () => {
 
   const handleDeleteProfileImage = async () => {
     if (!window.confirm("Delete your profile image?")) return;
-    await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`, {
-      email,
-      profilePicture: "",
-    });
+    await axios.put(
+      `${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`,
+      {
+        email,
+        profilePicture: "",
+      }
+    );
     setProfilePicture("");
     setPreview("");
   };
 
   const handleDeleteCnicImage = async () => {
     if (!window.confirm("Delete your CNIC image and CNIC back image?")) return;
-    await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`, {
-      email,
-      cnicPicture: "",
-      cnicBackPicture: "", // <-- Also clear CNIC back image
-    });
+    await axios.put(
+      `${import.meta.env.VITE_BACKEND_URL}/api/users/update-profile`,
+      {
+        email,
+        cnicPicture: "",
+        cnicBackPicture: "", // <-- Also clear CNIC back image
+      }
+    );
     setCnicPicture("");
     setCnicPreview("");
     setCnicBackPicture(""); // <-- Clear CNIC back image in state
@@ -481,20 +512,38 @@ const Profile = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className={s.inputBox}>
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled
-              />
-              <div className={s.forgotBox}>
-                <NavLink to="/forgot-password" className={s.forgot}>
-                  Forget Your Password?
-                </NavLink>
+            {authType !== "google" && (
+              <div className={s.inputBox}>
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled
+                />
+                <div className={s.forgotBox}>
+                  <NavLink to="/forgot-password" className={s.forgot}>
+                    Forget Your Password?
+                  </NavLink>
+                </div>
               </div>
-            </div>
+            )}
+            {authType === "google" && (
+              <div className={s.inputBox}>
+                <label>Authentication</label>
+                <input
+                  type="text"
+                  value="Google Account"
+                  disabled
+                  style={{ color: "#4285f4", fontWeight: "500" }}
+                />
+                <div className={s.forgotBox}>
+                  <span style={{ color: "#666", fontSize: "0.9em" }}>
+                    Authenticated via Google
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className={s.row}>
@@ -630,7 +679,9 @@ const Profile = () => {
                     style={{ flexDirection: "column" }}
                   >
                     <img
-                      src={`${import.meta.env.VITE_BACKEND_URL}/${cnicBackPicture}`}
+                      src={`${
+                        import.meta.env.VITE_BACKEND_URL
+                      }/${cnicBackPicture}`}
                       alt="Back"
                       className={s.cnicImgStyled}
                     />
@@ -780,16 +831,22 @@ const Profile = () => {
           undone.
         </p>
 
-        <div className={s.inputBox}>
-          <label>Enter your password to confirm:</label>
-          <input
-            type="password"
-            value={deletePassword}
-            onChange={(e) => setDeletePassword(e.target.value)}
-            placeholder="Your password"
-          />
-          {deleteError && <p className={s.errorText}>{deleteError}</p>}
-        </div>
+        {authType !== "google" && (
+          <div className={s.inputBox}>
+            <label>Enter your password to confirm:</label>
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Your password"
+            />
+            {deleteError && <p className={s.errorText}>{deleteError}</p>}
+          </div>
+        )}
+
+        {authType === "google" && deleteError && (
+          <p className={s.errorText}>{deleteError}</p>
+        )}
 
         <div className={s.modalActions}>
           <button className={s.cancelBtn} onClick={closeDeleteModal}>
