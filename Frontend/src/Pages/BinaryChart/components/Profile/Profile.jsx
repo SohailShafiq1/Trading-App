@@ -522,7 +522,10 @@ const Profile = () => {
                   disabled
                 />
                 <div className={s.forgotBox}>
-                  <NavLink to="/forgot-password" className={s.forgot}>
+                  <NavLink
+                    to={`/forgot-password?email=${email}`}
+                    className={s.forgot}
+                  >
                     Forget Your Password?
                   </NavLink>
                 </div>

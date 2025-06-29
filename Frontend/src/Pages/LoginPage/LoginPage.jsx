@@ -78,12 +78,8 @@ const LoginPage = () => {
       alert("Please enter your email to reset your password.");
       return;
     }
-    try {
-      await resetPassword(form.email);
-      alert("Password reset email sent. Please check your inbox.");
-    } catch (err) {
-      alert(err.message || "Failed to send password reset email.");
-    }
+    // Navigate to forgot password page with email pre-filled
+    navigate(`/forgot-password?email=${encodeURIComponent(form.email)}`);
   };
 
   const handleGoogleSignIn = () => {

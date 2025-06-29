@@ -98,7 +98,9 @@ const AffiliateRegister = () => {
             <option value="Benin">Benin</option>
             <option value="Bhutan">Bhutan</option>
             <option value="Bolivia">Bolivia</option>
-            <option value="Bosnia and Herzegovina">Bosnia and Herzegovina</option>
+            <option value="Bosnia and Herzegovina">
+              Bosnia and Herzegovina
+            </option>
             <option value="Botswana">Botswana</option>
             <option value="Brazil">Brazil</option>
             <option value="Brunei">Brunei</option>
@@ -109,14 +111,20 @@ const AffiliateRegister = () => {
             <option value="Cambodia">Cambodia</option>
             <option value="Cameroon">Cameroon</option>
             <option value="Canada">Canada</option>
-            <option value="Central African Republic">Central African Republic</option>
+            <option value="Central African Republic">
+              Central African Republic
+            </option>
             <option value="Chad">Chad</option>
             <option value="Chile">Chile</option>
             <option value="China">China</option>
             <option value="Colombia">Colombia</option>
             <option value="Comoros">Comoros</option>
-            <option value="Congo, Democratic Republic of the">Congo, Democratic Republic of the</option>
-            <option value="Congo, Republic of the">Congo, Republic of the</option>
+            <option value="Congo, Democratic Republic of the">
+              Congo, Democratic Republic of the
+            </option>
+            <option value="Congo, Republic of the">
+              Congo, Republic of the
+            </option>
             <option value="Costa Rica">Costa Rica</option>
             <option value="Cote d'Ivoire">Cote d'Ivoire</option>
             <option value="Croatia">Croatia</option>
@@ -225,7 +233,9 @@ const AffiliateRegister = () => {
             <option value="Rwanda">Rwanda</option>
             <option value="Saint Kitts and Nevis">Saint Kitts and Nevis</option>
             <option value="Saint Lucia">Saint Lucia</option>
-            <option value="Saint Vincent and the Grenadines">Saint Vincent and the Grenadines</option>
+            <option value="Saint Vincent and the Grenadines">
+              Saint Vincent and the Grenadines
+            </option>
             <option value="Samoa">Samoa</option>
             <option value="San Marino">San Marino</option>
             <option value="Sao Tome and Principe">Sao Tome and Principe</option>
@@ -313,21 +323,19 @@ const AffiliateRegister = () => {
           <button type="submit" className={styles.registerBtn}>
             Register
           </button>
-
-          <button type="button" className={styles.googleBtn}>
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-            />
-            Sign up with Google
-          </button>
         </form>
       </div>
       {successPopup && (
         <div className={styles.popupOverlay}>
           <div className={styles.popupBox}>
             <div className={styles.popupIcon}>
-              <span role="img" aria-label="success" style={{fontSize: '2.5rem', color: '#27ae60'}}>✅</span>
+              <span
+                role="img"
+                aria-label="success"
+                style={{ fontSize: "2.5rem", color: "#27ae60" }}
+              >
+                ✅
+              </span>
             </div>
             <div className={styles.popupTitle}>Successfully Registered!</div>
             <div className={styles.popupMsg}>

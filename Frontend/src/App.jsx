@@ -42,6 +42,7 @@ import Leaderboard from "./Admin/components/LeaderPage/LeaderPage";
 import Content from "./Admin/components/Contents/Content";
 import Amount from "./Admin/AdminPaymentInfo";
 import Admin from "./Admin/components/Admins/Admins";
+import ForgotPasswordPage from "./Pages/ForgotPasswordPage/ForgotPasswordPage";
 import { ThemeProvider } from "./Context/ThemeContext";
 const s = styles;
 
@@ -59,6 +60,7 @@ const App = () => {
                       <Route index element={<HomePage />} />
                       <Route path="/register" element={<RegisterPage />} />
                       <Route path="/login" element={<LoginPage />} />
+                      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     </Route>
                     <Route
                       path="/binarychart"

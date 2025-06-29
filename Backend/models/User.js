@@ -27,6 +27,14 @@ const UserSchema = new mongoose.Schema(
       enum: ["email", "google"],
       default: "email",
     },
+    resetPasswordOTP: {
+      type: String,
+      default: null,
+    },
+    resetPasswordOTPExpires: {
+      type: Date,
+      default: null,
+    },
     userId: {
       type: Number,
       unique: true,
