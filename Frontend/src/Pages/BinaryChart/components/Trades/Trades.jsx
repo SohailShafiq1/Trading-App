@@ -21,6 +21,7 @@ const Trades = ({
   const [currentOtcPrices, setCurrentOtcPrices] = useState({});
   const [localTimers, setLocalTimers] = useState({}); // { [tradeId]: secondsLeft }
   const [lockedResults, setLockedResults] = useState({}); // { [tradeId]: {lockedStatus, lockedReward, canBeClosed} }
+  const [processedTrades, setProcessedTrades] = useState(new Set()); // Track which trades have been processed
   const socketRef = useRef(null);
 
   // Helper to get unique trade ID
@@ -67,6 +68,12 @@ const Trades = ({
       });
       return next;
     });
+    
+    // Also clean up processed trades set for trades that no longer exist
+    setProcessedTrades(prev => {
+      const existingTradeIds = trades.map(trade => getTradeId(trade));
+      return new Set([...prev].filter(tradeId => existingTradeIds.includes(tradeId)));
+    });
   }, [trades]);
 
   // Per-trade timer interval for smooth countdown
@@ -85,15 +92,21 @@ const Trades = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Lock result and payout instantly at expiry
+  // Lock result and payout instantly at expiry (only once per trade)
   useEffect(() => {
     trades.forEach((trade) => {
       const tradeId = getTradeId(trade);
       if (
         localTimers[tradeId] === 0 &&
         !lockedResults[tradeId] &&
-        trade.status === "running"
+        trade.status === "running" &&
+        // Additional check: only if trade result is still pending
+        (!trade.result || trade.result === "pending") &&
+        // Ensure we haven't already processed this trade
+        !processedTrades.has(tradeId)
       ) {
+        // Mark this trade as processed
+        setProcessedTrades(prev => new Set([...prev, tradeId]));
         // Calculate locked result
         let endPrice = 0;
         if (trade.coinType === "OTC" || trade.coinType === "otc") {
@@ -112,17 +125,20 @@ const Trades = ({
         const profitPercentage = coinData?.profitPercentage || 0;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
         let centsChange = 0;
+        let isWin = false;
+        
+        // Correct binary options win/loss logic
         if (trade.type === "Buy") {
-          centsChange =
-            (endPrice - trade.entryPrice) *
-            (tradeInvestment / trade.entryPrice);
+          // Buy wins if current price is higher than entry price
+          isWin = endPrice > trade.entryPrice;
+          centsChange = (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
         } else {
-          centsChange =
-            (trade.entryPrice - endPrice) *
-            (tradeInvestment / trade.entryPrice);
+          // Sell wins if current price is lower than entry price  
+          isWin = endPrice < trade.entryPrice;
+          centsChange = (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
         }
+        
         const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-        const isWin = centsChange >= 0;
         const lockedReward = isWin
           ? Math.round((basePayout + centsChange) * 100) / 100
           : Math.round(centsChange * 100) / 100;
@@ -134,11 +150,12 @@ const Trades = ({
             canBeClosed: isWin,
           },
         }));
+        
         // Optionally, update backend here if needed
       }
     });
     // eslint-disable-next-line
-  }, [localTimers, trades, currentOtcPrices, livePrice, otcPrice, getPriceForTrade, coins]);
+  }, [localTimers, trades, currentOtcPrices, livePrice, otcPrice, getPriceForTrade, coins, processedTrades]);
 
   return (
     <div className={s.tradeHistory}>
@@ -242,8 +259,28 @@ const Trades = ({
                 <span>Open Price: ${openPrice}</span>
                 <span>Current Price: ${currentPrice}</span>
               </div>
-              {/* New Close Trade button: only for win trades, only if not already closed */}
-              {locked.lockedStatus === "win" && displayStatus === "running" && localTimers[tradeId] === 0 && canBeClosed && (
+              {/* Close Trade button: ONLY for confirmed winning trades that require manual close */}
+              {(() => {
+                // Explicit check: only show for winning trades
+                const isWinningTrade = (
+                  // Case 1: Trade result is explicitly "win" and requires manual close
+                  (trade.result === "win" && trade.manualClose === true) ||
+                  // Case 2: Timer expired and locked result shows win
+                  (locked.lockedStatus === "win" && 
+                   localTimers[tradeId] === 0 && 
+                   canBeClosed === true)
+                );
+                
+                // Safety check: never show for any losing conditions
+                const isLosingTrade = (
+                  trade.result === "loss" ||
+                  locked.lockedStatus === "loss" ||
+                  displayStatus === "loss"
+                );
+                
+                // Only show button if it's a winning trade AND not a losing trade
+                return isWinningTrade && !isLosingTrade;
+              })() && (
                 <div style={{ marginTop: 8, textAlign: "center" }}>
                   <button
                     onClick={() => handleCloseTrade(trade)}

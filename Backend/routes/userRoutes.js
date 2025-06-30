@@ -11,6 +11,7 @@ import {
   getUserTransactions,
   saveUserTrade,
   updateTradeResult,
+  manualCloseTrade,
   getUserTrades,
   updateProfile,
   verifyUser,
@@ -54,6 +55,7 @@ router.post("/withdraw", withdraw);
 router.get("/transactions/:email", getUserTransactions);
 router.post("/trade", saveUserTrade);
 router.put("/trade/result", updateTradeResult);
+router.put("/trade/manual-close", manualCloseTrade);
 router.get("/trades/:email", getUserTrades);
 router.put(
   "/update-profile",

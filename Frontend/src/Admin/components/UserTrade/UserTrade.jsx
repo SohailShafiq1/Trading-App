@@ -164,6 +164,7 @@ const UserTrade = () => {
         body: JSON.stringify({
           email: activeUser.email,
           trade,
+          openedByAdmin: true, // Mark as opened by admin
         }),
       });
 

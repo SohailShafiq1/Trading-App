@@ -275,7 +275,7 @@ export const saveUserTrade = async (req, res) => {
   }
 
   try {
-    const { email, trade } = req.body;
+    const { email, trade, openedByAdmin = false } = req.body;
     if (!email || !trade) {
       return res.status(400).json({ error: "Missing email or trade data" });
     }
@@ -308,7 +308,8 @@ export const saveUserTrade = async (req, res) => {
       result: "pending",
       reward: 0,
       createdAt: new Date(),
-      openedByAdmin: true, // <--- ADD THIS LINE
+      manualClose: false, // Initialize as false
+      openedByAdmin: openedByAdmin, // Set based on request
     };
 
     user.trades.push(newTrade);
@@ -367,10 +368,19 @@ export const updateTradeResult = async (req, res) => {
 
     const today = new Date().toISOString().slice(0, 10);
     let profitChange = 0;
+    
+    // Handle manual close logic
     if (result === "win") {
-      profitChange = reward;
+      // For winning trades, set manualClose to true and don't add profit yet
+      user.trades[tradeIndex].manualClose = true;
+      profitChange = 0; // Don't add profit to daily profits until manually closed
+      
+      // Don't add to user assets yet - wait for manual close
     } else if (result === "loss") {
+      // For losing trades, automatically close and update assets
+      user.trades[tradeIndex].manualClose = false;
       profitChange = -user.trades[tradeIndex].investment;
+      // Assets are already deducted when trade was created, no need to deduct again
     }
 
     let dailyEntry = user.dailyProfits.find((p) => p.date === today);
@@ -380,16 +390,12 @@ export const updateTradeResult = async (req, res) => {
       user.dailyProfits.push({ date: today, profit: profitChange });
     }
 
-    if (result === "win") {
-      user.assets += reward;
-    }
-
     const coin = user.trades[tradeIndex].coin || "the asset";
     if (result === "win") {
       user.notifications.push({
         type: "Trade",
         read: false,
-        message: `You won the trade on ${coin} and earned $${reward}.`,
+        message: `You won the trade on ${coin}. Click 'Close Trade' to collect your reward of $${reward}.`,
         date: new Date(),
       });
     } else if (result === "loss") {
@@ -406,6 +412,81 @@ export const updateTradeResult = async (req, res) => {
   } catch (err) {
     console.error("Error updating trade result:", err);
     res.status(500).json({ error: "Failed to update trade result" });
+  }
+};
+
+// Manual close trade (for winning trades only)
+export const manualCloseTrade = async (req, res) => {
+  try {
+    const { email, startedAt } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Find the trade
+    const tradeIndex = user.trades.findIndex((t) => {
+      if (!t.startedAt) return false;
+      let tTime = t.startedAt instanceof Date ? t.startedAt.getTime() : Number(t.startedAt);
+      let sTime = typeof startedAt === "string" || typeof startedAt === "number" ? Number(startedAt) : new Date(startedAt).getTime();
+      return tTime === sTime;
+    });
+
+    if (tradeIndex === -1) {
+      return res.status(404).json({ error: "Trade not found" });
+    }
+
+    const trade = user.trades[tradeIndex];
+
+    // Validate trade can be manually closed
+    if (trade.result !== "win") {
+      return res.status(400).json({ error: "Only winning trades can be manually closed" });
+    }
+
+    if (!trade.manualClose) {
+      return res.status(400).json({ error: "Trade is not pending manual close" });
+    }
+
+    // Additional safety check: ensure trade is not a loss
+    if (trade.result === "loss") {
+      return res.status(400).json({ error: "Cannot manually close a losing trade" });
+    }
+
+    // Add reward to user assets
+    user.assets += trade.reward;
+
+    // Add profit to daily profits
+    const today = new Date().toISOString().slice(0, 10);
+    let dailyEntry = user.dailyProfits.find((p) => p.date === today);
+    if (dailyEntry) {
+      dailyEntry.profit += trade.reward;
+    } else {
+      user.dailyProfits.push({ date: today, profit: trade.reward });
+    }
+
+    // Mark trade as manually closed
+    user.trades[tradeIndex].manualClose = false; // Trade is now fully closed
+
+    // Add notification
+    const coin = trade.coin || "the asset";
+    user.notifications.push({
+      type: "Trade",
+      read: false,
+      message: `You successfully closed your winning trade on ${coin} and earned $${trade.reward}.`,
+      date: new Date(),
+    });
+
+    await user.save();
+
+    res.status(200).json({ 
+      message: "Trade manually closed successfully", 
+      reward: trade.reward,
+      newBalance: user.assets + user.totalBonus 
+    });
+  } catch (err) {
+    console.error("Error manually closing trade:", err);
+    res.status(500).json({ error: "Failed to manually close trade" });
   }
 };
 

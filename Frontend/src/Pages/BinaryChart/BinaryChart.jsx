@@ -384,7 +384,7 @@ const BinaryChart = () => {
             }
             const reward = isWin
               ? (tradeInvestment * (1 + profitPercentage / 100)).toFixed(2)
-              : -tradeInvestment;
+              : 0; // For losing trades, reward is 0 (investment already deducted)
             const lockedStatus = isWin ? "win" : "loss";
             // Update backend if not demo
             if (!isDemo) {
@@ -903,89 +903,118 @@ const BinaryChart = () => {
 
   const handleCloseTrade = async (trade) => {
     try {
-      let endPrice;
-      if (trade.coinType === "Live") {
+      if (isDemo) {
+        // For demo mode, handle locally
+        let endPrice;
+        if (trade.coinType === "Live") {
+          const response = await fetch(
+            `https://api.binance.com/api/v3/ticker/price?symbol=${trade.coinName}USDT`
+          );
+          const data = await response.json();
+          endPrice = parseFloat(data.price);
+        } else {
+          const response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${
+              trade.coinName
+            }`
+          );
+          endPrice =
+            typeof response.data === "object"
+              ? parseFloat(response.data.price)
+              : parseFloat(response.data);
+        }
+
+        const coinData = coins.find((c) => c.name === trade.coinName);
+        const profitPercentage = coinData?.profitPercentage || 0;
+        const tradeInvestment = trade.investment ?? trade.price ?? 0;
+
+        let centsChange = 0;
+        if (trade.type === "Buy") {
+          centsChange =
+            (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
+        } else {
+          centsChange =
+            (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
+        }
+
+        let isWin = centsChange >= 0;
+        let reward;
+
+        if (trade.frontendReward !== undefined) {
+          reward = parseFloat(trade.frontendReward);
+        } else if (isWin) {
+          reward = (
+            tradeInvestment * (1 + profitPercentage / 100) +
+            centsChange
+          ).toFixed(2);
+        } else {
+          reward = (tradeInvestment + centsChange).toFixed(2);
+        }
+
+        // Update only the specific trade in state
+        setTrades((prev) =>
+          prev.map((t) =>
+            t.id === trade.id
+              ? {
+                  ...t,
+                  status: isWin ? "win" : "loss",
+                  reward: parseFloat(reward),
+                  remainingTime: 0,
+                }
+              : t
+          )
+        );
+
+        // Update demo assets
+        if (isWin) {
+          const newAssets = demoAssets + parseFloat(reward);
+          setDemoAssets(newAssets);
+          setDemo_assets(newAssets);
+          saveDemoAssets(newAssets);
+        }
+      } else {
+        // For real mode, call manual close API
         const response = await fetch(
-          `https://api.binance.com/api/v3/ticker/price?symbol=${trade.coinName}USDT`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/trade/manual-close`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: user.email,
+              startedAt: new Date(trade.startedAt).getTime(),
+            }),
+          }
         );
-        const data = await response.json();
-        endPrice = parseFloat(data.price);
-      } else {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${
-            trade.coinName
-          }`
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to close trade");
+        }
+
+        // Update local trade state
+        setTrades((prev) =>
+          prev.map((t) =>
+            t.id === trade.id || t._id === trade._id
+              ? {
+                  ...t,
+                  manualClose: false, // Trade is now fully closed
+                  status: "win", // Already confirmed as win
+                }
+              : t
+          )
         );
-        endPrice =
-          typeof response.data === "object"
-            ? parseFloat(response.data.price)
-            : parseFloat(response.data);
+
+        // Update user assets
+        setUserAssets(result.newBalance - (user.totalBonus || 0));
+
+        toast.success(`Trade closed successfully! Earned $${result.reward}`);
       }
-
-      const coinData = coins.find((c) => c.name === trade.coinName);
-      const profitPercentage = coinData?.profitPercentage || 0;
-      const tradeInvestment = trade.investment ?? trade.price ?? 0;
-
-      let centsChange = 0;
-      if (trade.type === "Buy") {
-        centsChange =
-          (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
-      } else {
-        centsChange =
-          (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
-      }
-
-      let isWin = centsChange >= 0;
-      let reward;
-
-      // Use frontendReward if provided (from UI logic), otherwise fallback to calculated
-      if (trade.frontendReward !== undefined) {
-        reward = parseFloat(trade.frontendReward);
-      } else if (isWin) {
-        reward = (
-          tradeInvestment * (1 + profitPercentage / 100) +
-          centsChange
-        ).toFixed(2);
-      } else {
-        reward = (tradeInvestment + centsChange).toFixed(2);
-      }
-
-      // Update only the specific trade in state
-      setTrades((prev) =>
-        prev.map((t) =>
-          t.id === trade.id
-            ? {
-                ...t,
-                status: isWin ? "win" : "loss",
-                reward: parseFloat(reward),
-                remainingTime: 0,
-              }
-            : t
-        )
-      );
-
-      if (!isDemo) {
-        await updateTradeResultInDB({
-          email: user.email,
-          // Always send startedAt as a timestamp (number)
-          startedAt: new Date(trade.startedAt).getTime(),
-          result: isWin ? "win" : "loss",
-          reward: parseFloat(reward),
-          exitPrice: endPrice,
-        });
-      }
-
-      // setPopupMessage(
-      //   isWin
-      //     ? `Trade Win! You got $${reward}`
-      //     : `Trade Loss! You lost $${Math.abs(reward)}`
-      // );
-      // setPopupColor(isWin ? "#10A055" : "#FF1600");
-      // setShowPopup(true);
-      // setTimeout(() => setShowPopup(false), 3000);
     } catch (err) {
       console.error("Failed to close trade:", err);
-      toast.error("Failed to close trade");
+      toast.error("Failed to close trade: " + (err.message || "Unknown error"));
     }
   };
 
