@@ -1,12 +1,6 @@
 import { RiArrowDropDownLine } from "react-icons/ri";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import {
-  createChart,
-  CrosshairMode,
-  CandlestickSeries,
-  BarSeries,
-  LineSeries,
-} from "lightweight-charts";
+import { createChart, CrosshairMode } from "lightweight-charts";
 import {
   AiOutlinePlus,
   AiOutlineBgColors,
@@ -18,7 +12,6 @@ import { FiMaximize2 } from "react-icons/fi";
 import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
-import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import Trades from "./components/Trades/Trades";
 
 const CANDLE_STYLES = {
@@ -119,7 +112,7 @@ const normalizeInterval = (interval) => {
       return interval;
   }
 };
-
+  
 const ForexTradingChart = ({
   coinName,
   setSelectedCoin,
@@ -297,8 +290,7 @@ const ForexTradingChart = ({
       timeScale: {
         borderColor: theme.gridColor,
         timeVisible: true,
-        secondsVisible: true,
-        rightOffset: window.innerWidth > 800 ? 70 : 15, // Adjust right offset based on screen size
+        secondsVisible: false,
         tickMarkFormatter: (time) => {
           const date = new Date(time * 1000);
           if (interval === "1day") {
@@ -314,7 +306,7 @@ const ForexTradingChart = ({
       },
     });
     chartRef.current = chart;
-    seriesRef.current = chart.addSeries(CandlestickSeries, {
+    seriesRef.current = chart.addCandlestickSeries({
       upColor: theme.upColor,
       downColor: theme.downColor,
       borderUpColor: theme.upColor,
@@ -363,7 +355,6 @@ const ForexTradingChart = ({
         height: 100,
         timeScale: {
           borderColor: theme.gridColor,
-          rightOffset: window.innerWidth > 800 ? 70 : 12, // Adjust right offset based on screen size
         },
       });
       indicatorChartRef.current = chart;
@@ -425,7 +416,7 @@ const ForexTradingChart = ({
       trendLineSeriesRef.current = null;
     }
     if (trendLinePoints.length === 2) {
-      trendLineSeriesRef.current = chartRef.current.addSeries(LineSeries, {
+      trendLineSeriesRef.current = chartRef.current.addLineSeries({
         color: "red",
         lineWidth: 2,
       });
@@ -578,28 +569,20 @@ const ForexTradingChart = ({
     // Overlays on main chart
     if (activeIndicator === INDICATORS.SMA) {
       const sma = filterValidData(calculateSMA(candles, 20));
-      const smaSeries = chartRef.current.addSeries(LineSeries, {
-        color: "orange",
-      });
+      const smaSeries = chartRef.current.addLineSeries({ color: "orange" });
       smaSeries.setData(sma);
       chartRef.current._indicatorSeries.push(smaSeries);
     } else if (activeIndicator === INDICATORS.EMA) {
       const ema = filterValidData(calculateEMA(candles, 20));
-      const emaSeries = chartRef.current.addSeries(LineSeries, {
-        color: "blue",
-      });
+      const emaSeries = chartRef.current.addLineSeries({ color: "blue" });
       emaSeries.setData(ema);
       chartRef.current._indicatorSeries.push(emaSeries);
     } else if (activeIndicator === INDICATORS.BB) {
       const bb = calculateBollingerBands(candles, 20, 2);
-      const upperSeries = chartRef.current.addSeries(LineSeries, {
-        color: "gray",
-      });
+      const upperSeries = chartRef.current.addLineSeries({ color: "gray" });
       upperSeries.setData(filterValidData(bb.upper));
       chartRef.current._indicatorSeries.push(upperSeries);
-      const lowerSeries = chartRef.current.addSeries(LineSeries, {
-        color: "gray",
-      });
+      const lowerSeries = chartRef.current.addLineSeries({ color: "gray" });
       lowerSeries.setData(filterValidData(bb.lower));
       chartRef.current._indicatorSeries.push(lowerSeries);
     }
@@ -607,18 +590,18 @@ const ForexTradingChart = ({
     if (indicatorChartRef.current) {
       if (activeIndicator === INDICATORS.RSI) {
         const rsi = filterValidData(calculateRSI(candles, 14));
-        const rsiSeries = indicatorChartRef.current.addSeries(LineSeries, {
+        const rsiSeries = indicatorChartRef.current.addLineSeries({
           color: "purple",
         });
         rsiSeries.setData(rsi);
         indicatorSeriesRef.current = [rsiSeries];
       } else if (activeIndicator === INDICATORS.MACD) {
         const { macd, signal } = calculateMACD(candles, 12, 26, 9);
-        const macdSeries = indicatorChartRef.current.addSeries(LineSeries, {
+        const macdSeries = indicatorChartRef.current.addLineSeries({
           color: "green",
         });
         macdSeries.setData(filterValidData(macd));
-        const signalSeries = indicatorChartRef.current.addSeries(LineSeries, {
+        const signalSeries = indicatorChartRef.current.addLineSeries({
           color: "red",
         });
         signalSeries.setData(filterValidData(signal));
@@ -701,22 +684,14 @@ const ForexTradingChart = ({
         } else if (trade.startedAt instanceof Date) {
           tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
         }
-
-        // Instead of bucketing, find the closest existing chart time that is >= trade time
-        let mappedTime = tradeTimestamp;
-        if (chartTimes.length > 0) {
-          // Find the closest chart time that is at or after the trade time
-          const futureOrCurrentTimes = chartTimes.filter(
-            (time) => time >= tradeTimestamp
+        let mappedTime = Math.floor(tradeTimestamp / intervalSec) * intervalSec;
+        if (!chartTimes.includes(mappedTime) && chartTimes.length > 0) {
+          mappedTime = chartTimes.reduce((prev, curr) =>
+            Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime)
+              ? curr
+              : prev
           );
-          if (futureOrCurrentTimes.length > 0) {
-            mappedTime = Math.min(...futureOrCurrentTimes);
-          } else {
-            // If no future times, use the latest available time
-            mappedTime = Math.max(...chartTimes);
-          }
         }
-
         if (!grouped[mappedTime]) grouped[mappedTime] = [];
         grouped[mappedTime].push(trade);
       });
@@ -767,10 +742,13 @@ const ForexTradingChart = ({
           const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
           const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
           const left = startLeft + idx * (boxWidth + gap);
-          const top = Math.max(
-            boxHeight / 2,
-            Math.min(y, containerRect.height - boxHeight / 2)
-          );
+          const top =
+            y != null && !isNaN(y)
+              ? Math.max(
+                  boxHeight / 2,
+                  Math.min(y, containerRect.height - boxHeight / 2)
+                )
+              : 40;
           const isBuy = trade.type === "Buy";
           const boxColor = isBuy ? "#10A055" : "#FF0000";
           const borderColor = isBuy ? "#0d7a3a" : "#b80000";
@@ -874,29 +852,11 @@ const ForexTradingChart = ({
                 )
               : 40;
           tradesArr.forEach((trade, idx) => {
-            // Show lines for a short time even after timeout (don't return immediately)
-            const isExpired =
+            if (
               typeof trade.remainingTime === "number" &&
-              trade.remainingTime <= 0;
-
-            // Skip only if trade has been expired for more than 5 seconds
-            if (
-              isExpired &&
-              trade.expiredAt &&
-              Date.now() - trade.expiredAt > 5000
-            ) {
+              trade.remainingTime <= 0
+            )
               return;
-            }
-
-            // Validate trade data before processing
-            const lineTradePriceData =
-              trade.entryPrice ?? trade.coinPrice ?? trade.price;
-            if (
-              lineTradePriceData == null ||
-              isNaN(Number(lineTradePriceData))
-            ) {
-              return; // Skip this trade if price is invalid
-            }
             let durationSec = 60;
             if (typeof trade.duration === "number") {
               durationSec = trade.duration;
@@ -936,40 +896,12 @@ const ForexTradingChart = ({
               );
             }
             let visibleLength = lineLength * percentLeft;
-
-            // For expired trades, show a short static line
-            if (isExpired) {
-              visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
-            }
-
             if (visibleLength <= 0) return;
             const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
-
-            // Fade out expired trades
-            const opacity = isExpired ? 0.4 : 1;
-
-            // Position line at the actual entry price of this trade (not with equal spacing)
-            const yTrade = seriesRef.current.priceToCoordinate(
-              Number(lineTradePriceData)
-            );
-
-            // Skip if coordinate conversion fails
-            if (yTrade == null || isNaN(yTrade)) {
-              return;
-            }
-
-            const lineTop = Math.max(
-              boxHeight / 2,
-              Math.min(yTrade, containerRect.height - boxHeight / 2)
-            );
-
-            // Position lines in front of the latest trade horizontally
-            const lineLeft = leftLast + boxWidth / 2 + 16;
-
             // Clamp lineLeft and visibleLength to stay within chart container
             let clampedLineLeft = Math.max(
               0,
-              Math.min(lineLeft, containerRect.width - 20)
+              Math.min(leftLast + boxWidth / 2 + 16, containerRect.width - 20)
             );
             let clampedVisibleLength = Math.max(
               0,
@@ -977,7 +909,7 @@ const ForexTradingChart = ({
             );
             let clampedLineTop = Math.max(
               0,
-              Math.min(lineTop, containerRect.height - 8)
+              Math.min(topLast + idx * 16 + 10, containerRect.height - 8)
             );
             rendered.push(
               <svg
@@ -999,7 +931,6 @@ const ForexTradingChart = ({
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
-                  opacity={opacity}
                 />
                 <line
                   x1={clampedLineLeft}
@@ -1008,7 +939,6 @@ const ForexTradingChart = ({
                   y2={clampedLineTop}
                   stroke={color}
                   strokeWidth={4}
-                  opacity={opacity}
                 />
                 <circle
                   cx={clampedLineLeft + clampedVisibleLength}
@@ -1017,7 +947,6 @@ const ForexTradingChart = ({
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
-                  opacity={opacity}
                 />
               </svg>
             );
@@ -1190,22 +1119,6 @@ const ForexTradingChart = ({
                 {"% "}
               </p>
             </div>
-          </div>
-
-          {/* Previous Coins Selector */}
-          <div
-            style={{
-              position: "absolute",
-              top: 100,
-              zIndex: 100,
-              display: window.innerWidth < 768 ? "none" : "flex",
-            }}
-          >
-            <PreviousCoinsSelector
-              setSelectedCoin={setSelectedCoin}
-              coins={coins}
-              currentCoin={coinName}
-            />
           </div>
 
           {/* Indicator selector */}
