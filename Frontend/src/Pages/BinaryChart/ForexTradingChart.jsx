@@ -12,6 +12,7 @@ import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
 import styles from "./Forex.module.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import Trades from "./components/Trades/Trades";
 
 const CANDLE_STYLES = {
@@ -162,7 +163,7 @@ const getCoinSymbol = (coinName) => {
   // If still not matched, default to forex
   return `FX:${coinName}`;
 };
-  
+
 const ForexTradingChart = ({
   coinName,
   setSelectedCoin,
@@ -188,154 +189,6 @@ const ForexTradingChart = ({
   const buttonRefs = useRef([]);
   const [tradePopup, setTradePopup] = useState(false);
   const [chartHeight, setChartHeight] = useState(600);
-
-  // Trade boxes state and helpers
-  const [tradeHover, setTradeHover] = useState({});
-
-  // Helper: get payout for a trade
-  const getTradePayout = (trade) => {
-    const coinData = coins.find((c) => c.name === trade.coinName);
-    const profitPercentage = coinData?.profitPercentage || 0;
-    return (trade.investment * (1 + profitPercentage / 100)).toFixed(2);
-  };
-
-  // Clear tradeHover when trades change to prevent stuck hover effect
-  useEffect(() => {
-    setTradeHover({});
-  }, [trades]);
-
-  // TradeBoxes component for TradingView - simplified version
-  const TradeBoxes = ({ trades, coinName, handleCloseTrade, tradeHover, setTradeHover }) => {
-    // Filter trades for current coin and running status
-    const activeTrades = trades.filter(
-      (trade) =>
-        trade &&
-        trade.status === "running" &&
-        trade.coinName === coinName &&
-        (trade.investment !== undefined ||
-          trade.price !== undefined ||
-          trade.coinPrice !== undefined)
-    );
-
-    if (activeTrades.length === 0) return null;
-
-    return (
-      <div
-        style={{
-          position: "absolute",
-          top: "60px",
-          right: "10px",
-          zIndex: 1000,
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-          pointerEvents: "auto",
-        }}
-      >
-        {activeTrades.map((trade, index) => {
-          const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
-          const isBuy = trade.type === "Buy";
-          const boxColor = isBuy ? "#10A055" : "#FF0000";
-          const borderColor = isBuy ? "#0d7a3a" : "#b80000";
-          const textColor = "#fff";
-
-          return (
-            <div
-              key={tradeId}
-              style={{
-                background: boxColor,
-                color: textColor,
-                border: `1.2px solid ${borderColor}`,
-                borderRadius: 6,
-                minWidth: 120,
-                minHeight: 40,
-                fontWeight: 600,
-                fontSize: 12,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "8px 12px",
-                gap: 2,
-                transition: "box-shadow 0.2s, background 0.2s",
-                cursor: "pointer",
-                opacity: 0.95,
-                position: "relative",
-              }}
-              onMouseEnter={() =>
-                setTradeHover((h) => ({ ...h, [tradeId]: true }))
-              }
-              onMouseLeave={() =>
-                setTradeHover((h) => ({ ...h, [tradeId]: false }))
-              }
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontWeight: 700, fontSize: 14 }}>
-                  {isBuy ? "BUY" : "SELL"}
-                </span>
-                <span style={{ fontWeight: 600, fontSize: 12 }}>
-                  ${trade.investment ?? trade.price ?? trade.coinPrice}
-                </span>
-              </div>
-              
-              {trade.remainingTime > 0 && (
-                <div style={{ fontSize: 11, opacity: 0.9 }}>
-                  {trade.remainingTime}s remaining
-                </div>
-              )}
-
-              {tradeHover[tradeId] && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-35px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#222",
-                    color: "#fff",
-                    padding: "4px 8px",
-                    borderRadius: 4,
-                    fontSize: 11,
-                    whiteSpace: "nowrap",
-                    zIndex: 10001,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                  }}
-                >
-                  Payout: ${getTradePayout(trade)}
-                </div>
-              )}
-
-              {trade.remainingTime === 0 && tradeId && (
-                <button
-                  style={{
-                    position: "absolute",
-                    top: 2,
-                    right: 2,
-                    background: "rgba(255,255,255,0.2)",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: 12,
-                    cursor: "pointer",
-                    zIndex: 30,
-                    borderRadius: 2,
-                    padding: "2px 4px",
-                    fontWeight: "bold",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCloseTrade(tradeId);
-                  }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
 
   // Chart height update effect
   useEffect(() => {
@@ -642,8 +495,6 @@ const ForexTradingChart = ({
               </p>
             </div>
           </div>
-
-          {/* Previous Coins Selector */}
           <div
             style={{
               position: "absolute",
@@ -1022,13 +873,6 @@ const ForexTradingChart = ({
           <div
             id="tradingview_chart_container"
             style={{ height: chartHeight, width: "100%" }}
-          />
-          <TradeBoxes
-            trades={trades}
-            coinName={coinName}
-            handleCloseTrade={handleCloseTrade}
-            tradeHover={tradeHover}
-            setTradeHover={setTradeHover}
           />
         </div>
       </div>
