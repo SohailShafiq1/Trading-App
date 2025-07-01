@@ -1,12 +1,5 @@
 import { RiArrowDropDownLine } from "react-icons/ri";
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import {
-  createChart,
-  CrosshairMode,
-  CandlestickSeries,
-  BarSeries,
-  LineSeries,
-} from "lightweight-charts";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AiOutlinePlus,
   AiOutlineBgColors,
@@ -17,6 +10,7 @@ import { BiLineChart, BiPencil } from "react-icons/bi";
 import { FiMaximize2 } from "react-icons/fi";
 import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
+import styles from "./Forex.module.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import Trades from "./components/Trades/Trades";
@@ -27,68 +21,52 @@ const CANDLE_STYLES = {
   LINE: "Line",
   HOLLOW: "Hollow Candle",
 };
+
 const THEMES = {
   LIGHT: {
     name: "Light",
-    background: "#ffffff",
-    textColor: "#333333",
-    gridColor: "rgba(60,60,60,0.10)", // lighter, more transparent
-    upColor: "#26a69a",
-    downColor: "#ef5350",
+    background: "rgb(255,255,255)",
+    textColor: "rgb(51,51,51)",
+    gridColor: "rgba(60,60,60,1)", // lighter, more transparent
+    upColor: "rgb(38,166,154)",
+    downColor: "rgb(239,83,80)",
     borderVisible: true,
     wickVisible: true,
+    wickUpColor: "rgb(38,166,154)",
+    wickDownColor: "rgb(239,83,80)",
+    wickWidth: 4,
   },
   DARK: {
     name: "Dark",
-    background: "#121212",
-    textColor: "#d1d4dc",
-    gridColor: "rgba(200,200,200,0.08)", // lighter, more transparent
-    upColor: "#00e676",
-    downColor: "#ff1744",
+    background: "rgb(18,18,18)",
+    textColor: "rgb(209,212,220)",
+    gridColor: "rgba(200,200,200,1)", // lighter, more transparent
+    upColor: "rgb(0,230,118)",
+    downColor: "rgb(255,23,68)",
     borderVisible: true,
     wickVisible: true,
+    wickUpColor: "rgb(0,230,118)",
+    wickDownColor: "rgb(255,23,68)",
+    wickWidth: 4,
   },
   BLUE: {
     name: "Blue",
-    background: "#0e1a2f",
-    textColor: "#ffffff",
-    gridColor: "rgba(30,42,63,0.12)", // lighter, more transparent
-    upColor: "#4caf50",
-    downColor: "#f44336",
+    background: "rgb(14,26,47)",
+    textColor: "rgb(255,255,255)",
+    gridColor: "rgba(30,42,63,1)", // lighter, more transparent
+    upColor: "rgb(76,175,80)",
+    downColor: "rgb(244,67,54)",
     borderVisible: true,
     wickVisible: true,
+    wickUpColor: "rgb(76,175,80)",
+    wickDownColor: "rgb(244,67,54)",
+    wickWidth: 4,
   },
 };
 
-const INDICATORS = {
-  NONE: "None",
-  SMA: "SMA (20)",
-  EMA: "EMA (20)",
-  RSI: "RSI (14)",
-  MACD: "MACD",
-  BB: "Bollinger Bands",
-};
-const DRAWING_TOOLS = {
-  NONE: "None",
-  HORIZONTAL_LINE: "Horizontal Line",
-  VERTICAL_LINE: "Vertical Line",
-  TREND_LINE: "Trend Line",
-};
-
-// Supported intervals for Twelve Data API
-const SUPPORTED_INTERVALS = [
-  { label: "1m", value: "1min" },
-  { label: "5m", value: "5min" },
-  { label: "15m", value: "15min" },
-  { label: "30m", value: "30min" },
-  { label: "1h", value: "1h" },
-  { label: "4h", value: "4h" },
-  { label: "1d", value: "1day" },
-];
-
+// Supported intervals for TradingView
 const intervalToSeconds = {
   "1m": 60,
-  "2m": 120,
   "3m": 180,
   "5m": 300,
   "15m": 900,
@@ -98,26 +76,92 @@ const intervalToSeconds = {
   "1d": 86400,
 };
 
-// --- INTERVAL NORMALIZATION ---
-const normalizeInterval = (interval) => {
-  switch (interval) {
-    case "1min":
-      return "1min";
-    case "5min":
-      return "5min";
-    case "15min":
-      return "15min";
-    case "30min":
-      return "30min";
-    case "1h":
-      return "1h";
-    case "4h":
-      return "4h";
-    case "1day":
-      return "1day";
-    default:
-      return interval;
+const SUPPORTED_INTERVALS = {
+  "1m": "1",
+  "3m": "3", 
+  "5m": "5",
+  "15m": "15",
+  "30m": "30",
+  "1h": "60",
+  "4h": "240",
+  "1d": "1D",
+};
+
+// Indicator options
+const INDICATORS = {
+  NONE: "None",
+  SMA: "SMA (20)",
+  EMA: "EMA (20)",
+  RSI: "RSI (14)",
+  MACD: "MACD",
+  BB: "Bollinger Bands",
+};
+
+// Drawing tool options
+const DRAWING_TOOLS = {
+  NONE: "None",
+  HORIZONTAL_LINE: "Horizontal Line",
+  VERTICAL_LINE: "Vertical Line",
+  TREND_LINE: "Trend Line",
+};
+
+// Convert coin names to TradingView symbols
+const getCoinSymbol = (coinName) => {
+  // Handle forex pairs
+  if (coinName.includes("USD") && !coinName.includes("BTC") && !coinName.includes("ETH")) {
+    // For forex pairs like EURUSD, GBPUSD, etc.
+    return `FX:${coinName}`;
   }
+  
+  // Handle crypto pairs
+  const cryptoMap = {
+    "BTCUSD": "BINANCE:BTCUSDT",
+    "ETHUSD": "BINANCE:ETHUSDT", 
+    "ADAUSD": "BINANCE:ADAUSDT",
+    "XRPUSD": "BINANCE:XRPUSDT",
+    "DOTUSD": "BINANCE:DOTUSDT",
+    "SOLUSD": "BINANCE:SOLUSDT",
+    "AVAXUSD": "BINANCE:AVAXUSDT",
+    "MATICUSD": "BINANCE:MATICUSDT",
+    "LINKUSD": "BINANCE:LINKUSDT",
+    "LTCUSD": "BINANCE:LTCUSDT",
+    "BCHUSD": "BINANCE:BCHUSDT",
+    "UNIUSD": "BINANCE:UNIUSDT",
+    "ATOMUSD": "BINANCE:ATOMUSDT",
+    "ALGOUSD": "BINANCE:ALGOUSDT",
+    "FILUSD": "BINANCE:FILUSDT",
+    "TRXUSD": "BINANCE:TRXUSDT",
+    "XLMUSD": "BINANCE:XLMUSDT",
+    "VETUSD": "BINANCE:VETUSDT",
+    "ICPUSD": "BINANCE:ICPUSDT",
+    "THETAUSD": "BINANCE:THETAUSDT",
+    "FTMUSD": "BINANCE:FTMUSDT",
+    "AXSUSD": "BINANCE:AXSUSDT",
+    "SANDUSD": "BINANCE:SANDUSDT",
+    "MANAUSD": "BINANCE:MANAUSDT",
+    "GALAUSD": "BINANCE:GALAUSDT",
+    "APEUSD": "BINANCE:APEUSDT",
+    "GMTUSD": "BINANCE:GMTUSDT",
+    "NEARUSD": "BINANCE:NEARUSDT",
+    "ROSEUSD": "BINANCE:ROSEUSDT",
+    "DARTUSD": "BINANCE:DARTUSDT",
+    "SHIBUSD": "BINANCE:SHIBUSDT",
+    "DOGEUSD": "BINANCE:DOGEUSDT",
+  };
+  
+  if (cryptoMap[coinName]) {
+    return cryptoMap[coinName];
+  }
+  
+  // Default fallback - try to format as crypto pair
+  if (coinName.length === 6) {
+    const base = coinName.substring(0, 3);
+    const quote = coinName.substring(3, 6);
+    return `BINANCE:${base}${quote}T`;
+  }
+  
+  // If still not matched, default to forex
+  return `FX:${coinName}`;
 };
 
 const ForexTradingChart = ({
@@ -129,90 +173,170 @@ const ForexTradingChart = ({
   trades,
   handleCloseTrade,
 }) => {
-  const containerRef = useRef();
-  const chartRef = useRef(null);
-  const seriesRef = useRef(null);
+  const chartContainerRef = useRef();
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const coinSelectorRef = useRef();
-  // Set default interval to 1min
-  const [interval, setInterval] = useState("1min");
-  const [candles, setCandles] = useState([]);
-  const [currentPrice, setCurrentPrice] = useState(null);
+  // Set default interval to 1 minute for TradingView
+  const [interval, setInterval] = useState("1m");
   const [theme, setTheme] = useState(THEMES.LIGHT);
   const [candleStyle, setCandleStyle] = useState(CANDLE_STYLES.CANDLE);
-  // Use single value for indicator and drawing tool
-  const [activeIndicator, setActiveIndicator] = useState(null);
-  const [activeDrawingTool, setActiveDrawingTool] = useState(null);
-  const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
-  const [showDrawingPopup, setShowDrawingPopup] = useState(false);
+  const [indicator, setIndicator] = useState(INDICATORS.NONE);
+  const [drawingTool, setDrawingTool] = useState(DRAWING_TOOLS.NONE);
   const [showThemePopup, setShowThemePopup] = useState(false);
   const [showStylePopup, setShowStylePopup] = useState(false);
+  const [showIndicatorPopup, setShowIndicatorPopup] = useState(false);
+  const [showDrawingPopup, setShowDrawingPopup] = useState(false);
   const buttonRefs = useRef([]);
-
-  // Drawing tool state for trend line
-  const [trendLinePoints, setTrendLinePoints] = useState([]);
-  const trendLineSeriesRef = useRef(null);
-
-  // New refs for indicator chart
-  const indicatorContainerRef = useRef();
-  const indicatorChartRef = useRef(null);
-  const indicatorSeriesRef = useRef([]);
-
-  // Trade popup state
   const [tradePopup, setTradePopup] = useState(false);
   const [chartHeight, setChartHeight] = useState(600);
 
-  // --- NEW fetchCandles with useCallback and polling useEffect ---
-  const fetchCandles = useCallback(async () => {
-    try {
-      const apiKey = import.meta.env.VITE_API_KEY;
-      let symbol = coinName.includes("/")
-        ? coinName
-        : coinName.replace(/(\w{3})(\w{3})/, "$1/$2");
-      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=5000&apikey=${apiKey}&ts=${Date.now()}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      console.log("APi data:", data);
-      if (data && data.values) {
-        const formattedCandles = data.values.reverse().map((candle) => ({
-          time: Math.floor(new Date(candle.datetime).getTime() / 1000),
-          open: parseFloat(candle.open),
-          high: parseFloat(candle.high),
-          low: parseFloat(candle.low),
-          close: parseFloat(candle.close),
-          volume: parseFloat(candle.volume || "0"),
-        }));
-        setCandles(formattedCandles);
-        if (formattedCandles.length > 0) {
-          setCurrentPrice(formattedCandles[formattedCandles.length - 1].close);
-        }
-      } else {
-        console.error("Twelve Data API error or no data:", data);
-      }
-    } catch (error) {
-      console.error("Error fetching candle data:", error);
-    }
-  }, [coinName, interval]);
+  // Trade boxes state and helpers
+  const [tradeHover, setTradeHover] = useState({});
 
+  // Helper: get payout for a trade
+  const getTradePayout = (trade) => {
+    const coinData = coins.find((c) => c.name === trade.coinName);
+    const profitPercentage = coinData?.profitPercentage || 0;
+    return (trade.investment * (1 + profitPercentage / 100)).toFixed(2);
+  };
+
+  // Clear tradeHover when trades change to prevent stuck hover effect
   useEffect(() => {
-    fetchCandles(); // Initial fetch on mount or when dependencies change
-    const intervalMapping = {
-      "1min": 60000,
-      "5min": 300000,
-      "15min": 900000,
-      "30min": 1800000,
-      "1h": 3600000,
-      "4h": 14400000,
-      "1day": 86400000,
-    };
-    const delay = intervalMapping[interval] || 60000;
-    const intervalId = setInterval(() => {
-      // Optionally add debug log:
-      // console.log("Polling fetchCandles called");
-      fetchCandles();
-    }, delay);
-    return () => clearInterval(intervalId); // Cleanup on unmount or dependency change
-  }, [fetchCandles, interval]);
+    setTradeHover({});
+  }, [trades]);
+
+  // TradeBoxes component for TradingView - simplified version
+  const TradeBoxes = ({ trades, coinName, handleCloseTrade, tradeHover, setTradeHover }) => {
+    // Filter trades for current coin and running status
+    const activeTrades = trades.filter(
+      (trade) =>
+        trade &&
+        trade.status === "running" &&
+        trade.coinName === coinName &&
+        (trade.investment !== undefined ||
+          trade.price !== undefined ||
+          trade.coinPrice !== undefined)
+    );
+
+    if (activeTrades.length === 0) return null;
+
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: "60px",
+          right: "10px",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          pointerEvents: "auto",
+        }}
+      >
+        {activeTrades.map((trade, index) => {
+          const tradeId = trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+          const isBuy = trade.type === "Buy";
+          const boxColor = isBuy ? "#10A055" : "#FF0000";
+          const borderColor = isBuy ? "#0d7a3a" : "#b80000";
+          const textColor = "#fff";
+
+          return (
+            <div
+              key={tradeId}
+              style={{
+                background: boxColor,
+                color: textColor,
+                border: `1.2px solid ${borderColor}`,
+                borderRadius: 6,
+                minWidth: 120,
+                minHeight: 40,
+                fontWeight: 600,
+                fontSize: 12,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px 12px",
+                gap: 2,
+                transition: "box-shadow 0.2s, background 0.2s",
+                cursor: "pointer",
+                opacity: 0.95,
+                position: "relative",
+              }}
+              onMouseEnter={() =>
+                setTradeHover((h) => ({ ...h, [tradeId]: true }))
+              }
+              onMouseLeave={() =>
+                setTradeHover((h) => ({ ...h, [tradeId]: false }))
+              }
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>
+                  {isBuy ? "BUY" : "SELL"}
+                </span>
+                <span style={{ fontWeight: 600, fontSize: 12 }}>
+                  ${trade.investment ?? trade.price ?? trade.coinPrice}
+                </span>
+              </div>
+              
+              {trade.remainingTime > 0 && (
+                <div style={{ fontSize: 11, opacity: 0.9 }}>
+                  {trade.remainingTime}s remaining
+                </div>
+              )}
+
+              {tradeHover[tradeId] && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-35px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: "#222",
+                    color: "#fff",
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    fontSize: 11,
+                    whiteSpace: "nowrap",
+                    zIndex: 10001,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  Payout: ${getTradePayout(trade)}
+                </div>
+              )}
+
+              {trade.remainingTime === 0 && tradeId && (
+                <button
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    background: "rgba(255,255,255,0.2)",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: 12,
+                    cursor: "pointer",
+                    zIndex: 30,
+                    borderRadius: 2,
+                    padding: "2px 4px",
+                    fontWeight: "bold",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCloseTrade(tradeId);
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   // Chart height update effect
   useEffect(() => {
@@ -273,848 +397,168 @@ const ForexTradingChart = ({
     return () => window.removeEventListener("resize", updateChartHeight);
   }, []);
 
-  // Main chart setup (recreate chart on theme or interval change, like ForexChart.jsx)
+  // TradingView widget setup
   useEffect(() => {
-    if (!containerRef.current) return;
-    // Remove previous chart if it exists
-    if (chartRef.current) {
-      chartRef.current.remove();
-      chartRef.current = null;
-      seriesRef.current = null;
-    }
-    const chart = createChart(containerRef.current, {
-      layout: {
-        background: { color: theme.background },
-        textColor: theme.textColor,
-      },
-      grid: {
-        vertLines: { color: theme.gridColor },
-        horzLines: { color: theme.gridColor },
-      },
-      crosshair: { mode: CrosshairMode.Normal },
-      width: containerRef.current.clientWidth,
-      height: chartHeight, // Responsive height
-      timeScale: {
-        borderColor: theme.gridColor,
-        timeVisible: true,
-        secondsVisible: true,
-        rightOffset: window.innerWidth > 800 ? 70 : 15, // Adjust right offset based on screen size
-        tickMarkFormatter: (time) => {
-          const date = new Date(time * 1000);
-          if (interval === "1day") {
-            return `${date.getFullYear()}-${(date.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
-          }
-          return `${date.getHours().toString().padStart(2, "0")}:${date
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
-        },
-      },
-    });
-    chartRef.current = chart;
-    seriesRef.current = chart.addSeries(CandlestickSeries, {
-      upColor: theme.upColor,
-      downColor: theme.downColor,
-      borderUpColor: theme.upColor,
-      borderDownColor: theme.downColor,
-      wickUpColor: theme.upColor,
-      wickDownColor: theme.downColor,
-    });
-    // Set initial data
-    if (candles.length > 0) {
-      seriesRef.current.setData(candles);
-    }
-    return () => {
-      chart.remove();
-      chartRef.current = null;
-      seriesRef.current = null;
-    };
-  }, [theme, interval, chartHeight]);
-
-  // Update chart data when candles change
-  useEffect(() => {
-    if (seriesRef.current) {
-      seriesRef.current.setData(candles);
-    }
-  }, [candles]);
-
-  // Indicator chart setup (for RSI/MACD)
-  useEffect(() => {
-    // Only run if indicator panel is needed and container is mounted
-    if (!indicatorContainerRef.current) return;
-    // Only create chart if it doesn't exist and indicator is RSI or MACD
-    if (
-      !indicatorChartRef.current &&
-      (activeIndicator === INDICATORS.RSI ||
-        activeIndicator === INDICATORS.MACD)
-    ) {
-      const chart = createChart(indicatorContainerRef.current, {
-        layout: {
-          background: { color: theme.background },
-          textColor: theme.textColor,
-        },
-        grid: {
-          vertLines: { color: theme.gridColor },
-          horzLines: { color: theme.gridColor },
-        },
-        width: indicatorContainerRef.current.clientWidth,
-        height: 100,
-        timeScale: {
-          borderColor: theme.gridColor,
-          rightOffset: window.innerWidth > 800 ? 70 : 12, // Adjust right offset based on screen size
-        },
-      });
-      indicatorChartRef.current = chart;
-    }
-    // Clean up on unmount or when indicator type changes away from RSI/MACD
-    return () => {
-      if (
-        indicatorChartRef.current &&
-        !(
-          activeIndicator === INDICATORS.RSI ||
-          activeIndicator === INDICATORS.MACD
-        )
-      ) {
-        indicatorChartRef.current.remove();
-        indicatorChartRef.current = null;
-      }
-    };
-  }, [activeIndicator, theme]);
-
-  // Add indicator
-  const selectIndicator = (ind) => {
-    setActiveIndicator(ind);
-  };
-  // Add drawing tool
-  const selectDrawingTool = (tool) => {
-    setActiveDrawingTool(tool);
-  };
-
-  // Drawing tool mouse logic
-  useEffect(() => {
-    if (!containerRef.current || activeDrawingTool !== DRAWING_TOOLS.TREND_LINE)
-      return;
-    const handleClick = (e) => {
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Convert x to time
-      const timeScale = chartRef.current.timeScale();
-      const logical = chartRef.current.coordinateToLogical(x);
-      const time = timeScale.coordinateToTime(x);
-      // Convert y to price
-      const priceScale = seriesRef.current.priceScale();
-      const price = priceScale.coordinateToPrice(y);
-      if (trendLinePoints.length === 0) {
-        setTrendLinePoints([{ time, price }]);
-      } else if (trendLinePoints.length === 1) {
-        setTrendLinePoints((prev) => [...prev, { time, price }]);
-      }
-    };
-    containerRef.current.addEventListener("click", handleClick);
-    return () => containerRef.current.removeEventListener("click", handleClick);
-  }, [activeDrawingTool, trendLinePoints]);
-
-  // Render trend line
-  useEffect(() => {
-    if (!chartRef.current) return;
-    if (trendLineSeriesRef.current) {
-      chartRef.current.removeSeries(trendLineSeriesRef.current);
-      trendLineSeriesRef.current = null;
-    }
-    if (trendLinePoints.length === 2) {
-      trendLineSeriesRef.current = chartRef.current.addSeries(LineSeries, {
-        color: "red",
-        lineWidth: 2,
-      });
-      trendLineSeriesRef.current.setData(trendLinePoints);
-    }
-    if (
-      (trendLinePoints.length > 2 ||
-        activeDrawingTool !== DRAWING_TOOLS.TREND_LINE) &&
-      trendLinePoints.length > 0
-    ) {
-      setTrendLinePoints([]);
-      if (trendLineSeriesRef.current) {
-        chartRef.current.removeSeries(trendLineSeriesRef.current);
-        trendLineSeriesRef.current = null;
-      }
-    }
-  }, [trendLinePoints, activeDrawingTool]);
-
-  // Indicator calculation utilities from LiveCandleChart
-  const calculateSMA = (data, period) => {
-    if (!data || data.length < period) return [];
-    const sma = [];
-    for (let i = period - 1; i < data.length; i++) {
-      const sum = data
-        .slice(i - period + 1, i + 1)
-        .reduce((acc, val) => acc + val.close, 0);
-      sma.push({ time: data[i].time, value: sum / period });
-    }
-    return sma;
-  };
-  const calculateEMA = (data, period) => {
-    if (!data || data.length < period) return [];
-    const ema = [];
-    const k = 2 / (period + 1);
-    let emaPrev =
-      data.slice(0, period).reduce((acc, val) => acc + val.close, 0) / period;
-    ema.push({ time: data[period - 1].time, value: emaPrev });
-    for (let i = period; i < data.length; i++) {
-      emaPrev = data[i].close * k + emaPrev * (1 - k);
-      ema.push({ time: data[i].time, value: emaPrev });
-    }
-    return ema;
-  };
-  const calculateRSI = (data, period = 14) => {
-    if (!data || data.length <= period) return [];
-    const rsi = [];
-    let gains = 0;
-    let losses = 0;
-    for (let i = 1; i <= period; i++) {
-      const change = data[i].close - data[i - 1].close;
-      if (change > 0) gains += change;
-      else losses -= change;
-    }
-    let avgGain = gains / period;
-    let avgLoss = losses / period;
-    const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
-    rsi.push({ time: data[period].time, value: 100 - 100 / (1 + rs) });
-    for (let i = period + 1; i < data.length; i++) {
-      const change = data[i].close - data[i - 1].close;
-      let currentGain = 0;
-      let currentLoss = 0;
-      if (change > 0) currentGain = change;
-      else currentLoss = -change;
-      avgGain = (avgGain * (period - 1) + currentGain) / period;
-      avgLoss = (avgLoss * (period - 1) + currentLoss) / period;
-      const rs = avgLoss !== 0 ? avgGain / avgLoss : 0;
-      rsi.push({ time: data[i].time, value: 100 - 100 / (1 + rs) });
-    }
-    return rsi;
-  };
-  const calculateMACD = (
-    data,
-    fastPeriod = 12,
-    slowPeriod = 26,
-    signalPeriod = 9
-  ) => {
-    if (!data || data.length < slowPeriod + signalPeriod)
-      return { macd: [], signal: [] };
-    const emaFast = calculateEMA(data, fastPeriod);
-    const emaSlow = calculateEMA(data, slowPeriod);
-    const macdLine = [];
-    for (let i = slowPeriod - fastPeriod; i < emaSlow.length; i++) {
-      macdLine.push({
-        time: emaSlow[i].time,
-        value: emaFast[i + (slowPeriod - fastPeriod)].value - emaSlow[i].value,
-      });
-    }
-    const signalLine = calculateEMA(
-      macdLine.map((d) => ({ close: d.value, time: d.time })),
-      signalPeriod
+    // Clean up any existing widgets
+    const existingWidget = document.getElementById(
+      "tradingview_chart_container"
     );
-    return {
-      macd: macdLine.slice(signalPeriod - 1),
-      signal: signalLine,
-    };
-  };
-  const calculateBollingerBands = (data, period = 20, multiplier = 2) => {
-    if (!data || data.length < period)
-      return { upper: [], middle: [], lower: [] };
-    const sma = calculateSMA(data, period);
-    const bands = { upper: [], middle: sma, lower: [] };
-    for (let i = period - 1; i < data.length; i++) {
-      const slice = data.slice(i - period + 1, i + 1);
-      const sum = slice.reduce(
-        (acc, val) => acc + Math.pow(val.close - sma[i - period + 1].value, 2),
-        0
-      );
-      const stdDev = Math.sqrt(sum / period);
-      bands.upper.push({
-        time: data[i].time,
-        value: sma[i - period + 1].value + multiplier * stdDev,
-      });
-      bands.lower.push({
-        time: data[i].time,
-        value: sma[i - period + 1].value - multiplier * stdDev,
-      });
+    if (existingWidget) {
+      existingWidget.innerHTML = "";
     }
-    return bands;
-  };
 
-  // Helper to filter and warn about bad data
-  function filterValidData(arr) {
-    const filtered = (arr || []).filter(
-      (d) =>
-        d && d.time !== undefined && d.value !== undefined && !isNaN(d.value)
-    );
-    if (filtered.length !== (arr || []).length) {
-      console.warn((arr || []).length - filtered.length);
+    // Remove existing script if present
+    const existingScript = document.getElementById("tradingview-widget-script");
+    if (existingScript) {
+      existingScript.remove();
     }
-    return filtered;
-  }
 
-  // Render indicator in the chart (fix RSI/MACD overlay)
-  useEffect(() => {
-    if (!chartRef.current || !seriesRef.current || candles.length === 0) return;
-    // Remove overlays from main chart
-    if (chartRef.current._indicatorSeries) {
-      chartRef.current._indicatorSeries.forEach((s) =>
-        chartRef.current.removeSeries(s)
-      );
-    }
-    chartRef.current._indicatorSeries = [];
-    // Remove indicator chart series
-    if (indicatorChartRef.current && indicatorSeriesRef.current.length) {
-      indicatorSeriesRef.current.forEach((s) =>
-        indicatorChartRef.current.removeSeries(s)
-      );
-      indicatorSeriesRef.current = [];
-    }
-    // Overlays on main chart
-    if (activeIndicator === INDICATORS.SMA) {
-      const sma = filterValidData(calculateSMA(candles, 20));
-      const smaSeries = chartRef.current.addSeries(LineSeries, {
-        color: "orange",
-      });
-      smaSeries.setData(sma);
-      chartRef.current._indicatorSeries.push(smaSeries);
-    } else if (activeIndicator === INDICATORS.EMA) {
-      const ema = filterValidData(calculateEMA(candles, 20));
-      const emaSeries = chartRef.current.addSeries(LineSeries, {
-        color: "blue",
-      });
-      emaSeries.setData(ema);
-      chartRef.current._indicatorSeries.push(emaSeries);
-    } else if (activeIndicator === INDICATORS.BB) {
-      const bb = calculateBollingerBands(candles, 20, 2);
-      const upperSeries = chartRef.current.addSeries(LineSeries, {
-        color: "gray",
-      });
-      upperSeries.setData(filterValidData(bb.upper));
-      chartRef.current._indicatorSeries.push(upperSeries);
-      const lowerSeries = chartRef.current.addSeries(LineSeries, {
-        color: "gray",
-      });
-      lowerSeries.setData(filterValidData(bb.lower));
-      chartRef.current._indicatorSeries.push(lowerSeries);
-    }
-    // RSI/MACD in indicator chart
-    if (indicatorChartRef.current) {
-      if (activeIndicator === INDICATORS.RSI) {
-        const rsi = filterValidData(calculateRSI(candles, 14));
-        const rsiSeries = indicatorChartRef.current.addSeries(LineSeries, {
-          color: "purple",
+    const script = document.createElement("script");
+    script.id = "tradingview-widget-script";
+    script.src = "https://s3.tradingview.com/tv.js";
+    script.async = true;
+    script.onload = () => {
+      try {
+        const symbol = getCoinSymbol(coinName);
+        const tvInterval = SUPPORTED_INTERVALS[interval] || "1";
+        console.log(`Loading TradingView chart for symbol: ${symbol}, interval: ${interval} -> ${tvInterval}`);
+
+        new window.TradingView.widget({
+          width: "100%",
+          height: chartHeight,
+          symbol: symbol,
+          interval: tvInterval,
+          timezone: "Etc/UTC",
+          theme: theme.name.toLowerCase(),
+          style:
+            candleStyle === CANDLE_STYLES.CANDLE
+              ? "1"
+              : candleStyle === CANDLE_STYLES.BAR
+              ? "8"
+              : candleStyle === CANDLE_STYLES.LINE
+              ? "2"
+              : "9",
+          locale: "en",
+          hide_top_toolbar: true,
+          hide_legend: true,
+          save_image: false,
+          container_id: "tradingview_chart_container",
+          studies: [],
+          withdateranges: false,
+          hide_side_toolbar: true,
+          allow_symbol_change: false,
+          fullscreen: false,
+          autosize: true,
+          hide_volume: true,
+          toolbar_bg: theme.background,
+          enable_publishing: false,
+          hideideas: true,
+          overrides: {
+            "paneProperties.background": theme.background,
+            "paneProperties.vertGridProperties.color": theme.gridColor,
+            "paneProperties.horzGridProperties.color": theme.gridColor,
+          },
         });
-        rsiSeries.setData(rsi);
-        indicatorSeriesRef.current = [rsiSeries];
-      } else if (activeIndicator === INDICATORS.MACD) {
-        const { macd, signal } = calculateMACD(candles, 12, 26, 9);
-        const macdSeries = indicatorChartRef.current.addSeries(LineSeries, {
-          color: "green",
-        });
-        macdSeries.setData(filterValidData(macd));
-        const signalSeries = indicatorChartRef.current.addSeries(LineSeries, {
-          color: "red",
-        });
-        signalSeries.setData(filterValidData(signal));
-        indicatorSeriesRef.current = [macdSeries, signalSeries];
+
+      } catch (error) {
+        console.error("Error creating TradingView widget:", error);
       }
-    }
-  }, [activeIndicator, candles]);
-
-  // --- TRADE BOXES DYNAMIC SIZE AND POSITION ---
-  const [tradeBoxSize, setTradeBoxSize] = useState({
-    width: 44,
-    height: 16,
-    font: 9,
-  });
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const updateSize = () => {
-      if (!chartRef.current) return;
-      const timeScale = chartRef.current.timeScale();
-      let barSpacing = 10;
-      if (typeof timeScale.barSpacing === "function") {
-        barSpacing = timeScale.barSpacing();
-      } else if (timeScale.options && timeScale.options.barSpacing) {
-        barSpacing = timeScale.options.barSpacing;
-      }
-      barSpacing = Math.max(3, Math.min(barSpacing, 40));
-      const width = Math.max(28, Math.min(90, barSpacing * 4.2));
-      const height = Math.max(14, Math.min(36, barSpacing * 1.6));
-      const font = Math.max(8, Math.min(18, barSpacing * 0.85));
-      setTradeBoxSize({ width, height, font });
     };
-    updateSize();
-    window.addEventListener("resize", updateSize);
+
+    script.onerror = () => {
+      console.error("Failed to load TradingView script");
+    };
+
+    if (chartContainerRef.current) {
+      chartContainerRef.current.appendChild(script);
+    }
+
+    // Cleanup function
     return () => {
-      window.removeEventListener("resize", updateSize);
-    };
-  }, [interval]);
-
-  // --- TRADE BOXES AND LINES RENDERING ---
-  const renderTradeBoxesAndLines = () => {
-    if (!chartRef.current || !seriesRef.current || !containerRef.current)
-      return null;
-    // Group trades by interval bucket (like TradingViewChart)
-    const normalizedInterval = normalizeInterval(interval);
-    const intervalSec = intervalToSeconds[normalizedInterval] || 60;
-    let chartTimes = [];
-    let chartData = [];
-    if (seriesRef.current && seriesRef.current._internal__data?._data) {
-      chartData = seriesRef.current._internal__data._data;
-      chartTimes = chartData.map((c) =>
-        typeof c.time === "string"
-          ? Math.floor(Date.parse(c.time) / 1000)
-          : Number(c.time)
+      const scriptToRemove = document.getElementById(
+        "tradingview-widget-script"
       );
-    }
-    // Map: { intervalTime: [trades] }
-    const grouped = {};
-    (trades || [])
-      .filter(
-        (trade) =>
-          trade &&
-          trade.status === "running" &&
-          trade.coinName === coinName &&
-          (trade.investment !== undefined ||
-            trade.price !== undefined ||
-            trade.coinPrice !== undefined)
-      )
-      .forEach((trade) => {
-        let tradeTimestamp;
-        if (typeof trade.startedAt === "number") {
-          tradeTimestamp =
-            trade.startedAt > 1e12
-              ? Math.floor(trade.startedAt / 1000)
-              : trade.startedAt;
-        } else if (typeof trade.startedAt === "string") {
-          const parsed = Date.parse(trade.startedAt);
-          if (!isNaN(parsed)) {
-            tradeTimestamp = Math.floor(parsed / 1000);
-          }
-        } else if (trade.startedAt instanceof Date) {
-          tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
-        }
-
-        // Instead of bucketing, find the closest existing chart time that is >= trade time
-        let mappedTime = tradeTimestamp;
-        if (chartTimes.length > 0) {
-          // Find the closest chart time that is at or after the trade time
-          const futureOrCurrentTimes = chartTimes.filter(
-            (time) => time >= tradeTimestamp
-          );
-          if (futureOrCurrentTimes.length > 0) {
-            mappedTime = Math.min(...futureOrCurrentTimes);
-          } else {
-            // If no future times, use the latest available time
-            mappedTime = Math.max(...chartTimes);
-          }
-        }
-
-        if (!grouped[mappedTime]) grouped[mappedTime] = [];
-        grouped[mappedTime].push(trade);
-      });
-    // For each interval, render all trades in the same row (horizontal offset)
-    const boxWidth = tradeBoxSize.width;
-    const boxHeight = tradeBoxSize.height;
-    const fontSize = tradeBoxSize.font;
-    let rendered = [];
-    Object.keys(grouped)
-      .sort((a, b) => a - b)
-      .forEach((mappedTime) => {
-        const tradesArr = grouped[mappedTime];
-        tradesArr.sort((a, b) => {
-          const aTime = new Date(a.startedAt).getTime();
-          const bTime = new Date(b.startedAt).getTime();
-          return aTime - bTime;
-        });
-        const gap = 28;
-        const totalWidth =
-          tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
-        const x = chartRef.current
-          ?.timeScale()
-          .timeToCoordinate(Number(mappedTime));
-        const containerRect = containerRef.current.getBoundingClientRect() || {
-          width: 600,
-          height: 500,
-        };
-        let startLeft =
-          x != null && !isNaN(x)
-            ? Math.max(
-                boxWidth / 2,
-                Math.min(
-                  x - totalWidth + boxWidth,
-                  x - totalWidth / 2,
-                  containerRect.width - totalWidth + boxWidth / 2
-                )
-              )
-            : containerRect.width - totalWidth - 10;
-        const latestBoxRight =
-          startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
-        if (x != null && latestBoxRight > x + boxWidth / 2) {
-          startLeft -= latestBoxRight - (x + boxWidth / 2);
-        }
-        // Render trade boxes
-        tradesArr.forEach((trade, idx) => {
-          const tradeId =
-            trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
-          const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
-          const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
-          const left = startLeft + idx * (boxWidth + gap);
-          const top = Math.max(
-            boxHeight / 2,
-            Math.min(y, containerRect.height - boxHeight / 2)
-          );
-          const isBuy = trade.type === "Buy";
-          const boxColor = isBuy ? "#10A055" : "#FF0000";
-          const borderColor = isBuy ? "#0d7a3a" : "#b80000";
-          const textColor = "#fff";
-          rendered.push(
-            <div
-              key={tradeId}
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                background: boxColor,
-                color: textColor,
-                border: `1.2px solid ${borderColor}`,
-                borderRadius: 5,
-                minWidth: 38,
-                minHeight: 24,
-                width: boxWidth,
-                height: boxHeight,
-                fontWeight: 600,
-                fontSize: fontSize,
-                boxShadow: "0 1px 4px rgba(0,0,0,0.13)",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "2px 7px",
-                gap: 6,
-                transition:
-                  "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
-                cursor: "pointer",
-                zIndex: 10,
-                pointerEvents: "auto",
-                opacity: 1,
-              }}
-            >
-              <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
-                {isBuy ? "B" : "S"}
-              </span>
-              <span style={{ fontWeight: 600, fontSize: fontSize }}>
-                ${trade.investment ?? trade.price ?? trade.coinPrice}
-              </span>
-              <span
-                style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
-              >
-                {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
-              </span>
-              {/* Close button for finished trades */}
-              {trade.remainingTime === 0 && tradeId && handleCloseTrade && (
-                <button
-                  style={{
-                    position: "absolute",
-                    top: 1,
-                    right: 1,
-                    background: "rgba(255,255,255,0.15)",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: fontSize - 1,
-                    cursor: "pointer",
-                    zIndex: 30,
-                    borderRadius: 2,
-                    padding: 0,
-                    transition: "background 0.2s",
-                    width: fontSize + 6,
-                    height: fontSize + 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  onClick={() => handleCloseTrade({ ...trade, id: tradeId })}
-                  title="Close Trade"
-                >
-                  <AiOutlineClose />
-                </button>
-              )}
-            </div>
-          );
-        });
-        // --- Add lines for each trade after the latest trade ---
-        if (
-          tradesArr.length > 0 &&
-          chartRef.current &&
-          seriesRef.current &&
-          containerRef.current
-        ) {
-          const lastTrade = tradesArr[tradesArr.length - 1];
-          const lastTradePrice =
-            lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
-          const yLast = seriesRef.current.priceToCoordinate(
-            Number(lastTradePrice)
-          );
-          const leftLast =
-            startLeft +
-            (tradesArr.length - 1) * (boxWidth + gap) +
-            boxWidth / 2;
-          const topLast =
-            yLast != null && !isNaN(yLast)
-              ? Math.max(
-                  boxHeight / 2,
-                  Math.min(yLast, containerRect.height - boxHeight / 2)
-                )
-              : 40;
-          tradesArr.forEach((trade, idx) => {
-            // Show lines for a short time even after timeout (don't return immediately)
-            const isExpired =
-              typeof trade.remainingTime === "number" &&
-              trade.remainingTime <= 0;
-
-            // Skip only if trade has been expired for more than 5 seconds
-            if (
-              isExpired &&
-              trade.expiredAt &&
-              Date.now() - trade.expiredAt > 5000
-            ) {
-              return;
-            }
-
-            // Validate trade data before processing
-            const lineTradePriceData =
-              trade.entryPrice ?? trade.coinPrice ?? trade.price;
-            if (
-              lineTradePriceData == null ||
-              isNaN(Number(lineTradePriceData))
-            ) {
-              return; // Skip this trade if price is invalid
-            }
-            let durationSec = 60;
-            if (typeof trade.duration === "number") {
-              durationSec = trade.duration;
-            } else if (
-              typeof trade.remainingTime === "number" &&
-              typeof trade.startedAt !== "undefined"
-            ) {
-              const now = Math.floor(Date.now() / 1000);
-              const started =
-                typeof trade.startedAt === "number"
-                  ? trade.startedAt > 1e12
-                    ? Math.floor(trade.startedAt / 1000)
-                    : trade.startedAt
-                  : Math.floor(new Date(trade.startedAt).getTime() / 1000);
-              durationSec = trade.remainingTime + (now - started);
-            }
-            let tradeStartSec =
-              typeof trade.startedAt === "number"
-                ? trade.startedAt > 1e12
-                  ? Math.floor(trade.startedAt / 1000)
-                  : trade.startedAt
-                : Math.floor(new Date(trade.startedAt).getTime() / 1000);
-            let tradeEndSec = tradeStartSec + durationSec;
-            let x0 = chartRef.current
-              .timeScale()
-              .timeToCoordinate(tradeStartSec);
-            let x1 = chartRef.current.timeScale().timeToCoordinate(tradeEndSec);
-            let lineLength = 80;
-            if (x0 != null && x1 != null && !isNaN(x0) && !isNaN(x1)) {
-              lineLength = Math.max(20, Math.abs(x1 - x0));
-            }
-            let percentLeft = 1;
-            if (typeof trade.remainingTime === "number" && durationSec > 0) {
-              percentLeft = Math.max(
-                0,
-                Math.min(1, trade.remainingTime / durationSec)
-              );
-            }
-            let visibleLength = lineLength * percentLeft;
-
-            // For expired trades, show a short static line
-            if (isExpired) {
-              visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
-            }
-
-            if (visibleLength <= 0) return;
-            const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
-
-            // Fade out expired trades
-            const opacity = isExpired ? 0.4 : 1;
-
-            // Position line at the actual entry price of this trade (not with equal spacing)
-            const yTrade = seriesRef.current.priceToCoordinate(
-              Number(lineTradePriceData)
-            );
-
-            // Skip if coordinate conversion fails
-            if (yTrade == null || isNaN(yTrade)) {
-              return;
-            }
-
-            const lineTop = Math.max(
-              boxHeight / 2,
-              Math.min(yTrade, containerRect.height - boxHeight / 2)
-            );
-
-            // Position lines in front of the latest trade horizontally
-            const lineLeft = leftLast + boxWidth / 2 + 16;
-
-            // Clamp lineLeft and visibleLength to stay within chart container
-            let clampedLineLeft = Math.max(
-              0,
-              Math.min(lineLeft, containerRect.width - 20)
-            );
-            let clampedVisibleLength = Math.max(
-              0,
-              Math.min(visibleLength, containerRect.width - clampedLineLeft - 8)
-            );
-            let clampedLineTop = Math.max(
-              0,
-              Math.min(lineTop, containerRect.height - 8)
-            );
-            rendered.push(
-              <svg
-                key={`afterline-${mappedTime}-${trade.id || trade._id || idx}`}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: "100%",
-                  height: "100%",
-                  pointerEvents: "none",
-                  zIndex: 20,
-                }}
-              >
-                <circle
-                  cx={clampedLineLeft}
-                  cy={clampedLineTop}
-                  r={4}
-                  fill={color}
-                  stroke="#fff"
-                  strokeWidth={1.5}
-                  opacity={opacity}
-                />
-                <line
-                  x1={clampedLineLeft}
-                  y1={clampedLineTop}
-                  x2={clampedLineLeft + clampedVisibleLength}
-                  y2={clampedLineTop}
-                  stroke={color}
-                  strokeWidth={4}
-                  opacity={opacity}
-                />
-                <circle
-                  cx={clampedLineLeft + clampedVisibleLength}
-                  cy={clampedLineTop}
-                  r={4}
-                  fill={color}
-                  stroke="#fff"
-                  strokeWidth={1.5}
-                  opacity={opacity}
-                />
-              </svg>
-            );
-          });
-        }
-      });
-    return <>{rendered}</>;
-  };
-
-  // --- Popup close on outside click ---
-  useEffect(() => {
-    if (
-      !showIndicatorPopup &&
-      !showDrawingPopup &&
-      !showThemePopup &&
-      !showStylePopup
-    )
-      return;
-    function handlePopupClickOutside(event) {
-      // Check for all popup refs (none are using refs, so check by class or id)
-      // We'll use the button refs and the popups' parent containers
-      const popups = [
-        document.getElementById("indicator-btn"),
-        document.getElementById("drawing-btn"),
-        document.getElementById("theme-btn"),
-        document.getElementById("style-btn"),
-      ];
-      let clickedInside = false;
-      for (const el of popups) {
-        if (el && el.contains(event.target)) {
-          clickedInside = true;
-          break;
-        }
+      if (scriptToRemove) {
+        scriptToRemove.remove();
       }
-      // Also check if the popup itself was clicked
-      const popupDivs = document.querySelectorAll(".popup-green-border");
-      for (const div of popupDivs) {
-        if (div.contains(event.target)) {
-          clickedInside = true;
-          break;
-        }
-      }
-      if (!clickedInside) {
-        setShowIndicatorPopup(false);
-        setShowDrawingPopup(false);
-        setShowThemePopup(false);
-        setShowStylePopup(false);
-      }
-    }
-    document.addEventListener("mousedown", handlePopupClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handlePopupClickOutside);
-  }, [showIndicatorPopup, showDrawingPopup, showThemePopup, showStylePopup]);
+    };
+  }, [coinName, interval, theme, candleStyle, chartHeight]);
 
-  // --- Coin selector close on outside click ---
+  // Handle click outside coin selector to close it
   useEffect(() => {
     if (!showCoinSelector) return;
-    function handleCoinSelectorClickOutside(event) {
-      // Check if click is inside the coin selector popup or its button
-      const popup = coinSelectorRef.current;
-      const button = buttonRefs.current[0];
+    
+    function handleClickOutside(event) {
       if (
-        (popup && popup.contains(event.target)) ||
-        (button && button.contains(event.target))
+        coinSelectorRef.current &&
+        !coinSelectorRef.current.contains(event.target)
       ) {
-        return;
+        setShowCoinSelector(false);
       }
-      setShowCoinSelector(false);
     }
-    document.addEventListener("mousedown", handleCoinSelectorClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () =>
-      document.removeEventListener("mousedown", handleCoinSelectorClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
   }, [showCoinSelector]);
+
+  // Toggle trade popup
+  const toggleTradePopup = () => {
+    setTradePopup(!tradePopup);
+  };
+
+  // Handle drawing tool selection
+  const handleDrawingToolClick = (tool) => {
+    setDrawingTool(tool);
+    setShowDrawingPopup(false);
+  };
+
+  // Clear all drawings (placeholder function)
+  const clearAllDrawings = () => {
+    setDrawingTool(DRAWING_TOOLS.NONE);
+    setShowDrawingPopup(false);
+  };
+
+  // Close popups when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if the clicked element is not part of any popup
+      if (
+        !event.target.closest(".popup-green-border") &&
+        !event.target.closest(".chartBtns")
+      ) {
+        setShowThemePopup(false);
+        setShowStylePopup(false);
+        setShowIndicatorPopup(false);
+        setShowDrawingPopup(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div
-      className="liveCHART"
+      className="mainBOX"
       style={{
         background: theme.background,
         color: theme.textColor,
         borderRadius: 10,
-        position: "relative",
       }}
     >
-      <div className="liveChartBtns">
-        <div
-          style={{ display: "flex", flexDirection: "row", marginBottom: 10 }}
-        >
-          {/* Coin Selector Button*/}
-          <div
-            className="coinSelectorMobile"
-            ref={(el) => (buttonRefs.current[0] = el)}
-          >
+      <div
+        className="charting"
+        style={{
+          display: "flex",
+          marginBottom: 10,
+        }}
+      >
+        {/* Coin Selector Button */}
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <div className="coinSelectorMobile2">
             <button
               id="indicator-btn"
               className="chartBtns"
-              onClick={() => setShowCoinSelector(true)}
+              onClick={() => setShowCoinSelector(!showCoinSelector)}
               style={{
                 fontSize: "1rem",
                 display: "flex",
@@ -1143,10 +587,14 @@ const ForexTradingChart = ({
               >
                 <p className="nameProfit">
                   {coins.find((c) => c.name === coinName)?.firstName}/
-                  {coins.find((c) => c.name === coinName)?.lastName}({type})
+                  {coins.find((c) => c.name === coinName)?.lastName}
+                  {"("}
+                  {type}
+                  {")"}
                 </p>
                 <p className="nameProfit">
-                  &nbsp;&nbsp;{profit}
+                  &nbsp;&nbsp;
+                  {profit}
                   {"% "}
                 </p>
                 <p className="nameProfit">
@@ -1162,7 +610,7 @@ const ForexTradingChart = ({
                   top: "110%",
                   left: 0,
                   zIndex: 200,
-                  width: "100%",
+                  minWidth: 260,
                 }}
               >
                 <CoinSelector
@@ -1179,20 +627,22 @@ const ForexTradingChart = ({
               </div>
             )}
           </div>
-          <div className="webCoinInfoT" style={{ position: "absolute" }}>
+          <div className="webCoinInfo" style={{ position: "absolute" }}>
             <div className="coininfoBox">
               <p className="nameProfitWeb">
                 {coins.find((c) => c.name === coinName)?.firstName}/
-                {coins.find((c) => c.name === coinName)?.lastName}({type})
+                {coins.find((c) => c.name === coinName)?.lastName}
+                {"("}
+                {type}
+                {")"}
               </p>
               <p className="nameProfitWeb">
-                &nbsp;&nbsp;{profit}
+                &nbsp;&nbsp;
+                {profit}
                 {"% "}
               </p>
             </div>
           </div>
-
-          {/* Previous Coins Selector */}
           <div
             style={{
               position: "absolute",
@@ -1208,19 +658,93 @@ const ForexTradingChart = ({
             />
           </div>
 
-          {/* Indicator selector */}
-          <div
-            style={{ position: "relative" }}
-            ref={(el) => (buttonRefs.current[5] = el)}
-          >
+          {window.innerWidth < 768 && (
             <button
-              id="indicator-btn"
+              onClick={() => setTradePopup(true)}
+              className="show-trades-btn"
+              style={{
+                marginRight: 8,
+                background: "#10A055",
+                color: "#fff",
+                border: "none",
+                width: "100px",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                fontWeight: 600,
+                fontSize: "1rem",
+                cursor: "pointer",
+                top: "103px",
+                left: 0,
+                zIndex: 2,
+                position: "absolute",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              }}
+            >
+              Trades
+            </button>
+          )}
+          {tradePopup && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                background: "rgba(0,0,0,0.4)",
+                zIndex: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={() => setTradePopup(false)}
+            >
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 10,
+                  padding: 24,
+                  minWidth: 320,
+                  maxWidth: 400,
+                  width: "90vw",
+                  maxHeight: "80vh",
+                  overflowY: "auto",
+                  position: "relative",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    background: "transparent",
+                    border: "none",
+                    fontSize: 24,
+                    cursor: "pointer",
+                    color: "#222",
+                    zIndex: 2,
+                  }}
+                  onClick={() => setTradePopup(false)}
+                >
+                  <AiOutlineClose />
+                </button>
+                <Trades
+                  trades={trades}
+                  coins={coins}
+                  handleCloseTrade={handleCloseTrade}
+                />
+              </div>
+            </div>
+          )}
+          <div style={{ position: "relative", display: "flex" }}>
+            <button
               className="chartBtns"
               onClick={() => {
                 setShowIndicatorPopup(!showIndicatorPopup);
-                setShowDrawingPopup(false);
-                setShowThemePopup(false);
                 setShowStylePopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(false);
               }}
               style={{
                 color: "black",
@@ -1230,9 +754,9 @@ const ForexTradingChart = ({
                 background: "#E0E0E0",
               }}
             >
-              {/* You can use a beaker or similar icon for indicator, or fallback to text */}
               <BiLineChart />
             </button>
+
             {showIndicatorPopup && (
               <div
                 className="popup-green-border"
@@ -1250,46 +774,31 @@ const ForexTradingChart = ({
                   gap: 5,
                 }}
               >
-                {Object.values(INDICATORS).map((indicator) => (
+                {Object.values(INDICATORS).map((ind) => (
                   <div
-                    key={indicator}
+                    key={ind}
                     onClick={() => {
-                      setActiveIndicator(
-                        indicator === INDICATORS.NONE ? null : indicator
-                      );
+                      setIndicator(ind);
                       setShowIndicatorPopup(false);
                     }}
                     style={{
                       padding: "5px 10px",
-                      color: theme.textColor,
                       cursor: "pointer",
-                      fontWeight: activeIndicator === indicator ? 700 : 400,
-                      background:
-                        activeIndicator === indicator
-                          ? "#e6f7ee"
-                          : "transparent",
-                      borderRadius: 4,
                     }}
                   >
-                    {indicator} {activeIndicator === indicator ? "✓" : ""}
+                    {ind}
                   </div>
                 ))}
               </div>
             )}
-          </div>
-          {/* Drawing tool selector */}
-          <div
-            style={{ position: "relative" }}
-            ref={(el) => (buttonRefs.current[1] = el)}
-          >
+
             <button
-              id="drawing-btn"
               className="chartBtns"
               onClick={() => {
-                setShowDrawingPopup(!showDrawingPopup);
                 setShowIndicatorPopup(false);
-                setShowThemePopup(false);
                 setShowStylePopup(false);
+                setShowThemePopup(false);
+                setShowDrawingPopup(!showDrawingPopup);
               }}
               style={{
                 color: "black",
@@ -1321,55 +830,58 @@ const ForexTradingChart = ({
                 {Object.values(DRAWING_TOOLS).map((tool) => (
                   <div
                     key={tool}
-                    onClick={() => {
-                      if (activeDrawingTool === tool) {
-                        selectDrawingTool(null);
-                      } else {
-                        selectDrawingTool(tool);
-                      }
-                    }}
+                    onClick={() => handleDrawingToolClick(tool)}
                     style={{
                       padding: "5px 10px",
                       color: theme.textColor,
                       cursor: "pointer",
                     }}
                   >
-                    {tool} {activeDrawingTool === tool ? "✓" : ""}
+                    {tool}
                   </div>
                 ))}
+                <div
+                  onClick={clearAllDrawings}
+                  style={{
+                    padding: "5px 10px",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    borderTop: `1px solid ${theme.gridColor}`,
+                    marginTop: 5,
+                  }}
+                >
+                  Clear All
+                </div>
               </div>
             )}
           </div>
-          {/* Interval selector */}
-          <div ref={(el) => (buttonRefs.current[2] = el)}>
-            <select
-              id="interval-select"
-              value={interval}
-              className="chartBtns"
-              onChange={(e) => setInterval(e.target.value)}
-              style={{
-                appearance: "none",
-                color: "black",
-                cursor: "pointer",
-                height: 50,
-                fontSize: "1rem",
-                background: "#E0E0E0",
-              }}
-            >
-              {SUPPORTED_INTERVALS.map((i) => (
-                <option key={i.value} value={i.value}>
-                  {i.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Theme selector */}
-          <div
-            style={{ position: "relative" }}
-            ref={(el) => (buttonRefs.current[3] = el)}
+          <select
+            value={interval}
+            onClick={() => {
+              setShowThemePopup(false);
+              setShowIndicatorPopup(false);
+              setShowStylePopup(false);
+              setShowDrawingPopup(false);
+            }}
+            className="chartBtns"
+            onChange={(e) => setInterval(e.target.value)}
+            style={{
+              appearance: "none",
+              color: "black",
+              cursor: "pointer",
+              height: 50,
+              fontSize: "1rem",
+              background: "#E0E0E0",
+            }}
           >
+            {Object.keys(intervalToSeconds).map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+          <div style={{ position: "relative" }}>
             <button
-              id="theme-btn"
               className="chartBtns"
               onClick={() => {
                 setShowThemePopup(!showThemePopup);
@@ -1421,23 +933,26 @@ const ForexTradingChart = ({
                     }}
                   >
                     <div
-                      style={{ width: 30, height: 30, background: t.upColor }}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        background: t.upColor,
+                      }}
                     />
                     <div
-                      style={{ width: 30, height: 30, background: t.downColor }}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        background: t.downColor,
+                      }}
                     />
                   </div>
                 ))}
               </div>
             )}
           </div>
-          {/* Chart style selector */}
-          <div
-            style={{ position: "relative" }}
-            ref={(el) => (buttonRefs.current[4] = el)}
-          >
+          <div style={{ position: "relative" }}>
             <button
-              id="style-btn"
               className="chartBtns"
               onClick={() => {
                 setShowStylePopup(!showStylePopup);
@@ -1479,7 +994,10 @@ const ForexTradingChart = ({
                       setCandleStyle(style);
                       setShowStylePopup(false);
                     }}
-                    style={{ padding: "5px 10px", cursor: "pointer" }}
+                    style={{
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                    }}
                   >
                     {style}
                   </div>
@@ -1492,107 +1010,27 @@ const ForexTradingChart = ({
           <Tabs />
         </div>
       </div>
-      <div
-        id="chart-container"
-        ref={(el) => {
-          containerRef.current = el;
-          // If you use buttonRefs, add: buttonRefs.current[5] = el;
-        }}
-        style={{
-          width: "100%",
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
-        {renderTradeBoxesAndLines()}
-      </div>
-      {(activeIndicator === INDICATORS.RSI ||
-        activeIndicator === INDICATORS.MACD) && (
+
+      <div style={{ position: "relative" }}>
         <div
-          ref={indicatorContainerRef}
-          style={{ width: "100%", height: 200, marginTop: 10 }}
-        />
-      )}
-      {window.innerWidth < 768 && (
-        <button
-          className="show-trades-btn"
-          style={{
-            marginRight: 8,
-            background: "#10A055",
-            color: "#fff",
-            border: "none",
-            width: "fit-content",
-            borderRadius: "6px",
-            padding: "8px 16px",
-            fontWeight: 600,
-            fontSize: "1rem",
-            cursor: "pointer",
-            top: "102px",
-            left: 0,
-            zIndex: 2,
-            position: "absolute",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          }}
-          onClick={() => setTradePopup(true)}
+          ref={chartContainerRef}
+          className="chartMain"
+          style={{ width: "100%", position: "relative" }}
         >
-          Trades
-        </button>
-      )}
-      {tradePopup && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.4)",
-            zIndex: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onClick={() => setTradePopup(false)}
-        >
+          {/* TradingView Chart Container */}
           <div
-            style={{
-              background: "#fff",
-              borderRadius: 10,
-              padding: 24,
-              minWidth: 320,
-              maxWidth: 400,
-              width: "90vw",
-              maxHeight: "80vh",
-              overflowY: "auto",
-              position: "relative",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              style={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                background: "transparent",
-                border: "none",
-                fontSize: 24,
-                cursor: "pointer",
-                color: "#222",
-                zIndex: 2,
-              }}
-              onClick={() => setTradePopup(false)}
-            >
-              <AiOutlineClose />
-            </button>
-            <Trades
-              trades={trades}
-              coins={coins}
-              handleCloseTrade={handleCloseTrade}
-              // Add other props as needed
-            />
-          </div>
+            id="tradingview_chart_container"
+            style={{ height: chartHeight, width: "100%" }}
+          />
+          <TradeBoxes
+            trades={trades}
+            coinName={coinName}
+            handleCloseTrade={handleCloseTrade}
+            tradeHover={tradeHover}
+            setTradeHover={setTradeHover}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 };

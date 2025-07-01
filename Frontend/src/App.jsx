@@ -44,6 +44,8 @@ import Amount from "./Admin/AdminPaymentInfo";
 import Admin from "./Admin/components/Admins/Admins";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage/ForgotPasswordPage";
 import { ThemeProvider } from "./Context/ThemeContext";
+import Forexchats from "./Forexchats";
+
 const s = styles;
 
 const App = () => {
@@ -56,7 +58,9 @@ const App = () => {
               <div className={s.container}>
                 <BrowserRouter>
                   <Routes>
+                    <Route path="/forex" element={<Forexchats />} />
                     <Route path="/" element={<RegisterLayout />}>
+
                       <Route index element={<HomePage />} />
                       <Route path="/register" element={<RegisterPage />} />
                       <Route path="/login" element={<LoginPage />} />
