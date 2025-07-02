@@ -93,7 +93,9 @@ const LoginPage = () => {
         window.google.accounts.id.prompt();
       } catch (error) {
         console.error("Google Sign-In initialization error:", error);
-        alert("Google Sign-In is not properly configured. Please contact support.");
+        alert(
+          "Google Sign-In is not properly configured. Please contact support."
+        );
       }
     } else {
       console.error("Google Identity Services script not loaded.");
@@ -105,7 +107,7 @@ const LoginPage = () => {
     try {
       const token = response.credential;
       await googleLogin(token, false); // false = this is login, not registration
-      
+
       // Check if user is admin
       const decoded = jwt_decode(token);
       const res = await fetch(`${BACKEND_URL}/api/auth/check-admin`, {
@@ -117,7 +119,7 @@ const LoginPage = () => {
       });
 
       const data = await res.json();
-      
+
       if (data.isAdmin === true) {
         navigate("/admin");
       } else {
@@ -134,12 +136,6 @@ const LoginPage = () => {
   };
 
   useEffect(() => {
-    console.log("=== GOOGLE AUTH DEBUG ===");
-    console.log("Google Client ID:", CLIENT_ID);
-    console.log("Current domain:", window.location.origin);
-    console.log("Current URL:", window.location.href);
-    console.log("Google object available:", !!window.google);
-    
     if (window.google) {
       try {
         window.google.accounts.id.initialize({
@@ -161,7 +157,7 @@ const LoginPage = () => {
     } else {
       console.error("Google Identity Services not loaded");
     }
-  }, []);  // Remove handleCredentialResponse from dependencies since it's now async
+  }, []); // Remove handleCredentialResponse from dependencies since it's now async
 
   return (
     <div className={styles.container}>
