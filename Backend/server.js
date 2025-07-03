@@ -23,7 +23,7 @@ import testimonialRoutes from "./routes/testimonialRoutes.js";
 
 // Services
 import candleService from "./services/candleGenerator.js";
-import { checkTrc20Deposits } from "./utils/tronWatcher.js";
+// import { checkTrc20Deposits } from "./utils/tronWatcher.js"; // TRC-20 API commented out
 import AffiliateTimers from "./utils/affiliateTimers.js";
 import "./utils/affiliateCron.js"; // Start affiliate cron job
 
@@ -172,8 +172,8 @@ const startServer = async () => {
     });
 
     // Start background services
-    setInterval(checkTrc20Deposits, 30000);
-    console.log("🔍 TRC20 deposit checker started");
+    // setInterval(checkTrc20Deposits, 30000); // TRC-20 deposit checker commented out
+    // console.log("🔍 TRC20 deposit checker started"); // TRC-20 deposit checker commented out
   } catch (err) {
     console.error("💥 Failed to start server:", err);
     process.exit(1);
