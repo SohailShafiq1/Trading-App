@@ -82,7 +82,6 @@ const register = async (req, res) => {
       message: "Registration successful",
     });
   } catch (error) {
-    console.error("Registration error:", error);
     res.status(500).json({
       success: false,
       message: "Registration failed",
@@ -93,8 +92,6 @@ const register = async (req, res) => {
 
 // Login User
 const login = async (req, res) => {
-  console.log("log in accessed");
-
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -151,7 +148,6 @@ const login = async (req, res) => {
       message: "Login successful",
     });
   } catch (error) {
-    console.error("Login error:", error);
     res.status(500).json({
       success: false,
       message: "Login failed",
@@ -165,9 +161,7 @@ const googleLogin = async (req, res) => {
   try {
     const { token, isRegistration, country, currency, referralCode } = req.body;
 
-    console.log("🔍 Google Client ID from env:", process.env.GOOGLE_CLIENT_ID);
-    console.log("🔍 Token received:", token ? "Token present" : "No token");
-    console.log("🔍 Is registration:", isRegistration);
+
 
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -227,7 +221,7 @@ const googleLogin = async (req, res) => {
             await affiliate.save();
           }
         } catch (affiliateError) {
-          console.error("Referral processing error:", affiliateError);
+          // Silently handle affiliate processing errors
         }
       }
     } else {
@@ -264,7 +258,6 @@ const googleLogin = async (req, res) => {
       isAdmin: user.isAdmin,
     });
   } catch (error) {
-    console.error("Google login error:", error);
     res.status(401).json({
       success: false,
       message: "Google authentication failed",
@@ -299,7 +292,6 @@ const getMe = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Fetch user error:", error);
     res.status(401).json({
       success: false,
       message: "Invalid or expired token",
@@ -362,9 +354,7 @@ const deleteAccount = async (req, res) => {
 
     // For Google users, skip password verification
     if (user.authType === "google") {
-      console.log(
-        "🔍 Google user deleting account, skipping password verification"
-      );
+      // Google user - no password verification needed
     } else {
       // For email users, verify password
       if (!password) {
@@ -394,7 +384,6 @@ const deleteAccount = async (req, res) => {
       message: "Account and associated affiliate data deleted successfully",
     });
   } catch (error) {
-    console.error("Account deletion error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to delete account",
@@ -426,7 +415,6 @@ const checkAdmin = async (req, res) => {
       isAdmin: user.isAdmin,
     });
   } catch (error) {
-    console.error("Check admin error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to check admin status",
@@ -506,7 +494,6 @@ const sendResetOTP = async (req, res) => {
       message: "OTP sent to your email address",
     });
   } catch (error) {
-    console.error("Send reset OTP error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to send OTP",
@@ -562,7 +549,6 @@ const verifyResetOTP = async (req, res) => {
       message: "OTP verified successfully",
     });
   } catch (error) {
-    console.error("Verify reset OTP error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to verify OTP",
@@ -662,10 +648,6 @@ const resetPassword = async (req, res) => {
     try {
       await transporter.sendMail(mailOptions);
     } catch (emailError) {
-      console.error(
-        "Failed to send password reset confirmation email:",
-        emailError
-      );
       // Don't fail the request if email fails
     }
 
@@ -674,7 +656,6 @@ const resetPassword = async (req, res) => {
       message: "Password reset successfully",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to reset password",

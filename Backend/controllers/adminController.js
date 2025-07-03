@@ -51,7 +51,6 @@ export const getAllWithdrawalRequests = async (req, res) => {
 
     res.status(200).json(allRequests);
   } catch (err) {
-    console.error("Error:", err);
     res.status(500).json({ error: "Failed to fetch requests" });
   }
 };
@@ -84,7 +83,6 @@ export const acceptWithdrawalRequest = async (req, res) => {
     await user.save();
     res.status(200).json({ message: "Request approved" });
   } catch (err) {
-    console.error("Error:", err);
     res.status(500).json({ error: "Failed to approve request" });
   }
 };
@@ -120,7 +118,6 @@ export const declineWithdrawalRequest = async (req, res) => {
     await user.save();
     res.status(200).json({ message: "Request rejected & funds returned" });
   } catch (err) {
-    console.error("Error:", err);
     res.status(500).json({ error: "Failed to reject request" });
   }
 };
@@ -195,7 +192,6 @@ export const updateDepositStatus = async (req, res) => {
       deposit,
     });
   } catch (err) {
-    console.error("Error updating deposit status:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -263,7 +259,6 @@ export const getAllSupportRequests = async (req, res) => {
     allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json(allRequests);
   } catch (err) {
-    console.error("Error fetching support requests:", err);
     res.status(500).json({ error: "Failed to fetch support requests" });
   }
 };
@@ -304,7 +299,6 @@ export const markSupportReviewed = async (req, res) => {
 
       await transporter.sendMail(mailOptions);
     } catch (emailErr) {
-      console.error("Failed to send reviewed email:", emailErr);
       // Don't fail the request if email fails
     }
     // --- End email ---
@@ -348,7 +342,6 @@ export const markSupportCompleted = async (req, res) => {
 
       await transporter.sendMail(mailOptions);
     } catch (emailErr) {
-      console.error("Failed to send completed email:", emailErr);
       // Don't fail the request if email fails
     }
     // --- End email ---
@@ -360,7 +353,6 @@ export const markSupportCompleted = async (req, res) => {
 };
 export const getAllUsers = async (req, res) => {
   try {
-    console.log("GET /api/admin/all-users HIT");
     const users = await User.find(
       { email: { $exists: true, $ne: "" } },
       {
@@ -374,10 +366,8 @@ export const getAllUsers = async (req, res) => {
         isAdmin: 1, // Include isAdmin for frontend filtering
       }
     );
-    console.log("USERS FOUND:", users.length);
     res.json({ users });
   } catch (err) {
-    console.error("ERROR FETCHING USERS:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };

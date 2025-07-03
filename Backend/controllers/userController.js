@@ -7,7 +7,6 @@ import path from "path";
 import Tesseract from "tesseract.js";
 import fs from "fs";
 import nodemailer from "nodemailer";
-import { log } from "console";
 
 const ensureDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -121,7 +120,6 @@ export const createDeposit = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error creating deposit:", err);
     res.status(500).json({ error: "Failed to create deposit." });
   }
 };
@@ -132,7 +130,6 @@ export const getAllUsers = async (req, res) => {
     const users = await User.find({}, { password: 0 });
     res.status(200).json(users);
   } catch (err) {
-    console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
@@ -145,7 +142,6 @@ export const getUserByEmail = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json(user);
   } catch (err) {
-    console.error("Error fetching user by email:", err);
     res.status(500).json({ error: "Failed to fetch user" });
   }
 };
@@ -183,7 +179,6 @@ export const updateUserAssets = async (req, res) => {
       totalBalance,
     });
   } catch (err) {
-    console.error("Error updating assets:", err);
     res.status(500).json({ error: "Failed to update assets" });
   }
 };
@@ -249,7 +244,6 @@ export const withdraw = async (req, res) => {
           : "Withdrawal submitted",
     });
   } catch (err) {
-    console.error("Error processing withdrawal:", err);
     res.status(500).json({ error: "Failed to process withdrawal" });
   }
 };
@@ -264,7 +258,6 @@ export const getUserTransactions = async (req, res) => {
 
     res.status(200).json(user.transactions || []);
   } catch (err) {
-    console.error("Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 };
@@ -334,16 +327,7 @@ export const updateTradeResult = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Debug: Print all startedAt values and types for this user
-    console.log("[DEBUG] updateTradeResult: Incoming startedAt:", startedAt, typeof startedAt);
-    user.trades.forEach((t, idx) => {
-      console.log(
-        `[DEBUG] Trade #${idx}: startedAt=`,
-        t.startedAt,
-        typeof t.startedAt,
-        t.startedAt instanceof Date ? t.startedAt.getTime() : t.startedAt
-      );
-    });
+
 
     // Robust matching: handle both Date and number types
     const tradeIndex = user.trades.findIndex((t) => {
@@ -410,7 +394,6 @@ export const updateTradeResult = async (req, res) => {
 
     res.status(200).json({ message: "Trade result updated", user });
   } catch (err) {
-    console.error("Error updating trade result:", err);
     res.status(500).json({ error: "Failed to update trade result" });
   }
 };
@@ -485,7 +468,6 @@ export const manualCloseTrade = async (req, res) => {
       newBalance: user.assets + user.totalBonus 
     });
   } catch (err) {
-    console.error("Error manually closing trade:", err);
     res.status(500).json({ error: "Failed to manually close trade" });
   }
 };
@@ -505,7 +487,6 @@ export const getUserTrades = async (req, res) => {
 
     res.status(200).json(validTrades.reverse());
   } catch (err) {
-    console.error("Error fetching trades:", err);
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 };
@@ -572,7 +553,6 @@ export const updateProfile = async (req, res) => {
         const match = text.match(/(\d{5}-\d{7}-\d{1})|(\d{13})/);
         update.imgCNIC = match ? match[0] : "";
       } catch (ocrErr) {
-        console.error("OCR error:", ocrErr);
         update.imgCNIC = "";
       }
 
@@ -597,7 +577,6 @@ export const updateProfile = async (req, res) => {
     // --- FIX: Preserve CNIC Back Picture ---
     if (req.files?.cnicBackPicture) {
       update.cnicBackPicture = `uploads/cnic/${req.files.cnicBackPicture[0].filename}`;
-      console.log("Saving CNIC BACK:", update.cnicBackPicture); // <--- ADD THIS
     } else if (
       typeof cnicBackPictureBody === "string" &&
       cnicBackPictureBody === ""
@@ -636,7 +615,6 @@ export const updateProfile = async (req, res) => {
 
     res.status(200).json({ message: "Profile updated successfully", user });
   } catch (err) {
-    console.error("Error in update-profile:", err);
     res.status(500).json({ error: "Failed to update profile" });
   }
 };
@@ -686,7 +664,6 @@ export const checkVerificationStatus = async (req, res) => {
     }
     res.status(200).json({ verified: user.verified });
   } catch (err) {
-    console.error("Error checking verification status:", err);
     res.status(500).json({ error: "Failed to check verification status" });
   }
 };
@@ -711,7 +688,6 @@ export const validateCNIC = async (req, res) => {
 
     res.status(200).json({ message: "CNIC number is valid" });
   } catch (err) {
-    console.error("Error validating CNIC:", err);
     res.status(500).json({ error: "Failed to validate CNIC" });
   }
 };
@@ -754,17 +730,11 @@ export const blockUser = async (req, res) => {
 
     try {
       await transporter.sendMail(mailOptions);
-      console.log("Block email sent to", user.email);
       if (user) {
         user.lastEmailSent = new Date();
         await user.save();
       }
     } catch (error) {
-      console.error("Error sending block email:", {
-        message: error.message,
-        stack: error.stack,
-        response: error.response,
-      });
       if (user) {
         user.emailError = error.message;
         await user.save();
@@ -809,7 +779,6 @@ export const unblockUser = async (req, res) => {
 
     try {
       await transporter.sendMail(mailOptions);
-      console.log("Unblock email sent to", user.email);
       user.notifications.push({
         type: "Account",
         read: false,
@@ -818,7 +787,7 @@ export const unblockUser = async (req, res) => {
       });
       await user.save();
     } catch (error) {
-      console.error("Error sending unblock email:", error);
+      // Silently handle email sending errors
     }
   }
   res.json({ success: true });
@@ -845,7 +814,7 @@ export const testEmail = async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.json({ success: true, message: "Test email sent successfully" });
   } catch (error) {
-    console.error("Test email failed:", error);
+
     res.status(500).json({
       success: false,
       error: error.message,
@@ -992,7 +961,7 @@ export const markAllNotificationsRead = async (req, res) => {
 
 export const createNotification = async (req, res) => {
   const { email, notification } = req.body;
-  console.log(req.body);
+
 
   if (!email || !notification) {
     return res
@@ -1066,14 +1035,14 @@ export const submitSupportRequest = async (req, res) => {
 
       await transporter.sendMail(mailOptions);
     } catch (emailErr) {
-      console.error("Failed to send support confirmation email:", emailErr);
+
       // Don't fail the request if email fails
     }
     // --- End email ---
 
     res.status(201).json({ message: "Support request submitted successfully" });
   } catch (err) {
-    console.error("Error submitting support request:", err);
+
     res.status(500).json({ error: "Failed to submit support request" });
   }
 };
@@ -1102,17 +1071,14 @@ export const getTotalTradeCount = async (req, res) => {
 };
 
 export const getRunningTradePercentage = async (req, res) => {
-  console.log("=== TRADE PERCENTAGE ENDPOINT HIT ===");
+
   try {
-    console.log("getRunningTradePercentage called");
+
     const users = await User.find(
       { "trades.result": "pending" },
       { trades: 1 }
     );
-    console.log("Users found:", users.length);
-    if (users.length > 0) {
-      console.log("Sample user:", JSON.stringify(users[0], null, 2));
-    }
+
     if (!users || users.length === 0) {
       return res.status(200).json({ buyPercentage: 0, sellPercentage: 0 });
     }
@@ -1123,11 +1089,7 @@ export const getRunningTradePercentage = async (req, res) => {
 
     users.forEach((user) => {
       if (!Array.isArray(user.trades)) {
-        console.warn(
-          "User with malformed trades array:",
-          user._id,
-          user.trades
-        );
+
         return;
       }
       user.trades.forEach((trade) => {
@@ -1139,7 +1101,7 @@ export const getRunningTradePercentage = async (req, res) => {
       });
     });
 
-    console.log("Trade result values:", resultValues);
+
 
     const totalRunningTrades = buyCount + sellCount;
     const buyPercentage =
@@ -1151,16 +1113,10 @@ export const getRunningTradePercentage = async (req, res) => {
         ? ((sellCount / totalRunningTrades) * 100).toFixed(2)
         : 0;
 
-    console.log({
-      buyCount,
-      sellCount,
-      totalRunningTrades,
-      buyPercentage,
-      sellPercentage,
-    });
+
     res.json({ buyPercentage, sellPercentage });
   } catch (err) {
-    console.error("Error getting running trade percentage:", err);
+
     res.status(500).json({
       error: "Failed to get running trade percentage",
       details: err.message,
@@ -1219,7 +1175,7 @@ export const getPendingDeposits = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error("Error getting pending deposits:", err);
+
     res.status(500).json({
       error: "Failed to get pending deposits",
       details: err.message

@@ -118,7 +118,6 @@ export const registerAffiliate = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Affiliate registration error:", error);
     res.status(500).json({
       success: false,
       message: "Registration failed",
@@ -159,7 +158,6 @@ export const loginAffiliate = async (req, res) => {
       message: "Affiliate login successful",
     });
   } catch (err) {
-    console.error("Login error:", err);
     return res
       .status(500)
       .json({ success: false, message: "Server error", error: err.message });
@@ -204,7 +202,6 @@ export const getAffiliateDetails = async (req, res) => {
       affiliate,
     });
   } catch (error) {
-    console.error("Server error while fetching affiliate details:", error);
     return res.status(500).json({
       success: false,
       message: "Server error while fetching affiliate details",
@@ -232,7 +229,6 @@ export const getTeamUsersByAffiliateEmail = async (req, res) => {
       teamUsers,
     });
   } catch (err) {
-    console.error("Error fetching affiliate team users:", err);
     return res.status(500).json({
       success: false,
       message: "Server error",
@@ -411,7 +407,6 @@ export const updateTrafficQuestions = async (req, res) => {
       : null;
 
     if (!token) {
-      console.log("No token found in header.");
       return res.status(401).json({
         success: false,
         message: "No authentication token provided",
@@ -419,19 +414,14 @@ export const updateTrafficQuestions = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded token:", decoded);
 
     const affiliate = await Affiliate.findById(decoded.id);
     if (!affiliate) {
-      console.log("Affiliate not found for ID:", decoded.id);
       return res.status(404).json({
         success: false,
         message: "Affiliate not found",
       });
     }
-
-    console.log("Affiliate found:", affiliate.email);
-    console.log("Request body:", req.body);
 
     const {
       primarySources,
@@ -455,7 +445,6 @@ export const updateTrafficQuestions = async (req, res) => {
       message: "Traffic questions submitted successfully",
     });
   } catch (err) {
-    console.error("🔥 Error in updateTrafficQuestions:", err);
     return res.status(500).json({
       success: false,
       message: "Failed to update traffic questions",
@@ -471,7 +460,6 @@ export const getTrafficQuestionsList = (req, res) => {
       questions: Affiliate.trafficQuestionsList,
     });
   } catch (err) {
-    console.error("Error fetching traffic questions list:", err);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch traffic questions list",
@@ -536,7 +524,6 @@ export const getTeamTotalDeposits = async (req, res) => {
       affiliateLevel: affiliate.affiliateLevel,
     });
   } catch (err) {
-    console.error("Error calculating team total deposits:", err);
     return res.status(500).json({
       success: false,
       message: "Server error",
@@ -571,7 +558,6 @@ export const submitAffiliateWithdrawRequest = async (req, res) => {
       message: "Withdraw request saved and balance deducted.",
     });
   } catch (err) {
-    console.error("Withdraw request error:", err);
     return res.status(500).json({ success: false, error: "Server error." });
   }
 };
@@ -597,7 +583,6 @@ export const getAllAffiliateWithdrawRequests = async (req, res) => {
     );
     res.status(200).json(allRequests);
   } catch (err) {
-    console.error("Error fetching affiliate withdrawals:", err);
     res.status(500).json({ error: "Failed to fetch affiliate withdrawals" });
   }
 };
@@ -621,7 +606,6 @@ export const approveAffiliateWithdrawRequest = async (req, res) => {
     await affiliate.save();
     res.status(200).json({ message: "Affiliate withdrawal approved" });
   } catch (err) {
-    console.error("Error approving affiliate withdrawal:", err);
     res.status(500).json({ error: "Failed to approve affiliate withdrawal" });
   }
 };
@@ -649,7 +633,6 @@ export const rejectAffiliateWithdrawRequest = async (req, res) => {
       .status(200)
       .json({ message: "Affiliate withdrawal rejected and amount refunded" });
   } catch (err) {
-    console.error("Error rejecting affiliate withdrawal:", err);
     res.status(500).json({ error: "Failed to reject affiliate withdrawal" });
   }
 };
