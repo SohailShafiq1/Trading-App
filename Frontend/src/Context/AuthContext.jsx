@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode"; // Correct import for jwtDecode
 
@@ -30,29 +36,50 @@ export const AuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async (token) => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setUser(res.data.user);
-    } catch {
-      logout();
-    } finally {
-      setLoading(false);
-    }
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
   };
 
+  const fetchUser = useCallback(
+    async (token) => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUser(res.data.user);
+      } catch {
+        localStorage.removeItem("token");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [] // Empty dependency array since setUser and setLoading are stable
+  );
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token && !isTokenExpired(token)) {
-      fetchUser(token);
-    } else {
+    const checkAndFetchUser = () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          if (decoded.exp > Date.now() / 1000) {
+            fetchUser(token);
+            return;
+          }
+        } catch {
+          // Invalid token
+        }
+      }
+      // No token, expired token, or invalid token
       setLoading(false);
-    }
-  }, []);
+    };
+
+    checkAndFetchUser();
+  }, [fetchUser]);
 
   const register = async (form) => {
     await axios.post(`${BACKEND_URL}/api/auth/register`, form);
@@ -67,14 +94,21 @@ export const AuthProvider = ({ children }) => {
     setUser(res.data.user);
   };
 
-  const googleLogin = async (token, isRegistration = false, additionalData = {}) => {
+  const googleLogin = async (
+    token,
+    isRegistration = false,
+    additionalData = {}
+  ) => {
     const payload = {
       token,
       isRegistration,
-      ...additionalData
+      ...additionalData,
     };
-    
-    const res = await axios.post(`${BACKEND_URL}/api/auth/google-login`, payload);
+
+    const res = await axios.post(
+      `${BACKEND_URL}/api/auth/google-login`,
+      payload
+    );
     localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
     return res.data;
@@ -102,22 +136,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-  };
-
   return (
     <AuthContext.Provider
-      value={{ 
-        user, 
-        register, 
-        login, 
-        googleLogin, 
-        logout, 
-        loading, 
-        resetPassword, 
-        updateUserTipStatus 
+      value={{
+        user,
+        register,
+        login,
+        googleLogin,
+        logout,
+        loading,
+        resetPassword,
+        updateUserTipStatus,
       }}
     >
       {children}

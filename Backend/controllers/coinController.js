@@ -135,7 +135,8 @@ export const getCoinCandles = async (req, res) => {
 
     const candles = coin.candles
       .filter((c) => c.interval === "30s")
-      .sort((a, b) => new Date(a.time) - new Date(b.time));
+      .sort((a, b) => new Date(a.time) - new Date(b.time))
+      .slice(-1000); // Limit to the most recent 1000 candles
 
     res.json(candles);
   } catch (err) {

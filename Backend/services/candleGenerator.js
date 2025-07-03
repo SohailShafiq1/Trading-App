@@ -54,7 +54,10 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
         move = state.burstTarget - state.burstAccum;
       } else {
         // Larger random move, but not always in burst direction
-        move = (Math.random() * 2.2 - 1.1) + (state.burstTarget / state.burstLen) * 0.7;
+        move =
+          Math.random() * 2.2 -
+          1.1 +
+          (state.burstTarget / state.burstLen) * 0.7;
         // Clamp so we don't overshoot
         if (Math.abs(state.burstAccum + move) > Math.abs(state.burstTarget)) {
           move = state.burstTarget - state.burstAccum;
@@ -68,7 +71,10 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
       return round(Math.max(0.01, base + move));
     }
     // --- Normal random walk for 'Random' trend ---
-    const bodyDelta = (Math.random() < 0.8 ? (Math.random() * 0.35 + 0.08) : (Math.random() * 0.7 + 0.15));
+    const bodyDelta =
+      Math.random() < 0.8
+        ? Math.random() * 0.35 + 0.08
+        : Math.random() * 0.7 + 0.15;
     if (lastDirections[coinName] === undefined)
       lastDirections[coinName] = Math.random() < 0.5 ? 1 : -1;
     if (Math.random() < 0.7) {
@@ -131,7 +137,8 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
 
 const updateCandles = async () => {
   try {
-    const coins = await Coin.find();
+    // Only fetch coins with type OTC
+    const coins = await Coin.find({ type: "OTC" });
 
     for (const coin of coins) {
       const roundedTime = new Date(
@@ -211,7 +218,8 @@ const updateCandles = async () => {
 
 const emitTicks = async () => {
   try {
-    const coins = await Coin.find();
+    // Only fetch coins with type OTC
+    const coins = await Coin.find({ type: "OTC" });
 
     for (const coin of coins) {
       const intervalSec = 30;
@@ -306,6 +314,7 @@ const startUpdateCandles = async () => {
 
 export const initSocket = (ioInstance) => {
   io = ioInstance;
+  // These functions will now only generate and emit data for OTC coins
   startEmitTicks();
   startUpdateCandles();
 };
