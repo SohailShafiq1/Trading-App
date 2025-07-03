@@ -12,6 +12,7 @@ import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
 import styles from "./Forex.module.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
+import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import Trades from "./components/Trades/Trades";
 
 const CANDLE_STYLES = {
@@ -77,7 +78,7 @@ const intervalToSeconds = {
 
 const SUPPORTED_INTERVALS = {
   "1m": "1",
-  "3m": "3", 
+  "3m": "3",
   "5m": "5",
   "15m": "15",
   "30m": "30",
@@ -107,62 +108,66 @@ const DRAWING_TOOLS = {
 // Convert coin names to TradingView symbols
 const getCoinSymbol = (coinName) => {
   // Handle forex pairs
-  if (coinName.includes("USD") && !coinName.includes("BTC") && !coinName.includes("ETH")) {
+  if (
+    coinName.includes("USD") &&
+    !coinName.includes("BTC") &&
+    !coinName.includes("ETH")
+  ) {
     // For forex pairs like EURUSD, GBPUSD, etc.
     return `FX:${coinName}`;
   }
-  
+
   // Handle crypto pairs
   const cryptoMap = {
-    "BTCUSD": "BINANCE:BTCUSDT",
-    "ETHUSD": "BINANCE:ETHUSDT", 
-    "ADAUSD": "BINANCE:ADAUSDT",
-    "XRPUSD": "BINANCE:XRPUSDT",
-    "DOTUSD": "BINANCE:DOTUSDT",
-    "SOLUSD": "BINANCE:SOLUSDT",
-    "AVAXUSD": "BINANCE:AVAXUSDT",
-    "MATICUSD": "BINANCE:MATICUSDT",
-    "LINKUSD": "BINANCE:LINKUSDT",
-    "LTCUSD": "BINANCE:LTCUSDT",
-    "BCHUSD": "BINANCE:BCHUSDT",
-    "UNIUSD": "BINANCE:UNIUSDT",
-    "ATOMUSD": "BINANCE:ATOMUSDT",
-    "ALGOUSD": "BINANCE:ALGOUSDT",
-    "FILUSD": "BINANCE:FILUSDT",
-    "TRXUSD": "BINANCE:TRXUSDT",
-    "XLMUSD": "BINANCE:XLMUSDT",
-    "VETUSD": "BINANCE:VETUSDT",
-    "ICPUSD": "BINANCE:ICPUSDT",
-    "THETAUSD": "BINANCE:THETAUSDT",
-    "FTMUSD": "BINANCE:FTMUSDT",
-    "AXSUSD": "BINANCE:AXSUSDT",
-    "SANDUSD": "BINANCE:SANDUSDT",
-    "MANAUSD": "BINANCE:MANAUSDT",
-    "GALAUSD": "BINANCE:GALAUSDT",
-    "APEUSD": "BINANCE:APEUSDT",
-    "GMTUSD": "BINANCE:GMTUSDT",
-    "NEARUSD": "BINANCE:NEARUSDT",
-    "ROSEUSD": "BINANCE:ROSEUSDT",
-    "DARTUSD": "BINANCE:DARTUSDT",
-    "SHIBUSD": "BINANCE:SHIBUSDT",
-    "DOGEUSD": "BINANCE:DOGEUSDT",
+    BTCUSD: "BINANCE:BTCUSDT",
+    ETHUSD: "BINANCE:ETHUSDT",
+    ADAUSD: "BINANCE:ADAUSDT",
+    XRPUSD: "BINANCE:XRPUSDT",
+    DOTUSD: "BINANCE:DOTUSDT",
+    SOLUSD: "BINANCE:SOLUSDT",
+    AVAXUSD: "BINANCE:AVAXUSDT",
+    MATICUSD: "BINANCE:MATICUSDT",
+    LINKUSD: "BINANCE:LINKUSDT",
+    LTCUSD: "BINANCE:LTCUSDT",
+    BCHUSD: "BINANCE:BCHUSDT",
+    UNIUSD: "BINANCE:UNIUSDT",
+    ATOMUSD: "BINANCE:ATOMUSDT",
+    ALGOUSD: "BINANCE:ALGOUSDT",
+    FILUSD: "BINANCE:FILUSDT",
+    TRXUSD: "BINANCE:TRXUSDT",
+    XLMUSD: "BINANCE:XLMUSDT",
+    VETUSD: "BINANCE:VETUSDT",
+    ICPUSD: "BINANCE:ICPUSDT",
+    THETAUSD: "BINANCE:THETAUSDT",
+    FTMUSD: "BINANCE:FTMUSDT",
+    AXSUSD: "BINANCE:AXSUSDT",
+    SANDUSD: "BINANCE:SANDUSDT",
+    MANAUSD: "BINANCE:MANAUSDT",
+    GALAUSD: "BINANCE:GALAUSDT",
+    APEUSD: "BINANCE:APEUSDT",
+    GMTUSD: "BINANCE:GMTUSDT",
+    NEARUSD: "BINANCE:NEARUSDT",
+    ROSEUSD: "BINANCE:ROSEUSDT",
+    DARTUSD: "BINANCE:DARTUSDT",
+    SHIBUSD: "BINANCE:SHIBUSDT",
+    DOGEUSD: "BINANCE:DOGEUSDT",
   };
-  
+
   if (cryptoMap[coinName]) {
     return cryptoMap[coinName];
   }
-  
+
   // Default fallback - try to format as crypto pair
   if (coinName.length === 6) {
     const base = coinName.substring(0, 3);
     const quote = coinName.substring(3, 6);
     return `BINANCE:${base}${quote}T`;
   }
-  
+
   // If still not matched, default to forex
   return `FX:${coinName}`;
 };
-  
+
 const ForexTradingChart = ({
   coinName,
   setSelectedCoin,
@@ -272,7 +277,9 @@ const ForexTradingChart = ({
       try {
         const symbol = getCoinSymbol(coinName);
         const tvInterval = SUPPORTED_INTERVALS[interval] || "1";
-        console.log(`Loading TradingView chart for symbol: ${symbol}, interval: ${interval} -> ${tvInterval}`);
+        console.log(
+          `Loading TradingView chart for symbol: ${symbol}, interval: ${interval} -> ${tvInterval}`
+        );
 
         new window.TradingView.widget({
           width: "100%",
@@ -310,7 +317,6 @@ const ForexTradingChart = ({
             "paneProperties.horzGridProperties.color": theme.gridColor,
           },
         });
-
       } catch (error) {
         console.error("Error creating TradingView widget:", error);
       }
@@ -338,7 +344,7 @@ const ForexTradingChart = ({
   // Handle click outside coin selector to close it
   useEffect(() => {
     if (!showCoinSelector) return;
-    
+
     function handleClickOutside(event) {
       if (
         coinSelectorRef.current &&
@@ -348,8 +354,7 @@ const ForexTradingChart = ({
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showCoinSelector]);
 
   // Toggle trade popup
