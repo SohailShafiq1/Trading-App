@@ -12,7 +12,6 @@ import Tabs from "./components/Tabs/Tabs";
 import "./LiveCandleChart.css";
 import styles from "./Forex.module.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
-import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import Trades from "./components/Trades/Trades";
 
 const CANDLE_STYLES = {
@@ -163,7 +162,7 @@ const getCoinSymbol = (coinName) => {
   // If still not matched, default to forex
   return `FX:${coinName}`;
 };
-
+  
 const ForexTradingChart = ({
   coinName,
   setSelectedCoin,
