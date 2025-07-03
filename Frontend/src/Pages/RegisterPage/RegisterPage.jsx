@@ -96,7 +96,7 @@ const RegisterPage = () => {
         try {
           console.log("🔍 Initializing Google Sign-In...");
           window.google.accounts.id.initialize({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            client_id: import.meta.env.VITE_OAUTH_CLIENT_ID,
             callback: handleGoogleResponse, // Use the function directly, it will access formRef.current
           });
 

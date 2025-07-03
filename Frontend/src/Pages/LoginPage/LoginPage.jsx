@@ -4,7 +4,7 @@ import { useAuth } from "../../Context/AuthContext";
 import styles from "./LoginPage.module.css";
 import { jwtDecode as jwt_decode } from "jwt-decode";
 import { NavLink } from "react-router-dom";
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const CLIENT_ID = import.meta.env.VITE_OAUTH_CLIENT_ID;
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 
 const LoginPage = () => {
