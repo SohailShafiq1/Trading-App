@@ -387,14 +387,19 @@ const LiveCandleChart = ({
         // Calculate candle width based on chart's bar spacing
         const visibleRange = timeScale.getVisibleLogicalRange();
         const chartWidth = timeScale.width();
+        let candleWidth = 50;
         if (visibleRange && chartWidth > 0) {
-          const candleWidth =
-            chartWidth / (visibleRange.to - visibleRange.from);
-          x = currentX + candleWidth;
-        } else {
-          // Fallback: use fixed pixel offset
-          x = currentX + 50;
+          candleWidth = chartWidth / (visibleRange.to - visibleRange.from);
         }
+        // Dynamic offset: further away when zoomed out (smaller candleWidth)
+        // minOffset ensures it's always at least a bit away
+        const minOffset = 20;
+        // As candleWidth gets smaller, offset increases
+        const dynamicOffset = Math.max(
+          minOffset,
+          2.5 * (minOffset - candleWidth)
+        );
+        x = currentX + Math.max(candleWidth, minOffset, dynamicOffset);
       } else {
         // Last fallback: position at right edge
         x = containerRect.width - labelWidth - 10;
