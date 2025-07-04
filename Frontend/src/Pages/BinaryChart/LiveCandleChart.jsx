@@ -810,6 +810,10 @@ const LiveCandleChart = ({
     applyTheme();
     applyCandleStyle();
     applyIndicators();
+    // Recalculate countdown position after theme/style changes
+    setTimeout(() => {
+      updateCountdownPosition();
+    }, 50); // Small delay to ensure chart has updated
   }, [theme, candleStyle, indicator]);
 
   // Load initial data
@@ -1120,9 +1124,9 @@ const LiveCandleChart = ({
 
   // --- TRADE BOXES DYNAMIC SIZE AND POSITION ---
   const [tradeBoxSize, setTradeBoxSize] = useState({
-    width: 44,
-    height: 16,
-    font: 9,
+    width: 24,
+    height: 12,
+    font: 8,
   });
   const prevBoxSizeRef = useRef(tradeBoxSize);
 
@@ -1139,9 +1143,10 @@ const LiveCandleChart = ({
         barSpacing = timeScale.options.barSpacing;
       }
       barSpacing = Math.max(3, Math.min(barSpacing, 40));
-      const width = Math.max(28, Math.min(90, barSpacing * 4.2));
-      const height = Math.max(14, Math.min(36, barSpacing * 1.6));
-      const font = Math.max(8, Math.min(18, barSpacing * 0.85));
+      // Make trade boxes responsive to zoom - bigger on zoom in, smaller on zoom out
+      const width = Math.max(16, Math.min(80, barSpacing * 3.5));
+      const height = Math.max(10, Math.min(32, barSpacing * 1.4));
+      const font = Math.max(6, Math.min(16, barSpacing * 0.9));
       const newSize = { width, height, font };
       const prev = prevBoxSizeRef.current;
       if (
@@ -1495,7 +1500,7 @@ const LiveCandleChart = ({
           return aTime - bTime;
         });
         // Calculate total width needed for all boxes and center them on the candle
-        const gap = 28; // space between boxes
+        const gap = Math.max(6, Math.min(24, boxWidth * 0.6)); // space between boxes, responsive to box size
         const totalWidth =
           tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
         const x = chartRef.current
@@ -1548,10 +1553,10 @@ const LiveCandleChart = ({
                 top: `${top}px`,
                 background: boxColor,
                 color: textColor,
-                border: `1.2px solid ${borderColor}`,
-                borderRadius: 5,
-                minWidth: 38,
-                minHeight: 24,
+                border: `${Math.max(0.5, Math.min(1.5, boxWidth * 0.05))}px solid ${borderColor}`,
+                borderRadius: Math.max(2, Math.min(6, boxWidth * 0.15)),
+                minWidth: 16,
+                minHeight: 10,
                 width: boxWidth,
                 height: boxHeight,
                 fontWeight: 600,
@@ -1561,8 +1566,8 @@ const LiveCandleChart = ({
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "2px 7px",
-                gap: 6,
+                padding: `${Math.max(1, Math.floor(boxHeight * 0.1))}px ${Math.max(2, Math.floor(boxWidth * 0.1))}px`,
+                gap: Math.max(2, Math.floor(boxWidth * 0.1)),
                 transition:
                   "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
                 cursor: "pointer",
@@ -1617,14 +1622,14 @@ const LiveCandleChart = ({
                     background: "rgba(255,255,255,0.15)",
                     border: "none",
                     color: "#fff",
-                    fontSize: fontSize - 1,
+                    fontSize: Math.max(6, fontSize - 1),
                     cursor: "pointer",
                     zIndex: 30,
                     borderRadius: 2,
                     padding: 0,
                     transition: "background 0.2s",
-                    width: fontSize + 6,
-                    height: fontSize + 6,
+                    width: Math.max(10, fontSize + 2),
+                    height: Math.max(10, fontSize + 2),
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
