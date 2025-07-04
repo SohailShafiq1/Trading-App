@@ -155,11 +155,11 @@ const groupCandles = (candles, interval) => {
       ts = Number(c.time);
     }
     if (isNaN(ts)) continue;
-    
+
     // Create proper time buckets for aggregation
     const bucket = Math.floor(ts / intervalSec) * intervalSec;
     const last = grouped[grouped.length - 1];
-    
+
     if (last && last.time === bucket) {
       // Update existing candle in the bucket
       last.high = Math.max(last.high, c.high);
@@ -178,7 +178,7 @@ const groupCandles = (candles, interval) => {
       });
     }
   }
-  
+
   return grouped;
 };
 const calculateSMA = (data, period) => {
@@ -952,9 +952,10 @@ const LiveCandleChart = ({
       }
 
       // Only apply indicators when data structure changes significantly
-      const shouldUpdateIndicators = !lastCandleRef.current || 
+      const shouldUpdateIndicators =
+        !lastCandleRef.current ||
         lastCandleRef.current.time !== liveCandle.time;
-      
+
       if (shouldUpdateIndicators) {
         applyIndicators();
       }
@@ -981,7 +982,8 @@ const LiveCandleChart = ({
         let updated;
         if (candleData) {
           const candleTime = Math.floor(Date.parse(candleData.time) / 1000);
-          const aggregatedTime = Math.floor(candleTime / intervalSec) * intervalSec;
+          const aggregatedTime =
+            Math.floor(candleTime / intervalSec) * intervalSec;
           updated = {
             time: Number(aggregatedTime),
             open: parseFloat(candleData.open.toFixed(4)),
@@ -1015,13 +1017,13 @@ const LiveCandleChart = ({
                 ...updated,
               });
             }
-            
+
             // Add smooth price transition effect without triggering re-render
             const container = chartContainerRef.current;
             if (container) {
-              container.classList.add('price-update');
+              container.classList.add("price-update");
               setTimeout(() => {
-                container.classList.remove('price-update');
+                container.classList.remove("price-update");
               }, 200);
             }
           }
@@ -1054,11 +1056,15 @@ const LiveCandleChart = ({
       // Update the chart series with the individual candle update instead of replacing all data
       if (seriesRef.current) {
         // Get current chart data to work with
-        const currentData = seriesRef.current.getData ? seriesRef.current.getData() : [];
-        
+        const currentData = seriesRef.current.getData
+          ? seriesRef.current.getData()
+          : [];
+
         // Find if we already have a candle for this aggregated time period
-        const existingCandleIndex = currentData.findIndex(c => c.time === aggregatedTime);
-        
+        const existingCandleIndex = currentData.findIndex(
+          (c) => c.time === aggregatedTime
+        );
+
         let aggregatedCandle;
         if (existingCandleIndex >= 0) {
           // Update existing aggregated candle
@@ -1094,20 +1100,20 @@ const LiveCandleChart = ({
               ...aggregatedCandle,
             });
           }
-          
+
           // Apply animation to new candle without triggering re-render
           const container = chartContainerRef.current;
           if (container) {
-            container.classList.add('candle-transition');
+            container.classList.add("candle-transition");
             setTimeout(() => {
-              container.classList.remove('candle-transition');
+              container.classList.remove("candle-transition");
             }, 500);
           }
         } catch (e) {
           console.error("Error updating candle:", e);
         }
       }
-      
+
       // Update live candle state
       setLiveCandle({
         time: Number(aggregatedTime),
@@ -1116,14 +1122,17 @@ const LiveCandleChart = ({
         low: candle.low,
         close: candle.close,
       });
-      
+
       // Only update render key and apply indicators for new time periods
-      const isNewTimePeriod = !candles.find(c => {
-        const cTime = typeof c.time === 'string' ? Math.floor(Date.parse(c.time) / 1000) : c.time;
+      const isNewTimePeriod = !candles.find((c) => {
+        const cTime =
+          typeof c.time === "string"
+            ? Math.floor(Date.parse(c.time) / 1000)
+            : c.time;
         const cAggregated = Math.floor(cTime / intervalSec) * intervalSec;
         return cAggregated === aggregatedTime;
       });
-      
+
       if (isNewTimePeriod) {
         setRenderKey((k) => k + 1);
         applyIndicators();
@@ -2520,7 +2529,7 @@ const LiveCandleChart = ({
         .candle-transition {
           animation: candleGrow 0.5s ease-out;
         }
-        
+
         @keyframes candleGrow {
           0% {
             transform: scaleY(0.95);
@@ -2531,11 +2540,11 @@ const LiveCandleChart = ({
             opacity: 1;
           }
         }
-        
+
         .price-update {
           transition: all 0.2s ease-in-out;
         }
-        
+
         .chart-container {
           transition: all 0.1s ease-out;
         }
