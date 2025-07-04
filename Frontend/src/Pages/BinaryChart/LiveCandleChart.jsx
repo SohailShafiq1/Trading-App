@@ -5,7 +5,7 @@ import { BsBarChartFill } from "react-icons/bs";
 import { AiOutlinePlusSquare } from "react-icons/ai";
 import { BiLineChart, BiPencil } from "react-icons/bi";
 import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./LiveCandleChart.css";
 import axios from "axios";
 import {
@@ -511,7 +511,7 @@ const LiveCandleChart = ({
     // Apply indicators after series is created
     applyIndicators();
   };
-  const applyIndicators = useCallback(() => {
+  const applyIndicators = () => {
     const cleanupIndicator = (ref) => {
       if (ref.current) {
         try {
@@ -631,7 +631,7 @@ const LiveCandleChart = ({
     } catch (e) {
       console.error("Error applying indicator:", e);
     }
-  }, [candles, interval, indicator]);
+  };
   const handleDrawingToolClick = (tool) => {
     setDrawingTool(tool);
     setShowDrawingPopup(false);
@@ -697,12 +697,7 @@ const LiveCandleChart = ({
     let chartHeight;
     const width = window.innerWidth;
     // Large desktops
-
-    if (width > 2560) {
-      chartHeight = 800;
-    } else if (width > 2100) {
-      chartHeight = 850;
-    } else if (width > 1920) {
+    if (width > 1920) {
       chartHeight = 750;
     } else if (width > 1800) {
       chartHeight = 700;
@@ -710,10 +705,6 @@ const LiveCandleChart = ({
       chartHeight = 650;
     } else if (width > 1600) {
       chartHeight = 600;
-    }
-    // Medium desktops
-    else if (width > 1500) {
-      chartHeight = 530;
     } else if (width > 1400) {
       chartHeight = 500;
     } else if (width > 1300) {
@@ -819,10 +810,6 @@ const LiveCandleChart = ({
     applyTheme();
     applyCandleStyle();
     applyIndicators();
-    // Recalculate countdown position after theme/style changes
-    setTimeout(() => {
-      updateCountdownPosition();
-    }, 50); // Small delay to ensure chart has updated
   }, [theme, candleStyle, indicator]);
 
   // Load initial data
@@ -843,10 +830,9 @@ const LiveCandleChart = ({
         const last = historical.at(-1);
         const lastClose = last?.close ?? 1.0;
 
-        // Initialize live candle properly starting from last historical candle's close
         setLiveCandle({
           time: Number(bucket),
-          open: lastClose, // Start from last historical close
+          open: lastClose,
           high: lastClose,
           low: lastClose,
           close: lastClose,
@@ -854,7 +840,7 @@ const LiveCandleChart = ({
 
         const grouped = groupCandles(historical, interval);
 
-        // Apply initial data to chart
+        // Don't add future time markers to main data anymore
         if (seriesRef.current) {
           if (candleStyle === CANDLE_STYLES.LINE) {
             const lineData = grouped.map((candle) => ({
@@ -868,13 +854,19 @@ const LiveCandleChart = ({
         }
 
         applyIndicators();
+
+        // Professional trading platform behavior:
+        // - Chart shows future time ticks automatically
+        // - No artificial range adjustments after data updates
+        // - User has complete control over zoom and position
+
         setRenderKey((k) => k + 1);
       } catch (err) {
         console.error("Initial candle fetch failed", err);
       }
     };
     load();
-  }, [coinName, interval, candleStyle, applyIndicators]);
+  }, [coinName, interval]);
 
   // Clear tradeHover when trades change to prevent stuck hover effect
   useEffect(() => {
@@ -934,7 +926,7 @@ const LiveCandleChart = ({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [candles, liveCandle, interval, renderKey, candleStyle, applyIndicators]);
+  }, [candles, liveCandle, interval, renderKey, candleStyle]);
 
   // Socket event handlers
   useEffect(() => {
@@ -943,11 +935,7 @@ const LiveCandleChart = ({
       if (counter != null) trendCounterRef.current = counter;
 
       const roundedPrice = parseFloat(price.toFixed(4));
-
-      // Apply price smoothing for very small changes to reduce jitter
-      const smoothedPrice = smoothPriceUpdate(currentPrice, roundedPrice);
-
-      setCurrentPrice(smoothedPrice);
+      setCurrentPrice(roundedPrice);
 
       setLiveCandle((prev) => {
         if (!prev || !prev.time) return prev;
@@ -957,44 +945,55 @@ const LiveCandleChart = ({
           Math.floor(now / intervalToSeconds[interval]) *
           intervalToSeconds[interval];
 
-        // Check if we need to start a new candle
-        if (bucket !== prev.time) {
-          // Create new candle starting from previous candle's close price
-          const newCandle = {
-            time: Number(bucket),
-            open: prev.close, // Start new candle from previous close
-            high: Math.max(prev.close, smoothedPrice),
-            low: Math.min(prev.close, smoothedPrice),
-            close: smoothedPrice,
-          };
+        if (bucket !== prev.time) return prev;
 
-          try {
-            if (seriesRef.current) {
-              if (candleStyle === CANDLE_STYLES.LINE) {
-                seriesRef.current.update({
-                  time: Number(newCandle.time),
-                  value: newCandle.close,
-                });
-              } else {
-                seriesRef.current.update({
-                  time: Number(newCandle.time),
-                  ...newCandle,
-                });
-              }
-            }
-            setRenderKey((k) => k + 1);
-          } catch (e) {
-            console.error("Error updating series with new candle:", e);
-          }
-          return newCandle;
+        const t = trendRef.current;
+        const c = trendCounterRef.current ?? 0;
+
+        let constrained = roundedPrice;
+        switch (t) {
+          case "Up":
+            constrained = Math.max(prev.open, roundedPrice);
+            break;
+          case "Down":
+            constrained = Math.min(prev.open, roundedPrice);
+            break;
+          case "Random":
+            constrained = roundedPrice;
+            break;
+          case "Scenario1":
+            constrained =
+              c % 4 < 3
+                ? Math.max(prev.open, roundedPrice)
+                : Math.min(prev.open, roundedPrice);
+            break;
+          case "Scenario2":
+            constrained =
+              c % 10 < 5
+                ? Math.min(prev.open, roundedPrice)
+                : Math.max(prev.open, roundedPrice);
+            break;
+          case "Scenario3":
+            constrained =
+              c % 2 === 0
+                ? Math.max(prev.open, roundedPrice)
+                : Math.min(prev.open, roundedPrice);
+            break;
+          case "Scenario4":
+            constrained = Math.max(prev.open, roundedPrice);
+            break;
+          case "Scenario5":
+            constrained = Math.min(prev.open, roundedPrice);
+            break;
+          default:
+            constrained = roundedPrice;
         }
 
-        // Update current candle with natural price oscillation (no artificial constraints)
         const updated = {
           ...prev,
-          high: parseFloat(Math.max(prev.high, smoothedPrice).toFixed(4)),
-          low: parseFloat(Math.min(prev.low, smoothedPrice).toFixed(4)),
-          close: parseFloat(smoothedPrice.toFixed(4)), // Use smoothed backend price
+          high: parseFloat(Math.max(prev.high, constrained).toFixed(4)),
+          low: parseFloat(Math.min(prev.low, constrained).toFixed(4)),
+          close: parseFloat(constrained.toFixed(4)),
         };
 
         try {
@@ -1022,59 +1021,35 @@ const LiveCandleChart = ({
     const handleCandle = (candle) => {
       if (candle.trend) trendRef.current = candle.trend;
 
-      // Immediately apply the backend candle to the candles array
       setCandles((prev) => {
-        const candleTime =
-          typeof candle.time === "string"
-            ? candle.time
-            : new Date(candle.time).toISOString();
-        const exists = prev.find((c) => c.time === candleTime);
+        const exists = prev.find((c) => c.time === candle.time);
         if (exists) {
-          return prev.map((c) => (c.time === candleTime ? candle : c));
+          return prev.map((c) => (c.time === candle.time ? candle : c));
         } else {
-          return [...prev, candle].sort((a, b) => {
-            const aTime =
-              typeof a.time === "string" ? Date.parse(a.time) : a.time;
-            const bTime =
-              typeof b.time === "string" ? Date.parse(b.time) : b.time;
-            return aTime - bTime;
-          });
+          return [...prev, candle];
         }
       });
 
-      // Convert candle time to bucket timestamp
-      const bucket =
-        typeof candle.time === "string"
-          ? Math.floor(Date.parse(candle.time) / 1000)
-          : Math.floor(candle.time / 1000);
+      const bucket = Math.floor(Date.parse(candle.time) / 1000);
 
-      // Get the last candle's close price for the new candle's open
-      const lastCandleClose = liveCandle?.close ?? candle.close;
-
-      // Create new live candle starting from previous candle's close
-      let newCandle = {
+      const newCandle = {
         time: Number(bucket),
-        open: lastCandleClose, // Start from previous close
-        high: Math.max(lastCandleClose, candle.close),
-        low: Math.min(lastCandleClose, candle.close),
+        open: candle.close,
+        high: candle.close,
+        low: candle.close,
         close: candle.close,
       };
 
-      // Ensure price continuity between candles
-      newCandle = ensurePriceContinuity(newCandle, liveCandle);
+      const merged = [...candles, candle];
+      const grouped = groupCandles(merged, interval);
 
-      // Update the chart immediately with the new candle data
-      const updatedCandles = [...candles, candle];
-      const grouped = groupCandles(updatedCandles, interval);
-
-      // Ensure the new candle is included in the grouped data
-      const existingGrouped = grouped.find((c) => c.time === newCandle.time);
-      if (!existingGrouped) {
+      if (!grouped.find((c) => c.time === newCandle.time)) {
         grouped.push(newCandle);
-        grouped.sort((a, b) => a.time - b.time);
       }
 
-      // Apply the updated data to the chart immediately
+      grouped.sort((a, b) => a.time - b.time);
+
+      // Don't add future time markers to socket updates
       if (seriesRef.current) {
         if (candleStyle === CANDLE_STYLES.LINE) {
           const lineData = grouped.map((c) => ({
@@ -1086,10 +1061,11 @@ const LiveCandleChart = ({
           seriesRef.current.setData(grouped);
         }
       }
-
       setLiveCandle(newCandle);
       setRenderKey((k) => k + 1);
       applyIndicators();
+
+      // Professional platforms: data updates only, no position changes
     };
 
     socket.on(`price:${coinName}`, handlePrice);
@@ -1099,15 +1075,7 @@ const LiveCandleChart = ({
       socket.off(`price:${coinName}`, handlePrice);
       socket.off(`candle:${coinName}`, handleCandle);
     };
-  }, [
-    coinName,
-    interval,
-    candleStyle,
-    applyIndicators,
-    candles,
-    liveCandle,
-    currentPrice,
-  ]);
+  }, [coinName, interval, candleStyle]);
 
   // Update timeScale when autoZoom changes
   useEffect(() => {
@@ -1152,9 +1120,9 @@ const LiveCandleChart = ({
 
   // --- TRADE BOXES DYNAMIC SIZE AND POSITION ---
   const [tradeBoxSize, setTradeBoxSize] = useState({
-    width: 24,
-    height: 12,
-    font: 8,
+    width: 44,
+    height: 16,
+    font: 9,
   });
   const prevBoxSizeRef = useRef(tradeBoxSize);
 
@@ -1171,10 +1139,9 @@ const LiveCandleChart = ({
         barSpacing = timeScale.options.barSpacing;
       }
       barSpacing = Math.max(3, Math.min(barSpacing, 40));
-      // Make trade boxes responsive to zoom - bigger on zoom in, smaller on zoom out
-      const width = Math.max(16, Math.min(80, barSpacing * 3.5));
-      const height = Math.max(10, Math.min(32, barSpacing * 1.4));
-      const font = Math.max(6, Math.min(16, barSpacing * 0.9));
+      const width = Math.max(28, Math.min(90, barSpacing * 4.2));
+      const height = Math.max(14, Math.min(36, barSpacing * 1.6));
+      const font = Math.max(8, Math.min(18, barSpacing * 0.85));
       const newSize = { width, height, font };
       const prev = prevBoxSizeRef.current;
       if (
@@ -1528,7 +1495,7 @@ const LiveCandleChart = ({
           return aTime - bTime;
         });
         // Calculate total width needed for all boxes and center them on the candle
-        const gap = Math.max(6, Math.min(24, boxWidth * 0.6)); // space between boxes, responsive to box size
+        const gap = 28; // space between boxes
         const totalWidth =
           tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
         const x = chartRef.current
@@ -1539,20 +1506,21 @@ const LiveCandleChart = ({
             width: 600,
             height: 500,
           };
-
-        // Simple centering: start at candle center minus half total width
-        let startLeft;
-        if (x != null && !isNaN(x)) {
-          startLeft = x - totalWidth / 2;
-          // Ensure boxes stay within container bounds
-          if (startLeft < 0) {
-            startLeft = 0;
-          } else if (startLeft + totalWidth > containerRect.width) {
-            startLeft = containerRect.width - totalWidth;
-          }
-        } else {
-          // Fallback if candle position not available
-          startLeft = containerRect.width - totalWidth - 10;
+        let startLeft =
+          x != null && !isNaN(x)
+            ? Math.max(
+                boxWidth / 2,
+                Math.min(
+                  x - totalWidth + boxWidth,
+                  x - totalWidth / 2,
+                  containerRect.width - totalWidth + boxWidth / 2
+                )
+              )
+            : containerRect.width - totalWidth - 10;
+        const latestBoxRight =
+          startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
+        if (x != null && latestBoxRight > x + boxWidth / 2) {
+          startLeft -= latestBoxRight - (x + boxWidth / 2);
         }
         tradesArr.forEach((trade, idx, arr) => {
           const tradeId =
@@ -1580,13 +1548,10 @@ const LiveCandleChart = ({
                 top: `${top}px`,
                 background: boxColor,
                 color: textColor,
-                border: `${Math.max(
-                  0.5,
-                  Math.min(1.5, boxWidth * 0.05)
-                )}px solid ${borderColor}`,
-                borderRadius: Math.max(2, Math.min(6, boxWidth * 0.15)),
-                minWidth: 16,
-                minHeight: 10,
+                border: `1.2px solid ${borderColor}`,
+                borderRadius: 5,
+                minWidth: 38,
+                minHeight: 24,
                 width: boxWidth,
                 height: boxHeight,
                 fontWeight: 600,
@@ -1596,11 +1561,8 @@ const LiveCandleChart = ({
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: `${Math.max(
-                  1,
-                  Math.floor(boxHeight * 0.1)
-                )}px ${Math.max(2, Math.floor(boxWidth * 0.1))}px`,
-                gap: Math.max(2, Math.floor(boxWidth * 0.1)),
+                padding: "2px 7px",
+                gap: 6,
                 transition:
                   "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
                 cursor: "pointer",
@@ -1655,14 +1617,14 @@ const LiveCandleChart = ({
                     background: "rgba(255,255,255,0.15)",
                     border: "none",
                     color: "#fff",
-                    fontSize: Math.max(6, fontSize - 1),
+                    fontSize: fontSize - 1,
                     cursor: "pointer",
                     zIndex: 30,
                     borderRadius: 2,
                     padding: 0,
                     transition: "background 0.2s",
-                    width: Math.max(10, fontSize + 2),
-                    height: Math.max(10, fontSize + 2),
+                    width: fontSize + 6,
+                    height: fontSize + 6,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1852,38 +1814,6 @@ const LiveCandleChart = ({
     return rendered;
   };
 
-  // Helper function to ensure price continuity between candles
-  const ensurePriceContinuity = (newCandle, previousCandle) => {
-    if (!previousCandle) return newCandle;
-
-    // If there's a gap between candles, adjust the open price to match previous close
-    if (newCandle.open !== previousCandle.close) {
-      return {
-        ...newCandle,
-        open: previousCandle.close,
-        high: Math.max(newCandle.high, previousCandle.close),
-        low: Math.min(newCandle.low, previousCandle.close),
-      };
-    }
-
-    return newCandle;
-  };
-
-  // Add a small smoothing mechanism to reduce jittery updates
-  const smoothPriceUpdate = (currentPrice, newPrice, smoothingFactor = 0.1) => {
-    if (!currentPrice) return newPrice;
-
-    // Apply exponential smoothing for very small price changes
-    const priceDiff = Math.abs(newPrice - currentPrice);
-    const priceRange = Math.max(currentPrice, newPrice) * 0.001; // 0.1% of price
-
-    if (priceDiff < priceRange) {
-      return currentPrice + (newPrice - currentPrice) * smoothingFactor;
-    }
-
-    return newPrice; // Use actual price for significant changes
-  };
-
   // Render the chart component
   return (
     <div
@@ -2044,7 +1974,6 @@ const LiveCandleChart = ({
                 zIndex: 2,
                 display: "flex",
                 alignItems: "center",
-
                 justifyContent: "center",
               }}
               onClick={() => setTradePopup(false)}
@@ -2377,7 +2306,7 @@ const LiveCandleChart = ({
             color: "#ffffff",
             background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
             border: "1px solid #404040",
-            borderRadius: 3,
+            borderRadius: 8,
             padding: "8px 16px",
             pointerEvents: "none",
             zIndex: 2,
