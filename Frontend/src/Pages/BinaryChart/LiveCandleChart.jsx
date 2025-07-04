@@ -1794,7 +1794,7 @@ const LiveCandleChart = ({
                   x2={clampedLineLeft + clampedVisibleLength}
                   y2={clampedLineTop}
                   stroke={color}
-                  strokeWidth={4}
+                  strokeWidth={2}
                   opacity={opacity}
                 />
                 <circle
@@ -1818,14 +1818,14 @@ const LiveCandleChart = ({
   useEffect(() => {
     if (tradePopup) {
       // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+
       // Add modal animation styles if not already present
-      if (!document.getElementById('modal-styles')) {
-        const style = document.createElement('style');
-        style.id = 'modal-styles';
+      if (!document.getElementById("modal-styles")) {
+        const style = document.createElement("style");
+        style.id = "modal-styles";
         style.textContent = `
           @keyframes modalSlideIn {
             from {
@@ -1853,29 +1853,29 @@ const LiveCandleChart = ({
       }
     } else {
       // Restore body scroll
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
     }
 
     // Cleanup on unmount
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
     };
   }, [tradePopup]);
 
   // Effect to handle keyboard events for modal
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && tradePopup) {
+      if (event.key === "Escape" && tradePopup) {
         setTradePopup(false);
       }
     };
 
     if (tradePopup) {
-      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
       // Focus trap - focus the modal when it opens
       const modalElement = document.querySelector('[data-modal="trade-popup"]');
       if (modalElement) {
@@ -1884,7 +1884,7 @@ const LiveCandleChart = ({
     }
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [tradePopup]);
 
@@ -2084,7 +2084,8 @@ const LiveCandleChart = ({
                   maxHeight: "80vh",
                   overflowY: "auto",
                   position: "relative",
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 8px 30px rgba(0,0,0,0.2)",
+                  boxShadow:
+                    "0 20px 60px rgba(0,0,0,0.3), 0 8px 30px rgba(0,0,0,0.2)",
                   animation: "modalSlideIn 0.3s ease-out",
                   outline: "none",
                 }}
