@@ -393,13 +393,9 @@ const LiveCandleChart = ({
         }
         // Dynamic offset: further away when zoomed out (smaller candleWidth)
         // minOffset ensures it's always at least a bit away
-        const minOffset = 20;
+        const minOffset = 25;
         // As candleWidth gets smaller, offset increases
-        const dynamicOffset = Math.max(
-          minOffset,
-          2.5 * (minOffset - candleWidth)
-        );
-        x = currentX + Math.max(candleWidth, minOffset, dynamicOffset);
+        x = currentX + Math.max(candleWidth, minOffset);
       } else {
         // Last fallback: position at right edge
         x = containerRect.width - labelWidth - 10;
@@ -417,19 +413,6 @@ const LiveCandleChart = ({
 
     label.style.left = `${constrainedX}px`;
     label.style.top = `${constrainedY}px`;
-    const width = timeScale.width();
-    const range = timeScale.getVisibleLogicalRange();
-    if (range) {
-      const barWidth = width / (range.to - range.from) - 250;
-      label.style.fontSize = `${Math.max(
-        10,
-        Math.min(16, barWidth * 0.1) + 30
-      )}px`;
-      label.style.padding = `${Math.max(2, barWidth * 0.05)}px ${Math.max(
-        4,
-        barWidth * 0.2
-      )}px`;
-    }
   };
   useEffect(() => {
     let raf;
@@ -1482,17 +1465,16 @@ const LiveCandleChart = ({
 
   // --- TRADE BOXES COMPONENT FOR LIVE POSITIONING ---
   const TradeBoxes = ({
-    trades,
     chartRef,
     seriesRef,
     chartContainerRef,
-    coinName,
     interval,
-    tradeBoxSize,
     getTradePayout,
     handleCloseTrade,
     tradeHover,
     setTradeHover,
+    trades,
+    coinName,
   }) => {
     const [, setRerender] = React.useState(0);
     React.useEffect(() => {
@@ -1505,7 +1487,7 @@ const LiveCandleChart = ({
       return () => cancelAnimationFrame(raf);
     }, [interval]);
 
-    // Group trades by mapped interval (ignore type)
+    // --- Group trades by mapped interval (ignore type) ---
     const intervalSec = intervalToSeconds[interval];
     let chartTimes = [];
     let chartData = [];
@@ -1517,7 +1499,6 @@ const LiveCandleChart = ({
           : Number(c.time)
       );
     }
-    // Map: { intervalTime: [trades] }
     const grouped = {};
     trades
       .filter(
@@ -1555,10 +1536,23 @@ const LiveCandleChart = ({
         if (!grouped[mappedTime]) grouped[mappedTime] = [];
         grouped[mappedTime].push(trade);
       });
-    // For each interval, render all trades in the same row (horizontal offset)
-    const boxWidth = tradeBoxSize.width;
-    const boxHeight = tradeBoxSize.height;
-    const fontSize = tradeBoxSize.font;
+
+    // --- Get current barSpacing for dynamic sizing ---
+    let barSpacing = 10;
+    if (
+      chartRef.current &&
+      chartRef.current.timeScale &&
+      typeof chartRef.current.timeScale().barSpacing === "function"
+    ) {
+      barSpacing = chartRef.current.timeScale().barSpacing();
+    }
+    barSpacing = Math.max(3, Math.min(barSpacing, 40));
+    const boxWidth = Math.max(20, Math.min(90, barSpacing * 4.2));
+    const boxHeight = Math.max(10, Math.min(36, barSpacing * 1.6));
+    const fontSize = Math.max(5, Math.min(18, barSpacing * 0.85));
+    const gap = Math.round(boxWidth * 0.7);
+    const minLineLength = Math.max(12, boxWidth * 0.8);
+    const maxLineLength = Math.max(40, boxWidth * 2.5);
     let rendered = [];
     Object.keys(grouped)
       .sort((a, b) => a - b)
@@ -1571,7 +1565,6 @@ const LiveCandleChart = ({
           return aTime - bTime;
         });
         // Calculate total width needed for all boxes and center them on the candle
-        const gap = 28; // space between boxes
         const totalWidth =
           tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
         const x = chartRef.current
@@ -1598,7 +1591,7 @@ const LiveCandleChart = ({
         if (x != null && latestBoxRight > x + boxWidth / 2) {
           startLeft -= latestBoxRight - (x + boxWidth / 2);
         }
-        tradesArr.forEach((trade, idx, arr) => {
+        tradesArr.forEach((trade, idx) => {
           const tradeId =
             trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
           const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
@@ -1626,8 +1619,6 @@ const LiveCandleChart = ({
                 color: textColor,
                 border: `1.2px solid ${borderColor}`,
                 borderRadius: 5,
-                minWidth: 38,
-                minHeight: 24,
                 width: boxWidth,
                 height: boxHeight,
                 fontWeight: 600,
@@ -1734,13 +1725,7 @@ const LiveCandleChart = ({
             startLeft +
             (tradesArr.length - 1) * (boxWidth + gap) +
             boxWidth / 2;
-          const topLast =
-            yLast != null && !isNaN(yLast)
-              ? Math.max(
-                  boxHeight / 2,
-                  Math.min(yLast, containerRect.height - boxHeight / 2)
-                )
-              : 40;
+          // Removed unused topLast
           // Draw a line for every trade (including the first)
           tradesArr.forEach((trade, idx) => {
             // Show lines for a short time even after timeout (don't return immediately)
@@ -1787,10 +1772,11 @@ const LiveCandleChart = ({
               .timeScale()
               .timeToCoordinate(tradeStartSec);
             let x1 = chartRef.current.timeScale().timeToCoordinate(tradeEndSec);
-            let lineLength = 80; // fallback
-            if (x0 != null && x1 != null && !isNaN(x0) && !isNaN(x1)) {
-              lineLength = Math.max(20, Math.abs(x1 - x0));
-            }
+            let lineLength = Math.max(
+              minLineLength,
+              Math.abs((x1 ?? 0) - (x0 ?? 0))
+            );
+            lineLength = Math.min(lineLength, maxLineLength); // clamp to max
             // Shrink the line as remainingTime decreases
             let percentLeft = 1;
             if (typeof trade.remainingTime === "number" && durationSec > 0) {
@@ -1803,7 +1789,7 @@ const LiveCandleChart = ({
 
             // For expired trades, show a short static line
             if (isExpired) {
-              visibleLength = Math.min(40, lineLength * 0.3); // Show 30% of original length or 40px max
+              visibleLength = Math.min(minLineLength, lineLength * 0.3); // Show 30% of original length or minLineLength px max
             }
 
             if (visibleLength <= 0) return;
@@ -1827,7 +1813,7 @@ const LiveCandleChart = ({
                 : 40;
 
             // Position lines in front of the latest trade horizontally
-            const lineLeft = leftLast + boxWidth / 2 + 16;
+            const lineLeft = leftLast + boxWidth / 2 + gap * 0.5;
 
             // Clamp lineLeft and visibleLength to stay within chart container
             let clampedLineLeft = Math.max(
@@ -1858,7 +1844,7 @@ const LiveCandleChart = ({
                 <circle
                   cx={clampedLineLeft}
                   cy={clampedLineTop}
-                  r={4}
+                  r={Math.max(2, boxHeight * 0.25)}
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
@@ -1870,13 +1856,13 @@ const LiveCandleChart = ({
                   x2={clampedLineLeft + clampedVisibleLength}
                   y2={clampedLineTop}
                   stroke={color}
-                  strokeWidth={2}
+                  strokeWidth={Math.max(1, boxHeight * 0.18)}
                   opacity={opacity}
                 />
                 <circle
                   cx={clampedLineLeft + clampedVisibleLength}
                   cy={clampedLineTop}
-                  r={4}
+                  r={Math.max(2, boxHeight * 0.25)}
                   fill={color}
                   stroke="#fff"
                   strokeWidth={1.5}
@@ -2502,9 +2488,9 @@ const LiveCandleChart = ({
             borderRadius: 8,
             padding: "8px 16px",
             pointerEvents: "none",
-            zIndex: 2,
+            zIndex: 10001,
             fontWeight: "600",
-            fontSize: "14px",
+            fontSize: "10px",
             whiteSpace: "nowrap",
             boxShadow:
               "0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)",
@@ -2522,7 +2508,6 @@ const LiveCandleChart = ({
           chartContainerRef={chartContainerRef}
           coinName={coinName}
           interval={interval}
-          tradeBoxSize={tradeBoxSize}
           getTradePayout={getTradePayout}
           handleCloseTrade={handleCloseTrade}
           tradeHover={tradeHover}
