@@ -569,8 +569,7 @@
 }
 
 .mobilePopupContent {
-  background-color: var(--popup-bg);
-  color: var(--popup-text);
+  background-color: #fff;
   width: 90%;
   max-width: 400px;
   border-radius: 10px;
