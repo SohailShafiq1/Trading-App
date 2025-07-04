@@ -24,7 +24,6 @@ const BinaryChart = () => {
   const getPriceForTrade = (trade) => {
     const coinData = coins.find((c) => c.name === trade.coinName);
     if (!coinData) {
-      console.log(`No coin data found for ${trade.coinName}`);
       return 0;
     }
 
@@ -33,29 +32,19 @@ const BinaryChart = () => {
         coinData.currentPrice && coinData.currentPrice > 0
           ? coinData.currentPrice
           : parseFloat(livePrice) || 0;
-      console.log(`Live price for trade ${trade.coinName}:`, price);
       return price;
     } else if (trade.coinType === "Forex") {
       const price =
         coinData.currentPrice && coinData.currentPrice > 0
           ? coinData.currentPrice
           : parseFloat(forexPrice) || 0;
-      console.log(
-        `[getPriceForTrade] Forex price for trade ${trade.coinName}:`,
-        price
-      );
-      console.log(
-        `[getPriceForTrade] coinData.currentPrice:`,
-        coinData.currentPrice
-      );
-      console.log(`[getPriceForTrade] forexPrice:`, forexPrice);
+
       return price;
     } else {
       const price =
         coinData.currentPrice && coinData.currentPrice > 0
           ? coinData.currentPrice
           : parseFloat(otcPrice) || 0;
-      console.log(`OTC price for trade ${trade.coinName}:`, price);
       return price;
     }
   };
@@ -69,21 +58,18 @@ const BinaryChart = () => {
         coinData?.currentPrice && coinData.currentPrice > 0
           ? coinData.currentPrice
           : parseFloat(livePrice) || 0;
-      console.log(`Current Live price for ${coinName}:`, price);
       return price;
     } else if (coinType === "Forex") {
       const price =
         coinData?.currentPrice && coinData.currentPrice > 0
           ? coinData.currentPrice
           : parseFloat(forexPrice) || 0;
-      console.log(`Current Forex price for ${coinName}:`, price);
       return price;
     } else {
       const price =
         coinData?.currentPrice && coinData.currentPrice > 0
           ? coinData.currentPrice
           : parseFloat(otcPrice) || 0;
-      console.log(`Current OTC price for ${coinName}:`, price);
       return price;
     }
   };
@@ -208,7 +194,6 @@ const BinaryChart = () => {
         }
       );
     } catch (err) {
-      console.error("Error updating user assets:", err);
       toast.error("Failed to update assets");
       throw err;
     }
@@ -223,7 +208,6 @@ const BinaryChart = () => {
         );
         setCoins(response.data);
       } catch (err) {
-        console.error("Error fetching coins:", err);
         toast.error("Failed to load coins");
       }
     };
@@ -259,7 +243,6 @@ const BinaryChart = () => {
         const data = await response.json();
         if (isMounted) {
           const price = parseFloat(data.price);
-          console.log(`Live price for ${selectedCoin}:`, price);
           setLivePrice(price.toFixed(2));
           setPriceLoaded(true);
         }
@@ -283,7 +266,6 @@ const BinaryChart = () => {
     const handlePriceUpdate = (priceData) => {
       const priceValue = priceData.price || priceData;
       const price = parseFloat(priceValue);
-      console.log(`OTC price for ${selectedCoin}:`, price);
       setOtcPrice(price);
       setPriceLoaded(true);
     };
@@ -301,8 +283,6 @@ const BinaryChart = () => {
     if (!selectedCoin || selectedCoinType !== "Forex") return;
     let isMounted = true;
 
-    console.log(`[FOREX] Starting to fetch price for ${selectedCoin}`);
-
     const fetchForexPrice = async () => {
       try {
         const apiKey = "947e8dde5aad425da8950b509decf8ca"; // Your API key
@@ -310,15 +290,10 @@ const BinaryChart = () => {
           ? selectedCoin
           : selectedCoin.replace(/(\w{3})(\w{3})/, "$1/$2");
 
-        console.log(`[FOREX] Fetching price for symbol: ${symbol}`);
-
         // For testing, let's set a mock price immediately
         if (isMounted) {
           const mockPrice = 1.17661; // EUR/USD example rate
-          console.log(
-            `[FOREX] Setting mock price for ${selectedCoin}:`,
-            mockPrice
-          );
+
           setForexPrice(mockPrice);
           setForexMarketStatus("open");
           setPriceLoaded(true);
@@ -328,8 +303,6 @@ const BinaryChart = () => {
         const statusUrl = `https://api.twelvedata.com/market_state?symbol=${symbol}&apikey=${apiKey}`;
         const statusResponse = await fetch(statusUrl);
         const statusData = await statusResponse.json();
-
-        console.log(`[FOREX] Market status response:`, statusData);
 
         if (
           isMounted &&
@@ -345,16 +318,12 @@ const BinaryChart = () => {
             const response = await fetch(url);
             const data = await response.json();
 
-            console.log(`[FOREX] Price response:`, data);
-
             if (isMounted && data && data.price) {
               const price = parseFloat(data.price);
-              console.log(`Forex price for ${selectedCoin}:`, price);
               setForexPrice(price);
               setPriceLoaded(true);
             } else if (isMounted) {
               setPriceLoaded(false);
-              console.error("Twelve Data price error or no data:", data);
             }
           } else {
             // Market is closed
@@ -368,28 +337,21 @@ const BinaryChart = () => {
           const response = await fetch(url);
           const data = await response.json();
 
-          console.log(`[FOREX] Fallback price response:`, data);
-
           if (isMounted && data && data.price) {
             const price = parseFloat(data.price);
-            console.log(`Forex price fallback for ${selectedCoin}:`, price);
             setForexPrice(price);
             setForexMarketStatus("open");
             setPriceLoaded(true);
           } else if (isMounted) {
             setForexMarketStatus("closed");
             setPriceLoaded(true);
-            console.error("Twelve Data price error or no data:", data);
           }
         }
       } catch (err) {
         if (isMounted) {
           // Set a mock price for testing if API fails
           const mockPrice = 1.17661; // EUR/USD example rate
-          console.log(
-            `[MOCK] Setting mock forex price for ${selectedCoin}:`,
-            mockPrice
-          );
+
           setForexPrice(mockPrice);
           setForexMarketStatus("open");
           setPriceLoaded(true);
@@ -591,7 +553,6 @@ const BinaryChart = () => {
     if (isDemo) return;
     try {
       // Debug log for payload
-      console.log("[DEBUG] updateTradeResultInDB payload:", tradeData);
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/users/trade/result`,
         tradeData
@@ -696,10 +657,6 @@ const BinaryChart = () => {
         selectedCoinType
       );
 
-      console.log(
-        `[TRADE EXECUTION] Using price for ${selectedCoin} (${selectedCoinType}): ${tradePrice}`
-      );
-
       // Validate that we have a valid price
       if (!tradePrice || isNaN(tradePrice) || tradePrice <= 0) {
         console.error(`[TRADE EXECUTION] Invalid price: ${tradePrice}`);
@@ -727,11 +684,6 @@ const BinaryChart = () => {
         reward: 0,
       };
 
-      console.log(`[TRADE CREATED] Trade object:`, trade);
-      console.log(
-        `[TRADE CREATED] Entry price: ${tradePrice} for ${selectedCoin} (${selectedCoinType})`
-      );
-
       // For demo, just use localStorage
       if (isDemo) {
         // Deduct investment from demo assets
@@ -756,8 +708,6 @@ const BinaryChart = () => {
           entryPrice: tradePrice, // <-- ADD THIS
           investment: investment, // <-- ADD THIS
         };
-
-        console.log(`[DEMO TRADE] Added to local state:`, newTrade);
         const updatedTrades = [...trades, newTrade];
         setTrades(updatedTrades);
         saveDemoTrades(updatedTrades);
@@ -787,7 +737,6 @@ const BinaryChart = () => {
           investment: investment, // <-- ADD THIS
         };
 
-        console.log(`[REAL TRADE] Added to local state:`, newTrade);
         setTrades((prev) => [...prev, newTrade]);
       }
 
