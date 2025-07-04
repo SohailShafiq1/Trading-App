@@ -1814,6 +1814,80 @@ const LiveCandleChart = ({
     return rendered;
   };
 
+  // Effect to prevent body scroll when modal is open
+  useEffect(() => {
+    if (tradePopup) {
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      
+      // Add modal animation styles if not already present
+      if (!document.getElementById('modal-styles')) {
+        const style = document.createElement('style');
+        style.id = 'modal-styles';
+        style.textContent = `
+          @keyframes modalSlideIn {
+            from {
+              opacity: 0;
+              transform: scale(0.9) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+          
+          @keyframes modalSlideOut {
+            from {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+            to {
+              opacity: 0;
+              transform: scale(0.9) translateY(-20px);
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [tradePopup]);
+
+  // Effect to handle keyboard events for modal
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && tradePopup) {
+        setTradePopup(false);
+      }
+    };
+
+    if (tradePopup) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Focus trap - focus the modal when it opens
+      const modalElement = document.querySelector('[data-modal="trade-popup"]');
+      if (modalElement) {
+        modalElement.focus();
+      }
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [tradePopup]);
+
   // Render the chart component
   return (
     <div
@@ -1922,6 +1996,45 @@ const LiveCandleChart = ({
               </p>
             </div>
           </div>
+          {window.innerWidth < 768 && (
+            <button
+              onClick={() => setTradePopup(true)}
+              className="show-trades-btn"
+              style={{
+                background: "#10A055",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                padding: "10px 16px",
+                fontWeight: 600,
+                fontSize: "0.9rem",
+                cursor: "pointer",
+                position: "absolute",
+                top: "103px",
+                left: "0",
+                zIndex: 10,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                transition: "all 0.2s ease",
+                minWidth: "80px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#0d8a47";
+                e.target.style.transform = "translateY(-1px)";
+                e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "#10A055";
+                e.target.style.transform = "translateY(0px)";
+                e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+              }}
+            >
+              Trades
+            </button>
+          )}
           <div
             style={{
               position: "absolute",
@@ -1937,31 +2050,6 @@ const LiveCandleChart = ({
             />
           </div>
 
-          {window.innerWidth < 768 && (
-            <button
-              onClick={() => setTradePopup(true)}
-              className="show-trades-btn"
-              style={{
-                marginRight: 8,
-                background: "#10A055",
-                color: "#fff",
-                border: "none",
-                width: "100px",
-                borderRadius: "6px",
-                padding: "8px 16px",
-                fontWeight: 600,
-                fontSize: "1rem",
-                cursor: "pointer",
-                top: "103px",
-                left: 0,
-                zIndex: 2,
-                position: "absolute",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              }}
-            >
-              Trades
-            </button>
-          )}
           {tradePopup && (
             <div
               style={{
@@ -1970,18 +2058,25 @@ const LiveCandleChart = ({
                 left: 0,
                 width: "100vw",
                 height: "100vh",
-                background: "rgba(0,0,0,0.4)",
-                zIndex: 2,
+                background: "rgba(0,0,0,0.6)",
+                zIndex: 9999,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                backdropFilter: "blur(2px)",
+                WebkitBackdropFilter: "blur(2px)",
               }}
               onClick={() => setTradePopup(false)}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
             >
               <div
+                data-modal="trade-popup"
+                tabIndex={-1}
                 style={{
                   background: "#fff",
-                  borderRadius: 10,
+                  borderRadius: 12,
                   padding: 24,
                   minWidth: 320,
                   maxWidth: 400,
@@ -1989,22 +2084,43 @@ const LiveCandleChart = ({
                   maxHeight: "80vh",
                   overflowY: "auto",
                   position: "relative",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 8px 30px rgba(0,0,0,0.2)",
+                  animation: "modalSlideIn 0.3s ease-out",
+                  outline: "none",
                 }}
                 onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
               >
                 <button
                   style={{
                     position: "absolute",
-                    top: 8,
-                    right: 8,
-                    background: "transparent",
+                    top: 12,
+                    right: 12,
+                    background: "rgba(0,0,0,0.1)",
                     border: "none",
-                    fontSize: 24,
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    fontSize: 18,
                     cursor: "pointer",
-                    color: "#222",
-                    zIndex: 2,
+                    color: "#666",
+                    zIndex: 10000,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease",
                   }}
                   onClick={() => setTradePopup(false)}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "rgba(0,0,0,0.2)";
+                    e.target.style.color = "#333";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "rgba(0,0,0,0.1)";
+                    e.target.style.color = "#666";
+                  }}
                 >
                   <AiOutlineClose />
                 </button>

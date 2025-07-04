@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear(); // Clear all localStorage data
     setUser(null);
   };
 
