@@ -329,13 +329,41 @@ const LiveCandleChart = ({
 
     const chart = chartRef.current;
     const timeScale = chart.timeScale();
-    const x = timeScale.timeToCoordinate(liveCandle.time);
+    
+    // Calculate the next candle time (one candle interval ahead)
+    const intervalSec = intervalToSeconds[interval];
+    const nextCandleTime = liveCandle.time + intervalSec;
+    
+    // Use time-based positioning for next candle location
+    let x = timeScale.timeToCoordinate(nextCandleTime);
     const y = seriesRef.current.priceToCoordinate(liveCandle.close);
     const label = document.getElementById("candle-countdown");
-    if (!label || x == null || y == null) return;
+    if (!label || y == null) return;
+    
     const containerRect = chartContainerRef.current.getBoundingClientRect();
     const labelWidth = label.offsetWidth;
     const labelHeight = label.offsetHeight;
+    
+    // If next candle time is outside visible range, position at current candle + offset
+    if (x == null || x < 0 || x > containerRect.width) {
+      const currentX = timeScale.timeToCoordinate(liveCandle.time);
+      if (currentX != null && !isNaN(currentX)) {
+        // Calculate candle width based on chart's bar spacing
+        const visibleRange = timeScale.getVisibleLogicalRange();
+        const chartWidth = timeScale.width();
+        if (visibleRange && chartWidth > 0) {
+          const candleWidth = chartWidth / (visibleRange.to - visibleRange.from);
+          x = currentX + candleWidth;
+        } else {
+          // Fallback: use fixed pixel offset
+          x = currentX + 50;
+        }
+      } else {
+        // Last fallback: position at right edge
+        x = containerRect.width - labelWidth - 10;
+      }
+    }
+    
     const constrainedX = Math.max(
       labelWidth / 2,
       Math.min(x, containerRect.width - labelWidth / 2)
@@ -663,12 +691,7 @@ const LiveCandleChart = ({
     });
     drawingsRef.current = [];
   };
-  const toggleAutoZoom = () => {
-    setAutoZoom(!autoZoom);
-    if (!autoZoom) {
-      chartRef.current.timeScale().fitContent();
-    }
-  };
+
   useEffect(() => {
     let chartHeight;
     const width = window.innerWidth;
@@ -1790,28 +1813,6 @@ const LiveCandleChart = ({
     return rendered;
   };
 
-  // Helper function to generate future time slots for better timescale display
-  // NOTE: Not needed - LightWeight Charts shows future time ticks naturally
-  const generateFutureTimeSlots = (lastCandleTime, interval, count = 10) => {
-    // Future time slots are handled automatically by the chart
-    return [];
-  };
-
-  // Helper function to add future time markers to chart data
-  // NOTE: Not needed - professional charts don't add fake data
-  const addFutureTimeMarkers = (candles, interval, count = 10) => {
-    // Don't add future markers to the main candle data
-    // Professional platforms show future times naturally
-    return candles;
-  };
-
-  // Future time markers are handled automatically by LightWeight Charts
-  // No invisible series or manual interventions needed - just like professional platforms
-  const addFutureTimeMarkersToChart = () => {
-    // Do nothing - professional behavior is built-in
-    return;
-  };
-
   // Render the chart component
   return (
     <div
@@ -2301,13 +2302,19 @@ const LiveCandleChart = ({
           style={{
             position: "absolute",
             transform: "translate(-50%, -50%)",
-            color: theme.textColor,
-            background: "rgba(0, 0,  0, 0.2)",
-            borderRadius: 4,
+            color: "#ffffff",
+            background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
+            border: "1px solid #404040",
+            borderRadius: 8,
+            padding: "8px 16px",
             pointerEvents: "none",
             zIndex: 2,
-            fontWeight: "bold",
+            fontWeight: "600",
+            fontSize: "14px",
             whiteSpace: "nowrap",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)",
+            backdropFilter: "blur(8px)",
+            letterSpacing: "0.5px",
           }}
         >
           {countdown}s
