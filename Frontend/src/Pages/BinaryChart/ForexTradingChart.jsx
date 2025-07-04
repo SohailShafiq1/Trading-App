@@ -204,7 +204,11 @@ const ForexTradingChart = ({
       let chartHeight;
       const width = window.innerWidth;
       // Large desktops
-      if (width > 1920) {
+      if (width > 2560) {
+        chartHeight = 800;
+      } else if (width > 2100) {
+        chartHeight = 850;
+      } else if (width > 1920) {
         chartHeight = 750;
       } else if (width > 1800) {
         chartHeight = 700;
@@ -212,10 +216,14 @@ const ForexTradingChart = ({
         chartHeight = 650;
       } else if (width > 1600) {
         chartHeight = 600;
+      }
+      // Medium desktops
+      else if (width > 1500) {
+        chartHeight = 530;
       } else if (width > 1400) {
         chartHeight = 500;
       } else if (width > 1300) {
-        chartHeight = 400;
+        chartHeight = 450;
       } else if (width > 1024) {
         chartHeight = 350;
       }

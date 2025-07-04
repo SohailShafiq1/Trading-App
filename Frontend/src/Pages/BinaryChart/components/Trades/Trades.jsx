@@ -26,7 +26,8 @@ const Trades = ({
   const socketRef = useRef(null);
 
   // Helper to get unique trade ID
-  const getTradeId = (trade) => trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+  const getTradeId = (trade) =>
+    trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
 
   // Subscribe to OTC price updates for all OTC coins
   useEffect(() => {
@@ -69,11 +70,13 @@ const Trades = ({
       });
       return next;
     });
-    
+
     // Also clean up processed trades set for trades that no longer exist
-    setProcessedTrades(prev => {
-      const existingTradeIds = trades.map(trade => getTradeId(trade));
-      return new Set([...prev].filter(tradeId => existingTradeIds.includes(tradeId)));
+    setProcessedTrades((prev) => {
+      const existingTradeIds = trades.map((trade) => getTradeId(trade));
+      return new Set(
+        [...prev].filter((tradeId) => existingTradeIds.includes(tradeId))
+      );
     });
   }, [trades]);
 
@@ -107,7 +110,7 @@ const Trades = ({
         !processedTrades.has(tradeId)
       ) {
         // Mark this trade as processed
-        setProcessedTrades(prev => new Set([...prev, tradeId]));
+        setProcessedTrades((prev) => new Set([...prev, tradeId]));
         // Calculate locked result
         let endPrice = 0;
         if (trade.coinType === "OTC" || trade.coinType === "otc") {
@@ -125,24 +128,31 @@ const Trades = ({
           }
         }
         const coinData = coins.find(
-          (c) => c._id === trade.coinId || c.name === trade.coinName || c.name === trade.coin
+          (c) =>
+            c._id === trade.coinId ||
+            c.name === trade.coinName ||
+            c.name === trade.coin
         );
         const profitPercentage = coinData?.profitPercentage || 0;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
         let centsChange = 0;
         let isWin = false;
-        
+
         // Correct binary options win/loss logic
         if (trade.type === "Buy") {
           // Buy wins if current price is higher than entry price
           isWin = endPrice > trade.entryPrice;
-          centsChange = (endPrice - trade.entryPrice) * (tradeInvestment / trade.entryPrice);
+          centsChange =
+            (endPrice - trade.entryPrice) *
+            (tradeInvestment / trade.entryPrice);
         } else {
-          // Sell wins if current price is lower than entry price  
+          // Sell wins if current price is lower than entry price
           isWin = endPrice < trade.entryPrice;
-          centsChange = (trade.entryPrice - endPrice) * (tradeInvestment / trade.entryPrice);
+          centsChange =
+            (trade.entryPrice - endPrice) *
+            (tradeInvestment / trade.entryPrice);
         }
-        
+
         const basePayout = tradeInvestment * (1 + profitPercentage / 100);
         const lockedReward = isWin
           ? Math.round((basePayout + centsChange) * 100) / 100
@@ -155,175 +165,189 @@ const Trades = ({
             canBeClosed: isWin,
           },
         }));
-        
+
         // Optionally, update backend here if needed
       }
     });
     // eslint-disable-next-line
-  }, [localTimers, trades, currentOtcPrices, livePrice, otcPrice, forexPrice, getPriceForTrade, coins, processedTrades]);
+  }, [
+    localTimers,
+    trades,
+    currentOtcPrices,
+    livePrice,
+    otcPrice,
+    forexPrice,
+    getPriceForTrade,
+    coins,
+    processedTrades,
+  ]);
 
   return (
-    <div className={s.tradeHistory}>
-      <p>Trades</p>
-      <ul>
-        {trades.map((trade) => {
-          const tradeId = getTradeId(trade);
-          // Use locked result if available
-          const locked = lockedResults[tradeId] || {};
-          let displayReward = locked.lockedReward ?? trade.lockedReward ?? trade.reward;
-          let displayStatus = locked.lockedStatus ?? trade.lockedStatus ?? trade.status;
-          const canBeClosed = locked.canBeClosed ?? trade.canBeClosed;
-          const coinData = coins.find((c) => c._id === trade.coinId || c.name === trade.coinName);
-          // Show trade open price and current price
-          const openPrice = trade.entryPrice;
-          let currentPrice = 0;
-          if (trade.coinId && currentOtcPrices[trade.coinId] !== undefined) {
-            currentPrice = currentOtcPrices[trade.coinId];
-          } else if (typeof getPriceForTrade === "function") {
-            currentPrice = getPriceForTrade(trade) ?? 0;
-          } else {
-            // Fallback based on coin type
-            if (trade.coinType === "Live") {
-              currentPrice = parseFloat(livePrice) || 0;
-            } else if (trade.coinType === "Forex") {
-              currentPrice = parseFloat(forexPrice) || 0;
+    <div className={s.tradesContainer}>
+      <div className={s.tradeHistory}>
+        <p>Trades</p>
+        <ul>
+          {trades.map((trade) => {
+            const tradeId = getTradeId(trade);
+            // Use locked result if available
+            const locked = lockedResults[tradeId] || {};
+            let displayReward =
+              locked.lockedReward ?? trade.lockedReward ?? trade.reward;
+            let displayStatus =
+              locked.lockedStatus ?? trade.lockedStatus ?? trade.status;
+            const canBeClosed = locked.canBeClosed ?? trade.canBeClosed;
+            const coinData = coins.find(
+              (c) => c._id === trade.coinId || c.name === trade.coinName
+            );
+            // Show trade open price and current price
+            const openPrice = trade.entryPrice;
+            let currentPrice = 0;
+            if (trade.coinId && currentOtcPrices[trade.coinId] !== undefined) {
+              currentPrice = currentOtcPrices[trade.coinId];
+            } else if (typeof getPriceForTrade === "function") {
+              currentPrice = getPriceForTrade(trade) ?? 0;
             } else {
-              currentPrice = parseFloat(otcPrice) || 0;
+              // Fallback based on coin type
+              if (trade.coinType === "Live") {
+                currentPrice = parseFloat(livePrice) || 0;
+              } else if (trade.coinType === "Forex") {
+                currentPrice = parseFloat(forexPrice) || 0;
+              } else {
+                currentPrice = parseFloat(otcPrice) || 0;
+              }
             }
-          }
-          return (
-            <li
-              key={tradeId}
-              style={{
-                color: "black",
-                padding: "2px",
-              }}
-            >
-              {/* First Row: Coin Name and Trade Duration */}
-              <div
+            return (
+              <li
+                key={tradeId}
                 style={{
-                  marginBottom: "8px",
-                  display: "flex",
-                  justifyContent: "space-around",
+                  color: "black",
+                  padding: "2px",
                 }}
               >
-                <strong>
-                  {coinData?.firstName}/{coinData?.lastName}
-                </strong>
-                <span>
-                  {trade.type === "Buy" ? (
-                    <span style={{ color: "#10A055", fontWeight: 600 }}>
-                      Buy
-                    </span>
-                  ) : (
-                    <span style={{ color: "#FF0000", fontWeight: 600 }}>
-                      Sell
-                    </span>
-                  )}
-                </span>{" "}
-              </div>
-
-              {/* Second Row: Trade Amount and Result */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-around",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <span
+                {/* First Row: Coin Name and Trade Duration */}
+                <div
                   style={{
-                    color:
-                      displayStatus === "win"
-                        ? "#10A055"
-                        : displayStatus === "loss"
-                        ? "#FF0000"
-                        : "black",
+                    marginBottom: "8px",
+                    display: "flex",
+                    justifyContent: "space-around",
                   }}
                 >
-                  Trade: ${trade.price}
-                </span>
-                <span
-                  style={{
-                    color:
-                      displayStatus === "win"
-                        ? "#10A055"
-                        : displayStatus === "loss"
-                        ? "#FF0000"
-                        : "black",
-                  }}
-                >
-                  {displayStatus === "running" && localTimers[tradeId] > 0
-                    ? `Time Left: ${localTimers[tradeId]}s`
-                    : `Payout: $${displayReward}`}
-                </span>
-              </div>
-              {/* Third Row: Open Price and Current Price */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-around",
-                  alignItems: "center",
-                  gap: 8,
-                  marginTop: 4,
-                  fontSize: "0.95em",
-                }}
-              >
-                <span>Open Price: ${openPrice}</span>
-                <span>Current Price: ${currentPrice}</span>
-              </div>
-              {/* Close Trade button: ONLY for confirmed winning trades that require manual close */}
-              {(() => {
-                // Explicit check: only show for winning trades
-                const isWinningTrade = (
-                  // Case 1: Trade result is explicitly "win" and requires manual close
-                  (trade.result === "win" && trade.manualClose === true) ||
-                  // Case 2: Timer expired and locked result shows win
-                  (locked.lockedStatus === "win" && 
-                   localTimers[tradeId] === 0 && 
-                   canBeClosed === true)
-                );
-                
-                // Safety check: never show for any losing conditions
-                const isLosingTrade = (
-                  trade.result === "loss" ||
-                  locked.lockedStatus === "loss" ||
-                  displayStatus === "loss"
-                );
-                
-                // Only show button if it's a winning trade AND not a losing trade
-                return isWinningTrade && !isLosingTrade;
-              })() && (
-                <div style={{ marginTop: 8, textAlign: "center" }}>
-                  <button
-                    onClick={() => handleCloseTrade(trade)}
-                    className={styles.closeTradeBtn}
-                  >
-                    Close Trade
-                  </button>
+                  <strong>
+                    {coinData?.firstName}/{coinData?.lastName}
+                  </strong>
+                  <span>
+                    {trade.type === "Buy" ? (
+                      <span style={{ color: "#10A055", fontWeight: 600 }}>
+                        Buy
+                      </span>
+                    ) : (
+                      <span style={{ color: "#FF0000", fontWeight: 600 }}>
+                        Sell
+                      </span>
+                    )}
+                  </span>{" "}
                 </div>
-              )}
-              <div>
-                {trade.openedByAdmin && (
+
+                {/* Second Row: Trade Amount and Result */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-around",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
                   <span
                     style={{
-                      marginLeft: 8,
-                      background: "#388e3c",
-                      color: "#fff",
-                      borderRadius: 4,
-                      padding: "2px 8px",
-                      fontSize: "0.85em",
+                      color:
+                        displayStatus === "win"
+                          ? "#10A055"
+                          : displayStatus === "loss"
+                          ? "#FF0000"
+                          : "black",
                     }}
                   >
-                    Opened by Admin
+                    Trade: ${trade.price}
                   </span>
+                  <span
+                    style={{
+                      color:
+                        displayStatus === "win"
+                          ? "#10A055"
+                          : displayStatus === "loss"
+                          ? "#FF0000"
+                          : "black",
+                    }}
+                  >
+                    {displayStatus === "running" && localTimers[tradeId] > 0
+                      ? `Time Left: ${localTimers[tradeId]}s`
+                      : `Payout: $${displayReward}`}
+                  </span>
+                </div>
+                {/* Third Row: Open Price and Current Price */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-around",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 4,
+                    fontSize: "0.95em",
+                  }}
+                >
+                  <span>Open Price: ${openPrice}</span>
+                  <span>Current Price: ${currentPrice}</span>
+                </div>
+                {/* Close Trade button: ONLY for confirmed winning trades that require manual close */}
+                {(() => {
+                  // Explicit check: only show for winning trades
+                  const isWinningTrade =
+                    // Case 1: Trade result is explicitly "win" and requires manual close
+                    (trade.result === "win" && trade.manualClose === true) ||
+                    // Case 2: Timer expired and locked result shows win
+                    (locked.lockedStatus === "win" &&
+                      localTimers[tradeId] === 0 &&
+                      canBeClosed === true);
+
+                  // Safety check: never show for any losing conditions
+                  const isLosingTrade =
+                    trade.result === "loss" ||
+                    locked.lockedStatus === "loss" ||
+                    displayStatus === "loss";
+
+                  // Only show button if it's a winning trade AND not a losing trade
+                  return isWinningTrade && !isLosingTrade;
+                })() && (
+                  <div style={{ marginTop: 8, textAlign: "center" }}>
+                    <button
+                      onClick={() => handleCloseTrade(trade)}
+                      className={styles.closeTradeBtn}
+                    >
+                      Close Trade
+                    </button>
+                  </div>
                 )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                <div>
+                  {trade.openedByAdmin && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        background: "#388e3c",
+                        color: "#fff",
+                        borderRadius: 4,
+                        padding: "2px 8px",
+                        fontSize: "0.85em",
+                      }}
+                    >
+                      Opened by Admin
+                    </span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 };

@@ -697,7 +697,12 @@ const LiveCandleChart = ({
     let chartHeight;
     const width = window.innerWidth;
     // Large desktops
-    if (width > 1920) {
+
+    if (width > 2560) {
+      chartHeight = 800;
+    } else if (width > 2100) {
+      chartHeight = 850;
+    } else if (width > 1920) {
       chartHeight = 750;
     } else if (width > 1800) {
       chartHeight = 700;
@@ -705,6 +710,10 @@ const LiveCandleChart = ({
       chartHeight = 650;
     } else if (width > 1600) {
       chartHeight = 600;
+    }
+    // Medium desktops
+    else if (width > 1500) {
+      chartHeight = 530;
     } else if (width > 1400) {
       chartHeight = 500;
     } else if (width > 1300) {
@@ -934,10 +943,10 @@ const LiveCandleChart = ({
       if (counter != null) trendCounterRef.current = counter;
 
       const roundedPrice = parseFloat(price.toFixed(4));
-      
+
       // Apply price smoothing for very small changes to reduce jitter
       const smoothedPrice = smoothPriceUpdate(currentPrice, roundedPrice);
-      
+
       setCurrentPrice(smoothedPrice);
 
       setLiveCandle((prev) => {
@@ -1015,23 +1024,29 @@ const LiveCandleChart = ({
 
       // Immediately apply the backend candle to the candles array
       setCandles((prev) => {
-        const candleTime = typeof candle.time === 'string' ? candle.time : new Date(candle.time).toISOString();
+        const candleTime =
+          typeof candle.time === "string"
+            ? candle.time
+            : new Date(candle.time).toISOString();
         const exists = prev.find((c) => c.time === candleTime);
         if (exists) {
           return prev.map((c) => (c.time === candleTime ? candle : c));
         } else {
           return [...prev, candle].sort((a, b) => {
-            const aTime = typeof a.time === 'string' ? Date.parse(a.time) : a.time;
-            const bTime = typeof b.time === 'string' ? Date.parse(b.time) : b.time;
+            const aTime =
+              typeof a.time === "string" ? Date.parse(a.time) : a.time;
+            const bTime =
+              typeof b.time === "string" ? Date.parse(b.time) : b.time;
             return aTime - bTime;
           });
         }
       });
 
       // Convert candle time to bucket timestamp
-      const bucket = typeof candle.time === 'string' 
-        ? Math.floor(Date.parse(candle.time) / 1000)
-        : Math.floor(candle.time / 1000);
+      const bucket =
+        typeof candle.time === "string"
+          ? Math.floor(Date.parse(candle.time) / 1000)
+          : Math.floor(candle.time / 1000);
 
       // Get the last candle's close price for the new candle's open
       const lastCandleClose = liveCandle?.close ?? candle.close;
@@ -1084,7 +1099,15 @@ const LiveCandleChart = ({
       socket.off(`price:${coinName}`, handlePrice);
       socket.off(`candle:${coinName}`, handleCandle);
     };
-  }, [coinName, interval, candleStyle, applyIndicators, candles, liveCandle, currentPrice]);
+  }, [
+    coinName,
+    interval,
+    candleStyle,
+    applyIndicators,
+    candles,
+    liveCandle,
+    currentPrice,
+  ]);
 
   // Update timeScale when autoZoom changes
   useEffect(() => {
@@ -1832,7 +1855,7 @@ const LiveCandleChart = ({
   // Helper function to ensure price continuity between candles
   const ensurePriceContinuity = (newCandle, previousCandle) => {
     if (!previousCandle) return newCandle;
-    
+
     // If there's a gap between candles, adjust the open price to match previous close
     if (newCandle.open !== previousCandle.close) {
       return {
@@ -1842,22 +1865,22 @@ const LiveCandleChart = ({
         low: Math.min(newCandle.low, previousCandle.close),
       };
     }
-    
+
     return newCandle;
   };
 
   // Add a small smoothing mechanism to reduce jittery updates
   const smoothPriceUpdate = (currentPrice, newPrice, smoothingFactor = 0.1) => {
     if (!currentPrice) return newPrice;
-    
+
     // Apply exponential smoothing for very small price changes
     const priceDiff = Math.abs(newPrice - currentPrice);
     const priceRange = Math.max(currentPrice, newPrice) * 0.001; // 0.1% of price
-    
+
     if (priceDiff < priceRange) {
       return currentPrice + (newPrice - currentPrice) * smoothingFactor;
     }
-    
+
     return newPrice; // Use actual price for significant changes
   };
 
@@ -2021,7 +2044,7 @@ const LiveCandleChart = ({
                 zIndex: 2,
                 display: "flex",
                 alignItems: "center",
-               
+
                 justifyContent: "center",
               }}
               onClick={() => setTradePopup(false)}

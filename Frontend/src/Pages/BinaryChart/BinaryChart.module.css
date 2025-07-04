@@ -287,10 +287,6 @@ body {
 }
 
 .tradeHistory {
-  overflow: hidden;
-  border-top: 2px solid #10a055;
-  border-bottom: 2px solid #ff1600;
-  border-radius: 1rem;
 }
 
 .tradeHistory p {
@@ -306,10 +302,13 @@ body {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 150px;
-  overflow-y: auto;
 }
-
+.tradesContainer {
+  overflow-y: scroll;
+  border-radius: 1rem;
+  border-top: 2px solid #10a055;
+  border-bottom: 2px solid #ff1600;
+}
 .tradeHistory li {
   border-radius: 6px;
   padding: 0.8rem;
@@ -376,8 +375,9 @@ body {
     flex-direction: column;
   }
 
-  .tradeHistory ul {
+  .tradesContainer {
     max-height: 200px;
+    min-height: 200px; /* Ensuring minimum height for smaller screens */
   }
 }
 .timestampPopup {
@@ -616,13 +616,15 @@ body {
 }
 
 @media (min-width: 767px) {
-  .tradeHistory ul {
-    max-height: 50px; /* Reduced height for medium screens */
+  .tradesContainer {
+    max-height: 120px; /* Reduced height for medium screens */
+    min-height: 120px; /* Ensuring minimum height for medium screens */
   }
 }
 @media (max-width: 768px) {
-  .tradeHistory ul {
+  .tradesContainer {
     max-height: 300px;
+    min-height: 300px; /* Ensuring minimum height for smaller screens */
   }
 }
 @media (max-width: 1300px) {
@@ -632,22 +634,33 @@ body {
 }
 
 @media (min-width: 1524px) {
-  .tradeHistory ul {
-    max-height: 150px; /* Reduced height for smaller screens */
+  .tradesContainer {
+    max-height: 190px; /* Reduced height for smaller screens */
+    min-height: 190px; /* Ensuring minimum height for larger screens */
   }
 }
 @media (min-width: 1600px) {
-  .tradeHistory ul {
-    max-height: 200px; /* Reduced height for larger screens */
+  .tradesContainer {
+    max-height: 260px; /* Reduced height for larger screens */
+    min-height: 260px; /* Ensuring minimum height for larger screens */
   }
 }
 @media (min-width: 1740px) {
-  .tradeHistory ul {
-    max-height: 340px; /* Reduced height for medium screens */
+  .tradesContainer {
+    max-height: 370px; /* Reduced height for medium screens */
+    min-height: 370px; /* Ensuring minimum height for larger screens */
   }
 }
 @media (min-width: 1940px) {
-  .tradeHistory ul {
-    max-height: 380px; /* Reduced height for medium screens */
+  .tradesContainer {
+    max-height: 430px;
+    min-height: 430px; /* Ensuring minimum height for larger screens */
+    /* Reduced height for medium screens */
+  }
+}
+@media (min-width: 2100px) {
+  .tradesContainer {
+    max-height: 520px;
+    min-height: 520px;
   }
 }
