@@ -329,21 +329,21 @@ const LiveCandleChart = ({
 
     const chart = chartRef.current;
     const timeScale = chart.timeScale();
-    
+
     // Calculate the next candle time (one candle interval ahead)
     const intervalSec = intervalToSeconds[interval];
     const nextCandleTime = liveCandle.time + intervalSec;
-    
+
     // Use time-based positioning for next candle location
     let x = timeScale.timeToCoordinate(nextCandleTime);
     const y = seriesRef.current.priceToCoordinate(liveCandle.close);
     const label = document.getElementById("candle-countdown");
     if (!label || y == null) return;
-    
+
     const containerRect = chartContainerRef.current.getBoundingClientRect();
     const labelWidth = label.offsetWidth;
     const labelHeight = label.offsetHeight;
-    
+
     // If next candle time is outside visible range, position at current candle + offset
     if (x == null || x < 0 || x > containerRect.width) {
       const currentX = timeScale.timeToCoordinate(liveCandle.time);
@@ -352,7 +352,8 @@ const LiveCandleChart = ({
         const visibleRange = timeScale.getVisibleLogicalRange();
         const chartWidth = timeScale.width();
         if (visibleRange && chartWidth > 0) {
-          const candleWidth = chartWidth / (visibleRange.to - visibleRange.from);
+          const candleWidth =
+            chartWidth / (visibleRange.to - visibleRange.from);
           x = currentX + candleWidth;
         } else {
           // Fallback: use fixed pixel offset
@@ -363,7 +364,7 @@ const LiveCandleChart = ({
         x = containerRect.width - labelWidth - 10;
       }
     }
-    
+
     const constrainedX = Math.max(
       labelWidth / 2,
       Math.min(x, containerRect.width - labelWidth / 2)
@@ -2305,14 +2306,15 @@ const LiveCandleChart = ({
             color: "#ffffff",
             background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
             border: "1px solid #404040",
-            borderRadius: 8,
+            borderRadius: 3,
             padding: "8px 16px",
             pointerEvents: "none",
             zIndex: 2,
             fontWeight: "600",
             fontSize: "14px",
             whiteSpace: "nowrap",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)",
+            boxShadow:
+              "0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)",
             backdropFilter: "blur(8px)",
             letterSpacing: "0.5px",
           }}
