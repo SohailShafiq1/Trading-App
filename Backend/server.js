@@ -161,7 +161,7 @@ const startServer = async () => {
     console.log("✅ MongoDB connected successfully");
 
     // Initialize services
-    candleService.initSocket(io);
+    await candleService.initSocket(io);
     affiliateTimers.initialize();
     console.log("📊 Services initialized");
 

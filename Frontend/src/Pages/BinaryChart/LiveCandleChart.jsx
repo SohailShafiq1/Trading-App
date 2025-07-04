@@ -5,7 +5,7 @@ import { BsBarChartFill } from "react-icons/bs";
 import { AiOutlinePlusSquare } from "react-icons/ai";
 import { BiLineChart, BiPencil } from "react-icons/bi";
 import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import "./LiveCandleChart.css";
 import axios from "axios";
 import {
@@ -24,8 +24,37 @@ import { AiOutlineClose } from "react-icons/ai"; // Add close icon
 import Trades from "./components/Trades/Trades";
 const socket = io(import.meta.env.VITE_BACKEND_URL, {
   withCredentials: true,
-  transports: ["websocket"], // 👈 force WebSocket only
+  transports: ["websocket"], // Use only WebSocket, no polling
+  timeout: 60000, // 60 seconds timeout
+  forceNew: true, // Force new connection
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
 });
+
+// Add connection debugging
+socket.on("connect", () => {
+  console.log("✅ Socket connected:", socket.id);
+});
+
+socket.on("disconnect", (reason) => {
+  console.log("❌ Socket disconnected:", reason);
+});
+
+socket.on("connect_error", (error) => {
+  console.error("� Socket connection error:", error);
+});
+
+socket.on("reconnect", (attemptNumber) => {
+  console.log("🔄 Socket reconnected after", attemptNumber, "attempts");
+});
+
+socket.on("reconnect_error", (error) => {
+  console.error("🔴 Socket reconnection error:", error);
+});
+
+console.log("🔌 Attempting to connect to:", import.meta.env.VITE_BACKEND_URL);
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 const intervalToSeconds = {
@@ -117,6 +146,7 @@ const groupCandles = (candles, interval) => {
           : Number(b.time);
       return aTime - bTime;
     });
+
   for (const c of sorted) {
     let ts;
     if (typeof c.time === "string") {
@@ -125,14 +155,19 @@ const groupCandles = (candles, interval) => {
       ts = Number(c.time);
     }
     if (isNaN(ts)) continue;
+    
+    // Create proper time buckets for aggregation
     const bucket = Math.floor(ts / intervalSec) * intervalSec;
     const last = grouped[grouped.length - 1];
+    
     if (last && last.time === bucket) {
+      // Update existing candle in the bucket
       last.high = Math.max(last.high, c.high);
       last.low = Math.min(last.low, c.low);
       last.close = c.close;
       last.volume = (last.volume || 0) + (c.volume || 0);
     } else {
+      // Create new candle for the bucket
       grouped.push({
         time: Number(bucket),
         open: c.open,
@@ -143,6 +178,7 @@ const groupCandles = (candles, interval) => {
       });
     }
   }
+  
   return grouped;
 };
 const calculateSMA = (data, period) => {
@@ -495,7 +531,7 @@ const LiveCandleChart = ({
         });
     }
 
-    // Set the data based on candle style
+    // Set the data based on candle style with proper aggregation
     const data = groupCandles(candles, interval);
 
     if (candleStyle === CANDLE_STYLES.LINE) {
@@ -511,7 +547,7 @@ const LiveCandleChart = ({
     // Apply indicators after series is created
     applyIndicators();
   };
-  const applyIndicators = () => {
+  const applyIndicators = useCallback(() => {
     const cleanupIndicator = (ref) => {
       if (ref.current) {
         try {
@@ -631,7 +667,7 @@ const LiveCandleChart = ({
     } catch (e) {
       console.error("Error applying indicator:", e);
     }
-  };
+  }, [candles, interval, indicator]);
   const handleDrawingToolClick = (tool) => {
     setDrawingTool(tool);
     setShowDrawingPopup(false);
@@ -822,12 +858,14 @@ const LiveCandleChart = ({
         const historical = res.data;
         setCandles(historical);
 
-        const ts = Math.floor(Date.now() / 1000);
-        const bucket =
-          Math.floor(ts / intervalToSeconds[interval]) *
-          intervalToSeconds[interval];
+        // Properly group candles for the selected interval
+        const grouped = groupCandles(historical, interval);
 
-        const last = historical.at(-1);
+        const ts = Math.floor(Date.now() / 1000);
+        const intervalSec = intervalToSeconds[interval];
+        const bucket = Math.floor(ts / intervalSec) * intervalSec;
+
+        const last = grouped.at(-1);
         const lastClose = last?.close ?? 1.0;
 
         setLiveCandle({
@@ -838,9 +876,7 @@ const LiveCandleChart = ({
           close: lastClose,
         });
 
-        const grouped = groupCandles(historical, interval);
-
-        // Don't add future time markers to main data anymore
+        // Set the grouped data to the chart
         if (seriesRef.current) {
           if (candleStyle === CANDLE_STYLES.LINE) {
             const lineData = grouped.map((candle) => ({
@@ -855,11 +891,7 @@ const LiveCandleChart = ({
 
         applyIndicators();
 
-        // Professional trading platform behavior:
-        // - Chart shows future time ticks automatically
-        // - No artificial range adjustments after data updates
-        // - User has complete control over zoom and position
-
+        // Only trigger render key update for initial load
         setRenderKey((k) => k + 1);
       } catch (err) {
         console.error("Initial candle fetch failed", err);
@@ -906,7 +938,7 @@ const LiveCandleChart = ({
 
       updated.sort((a, b) => a.time - b.time);
 
-      // Don't add future time markers to live updates
+      // Update chart data without frequent re-renders
       if (seriesRef.current) {
         if (candleStyle === CANDLE_STYLES.LINE) {
           const lineData = updated.map((candle) => ({
@@ -919,18 +951,21 @@ const LiveCandleChart = ({
         }
       }
 
-      // Professional chart behavior: only update data, never position
-      // Future time ticks are shown automatically by LightWeight Charts
-
-      applyIndicators();
+      // Only apply indicators when data structure changes significantly
+      const shouldUpdateIndicators = !lastCandleRef.current || 
+        lastCandleRef.current.time !== liveCandle.time;
+      
+      if (shouldUpdateIndicators) {
+        applyIndicators();
+      }
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [candles, liveCandle, interval, renderKey, candleStyle]);
+  }, [candles, liveCandle, interval, candleStyle]);
 
   // Socket event handlers
   useEffect(() => {
-    const handlePrice = ({ price, trend, counter }) => {
+    const handlePrice = ({ price, trend, counter, candleData }) => {
       if (trend) trendRef.current = trend;
       if (counter != null) trendCounterRef.current = counter;
 
@@ -938,63 +973,34 @@ const LiveCandleChart = ({
       setCurrentPrice(roundedPrice);
 
       setLiveCandle((prev) => {
-        if (!prev || !prev.time) return prev;
-
         const now = Math.floor(Date.now() / 1000);
-        const bucket =
-          Math.floor(now / intervalToSeconds[interval]) *
-          intervalToSeconds[interval];
+        const intervalSec = intervalToSeconds[interval];
+        const bucket = Math.floor(now / intervalSec) * intervalSec;
 
-        if (bucket !== prev.time) return prev;
+        // Use backend candle data if available, otherwise construct from price
+        let updated;
+        if (candleData) {
+          const candleTime = Math.floor(Date.parse(candleData.time) / 1000);
+          const aggregatedTime = Math.floor(candleTime / intervalSec) * intervalSec;
+          updated = {
+            time: Number(aggregatedTime),
+            open: parseFloat(candleData.open.toFixed(4)),
+            high: parseFloat(candleData.high.toFixed(4)),
+            low: parseFloat(candleData.low.toFixed(4)),
+            close: parseFloat(candleData.close.toFixed(4)),
+          };
+        } else {
+          // Fallback to previous logic with proper aggregation
+          if (!prev || !prev.time) return prev;
+          if (bucket !== prev.time) return prev;
 
-        const t = trendRef.current;
-        const c = trendCounterRef.current ?? 0;
-
-        let constrained = roundedPrice;
-        switch (t) {
-          case "Up":
-            constrained = Math.max(prev.open, roundedPrice);
-            break;
-          case "Down":
-            constrained = Math.min(prev.open, roundedPrice);
-            break;
-          case "Random":
-            constrained = roundedPrice;
-            break;
-          case "Scenario1":
-            constrained =
-              c % 4 < 3
-                ? Math.max(prev.open, roundedPrice)
-                : Math.min(prev.open, roundedPrice);
-            break;
-          case "Scenario2":
-            constrained =
-              c % 10 < 5
-                ? Math.min(prev.open, roundedPrice)
-                : Math.max(prev.open, roundedPrice);
-            break;
-          case "Scenario3":
-            constrained =
-              c % 2 === 0
-                ? Math.max(prev.open, roundedPrice)
-                : Math.min(prev.open, roundedPrice);
-            break;
-          case "Scenario4":
-            constrained = Math.max(prev.open, roundedPrice);
-            break;
-          case "Scenario5":
-            constrained = Math.min(prev.open, roundedPrice);
-            break;
-          default:
-            constrained = roundedPrice;
+          updated = {
+            ...prev,
+            high: parseFloat(Math.max(prev.high, roundedPrice).toFixed(4)),
+            low: parseFloat(Math.min(prev.low, roundedPrice).toFixed(4)),
+            close: parseFloat(roundedPrice.toFixed(4)),
+          };
         }
-
-        const updated = {
-          ...prev,
-          high: parseFloat(Math.max(prev.high, constrained).toFixed(4)),
-          low: parseFloat(Math.min(prev.low, constrained).toFixed(4)),
-          close: parseFloat(constrained.toFixed(4)),
-        };
 
         try {
           if (seriesRef.current) {
@@ -1009,8 +1015,17 @@ const LiveCandleChart = ({
                 ...updated,
               });
             }
+            
+            // Add smooth price transition effect without triggering re-render
+            const container = chartContainerRef.current;
+            if (container) {
+              container.classList.add('price-update');
+              setTimeout(() => {
+                container.classList.remove('price-update');
+              }, 200);
+            }
           }
-          setRenderKey((k) => k + 1);
+          // Remove frequent render key updates - only update for significant changes
         } catch (e) {
           console.error("Error updating series:", e);
         }
@@ -1021,6 +1036,7 @@ const LiveCandleChart = ({
     const handleCandle = (candle) => {
       if (candle.trend) trendRef.current = candle.trend;
 
+      // Update candles state
       setCandles((prev) => {
         const exists = prev.find((c) => c.time === candle.time);
         if (exists) {
@@ -1030,42 +1046,88 @@ const LiveCandleChart = ({
         }
       });
 
+      // Calculate aggregated time for the new candle
       const bucket = Math.floor(Date.parse(candle.time) / 1000);
+      const intervalSec = intervalToSeconds[interval];
+      const aggregatedTime = Math.floor(bucket / intervalSec) * intervalSec;
 
-      const newCandle = {
-        time: Number(bucket),
-        open: candle.close,
-        high: candle.close,
-        low: candle.close,
-        close: candle.close,
-      };
-
-      const merged = [...candles, candle];
-      const grouped = groupCandles(merged, interval);
-
-      if (!grouped.find((c) => c.time === newCandle.time)) {
-        grouped.push(newCandle);
-      }
-
-      grouped.sort((a, b) => a.time - b.time);
-
-      // Don't add future time markers to socket updates
+      // Update the chart series with the individual candle update instead of replacing all data
       if (seriesRef.current) {
-        if (candleStyle === CANDLE_STYLES.LINE) {
-          const lineData = grouped.map((c) => ({
-            time: c.time,
-            value: c.close,
-          }));
-          seriesRef.current.setData(lineData);
+        // Get current chart data to work with
+        const currentData = seriesRef.current.getData ? seriesRef.current.getData() : [];
+        
+        // Find if we already have a candle for this aggregated time period
+        const existingCandleIndex = currentData.findIndex(c => c.time === aggregatedTime);
+        
+        let aggregatedCandle;
+        if (existingCandleIndex >= 0) {
+          // Update existing aggregated candle
+          const existing = currentData[existingCandleIndex];
+          aggregatedCandle = {
+            time: Number(aggregatedTime),
+            open: existing.open, // Keep original open
+            high: Math.max(existing.high, candle.high),
+            low: Math.min(existing.low, candle.low),
+            close: candle.close, // Use latest close
+          };
         } else {
-          seriesRef.current.setData(grouped);
+          // Create new aggregated candle
+          aggregatedCandle = {
+            time: Number(aggregatedTime),
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close,
+          };
+        }
+
+        // Update the chart with just this candle
+        try {
+          if (candleStyle === CANDLE_STYLES.LINE) {
+            seriesRef.current.update({
+              time: Number(aggregatedTime),
+              value: aggregatedCandle.close,
+            });
+          } else {
+            seriesRef.current.update({
+              time: Number(aggregatedTime),
+              ...aggregatedCandle,
+            });
+          }
+          
+          // Apply animation to new candle without triggering re-render
+          const container = chartContainerRef.current;
+          if (container) {
+            container.classList.add('candle-transition');
+            setTimeout(() => {
+              container.classList.remove('candle-transition');
+            }, 500);
+          }
+        } catch (e) {
+          console.error("Error updating candle:", e);
         }
       }
-      setLiveCandle(newCandle);
-      setRenderKey((k) => k + 1);
-      applyIndicators();
-
-      // Professional platforms: data updates only, no position changes
+      
+      // Update live candle state
+      setLiveCandle({
+        time: Number(aggregatedTime),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      });
+      
+      // Only update render key and apply indicators for new time periods
+      const isNewTimePeriod = !candles.find(c => {
+        const cTime = typeof c.time === 'string' ? Math.floor(Date.parse(c.time) / 1000) : c.time;
+        const cAggregated = Math.floor(cTime / intervalSec) * intervalSec;
+        return cAggregated === aggregatedTime;
+      });
+      
+      if (isNewTimePeriod) {
+        setRenderKey((k) => k + 1);
+        applyIndicators();
+      }
     };
 
     socket.on(`price:${coinName}`, handlePrice);
@@ -1075,7 +1137,7 @@ const LiveCandleChart = ({
       socket.off(`price:${coinName}`, handlePrice);
       socket.off(`candle:${coinName}`, handleCandle);
     };
-  }, [coinName, interval, candleStyle]);
+  }, [coinName, interval, candleStyle, candles, applyIndicators]);
 
   // Update timeScale when autoZoom changes
   useEffect(() => {
@@ -1888,7 +1950,7 @@ const LiveCandleChart = ({
     };
   }, [tradePopup]);
 
-  // Render the chart component
+  // Add smooth candle oscillation CSS
   return (
     <div
       className="mainBOX"
@@ -2412,7 +2474,7 @@ const LiveCandleChart = ({
       <div style={{ position: "relative" }}>
         <div
           ref={chartContainerRef}
-          className="chartMain"
+          className="chartMain chart-container"
           style={{ width: "100%", position: "relative" }}
         />
         <div
@@ -2453,6 +2515,31 @@ const LiveCandleChart = ({
           setTradeHover={setTradeHover}
         />
       </div>
+      {/* Add smooth candle oscillation CSS */}
+      <style jsx>{`
+        .candle-transition {
+          animation: candleGrow 0.5s ease-out;
+        }
+        
+        @keyframes candleGrow {
+          0% {
+            transform: scaleY(0.95);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+        
+        .price-update {
+          transition: all 0.2s ease-in-out;
+        }
+        
+        .chart-container {
+          transition: all 0.1s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
