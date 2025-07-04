@@ -11,6 +11,7 @@ const Trades = ({
   coins,
   livePrice,
   otcPrice,
+  forexPrice,
   getPriceForTrade, // <-- add this
   setUserTrades,
   setSelected,
@@ -114,10 +115,14 @@ const Trades = ({
         } else if (typeof getPriceForTrade === "function") {
           endPrice = getPriceForTrade(trade) ?? 0;
         } else {
-          endPrice =
-            trade.coinType === "Live"
-              ? parseFloat(livePrice)
-              : parseFloat(otcPrice);
+          // Fallback based on coin type
+          if (trade.coinType === "Live") {
+            endPrice = parseFloat(livePrice) || 0;
+          } else if (trade.coinType === "Forex") {
+            endPrice = parseFloat(forexPrice) || 0;
+          } else {
+            endPrice = parseFloat(otcPrice) || 0;
+          }
         }
         const coinData = coins.find(
           (c) => c._id === trade.coinId || c.name === trade.coinName || c.name === trade.coin
@@ -155,7 +160,7 @@ const Trades = ({
       }
     });
     // eslint-disable-next-line
-  }, [localTimers, trades, currentOtcPrices, livePrice, otcPrice, getPriceForTrade, coins, processedTrades]);
+  }, [localTimers, trades, currentOtcPrices, livePrice, otcPrice, forexPrice, getPriceForTrade, coins, processedTrades]);
 
   return (
     <div className={s.tradeHistory}>
@@ -176,6 +181,15 @@ const Trades = ({
             currentPrice = currentOtcPrices[trade.coinId];
           } else if (typeof getPriceForTrade === "function") {
             currentPrice = getPriceForTrade(trade) ?? 0;
+          } else {
+            // Fallback based on coin type
+            if (trade.coinType === "Live") {
+              currentPrice = parseFloat(livePrice) || 0;
+            } else if (trade.coinType === "Forex") {
+              currentPrice = parseFloat(forexPrice) || 0;
+            } else {
+              currentPrice = parseFloat(otcPrice) || 0;
+            }
           }
           return (
             <li

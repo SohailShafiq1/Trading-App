@@ -176,6 +176,10 @@ const ForexTradingChart = ({
   type,
   trades,
   handleCloseTrade,
+  getPriceForTrade,
+  livePrice,
+  otcPrice,
+  forexPrice,
 }) => {
   const chartContainerRef = useRef();
   const [showCoinSelector, setShowCoinSelector] = useState(false);
@@ -589,6 +593,10 @@ const ForexTradingChart = ({
                   trades={trades}
                   coins={coins}
                   handleCloseTrade={handleCloseTrade}
+                  getPriceForTrade={getPriceForTrade}
+                  livePrice={livePrice}
+                  otcPrice={otcPrice}
+                  forexPrice={forexPrice}
                 />
               </div>
             </div>
