@@ -197,6 +197,7 @@ const ForexTradingChart = ({
   const buttonRefs = useRef([]);
   const [tradePopup, setTradePopup] = useState(false);
   const [chartHeight, setChartHeight] = useState(600);
+  const [isShaking, setIsShaking] = useState(false);
 
   // Chart height update effect
   useEffect(() => {
@@ -404,6 +405,20 @@ const ForexTradingChart = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Shake effect with randomized interval (2-3s)
+  useEffect(() => {
+    let timeoutId;
+    function triggerShake() {
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 700); // shake duration
+      // Next shake in 2-3 seconds (random)
+      const next = 2000 + Math.random() * 1000;
+      timeoutId = setTimeout(triggerShake, next);
+    }
+    triggerShake();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   return (
     <div
       className="mainBOX"
@@ -457,7 +472,7 @@ const ForexTradingChart = ({
                   {coins.find((c) => c.name === coinName)?.firstName}/
                   {coins.find((c) => c.name === coinName)?.lastName}
                   {"("}
-                  {type}
+                  {"Live"}
                   {")"}
                 </p>
                 <p className="nameProfit">
@@ -501,7 +516,7 @@ const ForexTradingChart = ({
                 {coins.find((c) => c.name === coinName)?.firstName}/
                 {coins.find((c) => c.name === coinName)?.lastName}
                 {"("}
-                {type}
+                {"Live"}
                 {")"}
               </p>
               <p className="nameProfitWeb">
@@ -560,7 +575,7 @@ const ForexTradingChart = ({
                 width: "100vw",
                 height: "100vh",
                 background: "rgba(0,0,0,0.4)",
-                zIndex: 2,
+                zIndex: 3211312,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -883,17 +898,100 @@ const ForexTradingChart = ({
         </div>
       </div>
 
-      <div style={{ position: "relative" }}>
+      <div
+        style={{
+          width: "100%",
+          position: "relative",
+          minHeight: `${chartHeight + 20}px`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div
-          ref={chartContainerRef}
-          className="chartMain"
-          style={{ width: "100%", position: "relative" }}
+          className={isShaking ? "popup-shake" : ""}
+          style={{
+            background: "linear-gradient(135deg, #10A055 0%, #38ef7d 100%)",
+            color: "#fff",
+            borderRadius: 18,
+            padding:
+              window.innerWidth < 600
+                ? "28px 12px"
+                : window.innerWidth < 900
+                ? "36px 24px"
+                : "48px 64px",
+            fontSize:
+              window.innerWidth < 600 ? 18 : window.innerWidth < 900 ? 24 : 32,
+            fontWeight: 800,
+            boxShadow: "0 8px 32px rgba(16,160,85,0.18)",
+            border: "none",
+            textAlign: "center",
+            letterSpacing: 1.2,
+            position: "relative",
+            overflow: "hidden",
+            maxWidth: 480,
+            width: "90vw",
+            transition: "box-shadow 0.2s, transform 0.2s",
+          }}
         >
-          {/* TradingView Chart Container */}
+          <svg
+            width={window.innerWidth < 600 ? 40 : 64}
+            height={window.innerWidth < 600 ? 40 : 64}
+            viewBox="0 0 64 64"
+            fill="none"
+            style={{ marginBottom: window.innerWidth < 600 ? 12 : 24 }}
+          >
+            <circle cx="32" cy="32" r="32" fill="#fff2" />
+            <path
+              d="M32 18v20M32 46h.02"
+              stroke="#fff"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </svg>
           <div
-            id="tradingview_chart_container"
-            style={{ height: chartHeight, width: "100%" }}
-          />
+            style={{
+              fontSize: window.innerWidth < 600 ? 22 : 36,
+              fontWeight: 900,
+              marginBottom: 12,
+              letterSpacing: 1.5,
+            }}
+          >
+            Live Market
+          </div>
+          <div
+            style={{
+              fontSize: window.innerWidth < 600 ? 15 : 22,
+              fontWeight: 600,
+              opacity: 0.95,
+              marginBottom: 8,
+            }}
+          >
+            Coming Soon
+          </div>
+          <div
+            style={{
+              fontSize: window.innerWidth < 600 ? 12 : 16,
+              opacity: 0.8,
+              marginTop: 8,
+            }}
+          >
+            Stay tuned for real-time Forex trading charts and features!
+          </div>
+          <style>{`
+            .popup-shake {
+              animation: shakeY 0.6s cubic-bezier(.22,1.2,.36,1);
+            }
+            @keyframes shakeY {
+              0% { transform: translateY(0); }
+              15% { transform: translateY(-7px); }
+              30% { transform: translateY(6px); }
+              45% { transform: translateY(-4px); }
+              60% { transform: translateY(3px); }
+              75% { transform: translateY(-2px); }
+              100% { transform: translateY(0); }
+            }
+          `}</style>
         </div>
       </div>
     </div>

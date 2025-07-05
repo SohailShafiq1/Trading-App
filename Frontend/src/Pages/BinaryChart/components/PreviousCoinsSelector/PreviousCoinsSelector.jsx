@@ -138,7 +138,7 @@ const PreviousCoinsSelector = ({ setSelectedCoin, coins, currentCoin }) => {
                 {coin.type === "OTC"
                   ? "(OTC)"
                   : coin.type === "Forex"
-                  ? "(Forex)"
+                  ? "(Live)"
                   : "(Live)"}
               </div>
               {/* <div className={styles.coinProfit}>

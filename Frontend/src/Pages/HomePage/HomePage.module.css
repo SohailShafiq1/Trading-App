@@ -538,7 +538,10 @@
   }
 
   .Image {
-    max-width: 90%;
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+    margin-top: -21rem;
   }
 
   .demoContent {

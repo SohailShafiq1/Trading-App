@@ -14,4 +14,5 @@ router.post("/trend", coinController.updateCoinTrend);
 router.post("/trend/all", coinController.updateAllCoinTrends);
 router.get("/type/:name", coinController.getCoinTypeByName);
 router.get("/forex/:pair", coinController.getLiveForexPrice);
+router.post("/delete-first-candle-once", coinController.deleteFirstCandleOnce);
 export default router;

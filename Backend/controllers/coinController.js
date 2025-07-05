@@ -266,3 +266,29 @@ export const getLiveForexPrice = async (req, res) => {
     });
   }
 };
+
+let hasDeletedFirstCandle = false;
+export const deleteFirstCandleOnce = async (req, res) => {
+  if (hasDeletedFirstCandle) {
+    return res
+      .status(400)
+      .json({ message: "Already deleted first candles on this server run" });
+  }
+  try {
+    const coins = await Coin.find({});
+    let updatedCount = 0;
+    for (const coin of coins) {
+      if (Array.isArray(coin.candles) && coin.candles.length > 0) {
+        coin.candles.splice(0, 5); // Remove first 5 candles
+        await coin.save();
+        updatedCount++;
+      }
+    }
+    hasDeletedFirstCandle = true;
+    res.json({ success: true, updatedCount });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to delete first candles", error: err.message });
+  }
+};
