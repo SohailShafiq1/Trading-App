@@ -1487,20 +1487,8 @@ const LiveCandleChart = ({
       return () => cancelAnimationFrame(raf);
     }, [interval]);
 
-    // --- Group trades by mapped interval (ignore type) ---
-    const intervalSec = intervalToSeconds[interval];
-    let chartTimes = [];
-    let chartData = [];
-    if (seriesRef.current && seriesRef.current._internal__data?._data) {
-      chartData = seriesRef.current._internal__data._data;
-      chartTimes = chartData.map((c) =>
-        typeof c.time === "string"
-          ? Math.floor(Date.parse(c.time) / 1000)
-          : Number(c.time)
-      );
-    }
-    const grouped = {};
-    trades
+    // Sort trades globally by startedAt (latest first)
+    const sortedTrades = [...trades]
       .filter(
         (trade) =>
           trade &&
@@ -1510,369 +1498,210 @@ const LiveCandleChart = ({
             trade.price !== undefined ||
             trade.coinPrice !== undefined)
       )
-      .forEach((trade) => {
-        let tradeTimestamp;
-        if (typeof trade.startedAt === "number") {
-          tradeTimestamp =
-            trade.startedAt > 1e12
-              ? Math.floor(trade.startedAt / 1000)
-              : trade.startedAt;
-        } else if (typeof trade.startedAt === "string") {
-          const parsed = Date.parse(trade.startedAt);
-          if (!isNaN(parsed)) {
-            tradeTimestamp = Math.floor(parsed / 1000);
-          }
-        } else if (trade.startedAt instanceof Date) {
-          tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
-        }
-        let mappedTime = Math.floor(tradeTimestamp / intervalSec) * intervalSec;
-        if (!chartTimes.includes(mappedTime) && chartTimes.length > 0) {
-          mappedTime = chartTimes.reduce((prev, curr) =>
-            Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime)
-              ? curr
-              : prev
-          );
-        }
-        if (!grouped[mappedTime]) grouped[mappedTime] = [];
-        grouped[mappedTime].push(trade);
-      });
+      .sort(
+        (a, b) =>
+          new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+      );
 
-    // --- Get current barSpacing for dynamic sizing ---
-    let barSpacing = 10;
-    if (
-      chartRef.current &&
-      chartRef.current.timeScale &&
-      typeof chartRef.current.timeScale().barSpacing === "function"
-    ) {
-      barSpacing = chartRef.current.timeScale().barSpacing();
-    }
-    barSpacing = Math.max(3, Math.min(barSpacing, 40));
-    const boxWidth = Math.max(20, Math.min(90, barSpacing * 4.2));
-    const boxHeight = Math.max(10, Math.min(36, barSpacing * 1.6));
-    const fontSize = Math.max(5, Math.min(18, barSpacing * 0.85));
-    const gap = Math.round(boxWidth * 0.7);
-    const minLineLength = Math.max(12, boxWidth * 0.8);
-    const maxLineLength = Math.max(40, boxWidth * 2.5);
+    // Chart and container references
+    const containerRect =
+      chartContainerRef.current?.getBoundingClientRect() || {
+        width: 600,
+        height: 500,
+      };
+    const boxWidth = 38; // reduced size
+    const boxHeight = 18; // reduced size
+    const gap = 42; // increased gap for clarity
+    const fontSize = 10; // smaller font
     let rendered = [];
-    Object.keys(grouped)
-      .sort((a, b) => a - b)
-      .forEach((mappedTime) => {
-        const tradesArr = grouped[mappedTime];
-        // Sort by startedAt ascending (oldest first)
-        tradesArr.sort((a, b) => {
-          const aTime = new Date(a.startedAt).getTime();
-          const bTime = new Date(b.startedAt).getTime();
-          return aTime - bTime;
-        });
-        // Calculate total width needed for all boxes and center them on the candle
-        const totalWidth =
-          tradesArr.length * boxWidth + (tradesArr.length - 1) * gap;
-        const x = chartRef.current
-          ?.timeScale()
-          .timeToCoordinate(Number(mappedTime));
-        const containerRect =
-          chartContainerRef.current?.getBoundingClientRect() || {
-            width: 600,
-            height: 500,
-          };
-        let startLeft =
-          x != null && !isNaN(x)
-            ? Math.max(
-                boxWidth / 2,
-                Math.min(
-                  x - totalWidth + boxWidth,
-                  x - totalWidth / 2,
-                  containerRect.width - totalWidth + boxWidth / 2
-                )
-              )
-            : containerRect.width - totalWidth - 10;
-        const latestBoxRight =
-          startLeft + (tradesArr.length - 1) * (boxWidth + gap) + boxWidth;
-        if (x != null && latestBoxRight > x + boxWidth / 2) {
-          startLeft -= latestBoxRight - (x + boxWidth / 2);
-        }
-        tradesArr.forEach((trade, idx) => {
-          const tradeId =
-            trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
-          const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
-          const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
-          const left = startLeft + idx * (boxWidth + gap);
-          const top =
-            y != null && !isNaN(y)
-              ? Math.max(
-                  boxHeight / 2,
-                  Math.min(y, containerRect.height - boxHeight / 2)
-                )
-              : 40;
-          const isBuy = trade.type === "Buy";
-          const boxColor = isBuy ? "#10A055" : "#FF0000";
-          const borderColor = isBuy ? "#0d7a3a" : "#b80000";
-          const textColor = "#fff";
-          rendered.push(
+
+    sortedTrades.forEach((trade, idx) => {
+      // Find candle center (x) and price (y)
+      let tradeTimestamp;
+      if (typeof trade.startedAt === "number") {
+        tradeTimestamp =
+          trade.startedAt > 1e12
+            ? Math.floor(trade.startedAt / 1000)
+            : trade.startedAt;
+      } else if (typeof trade.startedAt === "string") {
+        const parsed = Date.parse(trade.startedAt);
+        if (!isNaN(parsed)) tradeTimestamp = Math.floor(parsed / 1000);
+      } else if (trade.startedAt instanceof Date) {
+        tradeTimestamp = Math.floor(trade.startedAt.getTime() / 1000);
+      }
+      const intervalSec = intervalToSeconds[interval];
+      let mappedTime = Math.floor(tradeTimestamp / intervalSec) * intervalSec;
+      // Find closest chart time if not present
+      let chartTimes = [];
+      if (seriesRef.current && seriesRef.current._internal__data?._data) {
+        chartTimes = seriesRef.current._internal__data._data.map((c) =>
+          typeof c.time === "string"
+            ? Math.floor(Date.parse(c.time) / 1000)
+            : Number(c.time)
+        );
+      }
+      if (!chartTimes.includes(mappedTime) && chartTimes.length > 0) {
+        mappedTime = chartTimes.reduce((prev, curr) =>
+          Math.abs(curr - mappedTime) < Math.abs(prev - mappedTime)
+            ? curr
+            : prev
+        );
+      }
+      const x = chartRef.current?.timeScale().timeToCoordinate(mappedTime);
+      const tradePrice = trade.entryPrice ?? trade.coinPrice ?? trade.price;
+      const y = seriesRef.current?.priceToCoordinate(Number(tradePrice));
+      if (x == null || y == null || isNaN(x) || isNaN(y)) return;
+
+      // Calculate box position: offset left by (idx+1)*(boxWidth+gap)
+      const boxLeft = Math.max(0, x - (idx + 1) * (boxWidth + gap));
+      const boxTop = Math.max(
+        boxHeight / 2,
+        Math.min(y, containerRect.height - boxHeight / 2) - 8
+      );
+      // Line: perfectly horizontal from candle center to center of box
+      const lineStartX = x;
+      const lineStartY = y;
+      const lineEndX = boxLeft + boxWidth / 2; // center of box
+      const lineEndY = y; // keep line perfectly horizontal
+      const tradeId =
+        trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
+      const isBuy = trade.type === "Buy";
+      const boxColor = isBuy ? "#10A055" : "#FF0000";
+      const borderColor = isBuy ? "#0d7a3a" : "#b80000";
+      const textColor = "#fff";
+      // Draw the line from candle center to box
+      rendered.push(
+        <svg
+          key={`line-${tradeId}`}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 22120,
+          }}
+        >
+          <circle
+            cx={lineStartX}
+            cy={lineStartY}
+            r={5}
+            fill={boxColor}
+            stroke="#fff"
+            strokeWidth={1.2}
+            opacity={1}
+          />
+          <line
+            x1={lineStartX}
+            y1={lineStartY}
+            x2={lineEndX}
+            y2={lineEndY}
+            stroke={boxColor}
+            strokeWidth={2}
+            opacity={1}
+          />
+        </svg>
+      );
+      // Draw the trade box behind the line
+      rendered.push(
+        <div
+          key={`box-${tradeId}`}
+          style={{
+            position: "absolute",
+            left: `${boxLeft}px`,
+            top: `${boxTop}px`,
+            background: boxColor,
+            color: textColor,
+            border: `1.2px solid ${borderColor}`,
+            borderRadius: 4,
+            width: boxWidth,
+            height: boxHeight,
+            fontWeight: 600,
+            fontSize: fontSize,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.13)",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1px 3px",
+            gap: 3,
+            marginRight: gap, // add gap between boxes
+            transition:
+              "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
+            cursor: "pointer",
+            zIndex: 10211212,
+            pointerEvents: "auto",
+            opacity: 1,
+          }}
+          onMouseEnter={() => setTradeHover((h) => ({ ...h, [tradeId]: true }))}
+          onMouseLeave={() =>
+            setTradeHover((h) => ({ ...h, [tradeId]: false }))
+          }
+        >
+          <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
+            {isBuy ? "B" : "S"}
+          </span>
+          <span style={{ fontWeight: 600, fontSize: fontSize }}>
+            ${trade.investment ?? trade.price ?? trade.coinPrice}
+          </span>
+          <span
+            style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
+          >
+            {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
+          </span>
+          {tradeHover[tradeId] && (
             <div
-              key={tradeId}
               style={{
                 position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                background: boxColor,
-                color: textColor,
-                border: `1.2px solid ${borderColor}`,
-                borderRadius: 5,
-                width: boxWidth,
-                height: boxHeight,
-                fontWeight: 600,
+                top: `-${boxHeight}px`,
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "#222",
+                color: "#fff",
+                padding: "2px 7px",
+                borderRadius: 4,
                 fontSize: fontSize,
-                boxShadow: "0 1px 4px rgba(0,0,0,0.13)",
+                whiteSpace: "nowrap",
+                zIndex: 10001,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+              }}
+            >
+              Payout: ${getTradePayout(trade)}
+            </div>
+          )}
+          {trade.remainingTime === 0 && tradeId && (
+            <button
+              style={{
+                position: "absolute",
+                top: 1,
+                right: 1,
+                background: "rgba(255,255,255,0.15)",
+                border: "none",
+                color: "#fff",
+                fontSize: fontSize - 1,
+                cursor: "pointer",
+                zIndex: 30,
+                borderRadius: 2,
+                padding: 0,
+                transition: "background 0.2s",
+                width: fontSize + 6,
+                height: fontSize + 6,
                 display: "flex",
-                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "2px 7px",
-                gap: 6,
-                transition:
-                  "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
-                cursor: "pointer",
-                zIndex: 10,
-                pointerEvents: "auto",
-                opacity: 1,
               }}
-              onMouseEnter={() =>
-                setTradeHover((h) => ({ ...h, [tradeId]: true }))
+              onClick={() =>
+                handleCloseTrade && handleCloseTrade({ ...trade, id: tradeId })
               }
-              onMouseLeave={() =>
-                setTradeHover((h) => ({ ...h, [tradeId]: false }))
-              }
+              title="Close Trade"
             >
-              <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
-                {isBuy ? "B" : "S"}
-              </span>
-              <span style={{ fontWeight: 600, fontSize: fontSize }}>
-                ${trade.investment ?? trade.price ?? trade.coinPrice}
-              </span>
-              <span
-                style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
-              >
-                {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
-              </span>
-              {tradeHover[tradeId] && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: `-${boxHeight}px`,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#222",
-                    color: "#fff",
-                    padding: "2px 7px",
-                    borderRadius: 4,
-                    fontSize: fontSize,
-                    whiteSpace: "nowrap",
-                    zIndex: 10001,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
-                  }}
-                >
-                  Payout: ${getTradePayout(trade)}
-                </div>
-              )}
-              {trade.remainingTime === 0 && tradeId && (
-                <button
-                  style={{
-                    position: "absolute",
-                    top: 1,
-                    right: 1,
-                    background: "rgba(255,255,255,0.15)",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: fontSize - 1,
-                    cursor: "pointer",
-                    zIndex: 30,
-                    borderRadius: 2,
-                    padding: 0,
-                    transition: "background 0.2s",
-                    width: fontSize + 6,
-                    height: fontSize + 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  onClick={() =>
-                    handleCloseTrade &&
-                    handleCloseTrade({ ...trade, id: tradeId })
-                  }
-                  title="Close Trade"
-                >
-                  <AiOutlineClose />
-                </button>
-              )}
-            </div>
-          );
-        });
-        // --- Add lines for each trade after the latest trade ---
-        if (
-          tradesArr.length > 0 &&
-          chartRef.current &&
-          seriesRef.current &&
-          chartContainerRef.current
-        ) {
-          const lastTrade = tradesArr[tradesArr.length - 1];
-          const lastTradePrice =
-            lastTrade.entryPrice ?? lastTrade.coinPrice ?? lastTrade.price;
-          const yLast = seriesRef.current.priceToCoordinate(
-            Number(lastTradePrice)
-          );
-          const leftLast =
-            startLeft +
-            (tradesArr.length - 1) * (boxWidth + gap) +
-            boxWidth / 2;
-          // Removed unused topLast
-          // Draw a line for every trade (including the first)
-          tradesArr.forEach((trade, idx) => {
-            // Show lines for a short time even after timeout (don't return immediately)
-            const isExpired =
-              typeof trade.remainingTime === "number" &&
-              trade.remainingTime <= 0;
-
-            // Skip only if trade has been expired for more than 5 seconds
-            if (
-              isExpired &&
-              trade.expiredAt &&
-              Date.now() - trade.expiredAt > 5000
-            ) {
-              return;
-            }
-            // Calculate line length in pixels based on trade duration (in seconds)
-            let durationSec = 60; // default 1m
-            if (typeof trade.duration === "number") {
-              durationSec = trade.duration;
-            } else if (
-              typeof trade.remainingTime === "number" &&
-              typeof trade.startedAt !== "undefined"
-            ) {
-              // Estimate duration as (expiry - startedAt)
-              const now = Math.floor(Date.now() / 1000);
-              const started =
-                typeof trade.startedAt === "number"
-                  ? trade.startedAt > 1e12
-                    ? Math.floor(trade.startedAt / 1000)
-                    : trade.startedAt
-                  : Math.floor(new Date(trade.startedAt).getTime() / 1000);
-              durationSec = trade.remainingTime + (now - started);
-            }
-            // Calculate the time in seconds for the line's end
-            let tradeStartSec =
-              typeof trade.startedAt === "number"
-                ? trade.startedAt > 1e12
-                  ? Math.floor(trade.startedAt / 1000)
-                  : trade.startedAt
-                : Math.floor(new Date(trade.startedAt).getTime() / 1000);
-            let tradeEndSec = tradeStartSec + durationSec;
-            // Use chart time scale to get pixel length
-            let x0 = chartRef.current
-              .timeScale()
-              .timeToCoordinate(tradeStartSec);
-            let x1 = chartRef.current.timeScale().timeToCoordinate(tradeEndSec);
-            let lineLength = Math.max(
-              minLineLength,
-              Math.abs((x1 ?? 0) - (x0 ?? 0))
-            );
-            lineLength = Math.min(lineLength, maxLineLength); // clamp to max
-            // Shrink the line as remainingTime decreases
-            let percentLeft = 1;
-            if (typeof trade.remainingTime === "number" && durationSec > 0) {
-              percentLeft = Math.max(
-                0,
-                Math.min(1, trade.remainingTime / durationSec)
-              );
-            }
-            let visibleLength = lineLength * percentLeft;
-
-            // For expired trades, show a short static line
-            if (isExpired) {
-              visibleLength = Math.min(minLineLength, lineLength * 0.3); // Show 30% of original length or minLineLength px max
-            }
-
-            if (visibleLength <= 0) return;
-            const color = trade.type === "Buy" ? "#10A055" : "#FF0000";
-
-            // Fade out expired trades
-            const opacity = isExpired ? 0.4 : 1;
-
-            // Position line at the actual entry price of this trade (not with equal spacing)
-            const tradePrice =
-              trade.entryPrice ?? trade.coinPrice ?? trade.price;
-            const yTrade = seriesRef.current.priceToCoordinate(
-              Number(tradePrice)
-            );
-            const lineTop =
-              yTrade != null && !isNaN(yTrade)
-                ? Math.max(
-                    boxHeight / 2,
-                    Math.min(yTrade, containerRect.height - boxHeight / 2)
-                  )
-                : 40;
-
-            // Position lines in front of the latest trade horizontally
-            const lineLeft = leftLast + boxWidth / 2 + gap * 0.5;
-
-            // Clamp lineLeft and visibleLength to stay within chart container
-            let clampedLineLeft = Math.max(
-              0,
-              Math.min(lineLeft, containerRect.width - 20)
-            );
-            let clampedVisibleLength = Math.max(
-              0,
-              Math.min(visibleLength, containerRect.width - clampedLineLeft - 8)
-            );
-            let clampedLineTop = Math.max(
-              0,
-              Math.min(lineTop, containerRect.height - 8)
-            );
-            rendered.push(
-              <svg
-                key={`afterline-${mappedTime}-${trade.id || trade._id || idx}`}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: "100%",
-                  height: "100%",
-                  pointerEvents: "none",
-                  zIndex: 20, // ensure in front of trade boxes
-                }}
-              >
-                <circle
-                  cx={clampedLineLeft}
-                  cy={clampedLineTop}
-                  r={Math.max(2, boxHeight * 0.25)}
-                  fill={color}
-                  stroke="#fff"
-                  strokeWidth={1.5}
-                  opacity={opacity}
-                />
-                <line
-                  x1={clampedLineLeft}
-                  y1={clampedLineTop}
-                  x2={clampedLineLeft + clampedVisibleLength}
-                  y2={clampedLineTop}
-                  stroke={color}
-                  strokeWidth={Math.max(1, boxHeight * 0.18)}
-                  opacity={opacity}
-                />
-                <circle
-                  cx={clampedLineLeft + clampedVisibleLength}
-                  cy={clampedLineTop}
-                  r={Math.max(2, boxHeight * 0.25)}
-                  fill={color}
-                  stroke="#fff"
-                  strokeWidth={1.5}
-                  opacity={opacity}
-                />
-              </svg>
-            );
-          });
-        }
-      });
+              <AiOutlineClose />
+            </button>
+          )}
+        </div>
+      );
+    });
     return rendered;
   };
 
@@ -2486,7 +2315,7 @@ const LiveCandleChart = ({
             background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
             border: "1px solid #404040",
             borderRadius: 8,
-            padding: "8px 16px",
+            padding: "3px 10px",
             pointerEvents: "none",
             zIndex: 10001,
             fontWeight: "600",

@@ -300,10 +300,15 @@ const Trades = ({
                 </div>
                 {/* Close Trade button: ONLY for confirmed winning trades that require manual close */}
                 {(() => {
-                  // Explicit check: only show for winning trades
+                  // Only show button if trade is not closed
+                  if (trade.status === "closed" || displayStatus === "closed")
+                    return false;
+
+                  // Winning trade logic
                   const isWinningTrade =
                     // Case 1: Trade result is explicitly "win" and requires manual close
-                    (trade.result === "win" && trade.manualClose === true) ||
+                    ((trade.result === "win" || displayStatus === "win") &&
+                      (trade.manualClose === true || canBeClosed === true)) ||
                     // Case 2: Timer expired and locked result shows win
                     (locked.lockedStatus === "win" &&
                       localTimers[tradeId] === 0 &&
@@ -320,7 +325,18 @@ const Trades = ({
                 })() && (
                   <div style={{ marginTop: 8, textAlign: "center" }}>
                     <button
-                      onClick={() => handleCloseTrade(trade)}
+                      onClick={() => {
+                        handleCloseTrade(trade);
+                        // Optionally, optimistically update lockedResults to hide button instantly
+                        setLockedResults((prev) => ({
+                          ...prev,
+                          [getTradeId(trade)]: {
+                            ...(prev[getTradeId(trade)] || {}),
+                            lockedStatus: "closed",
+                            canBeClosed: false,
+                          },
+                        }));
+                      }}
                       className={styles.closeTradeBtn}
                     >
                       Close Trade
