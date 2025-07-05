@@ -337,6 +337,7 @@ const LiveCandleChart = ({
   const drawingsRef = useRef([]);
   const [autoZoom, setAutoZoom] = useState(true);
   const [tradePopup, setTradePopup] = useState(false);
+  const [openPopupTradeId, setOpenPopupTradeId] = useState(null);
 
   countdownRef.current = countdown;
   const lastCandleRef = useRef(null);
@@ -1489,15 +1490,29 @@ const LiveCandleChart = ({
 
     // Sort trades globally by startedAt (latest first)
     const sortedTrades = [...trades]
-      .filter(
-        (trade) =>
-          trade &&
-          trade.status === "running" &&
-          trade.coinName === coinName &&
-          (trade.investment !== undefined ||
-            trade.price !== undefined ||
-            trade.coinPrice !== undefined)
-      )
+      .filter((trade) => {
+        if (!trade) return false;
+        // Only show trades for this coin
+        if (trade.coinName !== coinName) return false;
+        // Must have investment/price
+        if (
+          trade.investment === undefined &&
+          trade.price === undefined &&
+          trade.coinPrice === undefined
+        )
+          return false;
+        // Always show if running
+        if (trade.status === "running") return true;
+        // If closed, never show
+        if (trade.status === "closed") return false;
+        // If not running, but is a winning trade that requires manual close, keep showing
+        // (matches Trades.jsx logic)
+        // Only show if it's a winning trade that needs manual close
+        return (
+          (trade.result === "win" || trade.status === "win") &&
+          (trade.manualClose === true || trade.canBeClosed === true)
+        );
+      })
       .sort(
         (a, b) =>
           new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
@@ -1675,103 +1690,167 @@ const LiveCandleChart = ({
           />
         </svg>
       );
-      // Draw the trade box behind the line
       rendered.push(
-        <div
-          key={`box-${tradeId}`}
-          style={{
-            position: "absolute",
-            left: `${boxLeft}px`,
-            top: `${boxTop}px`,
-            background: boxColor,
-            color: textColor,
-            border: `1.2px solid ${borderColor}`,
-            borderRadius: 4,
-            width: boxWidth,
-            height: boxHeight,
-            fontWeight: 600,
-            fontSize: fontSize,
-            boxShadow: "0 1px 4px rgba(0,0,0,0.13)",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1px 3px",
-            gap: 3,
-            marginRight: gap, // add gap between boxes
-            transition:
-              "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
-            cursor: "pointer",
-            zIndex: 10211212,
-            pointerEvents: "auto",
-            opacity: 1,
-          }}
-          onMouseEnter={() => setTradeHover((h) => ({ ...h, [tradeId]: true }))}
-          onMouseLeave={() =>
-            setTradeHover((h) => ({ ...h, [tradeId]: false }))
-          }
-        >
-          <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
-            {isBuy ? "B" : "S"}
-          </span>
-          <span style={{ fontWeight: 600, fontSize: fontSize }}>
-            ${trade.investment ?? trade.price ?? trade.coinPrice}
-          </span>
-          <span
-            style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
+        <>
+          {/* Trade box (click to toggle popup) */}
+          <div
+            key={`box-${tradeId}`}
+            style={{
+              position: "absolute",
+              left: `${boxLeft}px`,
+              top: `${boxTop}px`,
+              background: boxColor,
+              color: textColor,
+              border: `1.2px solid ${borderColor}`,
+              borderRadius: 5,
+              width: boxWidth,
+              height: boxHeight,
+              fontWeight: 600,
+              fontSize: fontSize,
+              boxShadow: "0 1px 4px rgba(0,0,0,0.13)",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "1px 3px",
+              gap: 3,
+              marginRight: gap, // add gap between boxes
+              transition:
+                "box-shadow 0.2s, background 0.2s, left 0.15s, top 0.15s, width 0.15s, height 0.15s, font-size 0.15s",
+              cursor: "pointer",
+              zIndex: 10211212,
+              pointerEvents: "auto",
+              opacity: 1,
+            }}
+            onClick={() =>
+              setOpenPopupTradeId(openPopupTradeId === tradeId ? null : tradeId)
+            }
           >
-            {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
-          </span>
-          {tradeHover[tradeId] && (
+            <span style={{ fontWeight: 700, fontSize: fontSize + 1 }}>
+              {isBuy ? "B" : "S"}
+            </span>
+            <span style={{ fontWeight: 600, fontSize: fontSize }}>
+              ${trade.investment ?? trade.price ?? trade.coinPrice}
+            </span>
+            <span
+              style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
+            >
+              {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
+            </span>
+          </div>
+          {/* Compact payout popup above the trade box (on press/click, toggled, rendered after box for z-order) */}
+          {openPopupTradeId === tradeId && (
             <div
+              key={`payout-popup-${tradeId}`}
               style={{
                 position: "absolute",
-                top: `-${boxHeight}px`,
-                left: "50%",
+                left: `${boxLeft + boxWidth / 2}px`,
+                top: `${boxTop - boxHeight - 42}px`,
                 transform: "translateX(-50%)",
-                background: "#222",
-                color: "#fff",
-                padding: "2px 7px",
-                borderRadius: 4,
-                fontSize: fontSize,
+                background: "#fff",
+                color: "#23272f",
+                padding: "7px 7px 7px 7px",
+                borderRadius: 7,
+                fontSize: fontSize + 1,
                 whiteSpace: "nowrap",
-                zIndex: 10001,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                zIndex: 40000,
+                boxShadow: "0 4px 16px rgba(0,0,0,0.13)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                pointerEvents: "auto",
+                border: `1.5px solid ${isBuy ? "#10A055" : "#FF0000"}`,
+                fontWeight: 600,
+                letterSpacing: 0.1,
               }}
             >
-              Payout: ${getTradePayout(trade)}
+              {/* Accent bar */}
+
+              <span
+                style={{
+                  fontWeight: 700,
+                  fontSize: fontSize + 2,
+                  color: isBuy ? "#10A055" : "#FF0000",
+                }}
+              >
+                {(() => {
+                  if (
+                    trade.status === "closed" ||
+                    trade.lockedReward !== undefined ||
+                    trade.reward !== undefined
+                  ) {
+                    const finalReward =
+                      trade.lockedReward ??
+                      trade.reward ??
+                      getTradePayout(trade);
+                    return `$${finalReward}`;
+                  }
+                  return `Payout: $${getTradePayout(trade)}`;
+                })()}
+              </span>
+              {(() => {
+                if (trade.status === "closed") return null;
+                const isWinningTrade =
+                  (trade.result === "win" || trade.status === "win") &&
+                  (trade.manualClose === true || trade.canBeClosed === true);
+                const isLosingTrade =
+                  trade.result === "loss" || trade.status === "loss";
+                if (isWinningTrade && !isLosingTrade) {
+                  return (
+                    <button
+                      style={{
+                        marginTop: 5,
+                        background: isBuy ? "#10A055" : "#FF0000",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: fontSize,
+                        cursor: "pointer",
+                        zIndex: 30,
+                        borderRadius: 4,
+                        padding: "3px 12px",
+                        fontWeight: 700,
+                        transition: "background 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: isBuy
+                          ? "0 1px 4px rgba(16,160,85,0.10)"
+                          : "0 1px 4px rgba(255,0,0,0.10)",
+                      }}
+                      onClick={() =>
+                        handleCloseTrade &&
+                        handleCloseTrade({ ...trade, id: tradeId })
+                      }
+                      title="Close Trade"
+                    >
+                      <AiOutlineClose
+                        style={{ marginRight: 5, fontSize: fontSize + 1 }}
+                      />{" "}
+                      Close
+                    </button>
+                  );
+                }
+                return null;
+              })()}
+              {/* Arrow pointer (after content for z-order) */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: -10,
+                  transform: "translateX(-50%)",
+                  width: 0,
+                  height: 0,
+                  borderLeft: "8px solid transparent",
+                  borderRight: "8px solid transparent",
+                  borderTop: "10px solid #fff",
+                  filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.08))",
+                  zIndex: 40001,
+                }}
+              />
             </div>
           )}
-          {trade.remainingTime === 0 && tradeId && (
-            <button
-              style={{
-                position: "absolute",
-                top: 1,
-                right: 1,
-                background: "rgba(255,255,255,0.15)",
-                border: "none",
-                color: "#fff",
-                fontSize: fontSize - 1,
-                cursor: "pointer",
-                zIndex: 30,
-                borderRadius: 2,
-                padding: 0,
-                transition: "background 0.2s",
-                width: fontSize + 6,
-                height: fontSize + 6,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              onClick={() =>
-                handleCloseTrade && handleCloseTrade({ ...trade, id: tradeId })
-              }
-              title="Close Trade"
-            >
-              <AiOutlineClose />
-            </button>
-          )}
-        </div>
+        </>
       );
     });
     return rendered;
@@ -1980,6 +2059,7 @@ const LiveCandleChart = ({
                 transition: "all 0.2s ease",
                 minWidth: "80px",
                 height: "40px",
+
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -2039,6 +2119,7 @@ const LiveCandleChart = ({
                 tabIndex={-1}
                 style={{
                   background: "#fff",
+
                   borderRadius: 12,
                   padding: 24,
                   minWidth: 320,
