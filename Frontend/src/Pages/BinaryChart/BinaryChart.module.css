@@ -194,26 +194,22 @@ body {
   align-items: center;
   justify-content: space-between;
   border-radius: 8px;
-  padding: 0.2rem;
+  padding: 0.1rem;
   border: 2px solid #1f1f1f;
   border-radius: 30px;
+  gap: 0.2rem;
 }
 
 .value {
   color: black;
+  background: transparent;
+
   font-size: 1.1rem;
   font-weight: 500;
   text-align: center;
-  min-width: 60px;
-}
-
-.moneyBox input {
-  background: transparent;
+  min-width: 20px;
+  max-width: 40px;
   border: none;
-  color: black;
-  font-size: 1.1rem;
-  text-align: center;
-  width: 100%;
   outline: none;
 }
 
@@ -304,10 +300,15 @@ body {
   margin: 0;
 }
 .tradesContainer {
-  overflow-y: scroll;
+  overflow-y: auto;
   border-radius: 1rem;
   border-top: 2px solid #10a055;
   border-bottom: 2px solid #ff1600;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.tradesContainer::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 .tradeHistory li {
   border-radius: 6px;
@@ -369,7 +370,7 @@ body {
 
   .control {
     padding: 1rem;
-    margin-bottom: 4rem;
+    gap: 0.2rem;
   }
 
   .buySelling {
@@ -503,6 +504,11 @@ body {
   }
   .Cbox {
     padding: 0;
+  }
+  .iconBtn {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
   }
 }
 

@@ -1619,7 +1619,7 @@ const LiveCandleChart = ({
               x2={countdownEndX}
               y2={lineY}
               stroke={boxColor}
-              strokeWidth={2.5}
+              strokeWidth={1.5}
               opacity={1}
             />
             {/* Circle at ahead end */}
@@ -1691,7 +1691,7 @@ const LiveCandleChart = ({
             x2={boxCenterX}
             y2={boxCenterY}
             stroke={boxColor}
-            strokeWidth={2}
+            strokeWidth={1}
             opacity={0.7}
           />
         </svg>
@@ -1741,7 +1741,9 @@ const LiveCandleChart = ({
             <span
               style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
             >
-              {trade.remainingTime > 0 ? formatCountdown(trade.remainingTime) : ""}
+              {trade.remainingTime > 0
+                ? formatCountdown(trade.remainingTime)
+                : ""}
             </span>
           </div>
           {/* Compact payout popup above the trade box (on press/click, toggled, rendered after box for z-order) */}
@@ -2066,7 +2068,7 @@ const LiveCandleChart = ({
                 cursor: "pointer",
                 position: "absolute",
                 top: "103px",
-                               left: "0",
+                left: "0",
                 zIndex: 10,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                 transition: "all 0.2s ease",
@@ -2115,7 +2117,7 @@ const LiveCandleChart = ({
                 width: "100vw",
                 height: "100vh",
                 background: "rgba(0,0,0,0.6)",
-                zIndex: 9999,
+                zIndex: 999321319,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -2470,7 +2472,7 @@ const LiveCandleChart = ({
       <div style={{ position: "relative" }}>
         <div
           ref={chartContainerRef}
-          className="chartMain chart-container"
+          className="chartMain"
           style={{ width: "100%", position: "relative" }}
         />
         <div
