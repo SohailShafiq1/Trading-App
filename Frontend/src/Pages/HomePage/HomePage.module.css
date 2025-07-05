@@ -538,10 +538,7 @@
   }
 
   .Image {
-    max-width: 100%;
-    height: auto;
-    object-fit: cover;
-    margin-top: -21rem;
+    max-width: 90%;
   }
 
   .demoContent {
@@ -558,9 +555,9 @@
     grid-template-columns: 1fr;
   }
 
-.featuresGrid{
-  padding: 0rem 1rem;
-}
+  .featuresGrid {
+    padding: 0rem 1rem;
+  }
   .faqFeatureWrapper {
     flex-direction: column;
     gap: 60px;
