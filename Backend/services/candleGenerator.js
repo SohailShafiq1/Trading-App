@@ -34,7 +34,7 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
         lastDirection: 0,
         priceHistory: [],
         meanReversion: 0,
-        volatility: 0.15,
+        volatility: 0.08, // Lowered base volatility for realism
         trendStrength: 0,
         microTrend: 0,
         microTrendCount: 0,
@@ -65,8 +65,8 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
     // --- Micro trend logic: creates short-term directional bias ---
     if (momentum.microTrendCount <= 0) {
       // Start new micro trend
-      momentum.microTrend = (Math.random() - 0.5) * 2; // -1 to 1
-      momentum.microTrendCount = Math.floor(Math.random() * 8) + 2; // 2-9 candles
+      momentum.microTrend = (Math.random() - 0.5) * 1.2; // -0.6 to 0.6
+      momentum.microTrendCount = Math.floor(Math.random() * 6) + 2; // 2-7 candles
     }
     momentum.microTrendCount--;
 
@@ -87,18 +87,18 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
     const state = burstState[coinName];
     state.candleCount++;
 
-    // Only start burst if not in cooldown (10% chance per candle after threshold)
+    // Only start burst if not in cooldown (5% chance per candle after threshold)
     if (
       !state.burstActive &&
       state.cooldownCount <= 0 &&
       state.candleCount >= state.nextBurst &&
-      Math.random() < 0.1
+      Math.random() < 0.05
     ) {
       state.burstActive = true;
       state.burstDirection = Math.random() < 0.5 ? 1 : -1;
-      state.burstLen = Math.floor(Math.random() * 6) + 3; // 3-8 candles
+      state.burstLen = Math.floor(Math.random() * 3) + 2; // 2-4 candles
       state.burstLeft = state.burstLen;
-      state.burstTarget = (Math.random() * 15 + 5) * state.burstDirection; // 5-20 total move (massively increased for up to 2 price change)
+      state.burstTarget = (Math.random() * 1.5 + 0.5) * state.burstDirection; // 0.5-2.0 total move
       state.burstAccum = 0.0;
       state.candleCount = 0;
       state.nextBurst = Math.floor(Math.random() * 50) + 25;
@@ -119,30 +119,28 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
       } else {
         // Gradual build-up with variance
         const targetPerCandle = state.burstTarget / state.burstLen;
-        const variance = (Math.random() - 0.5) * 0.6;
+        const variance = (Math.random() - 0.5) * 0.3;
         move = targetPerCandle * (1 + variance);
-
         // Prevent overshoot
         if (Math.abs(state.burstAccum + move) > Math.abs(state.burstTarget)) {
           move = state.burstTarget - state.burstAccum;
         }
       }
-
       state.burstAccum += move;
       state.burstLeft--;
       if (state.burstLeft === 0) {
         state.burstActive = false;
       }
-
       // Update momentum
       momentum.momentum = momentum.momentum * 0.6 + move * 0.4;
       momentum.lastMove = move;
-      return round(Math.max(0.01, base + move));
+      // Clamp move to ±2
+      return round(Math.max(0.01, Math.min(base + move, base + 2, base - 2)));
     }
 
     // --- Normal random walk with realistic patterns ---
-    // Base volatility varies dynamically (massively increased for bigger candles)
-    const baseVolatility = 0.25 + Math.random() * 0.75; // 0.25-1.00 range (massively increased for up to 2 price change)
+    // Base volatility varies dynamically (smaller for realism)
+    const baseVolatility = 0.05 + Math.random() * 0.15; // 0.05-0.2 range
 
     // Pure random component (50% weight)
     const randomComponent = (Math.random() - 0.5) * 2 * baseVolatility;
@@ -165,10 +163,10 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
       meanReversionComponent;
 
     // Add some noise to prevent predictability
-    totalMove += (Math.random() - 0.5) * 0.02;
+    totalMove += (Math.random() - 0.5) * 0.01;
 
     // Prevent consecutive large moves in same direction
-    if (Math.abs(totalMove) > 0.15 && Math.abs(momentum.lastMove) > 0.1) {
+    if (Math.abs(totalMove) > 0.12 && Math.abs(momentum.lastMove) > 0.1) {
       if (totalMove * momentum.lastMove > 0) {
         // Same direction
         totalMove *= 0.6; // Reduce magnitude
@@ -176,14 +174,14 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
     }
 
     // Anti-whipsaw logic: prevent large up followed immediately by large down
-    if (Math.abs(totalMove) > 0.2 && Math.abs(momentum.lastMove) > 0.15) {
+    if (Math.abs(totalMove) > 0.15 && Math.abs(momentum.lastMove) > 0.12) {
       if (totalMove * momentum.lastMove < 0) {
         // Opposite directions
         totalMove *= 0.4; // Severely reduce whipsaw
       }
     }
 
-    // Dynamic max move based on recent volatility (massively increased for bigger candles up to 2)
+    // Dynamic max move based on recent volatility (never more than 2.0)
     const recentMoves = momentum.priceHistory.slice(-5);
     const avgRecentMove =
       recentMoves.length > 1
@@ -194,11 +192,13 @@ const generatePrice = (open, trend, lastTick = open, coinName = "") => {
               0
             ) /
           (recentMoves.length - 1)
-        : 0.15;
-    const dynamicMaxMove = Math.max(0.8, Math.min(2.0, avgRecentMove * 5)); // Up to 2.0 max move (massively increased)
+        : 0.08;
+    const dynamicMaxMove = Math.max(0.2, Math.min(2.0, avgRecentMove * 5)); // Up to 2.0 max move
 
     // Limit the move
     totalMove = Math.max(-dynamicMaxMove, Math.min(dynamicMaxMove, totalMove));
+    // Clamp to ±2
+    totalMove = Math.max(-2, Math.min(2, totalMove));
 
     // Update momentum and tracking
     momentum.lastMove = totalMove;
@@ -301,9 +301,10 @@ const updateCandles = async () => {
       // --- Enhanced wick logic for Random trend ---
       let minWick, wiggle;
       if (coin.trend === "Random") {
-        minWick = 0.08 + Math.random() * 0.08;
-        wiggle = 0.05 + Math.random() * 0.08;
-        if (Math.random() < 0.15) {
+        minWick = 0.01 + Math.random() * 0.03; // 0.01-0.04
+        wiggle = 0.01 + Math.random() * 0.03; // 0.01-0.04
+        if (Math.random() < 0.05) {
+          // Rarely allow a slightly larger wick
           minWick *= 2 + Math.random();
           wiggle *= 2 + Math.random();
         }
