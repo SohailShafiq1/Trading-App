@@ -1573,6 +1573,12 @@ const LiveCandleChart = ({
         boxHeight / 2,
         Math.min(y, containerRect.height - boxHeight / 2) - 8
       );
+
+      // --- HIDE IF OUT OF CHART VISIBLE REGION ---
+      if (boxLeft + boxWidth < 0 || boxLeft > containerRect.width) {
+        return; // Don't render this trade box or its lines/circles
+      }
+
       // --- COUNTDOWN LINE LOGIC ---
       const maxLineLength = Math.max(40, Math.min(120, intervalSec * 1.2));
       const remaining = Math.max(0, trade.remainingTime || 0);

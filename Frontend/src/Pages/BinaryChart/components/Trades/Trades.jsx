@@ -23,6 +23,7 @@ const Trades = ({
   const [localTimers, setLocalTimers] = useState({}); // { [tradeId]: secondsLeft }
   const [lockedResults, setLockedResults] = useState({}); // { [tradeId]: {lockedStatus, lockedReward, canBeClosed} }
   const [processedTrades, setProcessedTrades] = useState(new Set()); // Track which trades have been processed
+  const [recentlyClosed, setRecentlyClosed] = useState(new Set()); // Track trades just closed
   const socketRef = useRef(null);
 
   // Helper to get unique trade ID
@@ -300,8 +301,12 @@ const Trades = ({
                 </div>
                 {/* Close Trade button: ONLY for confirmed winning trades that require manual close */}
                 {(() => {
-                  // Only show button if trade is not closed
-                  if (trade.status === "closed" || displayStatus === "closed")
+                  // Only show button if trade is not closed and not recently closed
+                  if (
+                    trade.status === "closed" ||
+                    displayStatus === "closed" ||
+                    recentlyClosed.has(tradeId)
+                  )
                     return false;
 
                   // Winning trade logic
@@ -336,6 +341,7 @@ const Trades = ({
                             canBeClosed: false,
                           },
                         }));
+                        setRecentlyClosed((prev) => new Set([...prev, tradeId]));
                       }}
                       className={styles.closeTradeBtn}
                     >
