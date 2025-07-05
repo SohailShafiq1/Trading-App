@@ -388,13 +388,13 @@ const LiveCandleChart = ({
         // Calculate candle width based on chart's bar spacing
         const visibleRange = timeScale.getVisibleLogicalRange();
         const chartWidth = timeScale.width();
-        let candleWidth = 50;
+        let candleWidth = 70;
         if (visibleRange && chartWidth > 0) {
           candleWidth = chartWidth / (visibleRange.to - visibleRange.from);
         }
         // Dynamic offset: further away when zoomed out (smaller candleWidth)
         // minOffset ensures it's always at least a bit away
-        const minOffset = 25;
+        const minOffset = 35;
         // As candleWidth gets smaller, offset increases
         x = currentX + Math.max(candleWidth, minOffset);
       } else {
@@ -1741,7 +1741,7 @@ const LiveCandleChart = ({
             <span
               style={{ fontSize: fontSize - 1, color: "#fff", opacity: 0.85 }}
             >
-              {trade.remainingTime > 0 ? `${trade.remainingTime}s` : ""}
+              {trade.remainingTime > 0 ? formatCountdown(trade.remainingTime) : ""}
             </span>
           </div>
           {/* Compact payout popup above the trade box (on press/click, toggled, rendered after box for z-order) */}
@@ -1936,6 +1936,13 @@ const LiveCandleChart = ({
     };
   }, [tradePopup]);
 
+  // Helper: format seconds as mm:ss
+  const formatCountdown = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   // Add smooth candle oscillation CSS
   return (
     <div
@@ -2059,7 +2066,7 @@ const LiveCandleChart = ({
                 cursor: "pointer",
                 position: "absolute",
                 top: "103px",
-                left: "0",
+                               left: "0",
                 zIndex: 10,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                 transition: "all 0.2s ease",
@@ -2487,7 +2494,7 @@ const LiveCandleChart = ({
             letterSpacing: "0.5px",
           }}
         >
-          {countdown}s
+          {formatCountdown(countdown)}
         </div>
         {/* --- TRADE BOXES ON CHART --- */}
         <TradeBoxes
