@@ -31,11 +31,11 @@ const HomePage = () => {
 
       {/* Features Section */} 
       <div className={s.featuresSection}>
-        <h2 className={s.featuresTitle}>What Our Platform Offers</h2>
         {/* <p className={s.featuresSubtitle}>
           We regularly improve our platform to make your trading comfortable and safe.
-        </p> */}
+          </p> */}
         <div className={s.featuresGrid}>
+          <h2 className={s.featuresTitle}>What Our Platform Offers</h2>
           {[
             {
               title: "Intuitive Design",

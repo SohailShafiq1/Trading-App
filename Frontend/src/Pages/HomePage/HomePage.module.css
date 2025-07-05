@@ -185,13 +185,12 @@
 }
 
 .demoBtnGreen {
-  
   color: white;
   font-weight: bold;
   padding: 10px 20px;
   border-radius: 8px;
   text-decoration: none;
-   background: linear-gradient(90deg, #66b544, #1a391d);
+  background: linear-gradient(90deg, #66b544, #1a391d);
   box-shadow: 10px 3px 10px rgba(10, 192, 4, 0.3);
   transition: 0.3s ease;
 }
@@ -290,7 +289,6 @@
 .greenButton:hover {
   transform: scale(1.03);
 }
-
 
 .faqSection {
   background: #f4fdf6;
@@ -521,7 +519,6 @@
   }
 }
 
-
 /* Mobile (below 768px) already included — refine and extend it */
 @media (max-width: 768px) {
   .homeDescription {
@@ -558,6 +555,9 @@
     grid-template-columns: 1fr;
   }
 
+.featuresGrid{
+  padding: 0rem 1rem;
+}
   .faqFeatureWrapper {
     flex-direction: column;
     gap: 60px;
