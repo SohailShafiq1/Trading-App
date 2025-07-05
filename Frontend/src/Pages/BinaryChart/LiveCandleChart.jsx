@@ -1558,21 +1558,102 @@ const LiveCandleChart = ({
         boxHeight / 2,
         Math.min(y, containerRect.height - boxHeight / 2) - 8
       );
-      // Line: perfectly horizontal from candle center to center of box
-      const lineStartX = x;
-      const lineStartY = y;
-      const lineEndX = boxLeft + boxWidth / 2; // center of box
-      const lineEndY = y; // keep line perfectly horizontal
+      // --- COUNTDOWN LINE LOGIC ---
+      const maxLineLength = Math.max(40, Math.min(120, intervalSec * 1.2));
+      const remaining = Math.max(0, trade.remainingTime || 0);
+      const total = trade.interval || intervalSec;
+      const frac = Math.max(0, Math.min(1, remaining / total));
+      // The countdown line starts at x + (maxLineLength * frac), ends at x (candle)
+      const countdownStartX = x + maxLineLength * frac;
+      const countdownEndX = x;
+      const lineY = y;
+      // The box-connecting line: from candle center to box center
+      const boxCenterX = boxLeft + boxWidth / 2;
+      const boxCenterY = y;
       const tradeId =
         trade.id || trade._id || `${trade.startedAt}-${trade.coinName}`;
       const isBuy = trade.type === "Buy";
       const boxColor = isBuy ? "#10A055" : "#FF0000";
       const borderColor = isBuy ? "#0d7a3a" : "#b80000";
       const textColor = "#fff";
-      // Draw the line from candle center to box
+      // Draw the countdown line with circles at both ends
+      if (remaining > 0) {
+        rendered.push(
+          <svg
+            key={`countdown-line-${tradeId}`}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+              zIndex: 22120,
+            }}
+          >
+            {/* Line from ahead to candle */}
+            <line
+              x1={countdownStartX}
+              y1={lineY}
+              x2={countdownEndX}
+              y2={lineY}
+              stroke={boxColor}
+              strokeWidth={2.5}
+              opacity={1}
+            />
+            {/* Circle at ahead end */}
+            <circle
+              cx={countdownStartX}
+              cy={lineY}
+              r={5}
+              fill={boxColor}
+              stroke="#fff"
+              strokeWidth={1.2}
+              opacity={1}
+            />
+            {/* Circle at candle center */}
+            <circle
+              cx={countdownEndX}
+              cy={lineY}
+              r={5}
+              fill={boxColor}
+              stroke="#fff"
+              strokeWidth={1.2}
+              opacity={1}
+            />
+          </svg>
+        );
+      } else {
+        // When time is up, just show a circle at the candle
+        rendered.push(
+          <svg
+            key={`countdown-circle-${tradeId}`}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+              zIndex: 22120,
+            }}
+          >
+            <circle
+              cx={countdownEndX}
+              cy={lineY}
+              r={5}
+              fill={boxColor}
+              stroke="#fff"
+              strokeWidth={1.2}
+              opacity={1}
+            />
+          </svg>
+        );
+      }
+      // Draw the line from candle center to box center (always present)
       rendered.push(
         <svg
-          key={`line-${tradeId}`}
+          key={`box-line-${tradeId}`}
           style={{
             position: "absolute",
             left: 0,
@@ -1580,26 +1661,17 @@ const LiveCandleChart = ({
             width: "100%",
             height: "100%",
             pointerEvents: "none",
-            zIndex: 22120,
+            zIndex: 22119,
           }}
         >
-          <circle
-            cx={lineStartX}
-            cy={lineStartY}
-            r={5}
-            fill={boxColor}
-            stroke="#fff"
-            strokeWidth={1.2}
-            opacity={1}
-          />
           <line
-            x1={lineStartX}
-            y1={lineStartY}
-            x2={lineEndX}
-            y2={lineEndY}
+            x1={x}
+            y1={y}
+            x2={boxCenterX}
+            y2={boxCenterY}
             stroke={boxColor}
             strokeWidth={2}
-            opacity={1}
+            opacity={0.7}
           />
         </svg>
       );
@@ -2001,6 +2073,7 @@ const LiveCandleChart = ({
                     zIndex: 10000,
                     display: "flex",
                     alignItems: "center",
+
                     justifyContent: "center",
                     transition: "all 0.2s ease",
                   }}
