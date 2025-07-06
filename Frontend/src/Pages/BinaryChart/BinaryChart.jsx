@@ -1355,6 +1355,7 @@ const BinaryChart = () => {
               ) : (
                 selectedCoin && (
                   <span>
+                    Current Price:{" "}
                     {getCurrentPriceForExecution(
                       selectedCoin,
                       selectedCoinType
