@@ -180,6 +180,63 @@ const BinaryChart = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  // Make demo trades behave like real trades: timer, result lock, asset update
+  useEffect(() => {
+    if (!isDemo) return;
+    if (!trades.some((t) => t.status === "running")) return;
+
+    const interval = setInterval(() => {
+      setTrades((prevTrades) => {
+        let updatedAssets = demoAssets;
+        let changed = false;
+        const updated = prevTrades.map((trade) => {
+          if (trade.status !== "running") return trade;
+          if (trade.remainingTime > 1) {
+            changed = true;
+            return { ...trade, remainingTime: trade.remainingTime - 1 };
+          } else if (trade.remainingTime === 1) {
+            // Timer hits 0, lock result
+            const endPrice = getPriceForTrade(trade) ?? 0;
+            const coinData = coins.find((c) => c.name === trade.coinName);
+            const profitPercentage = coinData?.profitPercentage || 0;
+            const tradeInvestment = trade.investment ?? trade.price ?? 0;
+            let isWin = false;
+            if (trade.type === "Buy") {
+              isWin = endPrice > trade.entryPrice;
+            } else {
+              isWin = endPrice < trade.entryPrice;
+            }
+            const basePayout = tradeInvestment * (1 + profitPercentage / 100);
+            const lockedReward = isWin ? basePayout : 0;
+            const lockedStatus = isWin ? "win" : "loss";
+            if (isWin) {
+              updatedAssets += lockedReward;
+            }
+            changed = true;
+            return {
+              ...trade,
+              remainingTime: 0,
+              lockedStatus,
+              lockedReward,
+              status: lockedStatus,
+              reward: lockedReward,
+            };
+          } else {
+            return trade;
+          }
+        });
+        if (changed) {
+          // Save updated trades and assets
+          saveDemoTrades(updated);
+          setDemoAssets(updatedAssets);
+          setDemo_assets(updatedAssets);
+          saveDemoAssets(updatedAssets);
+        }
+        return updated;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isDemo, trades, coins, demoAssets, setDemoAssets, setDemo_assets]);
 
   // Update user assets in database (only for real account)
   const updateUserAssetsInDB = async (newAssets) => {

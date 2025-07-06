@@ -2486,7 +2486,7 @@ const LiveCandleChart = ({
             borderRadius: 8,
             padding: "3px 10px",
             pointerEvents: "none",
-            zIndex: 10001,
+            zIndex: 1120001,
             fontWeight: "600",
             fontSize: "10px",
             whiteSpace: "nowrap",

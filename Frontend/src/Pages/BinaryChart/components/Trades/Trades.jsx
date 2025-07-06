@@ -143,21 +143,12 @@ const Trades = ({
         if (trade.type === "Buy") {
           // Buy wins if current price is higher than entry price
           isWin = endPrice > trade.entryPrice;
-          centsChange =
-            (endPrice - trade.entryPrice) *
-            (tradeInvestment / trade.entryPrice);
         } else {
           // Sell wins if current price is lower than entry price
           isWin = endPrice < trade.entryPrice;
-          centsChange =
-            (trade.entryPrice - endPrice) *
-            (tradeInvestment / trade.entryPrice);
         }
-
         const basePayout = tradeInvestment * (1 + profitPercentage / 100);
-        const lockedReward = isWin
-          ? Math.round((basePayout + centsChange) * 100) / 100
-          : Math.round(centsChange * 100) / 100;
+        const lockedReward = isWin ? Math.round(basePayout * 100) / 100 : 0;
         setLockedResults((prev) => ({
           ...prev,
           [tradeId]: {
