@@ -2249,7 +2249,7 @@ const LiveCandleChart = ({
               </div>
             )}
 
-            <button
+            {/* <button
               className="chartBtns"
               onClick={() => {
                 setShowIndicatorPopup(false);
@@ -2266,7 +2266,7 @@ const LiveCandleChart = ({
               }}
             >
               <BiPencil />
-            </button>
+            </button> */}
             {showDrawingPopup && (
               <div
                 className="popup-green-border"

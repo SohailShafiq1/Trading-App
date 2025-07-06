@@ -44,7 +44,11 @@ const CurrencyArray = [
   { name: "Polygon(MATIC)", icon: polygon },
 ];
 
-const supportedCoins = ["USD Tether(TRC-20)"];
+const supportedCoins = [
+  "USD Tether(TRC-20)",
+  "USD Tether(ERC-20)",
+  "BNB Smart Chain",
+];
 
 const DepositPage = () => {
   const { user } = useAuth();
@@ -77,9 +81,11 @@ const DepositPage = () => {
 
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/users/pending-deposits/${user._id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/pending-deposits/${
+          user._id
+        }`
       );
-      
+
       if (response.data.hasPending) {
         setPendingDeposits(response.data.deposits || []);
         setTotalPendingAmount(response.data.totalPendingAmount || 0);
@@ -162,7 +168,7 @@ const DepositPage = () => {
     if (
       coin.name === "USD Tether(TRC-20)" ||
       coin.name === "USD Tether(ERC-20)" ||
-      coin.name === "USD Tether(BEP-20)"
+      coin.name === "BNB Smart Chain"
     ) {
       fetchBonuses();
       setShowModal(true);
@@ -211,10 +217,10 @@ const DepositPage = () => {
       setTxId("");
       setFromAddress("");
       setSelectedBonus(null);
-      
+
       // Check for pending deposits after successful submission
       checkPendingDeposits();
-      
+
       toast.success("Deposit submitted successfully! Pending approval.");
     } catch (err) {
       setMessage("Deposit failed. Try again.");
@@ -236,7 +242,7 @@ const DepositPage = () => {
     if (currencyName === "USD Tether(ERC-20)") {
       return { address: ADMIN_WALLET_ERC, qr: ercImg, label: "ERC-20" };
     }
-    if (currencyName === "USD Tether(BEP-20)") {
+    if (currencyName === "BNB Smart Chain") {
       return { address: ADMIN_WALLET_BNB, qr: bnbImg, label: "BEP-20" };
     }
     return { address: "", qr: "", label: "" };
@@ -256,15 +262,18 @@ const DepositPage = () => {
               <div className={s.warningIcon}>⏳</div>
               <div className={s.warningContent}>
                 <h4>
-                  {pendingCount === 1 
-                    ? "1 Deposit Pending Approval" 
-                    : `${pendingCount} Deposits Pending Approval`
-                  }
+                  {pendingCount === 1
+                    ? "1 Deposit Pending Approval"
+                    : `${pendingCount} Deposits Pending Approval`}
                 </h4>
                 <p>
-                  You have {pendingCount === 1 ? 'a deposit' : `${pendingCount} deposits`} 
-                  totaling <strong>${totalPendingAmount.toFixed(2)}</strong> awaiting approval. 
-                  You can still make additional deposits while these are being processed.
+                  You have{" "}
+                  {pendingCount === 1
+                    ? "a deposit"
+                    : `${pendingCount} deposits`}
+                  totaling <strong>${totalPendingAmount.toFixed(2)}</strong>{" "}
+                  awaiting approval. You can still make additional deposits
+                  while these are being processed.
                 </p>
               </div>
             </div>
@@ -308,7 +317,9 @@ const DepositPage = () => {
             >
               ✕
             </button>
-            <h2 className={s.modalHeader}>{selected} <br /> Deposit</h2>
+            <h2 className={s.modalHeader}>
+              {selected} <br /> Deposit
+            </h2>
 
             {!showContinue ? (
               <>
@@ -496,11 +507,13 @@ const DepositPage = () => {
                       setAmount("");
                       setShowModal(false);
                       setShowContinue(false);
-                      
+
                       // Check for pending deposits after successful submission
                       checkPendingDeposits();
-                      
-                      toast.success("Deposit submitted successfully! Pending approval.");
+
+                      toast.success(
+                        "Deposit submitted successfully! Pending approval."
+                      );
                     } catch (err) {
                       setMessage("Deposit failed. Try again.");
                       toast.error("Deposit failed. Please try again.");
@@ -521,22 +534,24 @@ const DepositPage = () => {
         <div className={s.pendingNotificationOverlay}>
           <div className={s.pendingNotificationModal}>
             <div className={s.pendingIcon}>
-              <span role="img" aria-label="pending" style={{ fontSize: "3rem", color: "#f39c12" }}>
+              <span
+                role="img"
+                aria-label="pending"
+                style={{ fontSize: "3rem", color: "#f39c12" }}
+              >
                 ⏳
               </span>
             </div>
             <h3 className={s.pendingTitle}>
-              {pendingCount === 1 
-                ? "Deposit Submitted - Pending Approval" 
-                : `${pendingCount} Deposits Pending Approval`
-              }
+              {pendingCount === 1
+                ? "Deposit Submitted - Pending Approval"
+                : `${pendingCount} Deposits Pending Approval`}
             </h3>
             <div className={s.pendingDetails}>
               <p>
-                {pendingCount === 1 
-                  ? "Your deposit has been submitted and is awaiting admin approval:" 
-                  : `You have ${pendingCount} deposits awaiting admin approval:`
-                }
+                {pendingCount === 1
+                  ? "Your deposit has been submitted and is awaiting admin approval:"
+                  : `You have ${pendingCount} deposits awaiting admin approval:`}
               </p>
               <div className={s.depositInfo}>
                 {pendingCount === 1 ? (
@@ -544,17 +559,24 @@ const DepositPage = () => {
                   <>
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Amount:</span>
-                      <span className={s.infoValue}>${pendingDeposit.amount}</span>
+                      <span className={s.infoValue}>
+                        ${pendingDeposit.amount}
+                      </span>
                     </div>
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Date:</span>
                       <span className={s.infoValue}>
-                        {new Date(pendingDeposit.createdAt).toLocaleDateString()}
+                        {new Date(
+                          pendingDeposit.createdAt
+                        ).toLocaleDateString()}
                       </span>
                     </div>
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Status:</span>
-                      <span className={s.infoValue} style={{ color: "#f39c12", fontWeight: "bold" }}>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: "#f39c12", fontWeight: "bold" }}
+                      >
                         Pending
                       </span>
                     </div>
@@ -564,7 +586,9 @@ const DepositPage = () => {
                   <>
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Total Amount:</span>
-                      <span className={s.infoValue}>${totalPendingAmount.toFixed(2)}</span>
+                      <span className={s.infoValue}>
+                        ${totalPendingAmount.toFixed(2)}
+                      </span>
                     </div>
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Number of Deposits:</span>
@@ -573,12 +597,17 @@ const DepositPage = () => {
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Latest Deposit:</span>
                       <span className={s.infoValue}>
-                        {new Date(pendingDeposits[0].createdAt).toLocaleDateString()}
+                        {new Date(
+                          pendingDeposits[0].createdAt
+                        ).toLocaleDateString()}
                       </span>
                     </div>
                     <div className={s.infoRow}>
                       <span className={s.infoLabel}>Status:</span>
-                      <span className={s.infoValue} style={{ color: "#f39c12", fontWeight: "bold" }}>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: "#f39c12", fontWeight: "bold" }}
+                      >
                         All Pending
                       </span>
                     </div>
@@ -586,10 +615,9 @@ const DepositPage = () => {
                 )}
               </div>
               <p className={s.pendingMessage}>
-                {pendingCount === 1 
+                {pendingCount === 1
                   ? "Your deposit has been successfully submitted and is now pending admin approval. Please wait while our team reviews your deposit. You will receive a notification once it's approved and the funds are added to your account."
-                  : `Your ${pendingCount} deposits have been submitted and are pending admin approval. You can continue making additional deposits while these are being processed. You will receive notifications as each deposit is approved.`
-                }
+                  : `Your ${pendingCount} deposits have been submitted and are pending admin approval. You can continue making additional deposits while these are being processed. You will receive notifications as each deposit is approved.`}
               </p>
             </div>
             <div className={s.pendingButtonGroup}>
