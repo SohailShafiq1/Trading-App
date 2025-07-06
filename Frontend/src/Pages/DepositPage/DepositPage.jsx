@@ -249,6 +249,26 @@ const DepositPage = () => {
     return { address: "", qr: "", label: "" };
   };
 
+  // Auto-select bonus if amount is greater than or equal to a bonus min
+  useEffect(() => {
+    if (!bonusOptions.length || !amount || isNaN(Number(amount))) return;
+    // Find the highest eligible bonus (if multiple bonuses, pick the one with the highest min <= amount)
+    const eligibleBonuses = bonusOptions.filter(
+      (opt) => Number(amount) >= Number(opt.min)
+    );
+    if (eligibleBonuses.length > 0) {
+      // If already selected, don't change unless user manually changed amount
+      const bestBonus = eligibleBonuses.reduce((prev, curr) =>
+        Number(curr.percent) > Number(prev.percent) ? curr : prev
+      );
+      if (!selectedBonus || selectedBonus._id !== bestBonus._id) {
+        setSelectedBonus({ _id: bestBonus._id, percent: bestBonus.percent });
+      }
+    } else if (selectedBonus) {
+      setSelectedBonus(null);
+    }
+  }, [amount, bonusOptions]);
+
   return (
     <div className={s.container}>
       <div className={s.rightSide}>
@@ -402,12 +422,12 @@ const DepositPage = () => {
                                 _id: opt._id,
                                 percent: opt.percent,
                               });
-                              setAmount(String(opt.min));
-                              setAmountLocked(true);
+                              setAmount(String(opt.min)); // Set amount to bonus min when selected manually
+                              setAmountLocked(false);
                             }}
                             disabled={isDemo || !isVerified}
                           />
-                          Deposit: <b>${opt.min}</b> – Bonus:{" "}
+                          Min Deposit: <b>${opt.min}</b> – Bonus:{" "}
                           <b>{opt.percent}%</b>
                         </label>
                       ))}

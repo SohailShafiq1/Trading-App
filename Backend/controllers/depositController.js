@@ -16,6 +16,7 @@ export const handleTRC20Deposit = async (req, res) => {
   try {
     let bonusAmount = 0;
     if (bonusPercent) {
+      // Give bonus on the deposited amount, even if it's more than the bonus min
       bonusAmount = Math.floor((Number(amount) * Number(bonusPercent)) / 100);
     }
 
