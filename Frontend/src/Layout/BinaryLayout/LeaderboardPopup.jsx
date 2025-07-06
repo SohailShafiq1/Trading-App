@@ -3,7 +3,6 @@ import styles from "./BinaryLayout.module.css";
 import { AiOutlineClose } from "react-icons/ai";
 import axios from "axios";
 import { useAuth } from "../../Context/AuthContext"; // adjust path if needed
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Adjust this if needed
 
 const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -17,20 +16,24 @@ const LeaderboardPopup = ({ onClose }) => {
       try {
         // Fetch admin leaderboard entries
         const adminRes = await axios.get(
-          `${BACKEND_URL}/api/admin/leaderboard`
+          "http://localhost:5000/api/admin/leaderboard"
         );
         const adminEntries = adminRes.data;
 
         // Fetch all users (with email, userId, etc.)
-        const usersRes = await axios.get(`${BACKEND_URL}/api/admin/all-users`);
-        const users = usersRes.data;
+        const usersRes = await axios.get(
+          "http://localhost:5000/api/admin/all-users"
+        );
+        console.log("Fetched users:", usersRes.data); // Debug: log users response
+        const users = usersRes.data.users;
 
         // For each user, fetch their profit for today and trades info
         const userProfits = await Promise.all(
           users.map(async (u) => {
             try {
+              console.log("Fetching user details for:", u.email); // Debug: log each user email
               const userDetailRes = await axios.get(
-                `${BACKEND_URL}/api/users/email/${u.email}`
+                `http://localhost:5000/api/users/email/${u.email}`
               );
               const userDetail = userDetailRes.data;
               const todayProfit =
@@ -108,7 +111,6 @@ const LeaderboardPopup = ({ onClose }) => {
             <AiOutlineClose size={18} />
           </button>
         </div>
-
         {user && userIndex !== -1 && (
           <div className={styles.lbHighlight}>
             <div>

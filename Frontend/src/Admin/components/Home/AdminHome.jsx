@@ -4,6 +4,7 @@ import styles from "../../AdminLayout.module.css";
 const s = styles;
 
 const SECTION_OPTIONS = [
+  { key: "chart", label: "Chart", path: "/binarychart" },
   { key: "user", label: "User", path: "/admin/user" },
   { key: "withdraw", label: "Withdraw", path: "/admin/withdraw" },
   { key: "coins", label: "Coins", path: "/admin/coins" },
