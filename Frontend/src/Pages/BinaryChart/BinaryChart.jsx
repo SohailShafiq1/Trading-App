@@ -1041,7 +1041,12 @@ const BinaryChart = () => {
   const clickAudioRef = useRef(null);
 
   // 2. Play sound on Buy/Sell
+  // Forex: Prevent Buy/Sell and show toast (remove this block when live market is open)
   const handleTradeButtonClick = (tradeType) => {
+    if (selectedCoinType === "Forex") {
+      toast.info("Live Market coming soon");
+      return;
+    }
     if (clickAudioRef.current) {
       clickAudioRef.current.currentTime = 0; // rewind to start
     }
@@ -1057,6 +1062,7 @@ const BinaryChart = () => {
 
   const currentAssets = isDemo ? demoAssets : userAssets;
 
+  // Handle manual close of trade (show toast for demo win only)
   const handleCloseTrade = async (trade) => {
     try {
       if (isDemo) {
@@ -1070,9 +1076,7 @@ const BinaryChart = () => {
           endPrice = parseFloat(data.price);
         } else {
           const response = await axios.get(
-            `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${
-              trade.coinName
-            }`
+            `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${trade.coinName}`
           );
           endPrice =
             typeof response.data === "object"
@@ -1084,30 +1088,16 @@ const BinaryChart = () => {
         const profitPercentage = coinData?.profitPercentage || 0;
         const tradeInvestment = trade.investment ?? trade.price ?? 0;
 
-        let centsChange = 0;
+        let isWin = false;
         if (trade.type === "Buy") {
-          centsChange =
-            (endPrice - trade.entryPrice) *
-            (tradeInvestment / trade.entryPrice);
+          isWin = endPrice > trade.entryPrice;
         } else {
-          centsChange =
-            (trade.entryPrice - endPrice) *
-            (tradeInvestment / trade.entryPrice);
+          isWin = endPrice < trade.entryPrice;
         }
 
-        let isWin = centsChange >= 0;
-        let reward;
-
-        if (trade.frontendReward !== undefined) {
-          reward = parseFloat(trade.frontendReward);
-        } else if (isWin) {
-          reward = (
-            tradeInvestment * (1 + profitPercentage / 100) +
-            centsChange
-          ).toFixed(2);
-        } else {
-          reward = (tradeInvestment + centsChange).toFixed(2);
-        }
+        let reward = isWin
+          ? (tradeInvestment * (1 + profitPercentage / 100)).toFixed(2)
+          : 0;
 
         // Update only the specific trade in state
         setTrades((prev) =>
@@ -1129,6 +1119,7 @@ const BinaryChart = () => {
           setDemoAssets(newAssets);
           setDemo_assets(newAssets);
           saveDemoAssets(newAssets);
+          toast.success(`Demo Trade Closed: Win! Payout $${reward}`);
         }
       } else {
         // For real mode, call manual close API
@@ -1356,8 +1347,10 @@ const BinaryChart = () => {
               )}
             </h1>
             <p className={styles.selectedCoinPrice}>
-              Current Price:{" "}
-              {selectedCoin && (
+              {/* Forex: Hide current price and show 'Coming soon' (remove this block when live market is open) */}
+              {selectedCoinType === "Forex" ? (
+                <span style={{ color: '#888', fontWeight: 600 }}>Coming soon</span>
+              ) : selectedCoin && (
                 <span>
                   {getCurrentPriceForExecution(
                     selectedCoin,
@@ -1475,13 +1468,15 @@ const BinaryChart = () => {
               </p>
             </div>
             <div className={styles.buySelling}>
+              {/* Forex: Prevent Buy/Sell and show toast (remove this block when live market is open) */}
               <div
                 className={`${styles.buyBox} ${
                   !priceLoaded ||
                   isProcessingTrade ||
                   (!isDemo && !isVerified) ||
                   (selectedCoinType === "Forex" &&
-                    forexMarketStatus === "closed")
+                    forexMarketStatus === "closed") ||
+                  selectedCoinType === "Forex" // Forex: always disable
                     ? styles.disabled
                     : ""
                 }`}
@@ -1496,7 +1491,8 @@ const BinaryChart = () => {
                   isProcessingTrade ||
                   (!isDemo && !isVerified) ||
                   (selectedCoinType === "Forex" &&
-                    forexMarketStatus === "closed")
+                    forexMarketStatus === "closed") ||
+                  selectedCoinType === "Forex" // Forex: always disable
                     ? styles.disabled
                     : ""
                 }`}

@@ -332,7 +332,9 @@ const Trades = ({
                             canBeClosed: false,
                           },
                         }));
-                        setRecentlyClosed((prev) => new Set([...prev, tradeId]));
+                        setRecentlyClosed(
+                          (prev) => new Set([...prev, tradeId])
+                        );
                       }}
                       className={styles.closeTradeBtn}
                     >
