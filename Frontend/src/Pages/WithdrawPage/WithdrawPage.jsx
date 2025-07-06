@@ -12,7 +12,7 @@ const s = styles;
 const WithdrawPage = () => {
   const { userAssets, setUserAssets } = useUserAssets();
   const { user } = useAuth();
-  const { isDemo } = useAccountType();
+  const { isDemo, demo_assets } = useAccountType();
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [purse, setPurse] = useState("");
   const [network, setNetwork] = useState("");
@@ -34,7 +34,9 @@ const WithdrawPage = () => {
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${user._id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/is-verified/${
+            user._id
+          }`
         );
         const data = await response.json();
         setIsVerified(data.verified);
@@ -109,17 +111,20 @@ const WithdrawPage = () => {
     const toastId = toast.loading("Processing your withdrawal request...");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/withdraw`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          amount: withdrawAmount,
-          purse: sanitizedPurse,
-          network,
-          paymentMethod,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/withdraw`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            amount: withdrawAmount,
+            purse: sanitizedPurse,
+            network,
+            paymentMethod,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -176,32 +181,33 @@ const WithdrawPage = () => {
           <div className={s.accountInfo}>
             <p>In the account:</p>
             <p className={s.amount}>
-                 {isDemo
-                  ? demo_assets.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  : Number(totalBalance).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-               $</p>
+              {isDemo
+                ? demo_assets.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : Number(totalBalance).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+              $
+            </p>
           </div>
           <hr className={s.divider} />
           <div className={s.accountInfo}>
             <p>Available for withdrawal:</p>
             <p className={s.amount}>
-            
-             {isDemo
-                  ? demo_assets.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  : Number(userAssets).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-             $</p>
+              {isDemo
+                ? demo_assets.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : Number(userAssets).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+              $
+            </p>
           </div>
           <h1
             className={s.note}
@@ -309,8 +315,8 @@ const WithdrawPage = () => {
               <option value="XRP">Ripple </option>
               <option value="DOGE">DogeCoin </option>
               <option value="USDC_POLYGON">Polygon </option>
-              <option value="UNI">Uniswap  </option>
-              <option value="MATIC">Polygon  </option>
+              <option value="UNI">Uniswap </option>
+              <option value="MATIC">Polygon </option>
             </select>
           </div>
 
@@ -324,7 +330,7 @@ const WithdrawPage = () => {
               : !isVerified
               ? "Verify Your Account"
               : "Confirm"}
-              
+
             <BiRightArrowCircle className={s.icon} />
           </button>
 
@@ -343,14 +349,24 @@ const WithdrawPage = () => {
         <div className={s.popupOverlay}>
           <div className={s.popupBox}>
             <div className={s.popupIcon}>
-              <span role="img" aria-label="warning" style={{fontSize: '2.5rem', color: '#e67e22'}}>🚧</span>
+              <span
+                role="img"
+                aria-label="warning"
+                style={{ fontSize: "2.5rem", color: "#e67e22" }}
+              >
+                🚧
+              </span>
             </div>
             <div className={s.popupTitle}>Coming Soon</div>
             <div className={s.popupMsg}>
-              We are currently working on this withdrawal method.<br />
+              We are currently working on this withdrawal method.
+              <br />
               Please choose from <b>TRC-20</b>, <b>ERC-20</b>, or <b>BEP-20</b>.
             </div>
-            <button className={s.closePopupBtn} onClick={() => setShowUnavailablePopup(false)}>
+            <button
+              className={s.closePopupBtn}
+              onClick={() => setShowUnavailablePopup(false)}
+            >
               Close
             </button>
           </div>
@@ -362,14 +378,25 @@ const WithdrawPage = () => {
         <div className={s.popupOverlay}>
           <div className={s.popupBox}>
             <div className={s.popupIcon}>
-              <span role="img" aria-label="info" style={{fontSize: '2.5rem', color: '#3498db'}}>💸</span>
+              <span
+                role="img"
+                aria-label="info"
+                style={{ fontSize: "2.5rem", color: "#3498db" }}
+              >
+                💸
+              </span>
             </div>
             <div className={s.popupTitle}>Choose a Withdrawal Network</div>
             <div className={s.popupMsg}>
-              Please select one of the following networks to withdraw your funds:<br />
+              Please select one of the following networks to withdraw your
+              funds:
+              <br />
               <b>TRC-20</b>, <b>ERC-20</b>, <b>BNB Smart Chain</b>
             </div>
-            <button className={s.closePopupBtn} onClick={() => setShowMethodPopup(false)}>
+            <button
+              className={s.closePopupBtn}
+              onClick={() => setShowMethodPopup(false)}
+            >
               Close
             </button>
           </div>
