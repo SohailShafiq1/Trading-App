@@ -95,18 +95,6 @@ const WithdrawPage = () => {
       return;
     }
 
-    const sanitizedPurse = purse.replace(/[^a-z0-9]/g, "");
-
-    if (sanitizedPurse !== purse) {
-      toast.error(
-        "Wallet address can only contain lowercase letters and numbers",
-        {
-          autoClose: 3000,
-        }
-      );
-      return;
-    }
-
     // Show loading toast
     const toastId = toast.loading("Processing your withdrawal request...");
 
@@ -119,7 +107,7 @@ const WithdrawPage = () => {
           body: JSON.stringify({
             email: user.email,
             amount: withdrawAmount,
-            purse: sanitizedPurse,
+            purse, // Use purse as entered
             network,
             paymentMethod,
           }),
