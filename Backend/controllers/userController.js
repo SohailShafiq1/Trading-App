@@ -327,13 +327,17 @@ export const updateTradeResult = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-
-
     // Robust matching: handle both Date and number types
     const tradeIndex = user.trades.findIndex((t) => {
       if (!t.startedAt) return false;
-      let tTime = t.startedAt instanceof Date ? t.startedAt.getTime() : Number(t.startedAt);
-      let sTime = typeof startedAt === "string" || typeof startedAt === "number" ? Number(startedAt) : new Date(startedAt).getTime();
+      let tTime =
+        t.startedAt instanceof Date
+          ? t.startedAt.getTime()
+          : Number(t.startedAt);
+      let sTime =
+        typeof startedAt === "string" || typeof startedAt === "number"
+          ? Number(startedAt)
+          : new Date(startedAt).getTime();
       return tTime === sTime;
     });
 
@@ -352,13 +356,13 @@ export const updateTradeResult = async (req, res) => {
 
     const today = new Date().toISOString().slice(0, 10);
     let profitChange = 0;
-    
+
     // Handle manual close logic
     if (result === "win") {
       // For winning trades, set manualClose to true and don't add profit yet
       user.trades[tradeIndex].manualClose = true;
       profitChange = 0; // Don't add profit to daily profits until manually closed
-      
+
       // Don't add to user assets yet - wait for manual close
     } else if (result === "loss") {
       // For losing trades, automatically close and update assets
@@ -411,8 +415,14 @@ export const manualCloseTrade = async (req, res) => {
     // Find the trade
     const tradeIndex = user.trades.findIndex((t) => {
       if (!t.startedAt) return false;
-      let tTime = t.startedAt instanceof Date ? t.startedAt.getTime() : Number(t.startedAt);
-      let sTime = typeof startedAt === "string" || typeof startedAt === "number" ? Number(startedAt) : new Date(startedAt).getTime();
+      let tTime =
+        t.startedAt instanceof Date
+          ? t.startedAt.getTime()
+          : Number(t.startedAt);
+      let sTime =
+        typeof startedAt === "string" || typeof startedAt === "number"
+          ? Number(startedAt)
+          : new Date(startedAt).getTime();
       return tTime === sTime;
     });
 
@@ -424,16 +434,22 @@ export const manualCloseTrade = async (req, res) => {
 
     // Validate trade can be manually closed
     if (trade.result !== "win") {
-      return res.status(400).json({ error: "Only winning trades can be manually closed" });
+      return res
+        .status(400)
+        .json({ error: "Only winning trades can be manually closed" });
     }
 
     if (!trade.manualClose) {
-      return res.status(400).json({ error: "Trade is not pending manual close" });
+      return res
+        .status(400)
+        .json({ error: "Trade is not pending manual close" });
     }
 
     // Additional safety check: ensure trade is not a loss
     if (trade.result === "loss") {
-      return res.status(400).json({ error: "Cannot manually close a losing trade" });
+      return res
+        .status(400)
+        .json({ error: "Cannot manually close a losing trade" });
     }
 
     // Add reward to user assets
@@ -462,10 +478,10 @@ export const manualCloseTrade = async (req, res) => {
 
     await user.save();
 
-    res.status(200).json({ 
-      message: "Trade manually closed successfully", 
+    res.status(200).json({
+      message: "Trade manually closed successfully",
       reward: trade.reward,
-      newBalance: user.assets + user.totalBonus 
+      newBalance: user.assets + user.totalBonus,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to manually close trade" });
@@ -814,7 +830,6 @@ export const testEmail = async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.json({ success: true, message: "Test email sent successfully" });
   } catch (error) {
-
     res.status(500).json({
       success: false,
       error: error.message,
@@ -962,7 +977,6 @@ export const markAllNotificationsRead = async (req, res) => {
 export const createNotification = async (req, res) => {
   const { email, notification } = req.body;
 
-
   if (!email || !notification) {
     return res
       .status(400)
@@ -1035,14 +1049,12 @@ export const submitSupportRequest = async (req, res) => {
 
       await transporter.sendMail(mailOptions);
     } catch (emailErr) {
-
       // Don't fail the request if email fails
     }
     // --- End email ---
 
     res.status(201).json({ message: "Support request submitted successfully" });
   } catch (err) {
-
     res.status(500).json({ error: "Failed to submit support request" });
   }
 };
@@ -1071,9 +1083,7 @@ export const getTotalTradeCount = async (req, res) => {
 };
 
 export const getRunningTradePercentage = async (req, res) => {
-
   try {
-
     const users = await User.find(
       { "trades.result": "pending" },
       { trades: 1 }
@@ -1089,7 +1099,6 @@ export const getRunningTradePercentage = async (req, res) => {
 
     users.forEach((user) => {
       if (!Array.isArray(user.trades)) {
-
         return;
       }
       user.trades.forEach((trade) => {
@@ -1101,8 +1110,6 @@ export const getRunningTradePercentage = async (req, res) => {
       });
     });
 
-
-
     const totalRunningTrades = buyCount + sellCount;
     const buyPercentage =
       totalRunningTrades > 0
@@ -1113,10 +1120,8 @@ export const getRunningTradePercentage = async (req, res) => {
         ? ((sellCount / totalRunningTrades) * 100).toFixed(2)
         : 0;
 
-
     res.json({ buyPercentage, sellPercentage });
   } catch (err) {
-
     res.status(500).json({
       error: "Failed to get running trade percentage",
       details: err.message,
@@ -1128,31 +1133,34 @@ export const getRunningTradePercentage = async (req, res) => {
 export const getPendingDeposits = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // First get the user to find their email
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     // Find ALL pending deposits for the user using their email
     const pendingDeposits = await Deposit.find({
       userEmail: user.email,
-      status: "pending"
+      status: "pending",
     }).sort({ createdAt: -1 });
-    
+
     if (pendingDeposits && pendingDeposits.length > 0) {
       // Calculate total pending amount
-      const totalPendingAmount = pendingDeposits.reduce((sum, deposit) => sum + deposit.amount, 0);
-      
+      const totalPendingAmount = pendingDeposits.reduce(
+        (sum, deposit) => sum + deposit.amount,
+        0
+      );
+
       res.json({
         hasPending: true,
-        deposits: pendingDeposits.map(deposit => ({
+        deposits: pendingDeposits.map((deposit) => ({
           _id: deposit._id,
           amount: deposit.amount,
           status: deposit.status,
           createdAt: deposit.createdAt,
-          userEmail: deposit.userEmail
+          userEmail: deposit.userEmail,
         })),
         totalPendingAmount,
         pendingCount: pendingDeposits.length,
@@ -1162,8 +1170,8 @@ export const getPendingDeposits = async (req, res) => {
           amount: pendingDeposits[0].amount,
           status: pendingDeposits[0].status,
           createdAt: pendingDeposits[0].createdAt,
-          userEmail: pendingDeposits[0].userEmail
-        }
+          userEmail: pendingDeposits[0].userEmail,
+        },
       });
     } else {
       res.json({
@@ -1171,14 +1179,171 @@ export const getPendingDeposits = async (req, res) => {
         deposits: [],
         totalPendingAmount: 0,
         pendingCount: 0,
-        deposit: null
+        deposit: null,
       });
     }
   } catch (err) {
-
     res.status(500).json({
       error: "Failed to get pending deposits",
-      details: err.message
+      details: err.message,
     });
+  }
+};
+
+// --- AUTO-VERIFICATION PER-USER TIMER ---
+const autoVerifyTimers = {};
+
+export const autoVerifyUserIfProfileComplete = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    console.log(`[autoVerify] Invalid user ID format:`, id);
+    return res.status(400).json({ error: "Invalid user ID format" });
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      console.log(`[autoVerify] User not found for ID:`, id);
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Define required fields
+    const hasAllProfileFields =
+      user.firstName &&
+      user.lastName &&
+      user.dateOfBirth &&
+      user.country &&
+      ((user.cnicNumber && user.cnicPicture && user.cnicBackPicture) ||
+        (user.passportNumber && user.passportImage));
+
+    console.log(
+      `[autoVerify] User: ${user.email}, Verified: ${
+        user.verified
+      }, hasAllProfileFields: ${!!hasAllProfileFields}, autoVerifyAt: ${
+        user.autoVerifyAt
+      }`
+    );
+
+    // If all fields are filled and not verified, set autoVerifyAt if not set
+    if (hasAllProfileFields && !user.verified) {
+      if (!user.autoVerifyAt) {
+        user.autoVerifyAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        await user.save();
+        console.log(
+          `[autoVerify] Profile complete for ${user.email}. Set autoVerifyAt to ${user.autoVerifyAt}`
+        );
+        // Schedule a one-time timer if not already scheduled (AFTER save)
+        if (!autoVerifyTimers[user._id]) {
+          const scheduledAutoVerifyAt = user.autoVerifyAt; // capture the value at scheduling time
+          autoVerifyTimers[user._id] = setTimeout(async () => {
+            try {
+              const freshUser = await User.findById(user._id);
+              const stillComplete =
+                freshUser &&
+                freshUser.firstName &&
+                freshUser.lastName &&
+                freshUser.dateOfBirth &&
+                freshUser.country &&
+                ((freshUser.cnicNumber &&
+                  freshUser.cnicPicture &&
+                  freshUser.cnicBackPicture) ||
+                  (freshUser.passportNumber && freshUser.passportImage));
+              if (
+                stillComplete &&
+                !freshUser.verified &&
+                scheduledAutoVerifyAt &&
+                new Date() >= new Date(scheduledAutoVerifyAt)
+              ) {
+                freshUser.verified = true;
+                freshUser.autoVerifyAt = undefined;
+                freshUser.notifications = freshUser.notifications || [];
+                freshUser.notifications.push({
+                  type: "Profile",
+                  read: false,
+                  message: "Your profile has been auto-verified. Congratulations!",
+                  date: new Date(),
+                });
+                await freshUser.save();
+                console.log(
+                  `[autoVerify][TIMER] User ${freshUser.email} has been auto-verified by timer.`
+                );
+              } else {
+                console.log(
+                  `[autoVerify][TIMER][DEBUG] freshUser.verified: ${freshUser.verified}, stillComplete: ${!!stillComplete}, scheduledAutoVerifyAt: ${scheduledAutoVerifyAt}, now: ${new Date().toISOString()}, scheduledAutoVerifyAtTime: ${scheduledAutoVerifyAt ? new Date(scheduledAutoVerifyAt).toISOString() : 'undefined'}, timeCheck: ${scheduledAutoVerifyAt ? new Date() >= new Date(scheduledAutoVerifyAt) : 'n/a'}`
+                );
+                console.log(
+                  `[autoVerify][TIMER] User ${freshUser ? freshUser.email : user._id} not eligible for auto-verification at timer.`
+                );
+              }
+            } catch (err) {
+              console.log(
+                `[autoVerify][TIMER] Error auto-verifying user ${user._id}:`,
+                err
+              );
+            } finally {
+              delete autoVerifyTimers[user._id];
+            }
+          }, 5 * 60 * 1000 + 500); // 5 minutes + 0.5s buffer
+        }
+        return res.status(200).json({
+          message:
+            "Profile complete. User will be verified in 5 minutes if profile remains complete.",
+          autoVerifyAt: user.autoVerifyAt,
+          verified: user.verified,
+        });
+      } else if (new Date() >= new Date(user.autoVerifyAt)) {
+        user.verified = true;
+        user.autoVerifyAt = undefined;
+        await user.save();
+        console.log(`[autoVerify] User ${user.email} has been auto-verified.`);
+        return res.status(200).json({
+          message: "User has been auto-verified.",
+          verified: user.verified,
+        });
+      } else {
+        console.log(
+          `[autoVerify] Profile complete for ${user.email}. Waiting for auto-verification. autoVerifyAt: ${user.autoVerifyAt}`
+        );
+        return res.status(200).json({
+          message: "Profile complete. Waiting for auto-verification.",
+          autoVerifyAt: user.autoVerifyAt,
+          verified: user.verified,
+        });
+      }
+    } else if (!hasAllProfileFields && user.autoVerifyAt) {
+      // If user removed a required field, clear autoVerifyAt
+      user.autoVerifyAt = undefined;
+      await user.save();
+      // Cancel any scheduled timer
+      if (autoVerifyTimers[user._id]) {
+        clearTimeout(autoVerifyTimers[user._id]);
+        delete autoVerifyTimers[user._id];
+      }
+      console.log(
+        `[autoVerify] Profile incomplete for ${user.email}. Cleared autoVerifyAt.`
+      );
+      return res.status(200).json({
+        message: "Profile incomplete. Auto-verification timer cleared.",
+        verified: user.verified,
+      });
+    }
+
+    console.log(
+      `[autoVerify] User ${user.email} - ${
+        hasAllProfileFields ? "Profile complete." : "Profile incomplete."
+      } Verified: ${user.verified}`
+    );
+    return res.status(200).json({
+      message: hasAllProfileFields
+        ? "Profile complete."
+        : "Profile incomplete.",
+      verified: user.verified,
+    });
+  } catch (err) {
+    console.log(`[autoVerify] Error for user ID ${id}:`, err);
+    res
+      .status(500)
+      .json({ error: "Failed to check or update verification status" });
   }
 };

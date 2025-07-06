@@ -17,6 +17,7 @@ const LoginPage = () => {
     rememberMe: false,
   });
   const [blockMsg, setBlockMsg] = useState("");
+  const [popup, setPopup] = useState({ show: false, message: "", type: "" });
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
@@ -64,18 +65,22 @@ const LoginPage = () => {
         navigate("/binarychart");
       }
     } catch (err) {
-      // Check for block reason in error message
-      if (err.message && err.message.toLowerCase().includes("blocked")) {
-        setBlockMsg(err.message); // Show custom popup
+      const errMsg = err?.response?.data?.message || err?.message || "Login failed";
+      if (errMsg && errMsg.toLowerCase().includes("blocked")) {
+        setBlockMsg(errMsg); // Show custom popup
+      } else if (errMsg && (errMsg.toLowerCase().includes("not found") || errMsg.toLowerCase().includes("no user"))) {
+        setPopup({ show: true, message: "Email not found. Please check your email or register.", type: "email" });
+      } else if (errMsg && (errMsg.toLowerCase().includes("invalid credentials") || errMsg.toLowerCase().includes("password") || errMsg.toLowerCase().includes("401"))) {
+        setPopup({ show: true, message: "Incorrect password. Please try again.", type: "password" });
       } else {
-        alert(err.message || "Login failed");
+        setPopup({ show: true, message: errMsg, type: "other" });
       }
     }
   };
 
   const handleForgotPassword = async () => {
     if (!form.email) {
-      alert("Please enter your email to reset your password.");
+      setPopup({ show: true, message: "Please enter your email to reset your password.", type: "email" });
       return;
     }
     // Navigate to forgot password page with email pre-filled
@@ -93,13 +98,11 @@ const LoginPage = () => {
         window.google.accounts.id.prompt();
       } catch (error) {
         console.error("Google Sign-In initialization error:", error);
-        alert(
-          "Google Sign-In is not properly configured. Please contact support."
-        );
+        setPopup({ show: true, message: "Google Sign-In is not properly configured. Please contact support.", type: "other" });
       }
     } else {
       console.error("Google Identity Services script not loaded.");
-      alert("Google Sign-In is not available. Please try again later.");
+      setPopup({ show: true, message: "Google Sign-In is not available. Please try again later.", type: "other" });
     }
   };
 
@@ -127,10 +130,10 @@ const LoginPage = () => {
       }
     } catch (err) {
       if (err.response?.data?.needsRegistration) {
-        alert("Account not found. Please register first.");
+        setPopup({ show: true, message: "Account not found. Please register first.", type: "email" });
         navigate("/register");
       } else {
-        alert(err.response?.data?.message || "Google login failed");
+        setPopup({ show: true, message: err.response?.data?.message || "Google login failed", type: "other" });
       }
     }
   };
@@ -214,6 +217,35 @@ const LoginPage = () => {
               onClick={() => setBlockMsg("")}
             >
               OK
+            </button>
+          </div>
+        </div>
+      )}
+      {popup.show && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.popupIcon}>
+              {popup.type === "email" ? (
+                <span role="img" aria-label="email" style={{fontSize: '2.5rem', color: '#e74c3c'}}>📧</span>
+              ) : popup.type === "password" ? (
+                <span role="img" aria-label="lock" style={{fontSize: '2.5rem', color: '#e67e22'}}>🔒</span>
+              ) : (
+                <span role="img" aria-label="error" style={{fontSize: '2.5rem', color: '#e67e22'}}>⚠️</span>
+              )}
+            </div>
+            <div className={styles.popupTitle}>
+              {popup.type === "email"
+                ? "Email Error"
+                : popup.type === "password"
+                ? "Password Error"
+                : "Login Error"}
+            </div>
+            <div className={styles.popupMsg}>{popup.message}</div>
+            <button
+              className={styles.closeButton}
+              onClick={() => setPopup({ show: false, message: "", type: "" })}
+            >
+              Close
             </button>
           </div>
         </div>

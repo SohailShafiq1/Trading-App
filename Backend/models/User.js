@@ -108,7 +108,7 @@ const UserSchema = new mongoose.Schema(
     },
     verified: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     totalBonus: {
       type: Number,

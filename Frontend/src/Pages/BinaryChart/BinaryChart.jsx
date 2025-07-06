@@ -1076,7 +1076,9 @@ const BinaryChart = () => {
           endPrice = parseFloat(data.price);
         } else {
           const response = await axios.get(
-            `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${trade.coinName}`
+            `${import.meta.env.VITE_BACKEND_URL}/api/coins/price/${
+              trade.coinName
+            }`
           );
           endPrice =
             typeof response.data === "object"
@@ -1170,11 +1172,9 @@ const BinaryChart = () => {
   // Set selected coin to a forex coin if not already selected
   useEffect(() => {
     if (!selectedCoin && coins.length > 0) {
-      const forexCoin = coins.find(
-        (c) => c.type === "forex" || c.type === "Forex"
-      );
-      if (forexCoin) {
-        setSelectedCoin(forexCoin.name);
+      const otcCoin = coins.find((c) => c.type === "otc" || c.type === "OTC");
+      if (otcCoin) {
+        setSelectedCoin(otcCoin.name);
       }
     }
   }, [coins, selectedCoin]);
@@ -1349,14 +1349,18 @@ const BinaryChart = () => {
             <p className={styles.selectedCoinPrice}>
               {/* Forex: Hide current price and show 'Coming soon' (remove this block when live market is open) */}
               {selectedCoinType === "Forex" ? (
-                <span style={{ color: '#888', fontWeight: 600 }}>Coming soon</span>
-              ) : selectedCoin && (
-                <span>
-                  {getCurrentPriceForExecution(
-                    selectedCoin,
-                    selectedCoinType
-                  ).toFixed(3)}
+                <span style={{ color: "#888", fontWeight: 600 }}>
+                  Coming soon
                 </span>
+              ) : (
+                selectedCoin && (
+                  <span>
+                    {getCurrentPriceForExecution(
+                      selectedCoin,
+                      selectedCoinType
+                    ).toFixed(3)}
+                  </span>
+                )
               )}
             </p>
             <div className={styles.controlStuff}>

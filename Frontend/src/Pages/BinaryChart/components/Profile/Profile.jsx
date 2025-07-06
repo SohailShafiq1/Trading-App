@@ -6,6 +6,8 @@ import { useAffiliateAuth } from "../../../../Context/AffiliateAuthContext";
 import axios from "axios";
 import Modal from "react-modal";
 import Tesseract from "tesseract.js";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const s = styles;
 
@@ -178,7 +180,7 @@ const Profile = () => {
           }
           setIsOcrLoading(false);
         })
-        .catch(() => {
+        .catch((err) => {
           setIsOcrLoading(false);
           setCnicPicture("");
           console.error("OCR error:", err);
@@ -244,7 +246,7 @@ const Profile = () => {
   const handleSave = async () => {
     // Ensure all required fields are validated before sending the request
     if (!firstName || !lastName || !email) {
-      alert("First Name, Last Name, and Email are required.");
+      toast.error("First Name, Last Name, and Email are required.");
       return;
     }
 
@@ -258,14 +260,14 @@ const Profile = () => {
         m > 0 || (m === 0 && today.getDate() >= dob.getDate());
       const realAge = isBirthdayPassed ? age : age - 1;
       if (realAge < 18) {
-        alert("You must be at least 18 years old.");
+        toast.error("You must be at least 18 years old.");
         return;
       }
     }
 
     // CNIC validation
-    if (cnicNumber && !/^\d{5}-\d{7}-\d{1}$/.test(cnicNumber)) {
-      alert("Please enter a valid CNIC in the format 81101-0747282-1");
+    if (cnicNumber && !/^[\d]{5}-[\d]{7}-[\d]{1}$/.test(cnicNumber)) {
+      toast.error("Please enter a valid CNIC in the format 81101-0747282-1");
       return;
     }
 
@@ -279,7 +281,6 @@ const Profile = () => {
       setShowBackImageModal(true); // Show custom modal
       return;
     }
-
     try {
       setIsSaving(true); // Start loader
       const formData = new FormData();
@@ -317,7 +318,7 @@ const Profile = () => {
           },
         }
       );
-      alert("Profile updated!");
+      toast.success("Profile updated!");
       // Fetch updated profile
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${email}`
@@ -334,9 +335,25 @@ const Profile = () => {
       setCnicBackPicture(res.data.cnicBackPicture || "");
       setCnicBackPreview("");
       setPassportNumber(res.data.passportNumber || ""); // <-- ADD THIS
+
+      // --- Call auto-verify endpoint ---
+      try {
+        const autoVerifyRes = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/auto-verify/${res.data._id}`
+        );
+        if (autoVerifyRes.data.verified) {
+          setVerified(true);
+          toast.success("Your profile is now verified!");
+        } else if (autoVerifyRes.data.autoVerifyAt) {
+          toast.info("Profile complete. You will be verified automatically in 5 minutes if your profile remains complete.");
+        }
+      } catch (autoVerifyErr) {
+        console.error("Auto-verify error:", autoVerifyErr);
+      }
+      // --- End auto-verify ---
     } catch (err) {
       console.error("Error updating profile:", err);
-      alert("Failed to update profile");
+      toast.error("Failed to update profile");
     } finally {
       setIsSaving(false); // Stop loader
     }
@@ -389,7 +406,7 @@ const Profile = () => {
         }
       );
 
-      alert("Your account has been deleted successfully");
+      toast.success("Your account has been deleted successfully");
       logout();
       navigate("/register");
     } catch (err) {
@@ -890,6 +907,19 @@ const Profile = () => {
           Extracting CNIC number from image...
         </div>
       )}
+
+      <ToastContainer
+        position="top-center"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };

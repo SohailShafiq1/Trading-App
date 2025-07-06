@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import styles from "./RegisterPage.module.css";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const s = styles;
 
@@ -39,20 +41,21 @@ const RegisterPage = () => {
     e.preventDefault();
 
     if (!form.country) {
-      alert("Please select your country");
+      toast.error("Please select your country");
       return;
     }
 
     if (!form.confirmAge || !form.confirmTax) {
-      alert("Please confirm age and tax status.");
+      toast.error("Please confirm age and tax status.");
       return;
     }
 
     try {
       await register(form);
+      toast.success("Registration successful! Please login.");
       navigate("/login");
     } catch (err) {
-      alert(
+      toast.error(
         err.response?.data?.message ||
           err.response?.data?.error ||
           "Registration failed"
@@ -73,18 +76,15 @@ const RegisterPage = () => {
 
   // Google Sign-up handler
   const handleGoogleSignUp = () => {
-    console.log("🔍 Google Sign-Up button clicked");
-    console.log("🔍 Form country:", form.country);
-    console.log("🔍 Form confirmAge:", form.confirmAge);
-    console.log("🔍 Form confirmTax:", form.confirmTax);
-
     if (!form.country) {
-      alert("Please select your country before signing up with Google");
+      toast.error("Please select your country before signing up with Google");
       return;
     }
 
     if (!form.confirmAge || !form.confirmTax) {
-      alert("Please confirm age and tax status before signing up with Google");
+      toast.error(
+        "Please confirm age and tax status before signing up with Google"
+      );
       return;
     }
   };
@@ -157,12 +157,12 @@ const RegisterPage = () => {
 
       // Check validation before processing
       if (!currentForm.country) {
-        alert("Please select your country before signing up with Google");
+        toast.error("Please select your country before signing up with Google");
         return;
       }
 
       if (!currentForm.confirmAge || !currentForm.confirmTax) {
-        alert(
+        toast.error(
           "Please confirm age and tax status before signing up with Google"
         );
         return;
@@ -177,10 +177,11 @@ const RegisterPage = () => {
       console.log("🔍 Additional data for registration:", additionalData);
 
       await googleLogin(response.credential, true, additionalData);
+      toast.success("Registration successful! Please login.");
       navigate("/login");
     } catch (err) {
       console.error("🔍 Google registration error:", err);
-      alert(
+      toast.error(
         err.response?.data?.message ||
           err.response?.data?.error ||
           "Google registration failed"
@@ -513,6 +514,18 @@ const RegisterPage = () => {
           </button>
         </form>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };
