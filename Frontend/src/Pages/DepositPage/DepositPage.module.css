@@ -680,3 +680,43 @@
     font-size: 1.8rem;
   }
 }
+.txidInputBox {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.txidLabel {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.4rem;
+}
+
+.txidInput {
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  border: 1.5px solid #b5b5b5;
+  font-size: 1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  background: #f8f9fa;
+}
+
+.txidInput:focus {
+  border: 1.5px solid #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+  background: #fff;
+}
+
+@media (max-width: 768px) {
+  .txidInputBox {
+    margin-top: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .txidInput {
+    font-size: 0.98rem;
+    padding: 0.6rem 0.8rem;
+  }
+}

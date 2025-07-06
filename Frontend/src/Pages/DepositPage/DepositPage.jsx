@@ -72,6 +72,7 @@ const DepositPage = () => {
   const [totalPendingAmount, setTotalPendingAmount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [showPendingNotification, setShowPendingNotification] = useState(false);
+  const [showTxIdPopup, setShowTxIdPopup] = useState(false);
 
   const [bonusOptions, setBonusOptions] = useState([]);
 
@@ -222,7 +223,7 @@ const DepositPage = () => {
       checkPendingDeposits();
 
       toast.success("Deposit submitted successfully! Pending approval.");
-    } catch (err) {
+    } catch {
       setMessage("Deposit failed. Try again.");
       toast.error("Deposit failed. Please try again.");
     }
@@ -480,6 +481,21 @@ const DepositPage = () => {
                             Copy
                           </button>
                         </div>
+                        {/* Transaction ID input field */}
+                        <div className={s.txidInputBox}>
+                          <label htmlFor="txIdInput" className={s.txidLabel}>
+                            Transaction ID (TxID):
+                          </label>
+                          <input
+                            id="txIdInput"
+                            type="text"
+                            placeholder="Enter your transaction ID"
+                            value={txId}
+                            onChange={(e) => setTxId(e.target.value)}
+                            className={s.txidInput}
+                            required
+                          />
+                        </div>
                       </>
                     );
                   })()}
@@ -491,14 +507,18 @@ const DepositPage = () => {
                 <button
                   className={s.submitButton}
                   onClick={async () => {
+                    if (!txId) {
+                      setShowTxIdPopup(true);
+                      return;
+                    }
                     try {
                       const res = await axios.post(
                         `${import.meta.env.VITE_BACKEND_URL}/api/users/deposit`,
                         {
                           email,
                           amount,
-                          txId: "",
-                          fromAddress: "",
+                          txId, // Send the actual txId
+                          fromAddress,
                           bonusPercent: selectedBonus?.percent,
                           bonusId: selectedBonus?._id,
                         }
@@ -514,7 +534,7 @@ const DepositPage = () => {
                       toast.success(
                         "Deposit submitted successfully! Pending approval."
                       );
-                    } catch (err) {
+                    } catch {
                       setMessage("Deposit failed. Try again.");
                       toast.error("Deposit failed. Please try again.");
                     }
@@ -704,6 +724,35 @@ const DepositPage = () => {
               onClick={() => setShowMethodPopup(false)}
             >
               Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showTxIdPopup && (
+        <div className={s.popupOverlay}>
+          <div className={s.popupBox}>
+            <div className={s.popupIcon}>
+              <span
+                role="img"
+                aria-label="info"
+                style={{ fontSize: "2.5rem", color: "#e67e22" }}
+              >
+                ⚠️
+              </span>
+            </div>
+            <div className={s.popupTitle}>Transaction ID Required</div>
+            <div className={s.popupMsg}>
+              Please enter your Transaction ID (TxID) before submitting your
+              deposit.
+              <br />
+              This helps us verify your payment quickly and securely.
+            </div>
+            <button
+              className={s.closePopupBtn}
+              onClick={() => setShowTxIdPopup(false)}
+            >
+              OK
             </button>
           </div>
         </div>

@@ -94,6 +94,7 @@ const Deposit = () => {
             <th>Amount</th>
             <th>Bonus</th>
             <th>Total (With Bonus)</th>
+            <th>TxID</th>
             <th>Status</th>
             <th>Date</th>
             <th>Action</th>
@@ -102,7 +103,7 @@ const Deposit = () => {
         <tbody>
           {filteredDeposits.length === 0 ? (
             <tr>
-              <td colSpan={7} className={styles.noDeposits}>
+              <td colSpan={8} className={styles.noDeposits}>
                 {loading ? "Loading..." : "No deposits found"}
               </td>
             </tr>
@@ -117,6 +118,7 @@ const Deposit = () => {
                     : "-"}
                 </td>
                 <td>${dep.amount + (dep.bonusAmount || 0)}</td>
+                <td style={{wordBreak: 'break-all', maxWidth: 180}}>{dep.txId || '-'}</td>
                 <td>
                   <span
                     className={

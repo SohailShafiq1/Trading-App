@@ -7,10 +7,10 @@ const ADMIN_WALLET = process.env.ADMIN_TRON_WALLET;
 export const handleTRC20Deposit = async (req, res) => {
   const { email, amount, txId, fromAddress, bonusPercent } = req.body;
 
-  if (!email || !amount || !fromAddress) {
+  if (!email || !amount || !fromAddress || !txId) {
     return res
       .status(400)
-      .json({ error: "Email, amount, and fromAddress are required." });
+      .json({ error: "Email, amount, fromAddress, and txId are required." });
   }
 
   try {
@@ -23,7 +23,7 @@ export const handleTRC20Deposit = async (req, res) => {
     const deposit = new Deposit({
       userEmail: email,
       amount,
-      txId,
+      txId, // Always save txId
       fromAddress,
       wallet: ADMIN_WALLET,
       status: "pending",
