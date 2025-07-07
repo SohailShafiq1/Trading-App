@@ -65,13 +65,31 @@ const LoginPage = () => {
         navigate("/binarychart");
       }
     } catch (err) {
-      const errMsg = err?.response?.data?.message || err?.message || "Login failed";
+      const errMsg =
+        err?.response?.data?.message || err?.message || "Login failed";
       if (errMsg && errMsg.toLowerCase().includes("blocked")) {
         setBlockMsg(errMsg); // Show custom popup
-      } else if (errMsg && (errMsg.toLowerCase().includes("not found") || errMsg.toLowerCase().includes("no user"))) {
-        setPopup({ show: true, message: "Email not found. Please check your email or register.", type: "email" });
-      } else if (errMsg && (errMsg.toLowerCase().includes("invalid credentials") || errMsg.toLowerCase().includes("password") || errMsg.toLowerCase().includes("401"))) {
-        setPopup({ show: true, message: "Incorrect password. Please try again.", type: "password" });
+      } else if (
+        errMsg &&
+        (errMsg.toLowerCase().includes("not found") ||
+          errMsg.toLowerCase().includes("no user"))
+      ) {
+        setPopup({
+          show: true,
+          message: "Email not found. Please check your email or register.",
+          type: "email",
+        });
+      } else if (
+        errMsg &&
+        (errMsg.toLowerCase().includes("invalid credentials") ||
+          errMsg.toLowerCase().includes("password") ||
+          errMsg.toLowerCase().includes("401"))
+      ) {
+        setPopup({
+          show: true,
+          message: "Incorrect password. Please try again.",
+          type: "password",
+        });
       } else {
         setPopup({ show: true, message: errMsg, type: "other" });
       }
@@ -80,7 +98,11 @@ const LoginPage = () => {
 
   const handleForgotPassword = async () => {
     if (!form.email) {
-      setPopup({ show: true, message: "Please enter your email to reset your password.", type: "email" });
+      setPopup({
+        show: true,
+        message: "Please enter your email to reset your password.",
+        type: "email",
+      });
       return;
     }
     // Navigate to forgot password page with email pre-filled
@@ -98,11 +120,20 @@ const LoginPage = () => {
         window.google.accounts.id.prompt();
       } catch (error) {
         console.error("Google Sign-In initialization error:", error);
-        setPopup({ show: true, message: "Google Sign-In is not properly configured. Please contact support.", type: "other" });
+        setPopup({
+          show: true,
+          message:
+            "Google Sign-In is not properly configured. Please contact support.",
+          type: "other",
+        });
       }
     } else {
       console.error("Google Identity Services script not loaded.");
-      setPopup({ show: true, message: "Google Sign-In is not available. Please try again later.", type: "other" });
+      setPopup({
+        show: true,
+        message: "Google Sign-In is not available. Please try again later.",
+        type: "other",
+      });
     }
   };
 
@@ -130,10 +161,18 @@ const LoginPage = () => {
       }
     } catch (err) {
       if (err.response?.data?.needsRegistration) {
-        setPopup({ show: true, message: "Account not found. Please register first.", type: "email" });
+        setPopup({
+          show: true,
+          message: "Account not found. Please register first.",
+          type: "email",
+        });
         navigate("/register");
       } else {
-        setPopup({ show: true, message: err.response?.data?.message || "Google login failed", type: "other" });
+        setPopup({
+          show: true,
+          message: err.response?.data?.message || "Google login failed",
+          type: "other",
+        });
       }
     }
   };
@@ -226,11 +265,29 @@ const LoginPage = () => {
           <div className={styles.modal}>
             <div className={styles.popupIcon}>
               {popup.type === "email" ? (
-                <span role="img" aria-label="email" style={{fontSize: '2.5rem', color: '#e74c3c'}}>📧</span>
+                <span
+                  role="img"
+                  aria-label="email"
+                  style={{ fontSize: "2.5rem", color: "#e74c3c" }}
+                >
+                  📧
+                </span>
               ) : popup.type === "password" ? (
-                <span role="img" aria-label="lock" style={{fontSize: '2.5rem', color: '#e67e22'}}>🔒</span>
+                <span
+                  role="img"
+                  aria-label="lock"
+                  style={{ fontSize: "2.5rem", color: "#e67e22" }}
+                >
+                  🔒
+                </span>
               ) : (
-                <span role="img" aria-label="error" style={{fontSize: '2.5rem', color: '#e67e22'}}>⚠️</span>
+                <span
+                  role="img"
+                  aria-label="error"
+                  style={{ fontSize: "2.5rem", color: "#e67e22" }}
+                >
+                  ⚠️
+                </span>
               )}
             </div>
             <div className={styles.popupTitle}>

@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import styles from "./TransactionPage.module.css";
+import { useTheme } from "../../Context/ThemeContext";
 const s = styles;
 
 const TransactionPage = () => {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
@@ -79,39 +81,107 @@ const TransactionPage = () => {
     })),
   ].sort((a, b) => new Date(b.displayDate) - new Date(a.displayDate));
 
-  if (loading) return <div className={s.container}>Loading...</div>;
-  if (error) return <div className={s.container}>Error: {error}</div>;
+  if (loading)
+    return (
+      <div
+        className={s.container}
+        style={{ color: theme.textColor, background: theme.background }}
+      >
+        Loading...
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        className={s.container}
+        style={{ color: theme.textColor, background: theme.background }}
+      >
+        Error: {error}
+      </div>
+    );
 
   return (
-    <div className={s.container}>
-      <div className={s.box}>
-        <table className={s.table}>
+    <div
+      className={s.container}
+      style={{ color: theme.textColor, background: theme.background }}
+    >
+      <div
+        className={s.box}
+        style={{ background: theme.box, color: theme.textColor }}
+      >
+        <table
+          className={s.table}
+          style={{ background: theme.box, color: theme.textColor }}
+        >
           <thead>
             <tr>
-              <th>Order</th>
-              <th>Amount</th>
-              <th>Date and time</th>
-              <th>Payment system</th>
-              <th>Status</th>
-              <th>Transaction type</th>
+              <th
+                style={{ color: theme.textColor, background: theme.box }}
+              >
+                Order
+              </th>
+              <th
+                style={{ color: theme.textColor, background: theme.box }}
+              >
+                Amount
+              </th>
+              <th
+                style={{ color: theme.textColor, background: theme.box }}
+              >
+                Date and time
+              </th>
+              <th
+                style={{ color: theme.textColor, background: theme.box }}
+              >
+                Payment system
+              </th>
+              <th
+                style={{ color: theme.textColor, background: theme.box }}
+              >
+                Status
+              </th>
+              <th
+                style={{ color: theme.textColor, background: theme.box }}
+              >
+                Transaction type
+              </th>
             </tr>
           </thead>
           <tbody>
             {allRows.map((row) => (
               <tr key={row.orderId}>
-                <td className={s.tableData}>{row.orderId || "N/A"}</td>
+                <td
+                  className={s.tableData}
+                  style={{ color: theme.textColor }}
+                >
+                  {row.orderId || "N/A"}
+                </td>
                 <td className={s.amount}>{row.displayAmount}</td>
-                <td className={s.tableData}>
+                <td
+                  className={s.tableData}
+                  style={{ color: theme.textColor }}
+                >
                   {new Date(row.displayDate).toLocaleString()}
                 </td>
-                <td className={s.tableData}>
+                <td
+                  className={s.tableData}
+                  style={{ color: theme.textColor }}
+                >
                   {row.paymentMethod || row.network || row.purse || "N/A"}
                 </td>
-                <td className={s.tableData}>
+                <td
+                  className={s.tableData}
+                  style={{ color: theme.textColor }}
+                >
                   <AiOutlineCheckCircle className={s.circle} />
                   {row.displayStatus}
                 </td>
-                <td className={s.tableData}>{row.displayType}</td>
+                <td
+                  className={s.tableData}
+                  style={{ color: theme.textColor }}
+                >
+                  {row.displayType}
+                </td>
               </tr>
             ))}
           </tbody>

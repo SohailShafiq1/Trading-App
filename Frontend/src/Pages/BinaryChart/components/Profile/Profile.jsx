@@ -8,6 +8,7 @@ import Modal from "react-modal";
 import Tesseract from "tesseract.js";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useTheme } from "../../../../Context/ThemeContext";
 
 const s = styles;
 
@@ -36,6 +37,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { logoutAffiliate } = useAffiliateAuth();
+  const { theme } = useTheme();
 
   // Ensure all state variables have default values to avoid uncontrolled inputs
   const [firstName, setFirstName] = useState(user?.firstName || "");
@@ -454,17 +456,41 @@ const Profile = () => {
     setCnicBackPreview(""); // <-- Clear CNIC back preview in state
   };
 
+  // Helper: fallback to theme.background if theme.inputBackground is undefined
+  const inputBg = theme.box || theme.background;
+
   return (
-    <div className={s.container}>
-      <div className={s.profileBox}>
+    <div
+      className={s.container}
+      style={{
+        background: theme.background,
+        color: theme.textColorColor,
+        minHeight: "100vh",
+        transition: "background 0.3s, color 0.3s",
+      }}
+    >
+      <div
+        className={s.profileBox}
+        style={{
+          background: theme.background,
+          color: theme.textColorColor,
+          borderRadius: 12,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+        }}
+      >
         {/* Loader overlay */}
         {isSaving && (
-          <div className={s.loaderOverlay}>
+          <div
+            className={s.loaderOverlay}
+            style={{ background: theme.background + "cc" }}
+          >
             <div className={s.loaderSpinner}></div>
             <div className={s.loaderText}>Saving...</div>
           </div>
         )}
-        <h2 className={s.title}>Personal data:</h2>
+        <h2 className={s.title} style={{ color: theme.textColor }}>
+          Personal data:
+        </h2>
         <div className={s.userInfo}>
           <div className={s.avatar}>
             <div className={s.avatarImgWrapper}>
@@ -486,7 +512,12 @@ const Profile = () => {
                     className={s.avatarImg}
                   />
                 ) : (
-                  <span className={s.cameraIcon}>📷</span>
+                  <span
+                    className={s.cameraIcon}
+                    style={{ color: theme.textColor }}
+                  >
+                    📷
+                  </span>
                 )}
                 <input
                   id="profilePicInput"
@@ -500,7 +531,9 @@ const Profile = () => {
             </div>
           </div>
           <div>
-            <p className={s.userId}>ID: {userId || "N/A"}</p>
+            <p className={s.userId} style={{ color: theme.textColor }}>
+              ID: {userId || "N/A"}
+            </p>
             <p className={verified ? s.verified : s.unverified}>
               {verified ? "Verified" : "Unverified"}
             </p>
@@ -510,46 +543,51 @@ const Profile = () => {
         <div className={s.form}>
           <div className={s.row}>
             <div className={s.inputBox}>
-              <label>First Name</label>
+              <label style={{ color: theme.textColor }}>First Name</label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                style={{ color: theme.textColor, background: inputBg }}
               />
             </div>
             <div className={s.inputBox}>
-              <label>Last Name</label>
+              <label style={{ color: theme.textColor }}>Last Name</label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                style={{ color: theme.textColor, background: inputBg }}
               />
             </div>
           </div>
 
           <div className={s.row}>
             <div className={s.inputBox}>
-              <label>Email</label>
+              <label style={{ color: theme.textColor }}>Email</label>
               <input
                 type="email"
                 placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                style={{ color: theme.textColor, background: inputBg }}
               />
             </div>
             {authType !== "google" && (
               <div className={s.inputBox}>
-                <label>Password</label>
+                <label style={{ color: theme.textColor }}>Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled
+                  style={{ color: theme.textColor, background: inputBg }}
                 />
                 <div className={s.forgotBox}>
                   <NavLink
                     to={`/forgot-password?email=${email}`}
                     className={s.forgot}
+                    style={{ color: theme.textColor }}
                   >
                     Forget Your Password?
                   </NavLink>
@@ -558,12 +596,16 @@ const Profile = () => {
             )}
             {authType === "google" && (
               <div className={s.inputBox}>
-                <label>Authentication</label>
+                <label style={{ color: theme.textColor }}>Authentication</label>
                 <input
                   type="text"
                   value="Google Account"
                   disabled
-                  style={{ color: "#4285f4", fontWeight: "500" }}
+                  style={{
+                    color: "#4285f4",
+                    fontWeight: "500",
+                    background: inputBg,
+                  }}
                 />
                 <div className={s.forgotBox}>
                   <span style={{ color: "#666", fontSize: "0.9em" }}>
@@ -576,19 +618,21 @@ const Profile = () => {
 
           <div className={s.row}>
             <div className={s.inputBox}>
-              <label>Date Of Birth</label>
+              <label style={{ color: theme.textColor }}>Date Of Birth</label>
               <input
                 type="date"
                 placeholder="DD/MM/YEAR"
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
+                style={{ color: theme.textColor, background: inputBg }}
               />
             </div>
             <div className={s.inputBox}>
-              <label>Country</label>
+              <label style={{ color: theme.textColor }}>Country</label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
+                style={{ color: theme.textColor, background: inputBg }}
               >
                 <option value="">Select Country</option>
                 <option value="Afghanistan">Afghanistan</option>
@@ -811,10 +855,11 @@ const Profile = () => {
           {/* Document type selection and CNIC number */}
           <div className={s.row}>
             <div className={s.inputBox}>
-              <label>Document Type</label>
+              <label style={{ color: theme.textColor }}>Document Type</label>
               <select
                 value={documentType}
                 onChange={(e) => setDocumentType(e.target.value)}
+                style={{ color: theme.textColor, background: inputBg }}
               >
                 <option value="CNIC">CNIC</option>
                 <option value="Passport">Passport</option>
@@ -823,26 +868,30 @@ const Profile = () => {
             {documentType === "CNIC" ? (
               <>
                 <div className={s.inputBox}>
-                  <label>CNIC Number</label>
+                  <label style={{ color: theme.textColor }}>CNIC Number</label>
                   <input
                     type="text"
                     value={cnicNumber}
                     onChange={handleCnicChange}
                     placeholder="xxxxx-xxxxxxx-x"
                     maxLength={15}
+                    style={{ color: theme.textColor, background: inputBg }}
                   />
                 </div>
               </>
             ) : (
               <>
                 <div className={s.inputBox}>
-                  <label>Passport Number</label>
+                  <label style={{ color: theme.textColor }}>
+                    Passport Number
+                  </label>
                   <input
                     type="text"
                     value={passportNumber}
                     onChange={handlePassportChange}
                     placeholder="e.g. AA0000000"
                     maxLength={9}
+                    style={{ color: theme.textColor, background: inputBg }}
                   />
                 </div>
               </>
@@ -854,11 +903,13 @@ const Profile = () => {
             <div className={s.row}>
               {/* FRONT IMAGE */}
               <div className={s.inputBox}>
-                <label>{documentType} Front Image</label>
+                <label style={{ color: theme.textColor }}>
+                  {documentType} Front Image
+                </label>
                 {cnicPicture && typeof cnicPicture === "string" ? (
                   <div
                     className={s.cnicImageBox}
-                    style={{ flexDirection: "column" }}
+                    style={{ flexDirection: "column", background: inputBg }}
                   >
                     <img
                       src={
@@ -901,18 +952,25 @@ const Profile = () => {
                         className={s.cnicImgStyled}
                       />
                     ) : (
-                      <span className={s.cameraIcon}>📷</span>
+                      <span
+                        className={s.cameraIcon}
+                        style={{ color: theme.textColor }}
+                      >
+                        📷
+                      </span>
                     )}
                   </>
                 )}
               </div>
               {/* BACK IMAGE */}
               <div className={s.inputBox}>
-                <label>{documentType} Back Image</label>
+                <label style={{ color: theme.textColor }}>
+                  {documentType} Back Image
+                </label>
                 {cnicBackPicture && typeof cnicBackPicture === "string" ? (
                   <div
                     className={s.cnicImageBox}
-                    style={{ flexDirection: "column" }}
+                    style={{ flexDirection: "column", background: inputBg }}
                   >
                     <img
                       src={`${
@@ -951,7 +1009,12 @@ const Profile = () => {
                         className={s.cnicImgStyled}
                       />
                     ) : (
-                      <span className={s.cameraIcon}>📷</span>
+                      <span
+                        className={s.cameraIcon}
+                        style={{ color: theme.textColor }}
+                      >
+                        📷
+                      </span>
                     )}
                   </>
                 )}
@@ -960,7 +1023,9 @@ const Profile = () => {
           ) : (
             <div className={s.row}>
               <div className={s.inputBox}>
-                <label>Passport Number</label>
+                <label style={{ color: theme.textColor }}>
+                  Passport Number
+                </label>
                 {passportNumber &&
                 passportImage &&
                 typeof passportImage === "string" ? (
@@ -976,6 +1041,7 @@ const Profile = () => {
                         fontWeight: 600,
                         fontSize: "1.1em",
                         marginBottom: 8,
+                        color: theme.textColor,
                       }}
                     >
                       {passportNumber}
@@ -1017,7 +1083,11 @@ const Profile = () => {
                       onChange={handlePassportChange}
                       placeholder="e.g. AA0000000"
                       maxLength={9}
-                      style={{ marginBottom: 8 }}
+                      style={{
+                        marginBottom: 8,
+                        color: theme.textColor,
+                        background: inputBg,
+                      }}
                     />
                     <input
                       type="file"
@@ -1032,7 +1102,12 @@ const Profile = () => {
                         style={{ marginBottom: 8 }}
                       />
                     ) : (
-                      <span className={s.cameraIcon}>📷</span>
+                      <span
+                        className={s.cameraIcon}
+                        style={{ color: theme.textColor }}
+                      >
+                        📷
+                      </span>
                     )}
                   </>
                 )}
@@ -1061,20 +1136,23 @@ const Profile = () => {
         style={customStyles}
         contentLabel="Delete Account Confirmation"
       >
-        <h2>Delete Account</h2>
-        <p>
+        <h2 style={{ color: theme.textColor }}>Delete Account</h2>
+        <p style={{ color: theme.textColor }}>
           Are you sure you want to delete your account? This action cannot be
           undone.
         </p>
 
         {authType !== "google" && (
           <div className={s.inputBox}>
-            <label>Enter your password to confirm:</label>
+            <label style={{ color: theme.textColor }}>
+              Enter your password to confirm:
+            </label>
             <input
               type="password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               placeholder="Your password"
+              style={{ color: theme.textColor, background: inputBg }}
             />
             {deleteError && <p className={s.errorText}>{deleteError}</p>}
           </div>
@@ -1103,8 +1181,10 @@ const Profile = () => {
       >
         <div className={s.popupContainer}>
           <div className={s.popupIcon}>📄</div>
-          <h2 className={s.popupTitle}>CNIC Back Image Required</h2>
-          <p className={s.popupText}>
+          <h2 className={s.popupTitle} style={{ color: theme.textColor }}>
+            CNIC Back Image Required
+          </h2>
+          <p className={s.popupText} style={{ color: theme.textColor }}>
             Please provide your <b>CNIC back image</b> before saving your
             profile.
           </p>

@@ -4,6 +4,7 @@
   height: 100%;
 }
 .box {
+  border-radius: 10px;
   margin: 0rem 1rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -12,7 +13,8 @@
 }
 .constraint,
 .title {
-  margin: 0rem 2rem;
+  border-radius: 10px;
+  margin: 0rem 1rem;
   padding: 16px;
   font-weight: bold;
 }
@@ -28,12 +30,10 @@
   color: #10a055;
 }
 .iconTitle {
-  color: black;
   margin-right: 10px;
   position: relative;
   top: 2px;
   transform: rotate(15deg);
-  background-color: #d9d9d9;
   border-radius: 100%;
   padding: 2px;
 }
@@ -41,7 +41,6 @@
   color: #10a055;
 }
 .currency {
-  background-color: #d9d9d9;
   border-radius: 8px;
   padding: 16px;
   text-align: center;
@@ -70,7 +69,6 @@
 .submitButton {
   width: 100%;
   background: #22c55e;
-  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 12px 0;
@@ -91,7 +89,6 @@
 
 .walletCode {
   font-size: 1.1rem;
-  background: #f1f5f9;
   padding: 6px 12px;
   border-radius: 6px;
   word-break: break-all;
@@ -104,7 +101,6 @@
   border-radius: 6px;
   border: none;
   background: #22c55e;
-  color: #fff;
   font-weight: 600;
   cursor: pointer;
   font-size: 1rem;
@@ -136,7 +132,6 @@
 }
 
 .modal {
-  background: #fff;
   padding: 1rem;
   border-radius: 12px;
   max-width: 400px;
@@ -148,7 +143,6 @@
 
 .closeButton {
   position: absolute;
-  color: "black";
   top: 12px;
   right: 12px;
   font-size: 1.2rem;
@@ -172,7 +166,6 @@
 .form button {
   padding: 0.8rem;
   background: #007bff;
-  color: white;
   border: none;
   border-radius: 6px;
   font-weight: bold;
@@ -202,11 +195,9 @@
 
 .instructions {
   margin-bottom: 1rem;
-  background: #f9f9f9;
   padding: 1rem;
   border-radius: 8px;
   font-size: 0.95rem;
-  color: #333;
 }
 
 .instructions ol {
@@ -220,7 +211,6 @@
   margin: 12px 0;
   padding: 8px 18px;
   background: #007bff;
-  color: #fff;
   border: none;
   border-radius: 6px;
   font-weight: 600;
@@ -243,7 +233,6 @@
   z-index: 1001;
 }
 .bonusModal {
-  background: #fff;
   padding: 1rem 1rem;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(102, 181, 68, 0.18);
@@ -254,7 +243,6 @@
 .bonusOptions {
   margin: 1.5rem 0 0.5rem 0;
   padding: 1rem 0.5rem;
-  background: #f8fff4;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(102, 181, 68, 0.07);
 }
@@ -262,7 +250,6 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  background: #eafbe3;
   border: 2px solid transparent;
   border-radius: 8px;
   padding: 0.7rem 1rem;
@@ -282,7 +269,6 @@
 .bonusRadioLabel:hover,
 .bonusRadioLabel:focus-within {
   border: 2px solid #66b544;
-  background: #d8f5c7;
   color: #388e1c;
 }
 
@@ -301,7 +287,6 @@
 .bonusListItem {
   margin-bottom: 0.7rem;
   padding: 0.7rem 1rem;
-  background: #eafbe3;
   border-radius: 8px;
   border: 2px solid transparent;
   transition: border 0.2s, background 0.2s;
@@ -325,7 +310,6 @@
 .bonusListItem:hover,
 .bonusListItem:focus-within {
   border: 2px solid #66b544;
-  background: #d8f5c7;
   color: #388e1c;
 }
 
@@ -348,7 +332,6 @@
   text-align: center;
 }
 .bonusModal {
-  background: #fff;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(102, 181, 68, 0.18);
   padding: 1.2rem 1.2rem; /* Reduced padding */
@@ -367,7 +350,6 @@
 .closeBonusBtn {
   margin-top: 1.2rem;
   background: #66b544;
-  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.7rem 1.5rem;
@@ -385,7 +367,6 @@
   height: 180px;
   border: 4px solid #00c3ff;
   border-radius: 16px;
-  background: #fff;
   box-shadow: 0 4px 24px rgba(0, 195, 255, 0.18);
   padding: 12px;
   display: block;
@@ -406,7 +387,6 @@
 }
 
 .popupBox {
-  background: #fff;
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(44, 45, 53, 0.18);
   padding: 2.5rem 2.2rem 2rem 2.2rem;
@@ -435,19 +415,16 @@
 .popupTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #222;
   margin-bottom: 0.5rem;
 }
 
 .popupMsg {
   font-size: 1.05rem;
-  color: #444;
   margin-bottom: 1.2rem;
 }
 
 .closePopupBtn {
   background: linear-gradient(90deg, #66b544, #1a391d);
-  color: #fff;
   border: none;
   border-radius: 6px;
   padding: 0.7rem 2.2rem;
@@ -476,7 +453,6 @@
 }
 
 .pendingNotificationModal {
-  background: #fff;
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
   padding: 2.5rem 2rem;
@@ -505,7 +481,6 @@
 .pendingTitle {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #333;
   margin-bottom: 1rem;
 }
 
@@ -517,12 +492,10 @@
 .pendingDetails > p:first-child {
   text-align: center;
   font-size: 1.1rem;
-  color: #555;
   margin-bottom: 1.5rem;
 }
 
 .depositInfo {
-  background: #f8f9fa;
   border-radius: 8px;
   padding: 1.2rem;
   margin-bottom: 1.5rem;
@@ -541,20 +514,17 @@
 
 .infoLabel {
   font-weight: 600;
-  color: #666;
   font-size: 0.95rem;
 }
 
 .infoValue {
   font-weight: 600;
-  color: #333;
   font-size: 1rem;
 }
 
 .pendingMessage {
   text-align: center;
   font-size: 1rem;
-  color: #666;
   line-height: 1.5;
   margin: 0;
 }
@@ -568,7 +538,6 @@
 
 .refreshPendingBtn {
   background: linear-gradient(90deg, #3498db, #2980b9);
-  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.8rem 1.8rem;
@@ -585,7 +554,6 @@
 
 .closePendingBtn {
   background: linear-gradient(90deg, #f39c12, #e67e22);
-  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.8rem 2.5rem;
@@ -606,17 +574,17 @@
     margin: 1rem;
     padding: 2rem 1.5rem;
   }
-  
+
   .pendingTitle {
     font-size: 1.3rem;
   }
-  
+
   .infoRow {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.3rem;
   }
-  
+
   .pendingButtonGroup {
     flex-direction: column;
     gap: 0.8rem;
@@ -626,7 +594,6 @@
 /* Pending Warning Styles */
 .pendingWarning {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #e8f5e8, #d4edda);
   border: 2px solid #28a745;
   border-radius: 12px;
   padding: 1.5rem;
@@ -675,7 +642,7 @@
     gap: 0.8rem;
     padding: 1.2rem;
   }
-  
+
   .warningIcon {
     font-size: 1.8rem;
   }
@@ -690,7 +657,6 @@
 .txidLabel {
   font-size: 1rem;
   font-weight: 500;
-  color: #333;
   margin-bottom: 0.4rem;
 }
 
@@ -701,13 +667,11 @@
   font-size: 1rem;
   transition: border 0.2s, box-shadow 0.2s;
   outline: none;
-  background: #f8f9fa;
 }
 
 .txidInput:focus {
   border: 1.5px solid #22c55e;
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
-  background: #fff;
 }
 
 @media (max-width: 768px) {

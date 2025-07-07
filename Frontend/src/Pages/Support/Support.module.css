@@ -9,8 +9,11 @@
 
 .popupOverlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(44,62,80,0.18);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(44, 62, 80, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,12 +21,12 @@
 }
 .popupBox {
   background: #fff;
-  border: 2px solid #10A055;
+  border: 2px solid #10a055;
   border-radius: 10px;
   padding: 32px 24px 18px 24px;
   min-width: 320px;
   text-align: center;
-  box-shadow: 0 4px 24px rgba(44,62,80,0.12);
+  box-shadow: 0 4px 24px rgba(44, 62, 80, 0.12);
 }
 h2 {
   text-align: center;
@@ -55,7 +58,6 @@ h2 {
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 1rem;
-  background: #f8fafc;
   transition: border 0.2s;
 }
 
@@ -63,7 +65,6 @@ h2 {
 .textarea:focus {
   border-color: #1976d2;
   outline: none;
-  background: #fff;
 }
 
 .textarea {
@@ -72,8 +73,7 @@ h2 {
 }
 
 .submitBtn {
-    background: linear-gradient(90deg, #66b544, #1a391d);
-
+  background: linear-gradient(90deg, #66b544, #1a391d);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -107,8 +107,11 @@ h2 {
 /* Loader styles */
 .loaderOverlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255,255,255,0.7);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -125,8 +128,12 @@ h2 {
   margin-bottom: 18px;
 }
 @keyframes spin {
-  0% { transform: rotate(0deg);}
-  100% { transform: rotate(360deg);}
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 .loaderText {
   color: #1976d2;
@@ -150,7 +157,8 @@ h2 {
   transition: background 0.2s, transform 0.15s;
   letter-spacing: 0.5px;
 }
-.okBtn:hover, .okBtn:focus {
+.okBtn:hover,
+.okBtn:focus {
   background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
   transform: translateY(-2px) scale(1.03);
   outline: none;
@@ -168,7 +176,7 @@ h2 {
   cursor: pointer;
   font-weight: bold;
   color: #d32f2f;
-  box-shadow: 0 1px 4px rgba(44,62,80,0.12);
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.12);
   transition: background 0.15s;
 }
 .removeImgBtn:hover {

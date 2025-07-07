@@ -197,7 +197,7 @@ const Tabs = () => {
     <div
       className={styles.tabs}
       style={{
-        background: theme.background,
+        background: theme.box,
         color: theme.textColor,
         "--tab-hover-bg": theme.tabHover || "#f0f0f0",
         "--tab-btn-hover-bg": theme.tabBtnHover || "#e0e0e0",

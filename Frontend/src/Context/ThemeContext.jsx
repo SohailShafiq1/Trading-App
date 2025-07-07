@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 export const ThemeContext = createContext();
 
@@ -6,7 +6,8 @@ export const THEMES = {
   BLACK: {
     name: "Black",
     background: "black",
-    textColor: "#fff",
+    textColor: "white",
+    inputBackground: "#181818",
     accent: "#222",
     box: "#1F1F1F",
     settingButton: "#1F1F1F",
@@ -23,7 +24,8 @@ export const THEMES = {
   WHITE: {
     name: "White",
     background: "#ffffff",
-    textColor: "#222",
+    textColor: "black",
+    inputBackground: "#fff",
     accent: "#f5f5f5",
     box: "#f7f7f7",
     settingButton: "#f7f7f7",
@@ -40,7 +42,8 @@ export const THEMES = {
   GREY: {
     name: "Grey",
     background: "#666666",
-    textColor: "#fff",
+    textColor: "black",
+    inputBackground: "#888888",
     accent: "#bdbdbd",
     box: "#979797",
     settingButton: "#979797",
@@ -57,7 +60,30 @@ export const THEMES = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(THEMES.WHITE);
+  // Load theme from localStorage if available
+  const getInitialTheme = () => {
+    const saved = localStorage.getItem("selectedTheme");
+    if (saved && THEMES[saved]) return THEMES[saved];
+    return THEMES.WHITE;
+  };
+  const [theme, setThemeState] = useState(getInitialTheme());
+
+  // Set CSS variables for global theming
+  useEffect(() => {
+    if (theme) {
+      document.body.style.setProperty("--background", theme.background);
+      document.body.style.setProperty("--text-color", theme.textColor);
+    }
+  }, [theme]);
+
+  // Save theme to localStorage on change
+  const setTheme = (newTheme) => {
+    setThemeState(newTheme);
+    if (newTheme && newTheme.name) {
+      localStorage.setItem("selectedTheme", newTheme.name.toUpperCase());
+    }
+  };
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme, THEMES }}>
       {children}

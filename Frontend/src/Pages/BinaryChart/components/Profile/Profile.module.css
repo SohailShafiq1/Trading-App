@@ -68,7 +68,6 @@
   font-size: 24px;
   font-weight: 600;
   text-align: left;
-  color: #000;
   margin-bottom: 30px;
 }
 
@@ -89,13 +88,12 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  /* Add a border for a clear green ring */
   border: 4px solid #6abf4b;
   box-sizing: border-box;
 }
 
 .avatarImgWrapper {
-  width: 72px; /* slightly smaller than .avatar */
+  width: 72px;
   height: 72px;
   border-radius: 50%;
   overflow: hidden;
@@ -118,7 +116,6 @@
   bottom: 0;
   right: 0;
   background: #fff;
-  color: #000;
   font-size: 12px;
   padding: 2px;
   border-radius: 50%;
@@ -126,7 +123,6 @@
 
 .userId {
   font-size: 14px;
-  color: #000;
 }
 
 .form {
@@ -153,7 +149,6 @@
 
 .inputBox label {
   font-size: 12px;
-  color: #000;
   margin-bottom: 5px;
 }
 
@@ -162,14 +157,9 @@
   padding: 10px 12px;
   font-size: 14px;
   border: 1px solid #ccc;
-  color: #000;
-  background-color: #fff;
   border-radius: 4px;
   outline: none;
-}
-
-.inputBox input::placeholder {
-  color: #888;
+  /* color and background removed, will be set via inline style from theme */
 }
 
 .forgotBox {

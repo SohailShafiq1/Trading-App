@@ -7,6 +7,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../Context/AuthContext";
 import { useAccountType } from "../../Context/AccountTypeContext";
+import { useTheme } from "../../Context/ThemeContext";
 
 import bitcoin from "./assets/bitcoin.png";
 import ethereum from "./assets/ethereum.png";
@@ -53,6 +54,7 @@ const supportedCoins = [
 const DepositPage = () => {
   const { user } = useAuth();
   const { isDemo } = useAccountType(); // Get account type
+  const { theme } = useTheme();
   const [selected, setSelected] = useState("USD Tether(TRC-20)");
   const [showModal, setShowModal] = useState(false);
   const [amount, setAmount] = useState("");
@@ -270,29 +272,52 @@ const DepositPage = () => {
   }, [amount, bonusOptions]);
 
   return (
-    <div className={s.container}>
-      <div className={s.rightSide}>
-        <div className={s.title}>
-          <BsCurrencyBitcoin className={s.iconTitle} />
-          <span className={s.text}>Cryptocurrencies</span>
+    <div
+      className={s.container}
+      style={{ color: theme.textColor, background: theme.background }}
+    >
+      <div className={s.rightSide} style={{ color: theme.textColor }}>
+        <div
+          className={s.title}
+          style={{ color: theme.textColor, background: theme.box }}
+        >
+          <BsCurrencyBitcoin
+            className={s.iconTitle}
+            style={{ color: theme.textColor }}
+          />
+          <span className={s.text} style={{ color: theme.textColor }}>
+            Cryptocurrencies
+          </span>
         </div>
 
-        <div className={s.box}>
+        <div
+          className={s.box}
+          style={{ background: theme.box, color: theme.textColor }}
+        >
           {pendingDeposits.length > 0 && (
-            <div className={s.pendingWarning}>
+            <div
+              className={s.pendingWarning}
+              style={{
+                background: theme.warningBackground,
+                color: theme.warning,
+              }}
+            >
               <div className={s.warningIcon}>⏳</div>
               <div className={s.warningContent}>
-                <h4>
+                <h4 style={{ color: theme.textColor }}>
                   {pendingCount === 1
                     ? "1 Deposit Pending Approval"
                     : `${pendingCount} Deposits Pending Approval`}
                 </h4>
-                <p>
+                <p style={{ color: theme.textColor }}>
                   You have{" "}
                   {pendingCount === 1
                     ? "a deposit"
-                    : `${pendingCount} deposits`}
-                  totaling <strong>${totalPendingAmount.toFixed(2)}</strong>{" "}
+                    : `${pendingCount} deposits`}{" "}
+                  totaling{" "}
+                  <strong style={{ color: "#28a745" }}>
+                    ${totalPendingAmount.toFixed(2)}
+                  </strong>{" "}
                   awaiting approval. You can still make additional deposits
                   while these are being processed.
                 </p>
@@ -304,6 +329,15 @@ const DepositPage = () => {
               className={s.currency}
               key={index}
               onClick={() => handleCoinClick(currency)}
+              style={{
+                color: theme.textColor,
+                background: theme.background,
+                border: `1px solid ${theme.border}`,
+                borderRadius: 8,
+                marginBottom: 8,
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
             >
               <div className={s.imageBox}>
                 <img
@@ -312,21 +346,29 @@ const DepositPage = () => {
                   className={s.image}
                 />
               </div>
-              <p>{currency.name}</p>
+              <p style={{ color: theme.textColor }}>{currency.name}</p>
             </div>
           ))}
         </div>
 
-        <div className={s.constraint}>
-          <AiFillBank className={s.icon} />
-          <span className={s.text}>Minimum deposit amount:</span>
-          <span className={s.span}> $10 </span>
+        <div className={s.constraint} style={{ color: theme.textColor }}>
+          <AiFillBank className={s.icon} style={{ color: theme.textColor }} />
+          <span className={s.text} style={{ color: theme.textColor }}>
+            Minimum deposit amount:
+          </span>
+          <span className={s.span} style={{ color: "#28a745" }}>
+            {" "}
+            $10{" "}
+          </span>
         </div>
       </div>
 
       {showModal && (
         <div className={s.modalOverlay}>
-          <div className={s.modal}>
+          <div
+            className={s.modal}
+            style={{ background: theme.box, color: theme.textColor }}
+          >
             <button
               className={s.closeButton}
               onClick={() => {
@@ -335,25 +377,34 @@ const DepositPage = () => {
                 setAmount("");
                 setMessage("");
               }}
+              style={{ color: theme.textColor, background: theme.box }}
             >
               ✕
             </button>
-            <h2 className={s.modalHeader}>
+            <h2 className={s.modalHeader} style={{ color: theme.textColor }}>
               {selected} <br /> Deposit
             </h2>
 
             {!showContinue ? (
               <>
-                <div className={s.instructions}>
+                <div
+                  className={s.instructions}
+                  style={{ color: theme.textColor }}
+                >
                   <p>
-                    <strong>📌 Instructions:</strong>
+                    <strong style={{ color: "#28a745" }}>
+                      📌 Instructions:
+                    </strong>
                   </p>
                   <ol>
                     <li>
                       Go to your crypto wallet (Trust Wallet, Binance, etc.)
                     </li>
                     <li>
-                      Select <strong>USDT (TRC-20)</strong>
+                      Select{" "}
+                      <strong style={{ color: "#28a745" }}>
+                        USDT (TRC-20)
+                      </strong>
                     </li>
                     <li>Enter the amount you want to deposit below</li>
                   </ol>
@@ -368,6 +419,7 @@ const DepositPage = () => {
                     setShowContinue(true);
                   }}
                   className={s.form}
+                  style={{ color: theme.textColor }}
                 >
                   <input
                     type="number"
@@ -375,7 +427,6 @@ const DepositPage = () => {
                     value={amount}
                     onChange={(e) => {
                       setAmount(e.target.value);
-                      // If user edits, unlock and unselect bonus
                       if (amountLocked) {
                         setSelectedBonus(null);
                         setAmountLocked(false);
@@ -385,13 +436,18 @@ const DepositPage = () => {
                       if (amountLocked) {
                         setSelectedBonus(null);
                         setAmountLocked(false);
-                        setAmount(""); // Reset amount to zero/empty
+                        setAmount("");
                       }
                     }}
                     min="10"
                     required
                     disabled={isDemo || !isVerified}
                     readOnly={amountLocked}
+                    style={{
+                      background: theme.inputBackground,
+                      color: theme.textColor,
+                      border: `1px solid ${theme.border}`,
+                    }}
                   />
 
                   {/* Bonus options listed below Amount input */}
@@ -401,6 +457,7 @@ const DepositPage = () => {
                         fontWeight: 500,
                         marginBottom: 4,
                         display: "block",
+                        color: theme.textColor,
                       }}
                     >
                       Select Deposit Bonus:
@@ -409,26 +466,32 @@ const DepositPage = () => {
                       .filter(
                         (opt) =>
                           !usedBonuses.some((bonusId) => bonusId === opt._id)
-                      ) // Filter by ID
+                      )
                       .map((opt, idx) => (
-                        <label key={idx} className={s.bonusRadioLabel}>
+                        <label
+                          key={idx}
+                          className={s.bonusRadioLabel}
+                          style={{ color: theme.textColor }}
+                        >
                           <input
                             type="radio"
                             name="bonus"
-                            value={opt._id} // Now using _id instead of percent
+                            value={opt._id}
                             checked={selectedBonus?._id === opt._id}
                             onChange={() => {
                               setSelectedBonus({
                                 _id: opt._id,
                                 percent: opt.percent,
                               });
-                              setAmount(String(opt.min)); // Set amount to bonus min when selected manually
+                              setAmount(String(opt.min));
                               setAmountLocked(false);
                             }}
                             disabled={isDemo || !isVerified}
                           />
-                          Min Deposit: <b>${opt.min}</b> – Bonus:{" "}
-                          <b>{opt.percent}%</b>
+                          Min Deposit:{" "}
+                          <b style={{ color: "#28a745" }}>${opt.min}</b> –
+                          Bonus:{" "}
+                          <b style={{ color: "#28a745" }}>{opt.percent}%</b>
                         </label>
                       ))}
                     {/* Optionally show a message if all bonuses are used */}
@@ -437,7 +500,7 @@ const DepositPage = () => {
                     ).length === 0 && (
                       <div
                         style={{
-                          color: "#888",
+                          color: theme.textColor,
                           fontSize: "0.95em",
                         }}
                       >
@@ -446,19 +509,36 @@ const DepositPage = () => {
                     )}
                   </div>
 
-                  <button type="submit" disabled={isDemo || !isVerified}>
+                  <button
+                    type="submit"
+                    disabled={isDemo || !isVerified}
+                    style={{
+                      background: theme.button,
+                      color: theme.buttonText,
+                    }}
+                  >
                     Continue
                   </button>
 
-                  {message && <p className={s.message}>{message}</p>}
+                  {message && (
+                    <p className={s.message} style={{ color: theme.textColor }}>
+                      {message}
+                    </p>
+                  )}
                   {isDemo && (
-                    <p className={s.errorMessage}>
+                    <p
+                      className={s.errorMessage}
+                      style={{ color: theme.warning }}
+                    >
                       You cannot deposit with a demo account. Please switch to a
                       Live account.
                     </p>
                   )}
                   {!isVerified && (
-                    <p className={s.errorMessage}>
+                    <p
+                      className={s.errorMessage}
+                      style={{ color: theme.warning }}
+                    >
                       Please verify your account to make deposits.
                     </p>
                   )}
@@ -466,7 +546,7 @@ const DepositPage = () => {
                 {amountLocked && (
                   <p
                     className={s.note}
-                    style={{ color: "#888", fontSize: "0.95em" }}
+                    style={{ color: theme.textColor, fontSize: "0.95em" }}
                   >
                     Amount is set by your bonus selection. Edit amount to remove
                     bonus.
@@ -475,7 +555,10 @@ const DepositPage = () => {
               </>
             ) : (
               <>
-                <div className={s.instructions}>
+                <div
+                  className={s.instructions}
+                  style={{ color: theme.textColor }}
+                >
                   {(() => {
                     const wallet = getWalletInfo(selected);
                     return (
@@ -486,10 +569,17 @@ const DepositPage = () => {
                           className={styles.trxQrImg}
                         />
                         <p>
-                          <strong>Send to Wallet ({wallet.label}):</strong>
+                          <strong style={{ color: "#28a745" }}>
+                            Send to Wallet ({wallet.label}):
+                          </strong>
                         </p>
                         <div className={s.walletRow}>
-                          <code className={s.walletCode}>{wallet.address}</code>
+                          <code
+                            className={s.walletCode}
+                            style={{ color: theme.textColor }}
+                          >
+                            {wallet.address}
+                          </code>
                           <button
                             type="button"
                             className={s.copyButton}
@@ -497,13 +587,21 @@ const DepositPage = () => {
                               navigator.clipboard.writeText(wallet.address);
                               toast.success("Wallet address copied!");
                             }}
+                            style={{
+                              background: theme.button,
+                              color: theme.buttonText,
+                            }}
                           >
                             Copy
                           </button>
                         </div>
                         {/* Transaction ID input field */}
                         <div className={s.txidInputBox}>
-                          <label htmlFor="txIdInput" className={s.txidLabel}>
+                          <label
+                            htmlFor="txIdInput"
+                            className={s.txidLabel}
+                            style={{ color: theme.textColor }}
+                          >
                             Transaction ID (TxID):
                           </label>
                           <input
@@ -514,14 +612,20 @@ const DepositPage = () => {
                             onChange={(e) => setTxId(e.target.value)}
                             className={s.txidInput}
                             required
+                            style={{
+                              background: theme.inputBackground,
+                              color: theme.textColor,
+                              border: `1px solid ${theme.border}`,
+                            }}
                           />
                         </div>
                       </>
                     );
                   })()}
-                  <p>
-                    After sending, click <b>Submit</b> to finish your deposit
-                    request.
+                  <p style={{ color: theme.textColor }}>
+                    After sending, click{" "}
+                    <b style={{ color: "#28a745" }}>Submit</b> to finish your
+                    deposit request.
                   </p>
                 </div>
                 <button
@@ -560,6 +664,7 @@ const DepositPage = () => {
                     }
                   }}
                   disabled={isDemo || !isVerified}
+                  style={{ background: theme.button, color: theme.buttonText }}
                 >
                   Submit
                 </button>
@@ -572,22 +677,28 @@ const DepositPage = () => {
       {/* Pending Deposit Notification */}
       {showPendingNotification && pendingDeposits.length > 0 && (
         <div className={s.pendingNotificationOverlay}>
-          <div className={s.pendingNotificationModal}>
+          <div
+            className={s.pendingNotificationModal}
+            style={{ background: theme.box, color: theme.textColor }}
+          >
             <div className={s.pendingIcon}>
               <span
                 role="img"
                 aria-label="pending"
-                style={{ fontSize: "3rem", color: "#f39c12" }}
+                style={{ fontSize: "3rem", color: theme.warning }}
               >
                 ⏳
               </span>
             </div>
-            <h3 className={s.pendingTitle}>
+            <h3 className={s.pendingTitle} style={{ color: theme.textColor }}>
               {pendingCount === 1
                 ? "Deposit Submitted - Pending Approval"
                 : `${pendingCount} Deposits Pending Approval`}
             </h3>
-            <div className={s.pendingDetails}>
+            <div
+              className={s.pendingDetails}
+              style={{ color: theme.textColor }}
+            >
               <p>
                 {pendingCount === 1
                   ? "Your deposit has been submitted and is awaiting admin approval:"
@@ -598,24 +709,45 @@ const DepositPage = () => {
                   // Show single deposit details
                   <>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Amount:</span>
-                      <span className={s.infoValue}>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Amount:
+                      </span>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: theme.accent }}
+                      >
                         ${pendingDeposit.amount}
                       </span>
                     </div>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Date:</span>
-                      <span className={s.infoValue}>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Date:
+                      </span>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: theme.textColor }}
+                      >
                         {new Date(
                           pendingDeposit.createdAt
                         ).toLocaleDateString()}
                       </span>
                     </div>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Status:</span>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Status:
+                      </span>
                       <span
                         className={s.infoValue}
-                        style={{ color: "#f39c12", fontWeight: "bold" }}
+                        style={{ color: theme.warning, fontWeight: "bold" }}
                       >
                         Pending
                       </span>
@@ -625,28 +757,59 @@ const DepositPage = () => {
                   // Show multiple deposits summary
                   <>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Total Amount:</span>
-                      <span className={s.infoValue}>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Total Amount:
+                      </span>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: "#10a055" }}
+                      >
                         ${totalPendingAmount.toFixed(2)}
                       </span>
                     </div>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Number of Deposits:</span>
-                      <span className={s.infoValue}>{pendingCount}</span>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Number of Deposits:
+                      </span>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: "#10a055" }}
+                      >
+                        {pendingCount}
+                      </span>
                     </div>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Latest Deposit:</span>
-                      <span className={s.infoValue}>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Latest Deposit:
+                      </span>
+                      <span
+                        className={s.infoValue}
+                        style={{ color: "#10a055" }}
+                      >
                         {new Date(
                           pendingDeposits[0].createdAt
                         ).toLocaleDateString()}
                       </span>
                     </div>
                     <div className={s.infoRow}>
-                      <span className={s.infoLabel}>Status:</span>
+                      <span
+                        className={s.infoLabel}
+                        style={{ color: theme.textColor }}
+                      >
+                        Status:
+                      </span>
                       <span
                         className={s.infoValue}
-                        style={{ color: "#f39c12", fontWeight: "bold" }}
+                        style={{ color: "#10a055", fontWeight: "bold" }}
                       >
                         All Pending
                       </span>
@@ -654,7 +817,10 @@ const DepositPage = () => {
                   </>
                 )}
               </div>
-              <p className={s.pendingMessage}>
+              <p
+                className={s.pendingMessage}
+                style={{ color: theme.textColor }}
+              >
                 {pendingCount === 1
                   ? "Your deposit has been successfully submitted and is now pending admin approval. Please wait while our team reviews your deposit. You will receive a notification once it's approved and the funds are added to your account."
                   : `Your ${pendingCount} deposits have been submitted and are pending admin approval. You can continue making additional deposits while these are being processed. You will receive notifications as each deposit is approved.`}
@@ -667,12 +833,14 @@ const DepositPage = () => {
                   checkPendingDeposits();
                   toast.info("Status refreshed");
                 }}
+                style={{ background: theme.button, color: theme.buttonText }}
               >
                 Refresh Status
               </button>
               <button
                 className={s.closePendingBtn}
                 onClick={() => setShowPendingNotification(false)}
+                style={{ background: theme.button, color: theme.buttonText }}
               >
                 I Understand
               </button>
@@ -683,16 +851,23 @@ const DepositPage = () => {
 
       {showBonusPopup && (
         <div className={s.bonusModalOverlay}>
-          <div className={s.bonusModal}>
-            <h3>Deposit Bonus Structure</h3>
+          <div
+            className={s.bonusModal}
+            style={{ background: theme.box, color: theme.textColor }}
+          >
+            <h3 style={{ color: theme.textColor }}>Deposit Bonus Structure</h3>
             <ul className={s.bonusList}>
               {bonusOptions
                 .filter(
                   (opt) => !usedBonuses.some((bonusId) => bonusId === opt._id)
                 )
                 .map((opt, idx) => (
-                  <li key={idx} className={s.bonusListItem}>
-                    <label>
+                  <li
+                    key={idx}
+                    className={s.bonusListItem}
+                    style={{ color: theme.textColor }}
+                  >
+                    <label style={{ color: theme.textColor }}>
                       <input
                         type="radio"
                         name="bonus"
@@ -706,7 +881,9 @@ const DepositPage = () => {
                           setShowBonusPopup(false);
                         }}
                       />
-                      Deposit: <b>${opt.min}</b> – Bonus: <b>{opt.percent}%</b>
+                      Deposit: <b style={{ color: theme.accent }}>${opt.min}</b>{" "}
+                      – Bonus:{" "}
+                      <b style={{ color: theme.accent }}>{opt.percent}%</b>
                     </label>
                   </li>
                 ))}
@@ -714,6 +891,7 @@ const DepositPage = () => {
             <button
               className={s.closeBonusBtn}
               onClick={() => setShowBonusPopup(false)}
+              style={{ background: theme.button, color: theme.buttonText }}
             >
               Close
             </button>
@@ -723,25 +901,32 @@ const DepositPage = () => {
 
       {showMethodPopup && (
         <div className={s.popupOverlay}>
-          <div className={s.popupBox}>
+          <div
+            className={s.popupBox}
+            style={{ background: theme.box, color: theme.textColor }}
+          >
             <div className={s.popupIcon}>
               <span
                 role="img"
                 aria-label="info"
-                style={{ fontSize: "2.5rem", color: "#3498db" }}
+                style={{ fontSize: "2.5rem", color: theme.accent }}
               >
                 💸
               </span>
             </div>
-            <div className={s.popupTitle}>Choose a Deposit Method</div>
-            <div className={s.popupMsg}>
-              Please use <b>USD Tether (TRC-20)</b>, <b>USD Tether (ERC-20)</b>,
-              or <b>BNB Smart Chain</b> to deposit.
+            <div className={s.popupTitle} style={{ color: theme.textColor }}>
+              Choose a Deposit Method
+            </div>
+            <div className={s.popupMsg} style={{ color: theme.textColor }}>
+              Please use <b style={{ color: "#28a745" }}>USD Tether (TRC-20)</b>
+              , <b style={{ color: "#28a745" }}>USD Tether (ERC-20)</b>, or{" "}
+              <b style={{ color: "#28a745" }}>BNB Smart Chain</b> to deposit.
               <br /> We are currently working on other methods.
             </div>
             <button
               className={s.closePopupBtn}
               onClick={() => setShowMethodPopup(false)}
+              style={{ background: theme.button, color: theme.buttonText }}
             >
               Close
             </button>
@@ -751,18 +936,23 @@ const DepositPage = () => {
 
       {showTxIdPopup && (
         <div className={s.popupOverlay}>
-          <div className={s.popupBox}>
+          <div
+            className={s.popupBox}
+            style={{ background: theme.box, color: theme.textColor }}
+          >
             <div className={s.popupIcon}>
               <span
                 role="img"
                 aria-label="info"
-                style={{ fontSize: "2.5rem", color: "#e67e22" }}
+                style={{ fontSize: "2.5rem", color: theme.warning }}
               >
                 ⚠️
               </span>
             </div>
-            <div className={s.popupTitle}>Transaction ID Required</div>
-            <div className={s.popupMsg}>
+            <div className={s.popupTitle} style={{ color: theme.textColor }}>
+              Transaction ID Required
+            </div>
+            <div className={s.popupMsg} style={{ color: theme.textColor }}>
               Please enter your Transaction ID (TxID) before submitting your
               deposit.
               <br />
@@ -771,6 +961,7 @@ const DepositPage = () => {
             <button
               className={s.closePopupBtn}
               onClick={() => setShowTxIdPopup(false)}
+              style={{ background: theme.button, color: theme.buttonText }}
             >
               OK
             </button>
