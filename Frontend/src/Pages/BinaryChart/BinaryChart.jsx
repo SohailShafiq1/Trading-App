@@ -1405,7 +1405,10 @@ const BinaryChart = () => {
               >
                 <button
                   className={styles.iconBtn}
-                  style={{ background: theme.background }}
+                  style={{
+                    background: theme.background,
+                    color: theme.textColor,
+                  }}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
                   disabled={
                     isProcessingTrade ||
@@ -1425,7 +1428,10 @@ const BinaryChart = () => {
                 </div>
                 <button
                   className={styles.iconBtn}
-                  style={{ background: theme.background }}
+                  style={{
+                    background: theme.background,
+                    color: theme.textColor,
+                  }}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
                   disabled={
                     isProcessingTrade ||
@@ -1465,7 +1471,10 @@ const BinaryChart = () => {
               >
                 <button
                   className={styles.iconBtn}
-                  style={{ background: theme.background }}
+                  style={{
+                    background: theme.background,
+                    color: theme.textColor,
+                  }}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
                   disabled={
                     isProcessingTrade ||
@@ -1496,7 +1505,10 @@ const BinaryChart = () => {
                 />
                 <button
                   className={styles.iconBtn}
-                  style={{ background: theme.background }}
+                  style={{
+                    background: theme.background,
+                    color: theme.textColor,
+                  }}
                   onClick={() => setInvestment((prev) => prev + 1)}
                   disabled={
                     isProcessingTrade ||
