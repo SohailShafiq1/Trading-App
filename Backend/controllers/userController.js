@@ -535,6 +535,7 @@ export const updateProfile = async (req, res) => {
       firstName,
       lastName,
       dateOfBirth,
+      country: req.body.country, // <-- Add this line
       cnicNumber,
       passportNumber,
     };
