@@ -1398,10 +1398,14 @@ const BinaryChart = () => {
             <div className={styles.controlStuff}>
               <div
                 className={styles.controlBox}
-                style={{ background: theme.box }}
+                style={{
+                  background: theme.box,
+                  border: `1px solid ${theme.textColor}`,
+                }}
               >
                 <button
                   className={styles.iconBtn}
+                  style={{ background: theme.background }}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
                   disabled={
                     isProcessingTrade ||
@@ -1421,6 +1425,7 @@ const BinaryChart = () => {
                 </div>
                 <button
                   className={styles.iconBtn}
+                  style={{ background: theme.background }}
                   onClick={() => setTimer((prev) => Math.min(prev + 30, 300))}
                   disabled={
                     isProcessingTrade ||
@@ -1453,10 +1458,14 @@ const BinaryChart = () => {
 
               <div
                 className={styles.moneyBox}
-                style={{ background: theme.box }}
+                style={{
+                  background: theme.box,
+                  border: `1px solid ${theme.textColor}`,
+                }}
               >
                 <button
                   className={styles.iconBtn}
+                  style={{ background: theme.background }}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
                   disabled={
                     isProcessingTrade ||
@@ -1487,6 +1496,7 @@ const BinaryChart = () => {
                 />
                 <button
                   className={styles.iconBtn}
+                  style={{ background: theme.background }}
                   onClick={() => setInvestment((prev) => prev + 1)}
                   disabled={
                     isProcessingTrade ||

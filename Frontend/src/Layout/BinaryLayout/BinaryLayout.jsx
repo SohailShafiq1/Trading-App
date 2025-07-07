@@ -16,6 +16,7 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./BinaryLayout.module.css";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../../assets/logo.png";
+import blacklogo from "../../../assets/WealthXLogoBlack.png";
 import { useAuth } from "../../Context/AuthContext";
 import { useUserAssets } from "../../Context/UserAssetsContext";
 import { useAccountType } from "../../Context/AccountTypeContext";
@@ -314,7 +315,7 @@ const BinaryLayout = () => {
         >
           <div className={s.logo}>
             <img
-              src={logo}
+              src={theme.name === "Black" ? blacklogo : logo}
               onClick={() => navigate("/binarychart")}
               alt="WealthX Logo"
               style={{
@@ -958,8 +959,15 @@ const BinaryLayout = () => {
 
       {/* Mobile More Popup */}
       {mobileMorePopup && (
-        <div className={s.mobilePopup}>
-          <div className={s.mobilePopupContent}>
+        <div className={s.mobilePopup2}>
+          <div
+            className={s.mobilePopupContent}
+            style={{
+              background: theme.box,
+              color: theme.textColor,
+              border: theme.name === "Black" ? "1px solid #333" : undefined,
+            }}
+          >
             <div className={s.mobilePopupHeader}>
               <h3
                 style={{
