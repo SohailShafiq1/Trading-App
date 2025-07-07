@@ -14,6 +14,7 @@ import styles from "./Forex.module.css";
 import CoinSelector from "./components/CoinSelector/CoinSelector";
 import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCoinsSelector";
 import Trades from "./components/Trades/Trades";
+import { useTheme } from "../../Context/ThemeContext";
 
 const CANDLE_STYLES = {
   CANDLE: "Candlestick",
@@ -181,6 +182,7 @@ const ForexTradingChart = ({
   otcPrice,
   forexPrice,
 }) => {
+  const { theme: globalTheme } = useTheme();
   const chartContainerRef = useRef();
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const coinSelectorRef = useRef();
@@ -300,7 +302,7 @@ const ForexTradingChart = ({
           symbol: symbol,
           interval: tvInterval,
           timezone: "Etc/UTC",
-          theme: theme.name.toLowerCase(),
+          theme: globalTheme.name.toLowerCase(),
           style:
             candleStyle === CANDLE_STYLES.CANDLE
               ? "1"
@@ -321,13 +323,13 @@ const ForexTradingChart = ({
           fullscreen: false,
           autosize: true,
           hide_volume: true,
-          toolbar_bg: theme.background,
+          toolbar_bg: globalTheme.background,
           enable_publishing: false,
           hideideas: true,
           overrides: {
-            "paneProperties.background": theme.background,
-            "paneProperties.vertGridProperties.color": theme.gridColor,
-            "paneProperties.horzGridProperties.color": theme.gridColor,
+            "paneProperties.background": globalTheme.background,
+            "paneProperties.vertGridProperties.color": globalTheme.gridColor,
+            "paneProperties.horzGridProperties.color": globalTheme.gridColor,
           },
         });
       } catch (error) {
@@ -423,14 +425,16 @@ const ForexTradingChart = ({
     <div
       className="mainBOX"
       style={{
-        background: theme.background,
-        color: theme.textColor,
+        background: globalTheme.background,
+        color: globalTheme.textColor,
         borderRadius: 10,
       }}
     >
       <div
         className="charting"
         style={{
+          background:
+            window.innerWidth < 768 ? globalTheme.background : "transparent",
           display: "flex",
           marginBottom: 10,
         }}
@@ -447,7 +451,7 @@ const ForexTradingChart = ({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                color: theme.textColor,
+                color: globalTheme.textColor,
                 cursor: "pointer",
                 height: 50,
               }}
@@ -510,7 +514,14 @@ const ForexTradingChart = ({
               </div>
             )}
           </div>
-          <div className="webCoinInfo" style={{ position: "absolute" }}>
+          <div
+            className="webCoinInfo"
+            style={{
+              position: "absolute",
+              color: globalTheme.textColor,
+              background: globalTheme.box,
+            }}
+          >
             <div className="coininfoBox">
               <p className="nameProfitWeb">
                 {coins.find((c) => c.name === coinName)?.firstName}/
@@ -551,7 +562,6 @@ const ForexTradingChart = ({
                 color: "#fff",
                 border: "none",
                 width: "100px",
-                borderRadius: "6px",
                 padding: "8px 16px",
                 fontWeight: 600,
                 fontSize: "1rem",
@@ -634,11 +644,14 @@ const ForexTradingChart = ({
                 setShowDrawingPopup(false);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
+                background: globalTheme.inputBackground,
+                border: `1.5px solid ${globalTheme.box}`,
+                borderRadius: 6,
+                transition: "background 0.2s, color 0.2s, border 0.2s",
               }}
             >
               <BiLineChart />
@@ -652,13 +665,14 @@ const ForexTradingChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.popup,
+                  border: `2px solid ${globalTheme.tabBtnHoverColor}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(INDICATORS).map((ind) => (
@@ -671,6 +685,11 @@ const ForexTradingChart = ({
                     style={{
                       padding: "5px 10px",
                       cursor: "pointer",
+                      borderRadius: 4,
+                      background: globalTheme.inputBackground,
+                      color: globalTheme.textColor,
+                      marginBottom: 2,
+                      transition: "background 0.2s, color 0.2s",
                     }}
                   >
                     {ind}
@@ -688,11 +707,14 @@ const ForexTradingChart = ({
                 setShowDrawingPopup(!showDrawingPopup);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
+                background: globalTheme.inputBackground,
+                border: `1.5px solid ${globalTheme.box}`,
+                borderRadius: 6,
+                transition: "background 0.2s, color 0.2s, border 0.2s",
               }}
             >
               <BiPencil />
@@ -705,13 +727,14 @@ const ForexTradingChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.popup,
+                  border: `2px solid ${globalTheme.tabBtnHoverColor}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(DRAWING_TOOLS).map((tool) => (
@@ -720,8 +743,12 @@ const ForexTradingChart = ({
                     onClick={() => handleDrawingToolClick(tool)}
                     style={{
                       padding: "5px 10px",
-                      color: theme.textColor,
+                      color: globalTheme.textColor,
+                      background: globalTheme.inputBackground,
+                      borderRadius: 4,
                       cursor: "pointer",
+                      marginBottom: 2,
+                      transition: "background 0.2s, color 0.2s",
                     }}
                   >
                     {tool}
@@ -733,8 +760,10 @@ const ForexTradingChart = ({
                     padding: "5px 10px",
                     borderRadius: 4,
                     cursor: "pointer",
-                    borderTop: `1px solid ${theme.gridColor}`,
+                    borderTop: `1px solid ${globalTheme.gridColor}`,
                     marginTop: 5,
+                    background: globalTheme.inputBackground,
+                    color: globalTheme.textColor,
                   }}
                 >
                   Clear All
@@ -754,15 +783,25 @@ const ForexTradingChart = ({
             onChange={(e) => setInterval(e.target.value)}
             style={{
               appearance: "none",
-              color: "black",
+              color: globalTheme.textColor,
               cursor: "pointer",
               height: 50,
               fontSize: "1rem",
-              background: "#E0E0E0",
+              background: globalTheme.inputBackground,
+              border: `1.5px solid ${globalTheme.box}`,
+              borderRadius: 6,
+              transition: "background 0.2s, color 0.2s, border 0.2s",
             }}
           >
             {Object.keys(intervalToSeconds).map((i) => (
-              <option key={i} value={i}>
+              <option
+                key={i}
+                value={i}
+                style={{
+                  background: globalTheme.inputBackground,
+                  color: globalTheme.textColor,
+                }}
+              >
                 {i}
               </option>
             ))}
@@ -777,11 +816,14 @@ const ForexTradingChart = ({
                 setShowDrawingPopup(false);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
+                background: globalTheme.inputBackground,
+                border: `1.5px solid ${globalTheme.box}`,
+                borderRadius: 6,
+                transition: "background 0.2s, color 0.2s, border 0.2s",
               }}
             >
               <AiOutlineBgColors />
@@ -794,13 +836,14 @@ const ForexTradingChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.popup,
+                  border: `2px solid ${globalTheme.tabBtnHoverColor}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(THEMES).map((t) => (
@@ -817,6 +860,12 @@ const ForexTradingChart = ({
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
+                      marginBottom: 2,
+                      border:
+                        t.name === globalTheme.name
+                          ? `2px solid ${globalTheme.tabBtnHoverColor}`
+                          : "none",
+                      transition: "background 0.2s, color 0.2s, border 0.2s",
                     }}
                   >
                     <div
@@ -824,6 +873,8 @@ const ForexTradingChart = ({
                         width: 30,
                         height: 30,
                         background: t.upColor,
+                        borderRadius: 4,
+                        marginRight: 6,
                       }}
                     />
                     <div
@@ -831,6 +882,8 @@ const ForexTradingChart = ({
                         width: 30,
                         height: 30,
                         background: t.downColor,
+                        borderRadius: 4,
+                        marginRight: 6,
                       }}
                     />
                   </div>
@@ -848,11 +901,14 @@ const ForexTradingChart = ({
                 setShowDrawingPopup(false);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
+                background: globalTheme.inputBackground,
+                border: `1.5px solid ${globalTheme.box}`,
+                borderRadius: 6,
+                transition: "background 0.2s, color 0.2s, border 0.2s",
               }}
             >
               <BsBarChartFill />
@@ -865,13 +921,14 @@ const ForexTradingChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.popup,
+                  border: `2px solid ${globalTheme.tabBtnHoverColor}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(CANDLE_STYLES).map((style) => (
@@ -884,6 +941,11 @@ const ForexTradingChart = ({
                     style={{
                       padding: "5px 10px",
                       cursor: "pointer",
+                      borderRadius: 4,
+                      background: globalTheme.inputBackground,
+                      color: globalTheme.textColor,
+                      marginBottom: 2,
+                      transition: "background 0.2s, color 0.2s",
                     }}
                   >
                     {style}

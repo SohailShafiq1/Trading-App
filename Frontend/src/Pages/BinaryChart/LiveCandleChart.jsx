@@ -1992,12 +1992,12 @@ const LiveCandleChart = ({
               className="chartBtns"
               onClick={() => setShowCoinSelector(!showCoinSelector)}
               style={{
+                background: window.innerWidth < 768 ? globalTheme.box : "",
+                color: window.innerWidth < 768 ? globalTheme.textColor : "",
                 fontSize: "1rem",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                color: globalTheme.textColor,
-                background: globalTheme.box,
                 cursor: "pointer",
                 height: 50,
               }}
@@ -2005,7 +2005,7 @@ const LiveCandleChart = ({
               <AiOutlinePlus
                 className="coinAdd"
                 style={{
-                  color: globalTheme.textColor,
+                  color: "white",
                   fontSize: "1.5rem",
                   fontWeight: "bolder",
                 }}
