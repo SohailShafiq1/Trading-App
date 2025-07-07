@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import styles from "../../BinaryChart.module.css";
 import { io } from "socket.io-client";
+import { useTheme } from "../../../../Context/ThemeContext";
 
 const s = styles;
 
@@ -18,6 +19,7 @@ const Trades = ({
   setShowModal,
   toast,
 }) => {
+  const { theme } = useTheme();
   // State to hold real-time OTC prices by coinId
   const [currentOtcPrices, setCurrentOtcPrices] = useState({});
   const [localTimers, setLocalTimers] = useState({}); // { [tradeId]: secondsLeft }
@@ -177,7 +179,7 @@ const Trades = ({
   return (
     <div className={s.tradesContainer}>
       <div className={s.tradeHistory}>
-        <p>Trades</p>
+        <p style={{ color: theme.textColor }}>Trades</p>
         <ul>
           {trades.map((trade) => {
             const tradeId = getTradeId(trade);
@@ -224,7 +226,7 @@ const Trades = ({
                     justifyContent: "space-around",
                   }}
                 >
-                  <strong>
+                  <strong style={{ color: theme.textColor }}>
                     {coinData?.firstName}/{coinData?.lastName}
                   </strong>
                   <span>
@@ -256,7 +258,7 @@ const Trades = ({
                           ? "#10A055"
                           : displayStatus === "loss"
                           ? "#FF0000"
-                          : "black",
+                          : theme.textColor,
                     }}
                   >
                     Trade: ${trade.price}
@@ -268,7 +270,7 @@ const Trades = ({
                           ? "#10A055"
                           : displayStatus === "loss"
                           ? "#FF0000"
-                          : "black",
+                          : theme.textColor,
                     }}
                   >
                     {displayStatus === "running" && localTimers[tradeId] > 0
@@ -285,6 +287,7 @@ const Trades = ({
                     gap: 8,
                     marginTop: 4,
                     fontSize: "0.95em",
+                    color: theme.textColor,
                   }}
                 >
                   <span>Open Price: ${openPrice}</span>

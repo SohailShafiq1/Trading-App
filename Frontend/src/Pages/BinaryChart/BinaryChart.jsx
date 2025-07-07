@@ -18,8 +18,11 @@ import { io } from "socket.io-client";
 import track from "./assets/tradeopen.mp3";
 import { useNavigate } from "react-router-dom";
 import ForexChart from "./ForexChart";
+import { useTheme } from "../../Context/ThemeContext";
 
 const BinaryChart = () => {
+  const { theme } = useTheme();
+
   // Function to get current price for a trade object (used in trade display)
   const getPriceForTrade = (trade) => {
     const coinData = coins.find((c) => c.name === trade.coinName);
@@ -1189,14 +1192,34 @@ const BinaryChart = () => {
           <div
             className={styles.bonusPopupWrapper}
             onClick={() => navigate("/binarychart/bankinglayout/deposit")}
+            style={{ color: theme.textColor, background: theme.box }}
           >
-            <div className={styles.bonusPopupContent}>
-              <AiOutlineRocket className={styles.bonusIcon} />
-              <span className={styles.bonusText}>
-                Get a <b>{latestBonus.percent}% bonus</b> on your first deposit
-                of <b>${latestBonus.min}</b> or more!
+            <div
+              className={styles.bonusPopupContent}
+              style={{ color: theme.textColor, background: theme.box }}
+            >
+              <AiOutlineRocket
+                className={styles.bonusIcon}
+                style={{ color: theme.textColor }}
+              />
+              <span
+                className={styles.bonusText}
+                style={{ color: theme.textColor }}
+              >
+                Get a{" "}
+                <b style={{ color: theme.textColor }}>
+                  {latestBonus.percent}% bonus
+                </b>{" "}
+                on your first deposit of{" "}
+                <b style={{ color: theme.textColor }}>${latestBonus.min}</b> or
+                more!
               </span>
-              <span className={styles.bonusBadge}>{latestBonus.percent}%</span>
+              <span
+                className={styles.bonusBadge}
+                style={{ color: theme.textColor, background: theme.textColor }}
+              >
+                {latestBonus.percent}%
+              </span>
               <button
                 className={styles.closeBtn}
                 onClick={(e) => {
@@ -1204,6 +1227,7 @@ const BinaryChart = () => {
                   setShowBonusPopup(false);
                 }}
                 aria-label="Close"
+                style={{ color: theme.textColor, background: theme.box }}
               >
                 <AiOutlineClose />
               </button>
@@ -1211,22 +1235,18 @@ const BinaryChart = () => {
           </div>
         )}
 
-      <div className={styles.container}>
-        <div className={styles.Cbox}>
-          <div
-            className={styles.chart}
-            // style={
-            //   selectedCoinType === "OTC"
-            //     ? { marginBottom: "6rem" }
-            //     : { marginBottom: 0 }
-            // }
-          >
+      <div className={styles.container} style={{ color: theme.textColor }}>
+        <div className={styles.Cbox} style={{ color: theme.textColor }}>
+          <div className={styles.chart}>
             {selectedCoinType === "Forex" && forexMarketStatus === "closed" ? (
-              <div className={styles.marketClosedContainer}>
+              <div
+                className={styles.marketClosedContainer}
+                style={{ background: theme.box, color: theme.textColor }}
+              >
                 <div className={styles.marketClosedContent}>
                   <h2
                     style={{
-                      color: "#ff6b6b",
+                      color: theme.textColor,
                       fontSize: "2rem",
                       fontWeight: "bold",
                       marginBottom: "1rem",
@@ -1237,7 +1257,7 @@ const BinaryChart = () => {
                   </h2>
                   <p
                     style={{
-                      color: "#666",
+                      color: theme.textColor,
                       fontSize: "1.2rem",
                       textAlign: "center",
                       marginBottom: "1rem",
@@ -1249,7 +1269,7 @@ const BinaryChart = () => {
                   </p>
                   <p
                     style={{
-                      color: "#888",
+                      color: theme.textColor,
                       fontSize: "1rem",
                       textAlign: "center",
                     }}
@@ -1314,12 +1334,20 @@ const BinaryChart = () => {
             )}
           </div>
 
-          <div className={styles.control}>
-            <h1 className={styles.selectedCoinTitle}>
+          <div
+            className={styles.control}
+            style={{ color: theme.textColor, background: theme.box }}
+          >
+            <h1
+              className={styles.selectedCoinTitle}
+              style={{ color: theme.textColor }}
+            >
               {selectedCoin
                 ? selectedCoinType === "Live"
                   ? `${selectedCoin} Trading`
-                  : `${coins.find((c) => c.name === selectedCoin)?.firstName}/${
+                  : `${
+                      coins.find((c) => c.name === selectedCoin)?.firstName
+                    }/$${
                       coins.find((c) => c.name === selectedCoin)?.lastName
                     }  Trading`
                 : "Select Coin Trading"}
@@ -1329,8 +1357,8 @@ const BinaryChart = () => {
                   <span
                     style={{
                       fontSize: "1rem",
-                      color: "#10A055",
-                      background: "#eafbee",
+                      color: theme.textColor,
+                      background: "#10a055",
                       borderRadius: "1rem",
                       padding: "2px 10px",
                       marginLeft: 8,
@@ -1346,15 +1374,18 @@ const BinaryChart = () => {
                 </>
               )}
             </h1>
-            <p className={styles.selectedCoinPrice}>
+            <p
+              className={styles.selectedCoinPrice}
+              style={{ color: theme.textColor }}
+            >
               {/* Forex: Hide current price and show 'Coming soon' (remove this block when live market is open) */}
               {selectedCoinType === "Forex" ? (
-                <span style={{ color: "#888", fontWeight: 600 }}>
+                <span style={{ color: theme.textColor, fontWeight: 600 }}>
                   Coming soon
                 </span>
               ) : (
                 selectedCoin && (
-                  <span>
+                  <span style={{ color: theme.textColor }}>
                     Current Price:{" "}
                     {getCurrentPriceForExecution(
                       selectedCoin,
@@ -1365,7 +1396,10 @@ const BinaryChart = () => {
               )}
             </p>
             <div className={styles.controlStuff}>
-              <div className={styles.controlBox}>
+              <div
+                className={styles.controlBox}
+                style={{ background: theme.box }}
+              >
                 <button
                   className={styles.iconBtn}
                   onClick={() => setTimer((prev) => Math.max(prev - 30, 30))}
@@ -1379,6 +1413,7 @@ const BinaryChart = () => {
                   −
                 </button>
                 <div
+                  style={{ color: theme.textColor }}
                   className={styles.value}
                   onClick={() => setShowTimestampPopup((prev) => !prev)}
                 >
@@ -1416,7 +1451,10 @@ const BinaryChart = () => {
                 )}
               </div>
 
-              <div className={styles.moneyBox}>
+              <div
+                className={styles.moneyBox}
+                style={{ background: theme.box }}
+              >
                 <button
                   className={styles.iconBtn}
                   onClick={() => setInvestment((prev) => Math.max(prev - 1, 1))}
@@ -1443,6 +1481,9 @@ const BinaryChart = () => {
                     (selectedCoinType === "Forex" &&
                       forexMarketStatus === "closed")
                   }
+                  style={{
+                    color: theme.textColor,
+                  }}
                 />
                 <button
                   className={styles.iconBtn}

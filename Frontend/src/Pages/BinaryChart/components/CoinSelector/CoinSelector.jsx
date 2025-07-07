@@ -1,6 +1,7 @@
 import React, { useState, useEffect, forwardRef } from "react";
 import styles from "./CoinSelector.module.css";
 import axios from "axios";
+import { useTheme } from "../../../../Context/ThemeContext";
 
 const CoinSelector = forwardRef(
   (
@@ -14,6 +15,7 @@ const CoinSelector = forwardRef(
     },
     ref
   ) => {
+    const { theme } = useTheme();
     const [search, setSearch] = useState("");
     const [coins, setCoins] = useState([]);
 
@@ -51,34 +53,73 @@ const CoinSelector = forwardRef(
     };
 
     return (
-      <div className={styles.coinSelectorWrapper} ref={ref}>
+      <div
+        className={styles.coinSelectorWrapper}
+        ref={ref}
+        style={{ background: theme.background }}
+      >
         {isOpen && (
-          <div className={styles.coinPopup}>
+          <div
+            className={styles.coinPopup}
+            style={{
+              background: theme.box,
+              color: theme.textColor,
+              border: `1.5px solid ${theme.inputBackground}`,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+            }}
+          >
             <input
               type="text"
               className={styles.coinSearch}
               placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              style={{
+                background: theme.inputBackground,
+                color: theme.textColor,
+                border: `1px solid ${theme.box}`,
+                borderRadius: 6,
+                marginBottom: 8,
+                padding: 7,
+                outline: "none",
+                transition: "background 0.2s, color 0.2s, border 0.2s",
+              }}
             />
 
-            <div className={styles.coinListPopup}>
-              <div className={styles.coinHeader}>
+            <div
+              className={styles.coinListPopup}
+              style={{ background: theme.box, color: theme.textColor }}
+            >
+              <div
+                className={styles.coinHeader}
+                style={{ color: theme.textColor, opacity: 0.8 }}
+              >
                 <span>Name</span>
                 <span>Profit</span>
               </div>
               {coins
-                .filter((coin) =>
-                  coin.name.toLowerCase().includes(search.toLowerCase()) ||
-                  ((coin.firstName || "") + " " + (coin.lastName || ""))
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
+                .filter(
+                  (coin) =>
+                    coin.name.toLowerCase().includes(search.toLowerCase()) ||
+                    ((coin.firstName || "") + " " + (coin.lastName || ""))
+                      .toLowerCase()
+                      .includes(search.toLowerCase())
                 )
                 .map((coin) => (
                   <div
                     key={coin._id}
                     className={styles.coinRow}
                     onClick={() => handleSelect(coin)}
+                    style={{
+                      background:
+                        coin.name === selectedCoin
+                          ? theme.inputBackground
+                          : theme.box,
+                      color: theme.textColor,
+                      borderRadius: 5,
+                      cursor: "pointer",
+                      transition: "background 0.2s, color 0.2s",
+                    }}
                   >
                     <span>
                       {(coin.type === "OTC" || coin.type === "Forex") &&
@@ -90,7 +131,7 @@ const CoinSelector = forwardRef(
                       <span
                         style={{
                           fontSize: "0.95em",
-                          color: "#10a055",
+                          color: "#10a055", // keep special color for Buy/Sell
                           marginLeft: 8,
                           fontWeight: 700,
                           letterSpacing: 0.5,

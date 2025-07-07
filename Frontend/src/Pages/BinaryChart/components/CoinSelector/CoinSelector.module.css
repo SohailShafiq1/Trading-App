@@ -14,7 +14,6 @@
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
-  background-color: #f8fafc !important;
   text-align: left;
 }
 
@@ -23,8 +22,6 @@
   top: 40px;
   left: 0;
   width: 320px;
-  background: #fff !important;
-  color: #222 !important;
   border: 1px solid #ccc;
   border-radius: 10px;
   z-index: 999;
@@ -40,7 +37,6 @@
 
 .coinTab {
   flex: 1;
-  background: #e5e5e5 !important;
   border: none;
   padding: 0.4rem;
   margin: 0 0.2rem;
@@ -53,7 +49,6 @@
 
 .coinTab.active {
   background: #10a055 !important;
-  color: #fff !important;
 }
 
 .coinSearch {
@@ -62,7 +57,6 @@
   margin-bottom: 0.8rem;
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: #f8fafc !important;
   color: #222 !important;
 }
 
@@ -82,8 +76,6 @@
   padding-bottom: 0.3rem;
   margin-bottom: 0.4rem;
   font-size: 0.85rem;
-  color: #222 !important;
-  background: #fff !important;
 }
 
 .coinRow {
@@ -94,12 +86,9 @@
   border-radius: 6px;
   transition: background 0.2s ease, color 0.2s;
   font-size: 0.9rem;
-  color: #222 !important;
-  background: #fff !important;
 }
 
 .coinRow:hover {
-  background-color: #e8f5e9 !important;
   color: #10a055 !important;
 }
 

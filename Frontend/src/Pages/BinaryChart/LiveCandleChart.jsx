@@ -22,6 +22,7 @@ import PreviousCoinsSelector from "./components/PreviousCoinsSelector/PreviousCo
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai"; // Add close icon
 import Trades from "./components/Trades/Trades";
+import { useTheme } from "../../Context/ThemeContext";
 const socket = io(import.meta.env.VITE_BACKEND_URL, {
   withCredentials: true,
   transports: ["websocket"], // Use only WebSocket, no polling
@@ -86,7 +87,6 @@ const INDICATORS = {
 const THEMES = {
   LIGHT: {
     name: "Light",
-    background: "rgb(255,255,255)",
     textColor: "rgb(51,51,51)",
     gridColor: "rgba(60,60,60,1)", // lighter, more transparent
     upColor: "rgb(38,166,154)",
@@ -99,7 +99,6 @@ const THEMES = {
   },
   DARK: {
     name: "Dark",
-    background: "rgb(18,18,18)",
     textColor: "rgb(209,212,220)",
     gridColor: "rgba(200,200,200,1)", // lighter, more transparent
     upColor: "rgb(0,230,118)",
@@ -112,7 +111,6 @@ const THEMES = {
   },
   BLUE: {
     name: "Blue",
-    background: "rgb(14,26,47)",
     textColor: "rgb(255,255,255)",
     gridColor: "rgba(30,42,63,1)", // lighter, more transparent
     upColor: "rgb(76,175,80)",
@@ -312,6 +310,7 @@ const LiveCandleChart = ({
   const [renderKey, setRenderKey] = useState(0);
   const trendRef = useRef("Random");
   const trendCounterRef = useRef(0);
+  const { theme: globalTheme } = useTheme();
   const [theme, setTheme] = useState(THEMES.LIGHT);
   const [candleStyle, setCandleStyle] = useState(CANDLE_STYLES.CANDLE);
   const [indicator, setIndicator] = useState(INDICATORS.NONE);
@@ -430,15 +429,15 @@ const LiveCandleChart = ({
     // Apply theme - using v4 compatible API
     chartRef.current.applyOptions({
       layout: {
-        background: { color: theme.background },
-        textColor: theme.textColor,
+        background: { color: globalTheme.background },
+        textColor: globalTheme.textColor,
       },
       grid: {
-        vertLines: { color: theme.gridColor },
-        horzLines: { color: theme.gridColor },
+        vertLines: { color: globalTheme.gridColor || "#e0e0e0" },
+        horzLines: { color: globalTheme.gridColor || "#e0e0e0" },
       },
       timeScale: {
-        borderColor: theme.gridColor,
+        borderColor: globalTheme.gridColor || "#e0e0e0",
         timeVisible: true,
         secondsVisible: true,
         rightOffset: window.innerWidth > 800 ? 50 : 15, // Adjust right offset based on screen size
@@ -451,7 +450,7 @@ const LiveCandleChart = ({
         },
       },
       rightPriceScale: {
-        borderColor: theme.gridColor,
+        borderColor: globalTheme.gridColor || "#e0e0e0",
       },
     });
 
@@ -756,7 +755,7 @@ const LiveCandleChart = ({
       chartHeight = 510;
     }
     // iPhone 15/14/13/12/11, SE, Mini, Galaxy S24/S23/S22/S21/S20 FE, Pixel 8/7/6, Z Flip
-    // Heights: 2340, 2266, 2340, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400, 2400
+    // Heights: 2340, 2266, 2340, 2400, 2400, 2400, 2400, 2400, 2400, 2400
     else if (window.innerHeight > 900) {
       chartHeight = 490;
     }
@@ -772,18 +771,18 @@ const LiveCandleChart = ({
       width: chartContainerRef.current.clientWidth,
       height: chartHeight,
       layout: {
-        background: { color: theme.background },
-        textColor: theme.textColor,
+        background: { color: globalTheme.background },
+        textColor: globalTheme.textColor,
       },
       grid: {
-        vertLines: { color: theme.gridColor },
-        horzLines: { color: theme.gridColor },
+        vertLines: { color: globalTheme.gridColor || "#e0e0e0" },
+        horzLines: { color: globalTheme.gridColor || "#e0e0e0" },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
       },
       timeScale: {
-        borderColor: theme.gridColor,
+        borderColor: globalTheme.gridColor || "#e0e0e0",
         timeVisible: true,
         secondsVisible: true,
         rightOffset: window.innerWidth > 800 ? 50 : 15, // Adjust right offset based on screen size
@@ -804,10 +803,28 @@ const LiveCandleChart = ({
         },
       },
       rightPriceScale: {
-        borderColor: theme.gridColor,
+        borderColor: globalTheme.gridColor || "#e0e0e0",
       },
     });
     chartRef.current = chart;
+
+    // Apply globalTheme immediately after chart creation to ensure background updates on theme change
+    chart.applyOptions({
+      layout: {
+        background: { background: globalTheme.background },
+        textColor: globalTheme.textColor,
+      },
+      grid: {
+        vertLines: { color: globalTheme.gridColor || "#e0e0e0" },
+        horzLines: { color: globalTheme.gridColor || "#e0e0e0" },
+      },
+      timeScale: {
+        borderColor: globalTheme.gridColor || "#e0e0e0",
+      },
+      rightPriceScale: {
+        borderColor: globalTheme.gridColor || "#e0e0e0",
+      },
+    });
 
     // Create candlestick series - using v5 API
     seriesRef.current = chart.addSeries(CandlestickSeries, {
@@ -836,6 +853,11 @@ const LiveCandleChart = ({
     applyCandleStyle();
     applyIndicators();
   }, [theme, candleStyle, indicator]);
+
+  // Ensure chart updates live when globalTheme changes
+  useEffect(() => {
+    applyTheme();
+  }, [globalTheme]);
 
   // Load initial data
   useEffect(() => {
@@ -1958,6 +1980,7 @@ const LiveCandleChart = ({
       <div
         className="charting"
         style={{
+          background: window.innerWidth < 768 ? globalTheme.box : "transparent",
           display: "flex",
           marginBottom: 10,
         }}
@@ -1966,7 +1989,6 @@ const LiveCandleChart = ({
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div className="coinSelectorMobile2">
             <button
-              id="indicator-btn"
               className="chartBtns"
               onClick={() => setShowCoinSelector(!showCoinSelector)}
               style={{
@@ -1974,7 +1996,8 @@ const LiveCandleChart = ({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                color: theme.textColor,
+                color: globalTheme.textColor,
+                background: globalTheme.box,
                 cursor: "pointer",
                 height: 50,
               }}
@@ -1982,7 +2005,7 @@ const LiveCandleChart = ({
               <AiOutlinePlus
                 className="coinAdd"
                 style={{
-                  color: "white",
+                  color: globalTheme.textColor,
                   fontSize: "1.5rem",
                   fontWeight: "bolder",
                 }}
@@ -2037,7 +2060,14 @@ const LiveCandleChart = ({
               </div>
             )}
           </div>
-          <div className="webCoinInfo" style={{ position: "absolute" }}>
+          <div
+            className="webCoinInfo"
+            style={{
+              position: "absolute",
+              background: globalTheme.box,
+              color: globalTheme.textColor,
+            }}
+          >
             <div className="coininfoBox">
               <p className="nameProfitWeb">
                 {coins.find((c) => c.name === coinName)?.firstName}/
@@ -2059,7 +2089,7 @@ const LiveCandleChart = ({
               className="show-trades-btn"
               style={{
                 background: "#10A055",
-                color: "#fff",
+                color: globalTheme.textColor,
                 border: "none",
                 borderRadius: "6px",
                 padding: "10px 16px",
@@ -2074,18 +2104,17 @@ const LiveCandleChart = ({
                 transition: "all 0.2s ease",
                 minWidth: "80px",
                 height: "40px",
-
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = "#0d8a47";
+                e.target.style.background = globalTheme.accent || "#0d8a47";
                 e.target.style.transform = "translateY(-1px)";
                 e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = "#10A055";
+                e.target.style.background = globalTheme.accent || "#10A055";
                 e.target.style.transform = "translateY(0px)";
                 e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
               }}
@@ -2116,7 +2145,6 @@ const LiveCandleChart = ({
                 left: 0,
                 width: "100vw",
                 height: "100vh",
-                background: "rgba(0,0,0,0.6)",
                 zIndex: 999321319,
                 display: "flex",
                 alignItems: "center",
@@ -2133,14 +2161,14 @@ const LiveCandleChart = ({
                 data-modal="trade-popup"
                 tabIndex={-1}
                 style={{
-                  background: "#fff",
-
                   borderRadius: 12,
                   padding: 24,
                   minWidth: 320,
                   maxWidth: 400,
                   width: "90vw",
                   maxHeight: "80vh",
+                  background: theme.box,
+                  color: theme.textColor,
                   overflowY: "auto",
                   position: "relative",
                   boxShadow:
@@ -2204,11 +2232,11 @@ const LiveCandleChart = ({
                 setShowDrawingPopup(false);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
+                background: globalTheme.box,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
               }}
             >
               <BiLineChart />
@@ -2222,13 +2250,14 @@ const LiveCandleChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.box,
+                  border: `2px solid ${globalTheme.accent || "#10A055"}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(INDICATORS).map((ind) => (
@@ -2275,13 +2304,14 @@ const LiveCandleChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.box,
+                  border: `2px solid ${globalTheme.accent || "#10A055"}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(DRAWING_TOOLS).map((tool) => (
@@ -2324,11 +2354,11 @@ const LiveCandleChart = ({
             onChange={(e) => setInterval(e.target.value)}
             style={{
               appearance: "none",
-              color: "black",
+              color: globalTheme.textColor,
+              background: globalTheme.box,
               cursor: "pointer",
               height: 50,
               fontSize: "1rem",
-              background: "#E0E0E0",
             }}
           >
             {Object.keys(intervalToSeconds).map((i) => (
@@ -2347,11 +2377,11 @@ const LiveCandleChart = ({
                 setShowDrawingPopup(false);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
+                background: globalTheme.box,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
               }}
             >
               <AiOutlineBgColors />
@@ -2364,13 +2394,14 @@ const LiveCandleChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.box,
+                  border: `2px solid ${globalTheme.accent || "#10A055"}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(THEMES).map((t) => (
@@ -2419,11 +2450,11 @@ const LiveCandleChart = ({
                 setShowDrawingPopup(false);
               }}
               style={{
-                color: "black",
+                color: globalTheme.textColor,
+                background: globalTheme.box,
                 cursor: "pointer",
                 height: 50,
                 fontSize: "1.5rem",
-                background: "#E0E0E0",
               }}
             >
               <BsBarChartFill />
@@ -2436,13 +2467,14 @@ const LiveCandleChart = ({
                   top: "100%",
                   left: 0,
                   zIndex: 100,
-                  background: "#E0E0E0",
-                  border: "2px solid #10A055",
+                  background: globalTheme.box,
+                  border: `2px solid ${globalTheme.accent || "#10A055"}`,
                   borderRadius: 4,
                   padding: 10,
                   display: "flex",
                   flexDirection: "column",
                   gap: 5,
+                  color: globalTheme.textColor,
                 }}
               >
                 {Object.values(CANDLE_STYLES).map((style) => (

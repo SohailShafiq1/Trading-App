@@ -7,6 +7,7 @@
 .tab {
   cursor: pointer;
   color: #9197a4;
+  padding: 0.5rem;
   transition: background-color 0.3s ease;
   position: relative;
 }

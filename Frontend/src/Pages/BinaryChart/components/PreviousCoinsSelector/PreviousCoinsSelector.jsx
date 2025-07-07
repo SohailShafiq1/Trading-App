@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { AiOutlineClose } from "react-icons/ai";
 import styles from "./PreviousCoinsSelector.module.css";
+import { useTheme } from "../../../../Context/ThemeContext";
 
 const PreviousCoinsSelector = ({ setSelectedCoin, coins, currentCoin }) => {
+  const { theme } = useTheme();
   const [previousCoins, setPreviousCoins] = useState([]);
 
   // Load previous coins from localStorage on mount
@@ -115,7 +117,7 @@ const PreviousCoinsSelector = ({ setSelectedCoin, coins, currentCoin }) => {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ background: theme.background }}>
       <div className={styles.coinsGrid}>
         {previousCoins.map((coin) => (
           <div
@@ -124,9 +126,18 @@ const PreviousCoinsSelector = ({ setSelectedCoin, coins, currentCoin }) => {
               coin.name === currentCoin ? styles.active : ""
             }`}
             onClick={() => handleCoinClick(coin)}
+            style={{
+              background:
+                coin.name === currentCoin ? theme.box : theme.inputBackground,
+              color: theme.textColor,
+              transition: "background 0.2s, color 0.2s, border 0.2s",
+            }}
           >
             <div className={styles.coinInfo}>
-              <div className={styles.coinName}>
+              <div
+                className={styles.coinName}
+                style={{ color: theme.textColor }}
+              >
                 {(coin.type === "OTC" || coin.type === "Forex") &&
                 (coin.firstName || coin.lastName)
                   ? `${coin.firstName || ""}${
@@ -134,7 +145,7 @@ const PreviousCoinsSelector = ({ setSelectedCoin, coins, currentCoin }) => {
                     }`
                   : coin.name}
               </div>
-              <div className={styles.coinType}>
+              <div className={styles.coinType} style={{ opacity: 0.7 }}>
                 {coin.type === "OTC"
                   ? "(OTC)"
                   : coin.type === "Forex"
@@ -151,6 +162,16 @@ const PreviousCoinsSelector = ({ setSelectedCoin, coins, currentCoin }) => {
                 className={styles.removeBtn}
                 onClick={(e) => handleRemoveCoin(coin, e)}
                 title="Remove from list"
+                style={{
+                  color: theme.textColor,
+                  background: theme.inputBackground,
+                  border: `1px solid ${theme.box}`,
+                  borderRadius: 4,
+                  padding: 2,
+                  cursor: "pointer",
+                  marginLeft: 8,
+                  transition: "background 0.2s, color 0.2s, border 0.2s",
+                }}
               >
                 <AiOutlineClose />
               </div>

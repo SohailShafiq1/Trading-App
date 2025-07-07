@@ -90,7 +90,6 @@
 
 .Cbox {
   display: flex;
-  background-color: #ffffff;
   flex-direction: column;
   gap: 0.5rem;
 }
