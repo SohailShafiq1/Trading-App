@@ -110,7 +110,7 @@ const Tabs = () => {
             <br />
             <div
               style={{
-                color: "black",
+                color: theme.textColor,
                 fontWeight: "700",
                 fontSize: "16px",
               }}

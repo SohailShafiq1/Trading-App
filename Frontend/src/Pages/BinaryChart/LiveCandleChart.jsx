@@ -87,38 +87,74 @@ const INDICATORS = {
 const THEMES = {
   LIGHT: {
     name: "Light",
-    textColor: "rgb(51,51,51)",
-    gridColor: "rgba(60,60,60,1)", // lighter, more transparent
-    upColor: "rgb(38,166,154)",
-    downColor: "rgb(239,83,80)",
+    textColor: "#222",
+    gridColor: "#e0e0e0",
+    upColor: "#10a055", // Green for bullish
+    downColor: "#ff1600", // Red for bearish
     borderVisible: true,
     wickVisible: true,
-    wickUpColor: "rgb(38,166,154)",
-    wickDownColor: "rgb(239,83,80)",
+    wickUpColor: "#10a055",
+    wickDownColor: "#ff1600",
     wickWidth: 4,
   },
   DARK: {
     name: "Dark",
-    textColor: "rgb(209,212,220)",
-    gridColor: "rgba(200,200,200,1)", // lighter, more transparent
-    upColor: "rgb(0,230,118)",
-    downColor: "rgb(255,23,68)",
+    textColor: "#eaeaea",
+    gridColor: "#444",
+    upColor: "#28e07c", // Bright green for bullish
+    downColor: "#ff4d4f", // Bright red for bearish
     borderVisible: true,
     wickVisible: true,
-    wickUpColor: "rgb(0,230,118)",
-    wickDownColor: "rgb(255,23,68)",
+    wickUpColor: "#28e07c",
+    wickDownColor: "#ff4d4f",
     wickWidth: 4,
   },
   BLUE: {
     name: "Blue",
-    textColor: "rgb(255,255,255)",
-    gridColor: "rgba(30,42,63,1)", // lighter, more transparent
-    upColor: "rgb(76,175,80)",
-    downColor: "rgb(244,67,54)",
+    textColor: "#e3eaff",
+    gridColor: "#2a3553",
+    upColor: "#4fc3f7", // Blue for bullish
+    downColor: "#f06292", // Pink for bearish
     borderVisible: true,
     wickVisible: true,
-    wickUpColor: "rgb(76,175,80)",
-    wickDownColor: "rgb(244,67,54)",
+    wickUpColor: "#4fc3f7",
+    wickDownColor: "#f06292",
+    wickWidth: 4,
+  },
+  GREEN: {
+    name: "Green",
+    textColor: "#1b5e20",
+    gridColor: "#c8e6c9",
+    upColor: "#43a047", // Deep green for bullish
+    downColor: "#ff7043", // Orange for bearish
+    borderVisible: true,
+    wickVisible: true,
+    wickUpColor: "#43a047",
+    wickDownColor: "#ff7043",
+    wickWidth: 4,
+  },
+  PURPLE: {
+    name: "Purple",
+    textColor: "#d1c4e9",
+    gridColor: "#7e57c2",
+    upColor: "#ab47bc", // Purple for bullish
+    downColor: "#ff7043", // Orange for bearish
+    borderVisible: true,
+    wickVisible: true,
+    wickUpColor: "#ab47bc",
+    wickDownColor: "#ff7043",
+    wickWidth: 4,
+  },
+  ORANGE: {
+    name: "Orange",
+    textColor: "#ff9800",
+    gridColor: "#ffe0b2",
+    upColor: "#ffb300", // Orange for bullish
+    downColor: "#e53935", // Red for bearish
+    borderVisible: true,
+    wickVisible: true,
+    wickUpColor: "#ffb300",
+    wickDownColor: "#e53935",
     wickWidth: 4,
   },
 };
