@@ -14,7 +14,7 @@ import { AccountTypeProvider } from "./Context/AccountTypeContext";
 import AdminProtectedRoute from "./Route/ProtectedRoute/AdminProtectedRoute";
 import { ThemeProvider } from "./Context/ThemeContext";
 import LoadingSpinner from "./components/LoadingSpinner/LoadingSpinner";
-
+import ComingSoon from './Pages/HomePage/Coming'
 // Lazy load components
 const HomePage = lazy(() => import("./Pages/HomePage/HomePage"));
 const RegisterLayout = lazy(() => import("./Layout/RegisterLayout/RegisterLayout"));
@@ -64,7 +64,7 @@ const App = () => {
                   <Suspense fallback={<LoadingSpinner />}>
                     <Routes>
                       <Route path="/" element={<RegisterLayout />}>
-                        <Route index element={<HomePage />} />
+                        <Route index element={<ComingSoon />} />
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route

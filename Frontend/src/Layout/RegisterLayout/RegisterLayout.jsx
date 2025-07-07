@@ -64,12 +64,12 @@ const RegisterLayout = () => {
               </NavLink>
             </div>
             <div className={s.navItems}>
-              <div className={s.loginButton}>
+              {/* <div className={s.loginButton}>
                 <NavLink to={"/login"}>Login</NavLink>
               </div>
               <div className={s.registerButton}>
                 <NavLink to={"/register"}>Register</NavLink>
-              </div>
+              </div> */}
             </div>
           </div>
           <Outlet />
