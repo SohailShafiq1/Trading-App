@@ -4,6 +4,7 @@ import styles from "./Admins.module.css";
 const s = styles;
 
 const SECTION_OPTIONS = [
+  { key: "chart", label: "Chart" },
   { key: "user", label: "User" },
   { key: "withdraw", label: "Withdraw" },
   { key: "coins", label: "Coins" },
