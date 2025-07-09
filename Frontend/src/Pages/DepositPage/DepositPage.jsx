@@ -403,7 +403,10 @@ const DepositPage = () => {
                     <li>
                       Select{" "}
                       <strong style={{ color: "#28a745" }}>
-                        USDT (TRC-20)
+                        {selected === "USD Tether(TRC-20)" ? "USDT (TRC-20)" :
+                         selected === "USD Tether(ERC-20)" ? "USDT (ERC-20)" :
+                         selected === "BNB Smart Chain" ? "BNB Smart Chain" : 
+                         "USDT (TRC-20)"}
                       </strong>
                     </li>
                     <li>Enter the amount you want to deposit below</li>
