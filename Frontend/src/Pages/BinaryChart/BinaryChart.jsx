@@ -1216,7 +1216,7 @@ const BinaryChart = () => {
               </span>
               <span
                 className={styles.bonusBadge}
-                style={{ color: theme.textColor, background: theme.textColor }}
+               
               >
                 {latestBonus.percent}%
               </span>
