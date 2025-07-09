@@ -242,41 +242,29 @@ const Coins = () => {
   };
 
   const handleProfitClick = async () => {
-    if (
-      tradePercentage &&
-      Number(tradePercentage.buyPercentage) >
-        Number(tradePercentage.sellPercentage)
-    ) {
-      await setAllCoinTrends("Up");
-      setTrendAction("profit");
-      setCountdown(3600);
-      const endTime = Date.now() + 3600 * 1000;
-      localStorage.setItem(
-        "trendTimerState",
-        JSON.stringify({ trendAction: "profit", endTime })
-      );
-      const timer = setTimeout(revertAllCoinTrends, 3600 * 1000); // 1 hour
-      setTrendTimer(timer);
-    }
+    await setAllCoinTrends("Up");
+    setTrendAction("profit");
+    setCountdown(3600);
+    const endTime = Date.now() + 3600 * 1000;
+    localStorage.setItem(
+      "trendTimerState",
+      JSON.stringify({ trendAction: "profit", endTime })
+    );
+    const timer = setTimeout(revertAllCoinTrends, 3600 * 1000); // 1 hour
+    setTrendTimer(timer);
   };
 
   const handleLossClick = async () => {
-    if (
-      tradePercentage &&
-      Number(tradePercentage.buyPercentage) >
-        Number(tradePercentage.sellPercentage)
-    ) {
-      await setAllCoinTrends("Down");
-      setTrendAction("loss");
-      setCountdown(3600);
-      const endTime = Date.now() + 3600 * 1000;
-      localStorage.setItem(
-        "trendTimerState",
-        JSON.stringify({ trendAction: "loss", endTime })
-      );
-      const timer = setTimeout(revertAllCoinTrends, 3600 * 1000); // 1 hour
-      setTrendTimer(timer);
-    }
+    await setAllCoinTrends("Down");
+    setTrendAction("loss");
+    setCountdown(3600);
+    const endTime = Date.now() + 3600 * 1000;
+    localStorage.setItem(
+      "trendTimerState",
+      JSON.stringify({ trendAction: "loss", endTime })
+    );
+    const timer = setTimeout(revertAllCoinTrends, 3600 * 1000); // 1 hour
+    setTrendTimer(timer);
   };
 
   // Persist timer state in localStorage
@@ -348,27 +336,25 @@ const Coins = () => {
             {tradePercentage.buyPercentage}% | Sell:{" "}
             {tradePercentage.sellPercentage}%
           </div>
-          {Number(tradePercentage.buyPercentage) >
-            Number(tradePercentage.sellPercentage) && (
-            <div className={s.trendButtonGroup}>
-              <button
-                onClick={handleProfitClick}
-                className={s.trendButton}
-                disabled={
-                  isLoading || trendAction === "profit" || bothPercentagesZero
-                }
-              >
-                Profit
-              </button>
-              <button
-                onClick={handleLossClick}
-                className={s.trendButton}
-                disabled={
-                  isLoading || trendAction === "loss" || bothPercentagesZero
-                }
-              >
-                Loss
-              </button>
+          <div className={s.trendButtonGroup}>
+            <button
+              onClick={handleProfitClick}
+              className={s.trendButton}
+              disabled={
+                isLoading || trendAction === "profit" || bothPercentagesZero
+              }
+            >
+              Profit
+            </button>
+            <button
+              onClick={handleLossClick}
+              className={s.trendButton}
+              disabled={
+                isLoading || trendAction === "loss" || bothPercentagesZero
+              }
+            >
+              Loss
+            </button>
               {/* Show Restart button only if a trend is active */}
               {trendAction && (
                 <>
@@ -395,7 +381,6 @@ const Coins = () => {
                 </>
               )}
             </div>
-          )}
         </div>
       )}
       {tradePercentage && tradePercentage.error && (
