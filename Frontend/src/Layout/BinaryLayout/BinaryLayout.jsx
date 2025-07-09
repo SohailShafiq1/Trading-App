@@ -38,7 +38,7 @@ const BinaryLayout = () => {
   const { userAssets } = useUserAssets();
   const { isDemo, setIsDemo, demo_assets, setDemo_assets } = useAccountType();
   const assets = typeof userAssets === "number" ? userAssets : 0;
-  const totalBalance = assets.toFixed(2);
+  const totalBalance = (assets + (user?.totalBonus || 0)).toFixed(2);
   const tip1 = user?.tips?.find((tip) => tip.text === "tip1")?.status;
   const navigate = useNavigate();
 
