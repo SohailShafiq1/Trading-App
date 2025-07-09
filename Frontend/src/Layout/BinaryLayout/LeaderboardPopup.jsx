@@ -16,13 +16,13 @@ const LeaderboardPopup = ({ onClose }) => {
       try {
         // Fetch admin leaderboard entries
         const adminRes = await axios.get(
-          "http://localhost:5000/api/admin/leaderboard"
+          `${import.meta.env.VITE_BACKEND_URL}/api/admin/leaderboard`
         );
         const adminEntries = adminRes.data;
 
         // Fetch all users (with email, userId, etc.)
         const usersRes = await axios.get(
-          "http://localhost:5000/api/admin/all-users"
+          `${import.meta.env.VITE_BACKEND_URL}/api/admin/all-users`
         );
         console.log("Fetched users:", usersRes.data); // Debug: log users response
         const users = usersRes.data.users;
@@ -33,7 +33,7 @@ const LeaderboardPopup = ({ onClose }) => {
             try {
               console.log("Fetching user details for:", u.email); // Debug: log each user email
               const userDetailRes = await axios.get(
-                `http://localhost:5000/api/users/email/${u.email}`
+                `${import.meta.env.VITE_BACKEND_URL}/api/users/email/${u.email}`
               );
               const userDetail = userDetailRes.data;
               const todayProfit =
