@@ -544,7 +544,7 @@ const BinaryChart = () => {
               ? (tradeInvestment * (1 + profitPercentage / 100)).toFixed(2)
               : 0; // For losing trades, reward is 0 (investment already deducted)
             const lockedStatus = isWin ? "win" : "loss";
-            // Update backend if not demo
+            // Update backend if not demo - AUTO-CLOSE ALL TRADES (WINS & LOSSES)
             if (!isDemo) {
               await updateTradeResultInDB({
                 email: user.email,
@@ -554,8 +554,35 @@ const BinaryChart = () => {
                 reward: parseFloat(reward),
                 exitPrice: endPrice,
               });
+              
+              // For winning trades, also auto-add rewards to user assets
+              if (isWin) {
+                try {
+                  const response = await fetch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/users/trade/manual-close`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        email: user.email,
+                        startedAt: new Date(trade.startedAt).getTime(),
+                      }),
+                    }
+                  );
+                  const result = await response.json();
+                  if (response.ok) {
+                    // Update user assets automatically
+                    setUserAssets(result.newBalance - (user.totalBonus || 0));
+                  }
+                } catch (err) {
+                  console.error("Failed to auto-close winning trade:", err);
+                }
+              }
             }
-            // Update local state
+            
+            // Auto-close ALL trades (both wins and losses)
             setTrades((prev) =>
               prev.map((t) =>
                 t.id === trade.id
@@ -570,6 +597,14 @@ const BinaryChart = () => {
                   : t
               )
             );
+            
+            // Update demo assets for wins
+            if (isDemo && isWin) {
+              const newAssets = demoAssets + parseFloat(reward);
+              setDemoAssets(newAssets);
+              setDemo_assets(newAssets);
+              saveDemoAssets(newAssets);
+            }
             setPopupMessage(
               isWin
                 ? `Trade Win! You got $${reward}`
@@ -1065,7 +1100,8 @@ const BinaryChart = () => {
 
   const currentAssets = isDemo ? demoAssets : userAssets;
 
-  // Handle manual close of trade (show toast for demo win only)
+  // Handle manual close of trade (COMMENTED OUT - NOW AUTO-CLOSE ALL TRADES)
+  /*
   const handleCloseTrade = async (trade) => {
     try {
       if (isDemo) {
@@ -1170,6 +1206,13 @@ const BinaryChart = () => {
       console.error("Failed to close trade:", err);
       toast.error("Failed to close trade: " + (err.message || "Unknown error"));
     }
+  };
+  */
+  
+  // Dummy function for compatibility (since components may still reference it)
+  const handleCloseTrade = async (trade) => {
+    // All trades now auto-close, manual close is disabled
+    console.log("Manual close disabled - all trades auto-close");
   };
 
   // Set selected coin to a forex coin if not already selected

@@ -156,7 +156,7 @@ const Trades = ({
           [tradeId]: {
             lockedStatus: isWin ? "win" : "loss",
             lockedReward,
-            canBeClosed: isWin,
+            canBeClosed: false, // Disable manual close - all trades auto-close
           },
         }));
 
@@ -293,8 +293,8 @@ const Trades = ({
                   <span>Open Price: ${openPrice}</span>
                   <span>Current Price: ${currentPrice}</span>
                 </div>
-                {/* Close Trade button: ONLY for confirmed winning trades that require manual close */}
-                {(() => {
+                {/* Close Trade button: COMMENTED OUT - ALL TRADES NOW AUTO-CLOSE */}
+                {false && (() => {
                   // Only show button if trade is not closed and not recently closed
                   if (
                     trade.status === "closed" ||

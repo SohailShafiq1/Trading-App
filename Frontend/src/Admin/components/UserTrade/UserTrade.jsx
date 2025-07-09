@@ -352,7 +352,7 @@ const UserTrade = () => {
           if (trade.remainingTime > 1) {
             return { ...trade, remainingTime: trade.remainingTime - 1 };
           } else if (trade.remainingTime === 1) {
-            // Timer will hit 0 now, lock status and reward
+            // Timer will hit 0 now, lock status and reward (auto-close all trades)
             const endPrice = getPriceForTrade(trade) ?? 0;
             const coinData = coins.find(
               (c) => c.name === trade.coinName || c.name === trade.coin
@@ -379,6 +379,9 @@ const UserTrade = () => {
               remainingTime: 0,
               lockedStatus,
               lockedReward,
+              // Auto-close all trades (no manual close needed)
+              manualClose: false,
+              canBeClosed: false,
             };
           } else {
             // After timer 0, do not recalculate anything, just keep locked values
@@ -579,9 +582,10 @@ const UserTrade = () => {
                     secs
                   ).padStart(2, "0")}`;
                 }}
-                // handleCloseTrade={handleCloseTrade}
+                // handleCloseTrade={handleCloseTrade} - MANUAL CLOSE DISABLED
                 coins={coins}
                 getPriceForTrade={getPriceForTrade}
+                isDemo={false} // Admin panel is never demo mode
               />
             )}
           </div>
