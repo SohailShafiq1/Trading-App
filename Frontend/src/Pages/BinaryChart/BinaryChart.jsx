@@ -554,12 +554,14 @@ const BinaryChart = () => {
                 reward: parseFloat(reward),
                 exitPrice: endPrice,
               });
-              
+
               // For winning trades, also auto-add rewards to user assets
               if (isWin) {
                 try {
                   const response = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/users/trade/manual-close`,
+                    `${
+                      import.meta.env.VITE_BACKEND_URL
+                    }/api/users/trade/manual-close`,
                     {
                       method: "PUT",
                       headers: {
@@ -581,7 +583,7 @@ const BinaryChart = () => {
                 }
               }
             }
-            
+
             // Auto-close ALL trades (both wins and losses)
             setTrades((prev) =>
               prev.map((t) =>
@@ -597,7 +599,7 @@ const BinaryChart = () => {
                   : t
               )
             );
-            
+
             // Update demo assets for wins
             if (isDemo && isWin) {
               const newAssets = demoAssets + parseFloat(reward);
@@ -1208,7 +1210,7 @@ const BinaryChart = () => {
     }
   };
   */
-  
+
   // Dummy function for compatibility (since components may still reference it)
   const handleCloseTrade = async (trade) => {
     // All trades now auto-close, manual close is disabled
@@ -1235,34 +1237,14 @@ const BinaryChart = () => {
           <div
             className={styles.bonusPopupWrapper}
             onClick={() => navigate("/binarychart/bankinglayout/deposit")}
-            style={{ color: theme.textColor, background: theme.box }}
           >
-            <div
-              className={styles.bonusPopupContent}
-              style={{ color: theme.textColor, background: theme.box }}
-            >
-              <AiOutlineRocket
-                className={styles.bonusIcon}
-                style={{ color: theme.textColor }}
-              />
-              <span
-                className={styles.bonusText}
-                style={{ color: theme.textColor }}
-              >
-                Get a{" "}
-                <b style={{ color: theme.textColor }}>
-                  {latestBonus.percent}% bonus
-                </b>{" "}
-                on your first deposit of{" "}
-                <b style={{ color: theme.textColor }}>${latestBonus.min}</b> or
-                more!
+            <div className={styles.bonusPopupContent}>
+              <AiOutlineRocket className={styles.bonusIcon} />
+              <span className={styles.bonusText}>
+                Get a {latestBonus.percent}% bonus on your first deposit of $
+                {latestBonus.min} or more!
               </span>
-              <span
-                className={styles.bonusBadge}
-               
-              >
-                {latestBonus.percent}%
-              </span>
+              <span className={styles.bonusBadge}>{latestBonus.percent}%</span>
               <button
                 className={styles.closeBtn}
                 onClick={(e) => {
@@ -1270,7 +1252,6 @@ const BinaryChart = () => {
                   setShowBonusPopup(false);
                 }}
                 aria-label="Close"
-                style={{ color: theme.textColor, background: theme.box }}
               >
                 <AiOutlineClose />
               </button>
