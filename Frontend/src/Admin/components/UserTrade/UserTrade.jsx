@@ -449,14 +449,22 @@ const UserTrade = () => {
               {activeUser.email})
             </h3>
             <div className={s.actionPanel}>
-              {/* Assets */}
+              {/* Assets and Balance */}
               {typeof activeUser.assets === "number" ? (
                 <div className={s.assetsBox}>
-                  <b>Assets:</b>
+                  <b>Balance:</b>
                   <ul>
                     <li>
-                      <span className={s.assetCoin}>USDT:</span>{" "}
-                      <span className={s.assetAmount}>{activeUser.assets}</span>
+                      <span className={s.assetCoin}>Assets:</span>{" "}
+                      <span className={s.assetAmount}>${activeUser.assets.toFixed(2)}</span>
+                    </li>
+                    <li>
+                      <span className={s.assetCoin}>Bonus:</span>{" "}
+                      <span className={s.assetAmount}>${(activeUser.totalBonus || 0).toFixed(2)}</span>
+                    </li>
+                    <li style={{ borderTop: '1px solid #ccc', paddingTop: '5px', marginTop: '5px' }}>
+                      <span className={s.assetCoin}><strong>Total:</strong></span>{" "}
+                      <span className={s.assetAmount}><strong>${(activeUser.assets + (activeUser.totalBonus || 0)).toFixed(2)}</strong></span>
                     </li>
                   </ul>
                 </div>
@@ -474,6 +482,11 @@ const UserTrade = () => {
                         )
                       )}
                     </ul>
+                    {activeUser.totalBonus && activeUser.totalBonus > 0 && (
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #ccc' }}>
+                        <b>Bonus: ${activeUser.totalBonus.toFixed(2)}</b>
+                      </div>
+                    )}
                   </div>
                 )
               )}
