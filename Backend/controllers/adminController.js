@@ -171,7 +171,6 @@ export const updateDepositStatus = async (req, res) => {
           // Apply bonus if exists
           if (deposit.bonusAmount && deposit.bonusAmount > 0) {
             user.totalBonus = (user.totalBonus || 0) + deposit.bonusAmount;
-            user.assets += deposit.bonusAmount; // Add bonus to assets
 
             // Track bonus percent if not already tracked
             if (
