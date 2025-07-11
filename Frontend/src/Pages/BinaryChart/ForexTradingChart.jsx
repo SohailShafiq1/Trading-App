@@ -594,7 +594,8 @@ const ForexTradingChart = ({
             >
               <div
                 style={{
-                  background: "#fff",
+                  background: globalTheme.box,
+                  color: globalTheme.textColor,
                   borderRadius: 10,
                   padding: 24,
                   minWidth: 320,

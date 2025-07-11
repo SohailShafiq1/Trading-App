@@ -177,7 +177,7 @@ const Trades = ({
   ]);
 
   return (
-    <div className={s.tradesContainer}>
+    <div className={s.tradesContainer} style={{ background: theme.box }}>
       <div className={s.tradeHistory}>
         <p style={{ color: theme.textColor }}>Trades</p>
         <ul>
