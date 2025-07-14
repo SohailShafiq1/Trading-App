@@ -6,9 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
+    "start:gc": "node --expose-gc server.js",
     "dev": "nodemon server.js",
+    "dev:gc": "nodemon --expose-gc server.js",
     "dev:local": "cross-env DB_ENV=local nodemon server.js",
-    "dev:atlas": "cross-env DB_ENV=atlas nodemon server.js"
+    "dev:atlas": "cross-env DB_ENV=atlas nodemon server.js",
+    "memory-test": "node --expose-gc test-memory.js"
   },
   "keywords": [],
   "author": "",

@@ -79,6 +79,17 @@ class AffiliateTimers {
     }
   }
 
+  // Cleanup all timers (for graceful shutdown)
+  cleanup() {
+    console.log("🧹 Cleaning up affiliate timers...");
+    for (const [email, interval] of this.timers) {
+      clearInterval(interval);
+      console.log(`⏹️ Cleaned up timer for: ${email}`);
+    }
+    this.timers.clear();
+    console.log("✅ All affiliate timers cleaned up");
+  }
+
   // Handle socket connection for an affiliate
   handleConnection(socket, email) {
     socket.join(email);

@@ -134,9 +134,13 @@ const io = new Server(httpServer, {
 // Initialize Affiliate Timers Service
 const affiliateTimers = new AffiliateTimers(io);
 
+// Track connected sockets for cleanup
+const connectedSockets = new Set();
+
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log(`🔌 New client connected: ${socket.id}`);
+  connectedSockets.add(socket);
 
   // Handle affiliate timer registration
   socket.on("registerAffiliate", (email) => {
@@ -147,6 +151,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", (reason) => {
     console.log(`❌ Client disconnected (${reason}): ${socket.id}`);
+    connectedSockets.delete(socket);
   });
 
   socket.on("error", (err) => {
@@ -185,18 +190,47 @@ const startServer = async () => {
 startServer();
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("🛑 SIGTERM received. Shutting down gracefully...");
-  httpServer.close(() => {
-    console.log("💤 Server terminated");
+const gracefulShutdown = async (signal) => {
+  console.log(`🛑 ${signal} received. Shutting down gracefully...`);
+  
+  try {
+    // Stop accepting new connections
+    httpServer.close(() => {
+      console.log("💤 HTTP Server closed");
+    });
+
+    // Close all socket connections
+    connectedSockets.forEach(socket => {
+      socket.disconnect(true);
+    });
+    connectedSockets.clear();
+
+    // Stop affiliate timers
+    if (affiliateTimers) {
+      affiliateTimers.cleanup();
+    }
+
+    // Disconnect from database
+    await disconnectDB();
+    
+    console.log("💤 Graceful shutdown completed");
     process.exit(0);
-  });
+  } catch (error) {
+    console.error("❌ Error during graceful shutdown:", error);
+    process.exit(1);
+  }
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+// Handle uncaught exceptions and unhandled rejections
+process.on("uncaughtException", (error) => {
+  console.error("💥 Uncaught Exception:", error);
+  gracefulShutdown("UNCAUGHT_EXCEPTION");
 });
 
-process.on("SIGINT", () => {
-  console.log("🛑 SIGINT received. Shutting down gracefully...");
-  httpServer.close(() => {
-    console.log("💤 Server terminated");
-    process.exit(0);
-  });
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("� Unhandled Rejection at:", promise, "reason:", reason);
+  gracefulShutdown("UNHANDLED_REJECTION");
 });
